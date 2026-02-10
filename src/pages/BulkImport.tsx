@@ -88,7 +88,7 @@ const BulkImport = () => {
       full_name: s.name,
       halaqa_id: s.halaqa_id,
       status: "active" as const,
-      current_level: "مبتدئ",
+      current_level: selectedLevel || "مبتدئ",
     }));
 
     const { error } = await supabase.from("students").insert(records);
