@@ -41,9 +41,15 @@ const Students = () => {
     setHalaqat(data || []);
   };
 
+  const fetchLevels = async () => {
+    const { data } = await supabase.from("memorization_levels").select("*").eq("active", true).order("sort_order");
+    setLevels(data || []);
+  };
+
   useEffect(() => {
     fetchStudents();
     fetchHalaqat();
+    fetchLevels();
   }, []);
 
   const handleAdd = async (e: React.FormEvent) => {
