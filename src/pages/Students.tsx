@@ -12,6 +12,7 @@ import { Plus, Search, User, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const Students = () => {
+  const navigate = useNavigate();
   const [students, setStudents] = useState<any[]>([]);
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [search, setSearch] = useState("");
