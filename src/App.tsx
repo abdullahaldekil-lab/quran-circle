@@ -49,6 +49,7 @@ const App = () => (
             <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
             <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
             <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
+            <Route path="/levels" element={<ProtectedRoute><Levels /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
