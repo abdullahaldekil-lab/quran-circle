@@ -14,6 +14,7 @@ import {
   Upload,
   GraduationCap,
   Trophy,
+  Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
