@@ -17,8 +17,10 @@ interface PendingStudent {
 
 const BulkImport = () => {
   const [halaqat, setHalaqat] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
   const [namesText, setNamesText] = useState("");
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState("");
   const [pendingStudents, setPendingStudents] = useState<PendingStudent[]>([]);
   const [saving, setSaving] = useState(false);
 
