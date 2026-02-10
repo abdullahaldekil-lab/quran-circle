@@ -648,38 +648,182 @@ export type Database = {
           },
         ]
       }
-      trips: {
+      trip_attendance: {
         Row: {
           created_at: string
-          created_by: string | null
-          description: string | null
-          halaqa_id: string | null
           id: string
+          note: string | null
           status: string
-          title: string
-          trip_date: string
-          updated_at: string
+          student_id: string
+          trip_id: string
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
-          description?: string | null
-          halaqa_id?: string | null
           id?: string
+          note?: string | null
           status?: string
-          title: string
-          trip_date: string
-          updated_at?: string
+          student_id: string
+          trip_id: string
         }
         Update: {
           created_at?: string
+          id?: string
+          note?: string | null
+          status?: string
+          student_id?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_attendance_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_halaqat: {
+        Row: {
+          created_at: string
+          halaqa_id: string
+          id: string
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          halaqa_id: string
+          id?: string
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          halaqa_id?: string
+          id?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_halaqat_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_halaqat_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_status_log: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_status: string
+          note: string | null
+          old_status: string | null
+          trip_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status: string
+          note?: string | null
+          old_status?: string | null
+          trip_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status?: string
+          note?: string | null
+          old_status?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_status_log_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_status_log_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trips: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          estimated_return_time: string | null
+          halaqa_id: string | null
+          id: string
+          location: string | null
+          start_time: string | null
+          status: string
+          supervising_teacher_id: string | null
+          title: string
+          trip_date: string
+          trip_type: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
           created_by?: string | null
           description?: string | null
+          end_time?: string | null
+          estimated_return_time?: string | null
           halaqa_id?: string | null
           id?: string
+          location?: string | null
+          start_time?: string | null
           status?: string
+          supervising_teacher_id?: string | null
+          title: string
+          trip_date: string
+          trip_type?: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          estimated_return_time?: string | null
+          halaqa_id?: string | null
+          id?: string
+          location?: string | null
+          start_time?: string | null
+          status?: string
+          supervising_teacher_id?: string | null
           title?: string
           trip_date?: string
+          trip_type?: string
           updated_at?: string
         }
         Relationships: [
@@ -695,6 +839,13 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_supervising_teacher_id_fkey"
+            columns: ["supervising_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
