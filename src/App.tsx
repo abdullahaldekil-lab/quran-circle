@@ -16,6 +16,7 @@ import StudentProfile from "./pages/StudentProfile";
 import BulkImport from "./pages/BulkImport";
 import Levels from "./pages/Levels";
 import Rankings from "./pages/Rankings";
+import Rewards from "./pages/Rewards";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
