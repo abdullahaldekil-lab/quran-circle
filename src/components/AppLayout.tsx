@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   CheckSquare,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

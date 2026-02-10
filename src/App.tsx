@@ -47,6 +47,7 @@ const App = () => (
             <Route path="/recitation" element={<ProtectedRoute><Recitation /></ProtectedRoute>} />
             <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
             <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
+            <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
