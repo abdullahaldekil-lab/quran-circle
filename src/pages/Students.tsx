@@ -153,7 +153,7 @@ const Students = () => {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((student) => (
-          <Card key={student.id} className="animate-slide-in hover:shadow-md transition-shadow">
+          <Card key={student.id} className="animate-slide-in hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/students/${student.id}`)}>
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
