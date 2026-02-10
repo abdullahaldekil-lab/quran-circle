@@ -15,6 +15,7 @@ import {
   GraduationCap,
   Trophy,
   Gift,
+  Bus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
