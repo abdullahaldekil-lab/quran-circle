@@ -21,6 +21,7 @@ import Levels from "./pages/Levels";
 import Rankings from "./pages/Rankings";
 import Rewards from "./pages/Rewards";
 import Trips from "./pages/Trips";
+import Finance from "./pages/Finance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
