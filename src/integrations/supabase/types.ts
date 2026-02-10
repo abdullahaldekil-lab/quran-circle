@@ -14,7 +14,318 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          attendance_date: string
+          created_at: string
+          halaqa_id: string
+          id: string
+          note: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+        }
+        Insert: {
+          attendance_date?: string
+          created_at?: string
+          halaqa_id: string
+          id?: string
+          note?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+        }
+        Update: {
+          attendance_date?: string
+          created_at?: string
+          halaqa_id?: string
+          id?: string
+          note?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      halaqat: {
+        Row: {
+          active: boolean
+          assistant_teacher_id: string | null
+          created_at: string
+          id: string
+          location: string | null
+          name: string
+          schedule: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          assistant_teacher_id?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          name: string
+          schedule?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          assistant_teacher_id?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string
+          schedule?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "halaqat_assistant_teacher_id_fkey"
+            columns: ["assistant_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instructions: {
+        Row: {
+          body: string | null
+          created_at: string
+          from_manager_id: string
+          id: string
+          priority: string | null
+          status: Database["public"]["Enums"]["instruction_status"]
+          teacher_comment: string | null
+          title: string
+          to_teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          from_manager_id: string
+          id?: string
+          priority?: string | null
+          status?: Database["public"]["Enums"]["instruction_status"]
+          teacher_comment?: string | null
+          title: string
+          to_teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          from_manager_id?: string
+          id?: string
+          priority?: string | null
+          status?: Database["public"]["Enums"]["instruction_status"]
+          teacher_comment?: string | null
+          title?: string
+          to_teacher_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructions_from_manager_id_fkey"
+            columns: ["from_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructions_to_teacher_id_fkey"
+            columns: ["to_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          full_name: string
+          id: string
+          phone: string | null
+          position_title: string | null
+          role: Database["public"]["Enums"]["staff_role"]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          full_name: string
+          id: string
+          phone?: string | null
+          position_title?: string | null
+          role?: Database["public"]["Enums"]["staff_role"]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          position_title?: string | null
+          role?: Database["public"]["Enums"]["staff_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      recitation_records: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          halaqa_id: string
+          id: string
+          memorization_quality: number | null
+          memorized_from: string | null
+          memorized_to: string | null
+          mistakes_count: number | null
+          notes: string | null
+          record_date: string
+          review_from: string | null
+          review_to: string | null
+          student_id: string
+          tajweed_score: number | null
+          teacher_id: string | null
+          total_score: number | null
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          halaqa_id: string
+          id?: string
+          memorization_quality?: number | null
+          memorized_from?: string | null
+          memorized_to?: string | null
+          mistakes_count?: number | null
+          notes?: string | null
+          record_date?: string
+          review_from?: string | null
+          review_to?: string | null
+          student_id: string
+          tajweed_score?: number | null
+          teacher_id?: string | null
+          total_score?: number | null
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          halaqa_id?: string
+          id?: string
+          memorization_quality?: number | null
+          memorized_from?: string | null
+          memorized_to?: string | null
+          mistakes_count?: number | null
+          notes?: string | null
+          record_date?: string
+          review_from?: string | null
+          review_to?: string | null
+          student_id?: string
+          tajweed_score?: number | null
+          teacher_id?: string | null
+          total_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recitation_records_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recitation_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recitation_records_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          created_at: string
+          current_level: string | null
+          full_name: string
+          guardian_name: string | null
+          guardian_phone: string | null
+          halaqa_id: string | null
+          id: string
+          join_date: string
+          notes: string | null
+          status: Database["public"]["Enums"]["student_status"]
+          total_memorized_pages: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_level?: string | null
+          full_name: string
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          halaqa_id?: string | null
+          id?: string
+          join_date?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["student_status"]
+          total_memorized_pages?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_level?: string | null
+          full_name?: string
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          halaqa_id?: string | null
+          id?: string
+          join_date?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["student_status"]
+          total_memorized_pages?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +334,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      attendance_status: "present" | "absent" | "late" | "excused"
+      instruction_status: "new" | "in_progress" | "completed"
+      staff_role:
+        | "manager"
+        | "secretary"
+        | "supervisor"
+        | "assistant_supervisor"
+        | "admin_staff"
+        | "teacher"
+        | "assistant_teacher"
+      student_status: "active" | "inactive" | "graduated" | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +471,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      attendance_status: ["present", "absent", "late", "excused"],
+      instruction_status: ["new", "in_progress", "completed"],
+      staff_role: [
+        "manager",
+        "secretary",
+        "supervisor",
+        "assistant_supervisor",
+        "admin_staff",
+        "teacher",
+        "assistant_teacher",
+      ],
+      student_status: ["active", "inactive", "graduated", "suspended"],
+    },
   },
 } as const
