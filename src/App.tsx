@@ -13,6 +13,7 @@ import Recitation from "./pages/Recitation";
 import Attendance from "./pages/Attendance";
 import Instructions from "./pages/Instructions";
 import StudentProfile from "./pages/StudentProfile";
+import BulkImport from "./pages/BulkImport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
