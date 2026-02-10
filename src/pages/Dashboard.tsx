@@ -1,24 +1,24 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, ClipboardList, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({
-    students: 0,
-    halaqat: 0,
-    todayRecitations: 0,
-    avgScore: 0,
-  });
+  const { profile } = useAuth();
+  const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
+  const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
       const today = new Date().toISOString().split("T")[0];
 
-      const [studentsRes, halaqatRes, recitationsRes] = await Promise.all([
+      const [studentsRes, halaqatRes, recitationsRes, allStudentsRes] = await Promise.all([
         supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("halaqat").select("id", { count: "exact", head: true }).eq("active", true),
         supabase.from("recitation_records").select("total_score").eq("record_date", today),
+        supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
       ]);
 
       const scores = recitationsRes.data?.map((r) => Number(r.total_score)).filter(Boolean) || [];
@@ -30,6 +30,27 @@ const Dashboard = () => {
         todayRecitations: recitationsRes.data?.length || 0,
         avgScore: Math.round(avg),
       });
+
+      // Generate alerts
+      const newAlerts: { type: string; message: string }[] = [];
+      const totalStudents = allStudentsRes.data?.length || 0;
+      const todayCount = recitationsRes.data?.length || 0;
+
+      if (totalStudents > 0 && todayCount < totalStudents * 0.5) {
+        newAlerts.push({ type: "warning", message: `تم تسميع ${todayCount} من ${totalStudents} طالب فقط اليوم` });
+      }
+
+      // Check for low scores
+      const lowScores = (recitationsRes.data || []).filter((r) => Number(r.total_score) < 50);
+      if (lowScores.length > 0) {
+        newAlerts.push({ type: "error", message: `${lowScores.length} طالب حصلوا على أقل من 50 درجة اليوم` });
+      }
+
+      if (todayCount > 0 && avg >= 80) {
+        newAlerts.push({ type: "success", message: `أداء ممتاز اليوم! متوسط الدرجات ${Math.round(avg)}` });
+      }
+
+      setAlerts(newAlerts);
     };
     fetchStats();
   }, []);
@@ -44,17 +65,42 @@ const Dashboard = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">لوحة التحكم</h1>
-        <p className="text-muted-foreground mt-1">مرحباً بك في مجمع حويلان لتحفيظ القرآن الكريم</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+          مرحباً {profile?.full_name || ""}
+        </h1>
+        <p className="text-muted-foreground mt-1">مجمع حويلان لتحفيظ القرآن الكريم</p>
       </div>
+
+      {/* Alerts */}
+      {alerts.length > 0 && (
+        <div className="space-y-2">
+          {alerts.map((alert, i) => (
+            <div
+              key={i}
+              className={`flex items-center gap-3 p-3 rounded-lg text-sm ${
+                alert.type === "error"
+                  ? "bg-destructive/10 text-destructive"
+                  : alert.type === "warning"
+                  ? "bg-warning/10 text-warning"
+                  : "bg-success/10 text-success"
+              }`}
+            >
+              {alert.type === "success" ? (
+                <CheckCircle className="w-4 h-4 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+              )}
+              {alert.message}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card) => (
           <Card key={card.title} className="animate-slide-in">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {card.title}
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </CardHeader>
             <CardContent>
@@ -88,7 +134,6 @@ const Dashboard = () => {
 
 const RecentRecitations = () => {
   const [records, setRecords] = useState<any[]>([]);
-
   useEffect(() => {
     supabase
       .from("recitation_records")
@@ -119,7 +164,6 @@ const RecentRecitations = () => {
 
 const RecentInstructions = () => {
   const [items, setItems] = useState<any[]>([]);
-
   useEffect(() => {
     supabase
       .from("instructions")

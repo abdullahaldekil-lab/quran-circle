@@ -12,6 +12,7 @@ import Halaqat from "./pages/Halaqat";
 import Recitation from "./pages/Recitation";
 import Attendance from "./pages/Attendance";
 import Instructions from "./pages/Instructions";
+import StudentProfile from "./pages/StudentProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
+            <Route path="/students/:id" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
             <Route path="/halaqat" element={<ProtectedRoute><Halaqat /></ProtectedRoute>} />
             <Route path="/recitation" element={<ProtectedRoute><Recitation /></ProtectedRoute>} />
             <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
