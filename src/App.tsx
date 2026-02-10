@@ -13,6 +13,7 @@ import Recitation from "./pages/Recitation";
 import Attendance from "./pages/Attendance";
 import Instructions from "./pages/Instructions";
 import StudentProfile from "./pages/StudentProfile";
+import BulkImport from "./pages/BulkImport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/recitation" element={<ProtectedRoute><Recitation /></ProtectedRoute>} />
             <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
             <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
+            <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

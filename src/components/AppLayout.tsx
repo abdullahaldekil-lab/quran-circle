@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   CheckSquare,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +22,7 @@ const navItems = [
   { to: "/recitation", icon: ClipboardList, label: "التسميع" },
   { to: "/attendance", icon: CheckSquare, label: "الحضور" },
   { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
+  { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
 ];
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
