@@ -15,6 +15,7 @@ const Students = () => {
   const navigate = useNavigate();
   const [students, setStudents] = useState<any[]>([]);
   const [halaqat, setHalaqat] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [filterHalaqa, setFilterHalaqa] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
