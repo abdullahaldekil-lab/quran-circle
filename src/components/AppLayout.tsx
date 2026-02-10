@@ -13,6 +13,7 @@ import {
   CheckSquare,
   Upload,
   GraduationCap,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
