@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/AppLayout";
 import Auth from "./pages/Auth";
+import GuardianAuth from "./pages/GuardianAuth";
+import GuardianDashboard from "./pages/GuardianDashboard";
+import GuardianChildProfile from "./pages/GuardianChildProfile";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Halaqat from "./pages/Halaqat";
@@ -43,6 +46,9 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/guardian-auth" element={<GuardianAuth />} />
+            <Route path="/guardian" element={<GuardianDashboard />} />
+            <Route path="/guardian/child/:id" element={<GuardianChildProfile />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
             <Route path="/students/:id" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
