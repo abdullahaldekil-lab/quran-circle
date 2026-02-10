@@ -112,13 +112,20 @@ const Auth = () => {
                 {loading ? "جارٍ التحميل..." : isLogin ? "دخول" : "إنشاء حساب"}
               </Button>
             </form>
-            <div className="mt-4 text-center">
+            <div className="mt-4 text-center space-y-2">
               <button
                 type="button"
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-primary hover:underline block w-full"
                 onClick={() => setIsLogin(!isLogin)}
               >
                 {isLogin ? "ليس لديك حساب؟ أنشئ واحداً" : "لديك حساب؟ سجّل الدخول"}
+              </button>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:underline block w-full"
+                onClick={() => navigate("/guardian-auth")}
+              >
+                دخول كولي أمر
               </button>
             </div>
           </CardContent>
