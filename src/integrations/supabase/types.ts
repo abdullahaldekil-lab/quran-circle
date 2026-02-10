@@ -89,6 +89,165 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_accounts: {
+        Row: {
+          account_name: string
+          bank_name: string | null
+          created_at: string
+          created_by: string | null
+          iban: string | null
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          bank_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          iban?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          bank_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          iban?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_accounts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_audit_log: {
+        Row: {
+          action: string
+          details: string | null
+          id: string
+          performed_at: string
+          performed_by: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          action: string
+          details?: string | null
+          id?: string
+          performed_at?: string
+          performed_by?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          action?: string
+          details?: string | null
+          id?: string
+          performed_at?: string
+          performed_by?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_audit_log_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_audit_log_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "financial_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          attachment_url: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          reference_number: string | null
+          status: string
+          transaction_date: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          reference_number?: string | null
+          status?: string
+          transaction_date?: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          reference_number?: string | null
+          status?: string
+          transaction_date?: string
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guardian_profiles: {
         Row: {
           created_at: string
@@ -855,7 +1014,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_staff_role: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
       attendance_status: "present" | "absent" | "late" | "excused"
@@ -869,6 +1028,7 @@ export type Database = {
         | "teacher"
         | "assistant_teacher"
       student_status: "active" | "inactive" | "graduated" | "suspended"
+      transaction_type: "income" | "expense"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1008,6 +1168,7 @@ export const Constants = {
         "assistant_teacher",
       ],
       student_status: ["active", "inactive", "graduated", "suspended"],
+      transaction_type: ["income", "expense"],
     },
   },
 } as const
