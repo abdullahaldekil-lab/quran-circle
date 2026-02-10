@@ -53,6 +53,7 @@ const App = () => (
             <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
             <Route path="/levels" element={<ProtectedRoute><Levels /></ProtectedRoute>} />
             <Route path="/rankings" element={<ProtectedRoute><Rankings /></ProtectedRoute>} />
+            <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
