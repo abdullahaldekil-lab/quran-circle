@@ -31,6 +31,7 @@ const navItems = [
   { to: "/rankings", icon: Trophy, label: "الترتيب" },
   { to: "/rewards", icon: Gift, label: "الحوافز" },
   { to: "/trips", icon: Bus, label: "الرحلات" },
+  { to: "/finance", icon: DollarSign, label: "المالية" },
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
 ];
 
