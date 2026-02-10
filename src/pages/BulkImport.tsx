@@ -17,17 +17,26 @@ interface PendingStudent {
 
 const BulkImport = () => {
   const [halaqat, setHalaqat] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
   const [namesText, setNamesText] = useState("");
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState("");
   const [pendingStudents, setPendingStudents] = useState<PendingStudent[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchHalaqat = async () => {
-      const { data } = await supabase.from("halaqat").select("*").eq("active", true).order("name");
-      setHalaqat(data || []);
+    const fetchData = async () => {
+      const [halaqatRes, levelsRes] = await Promise.all([
+        supabase.from("halaqat").select("*").eq("active", true).order("name"),
+        supabase.from("memorization_levels").select("*").eq("active", true).order("sort_order"),
+      ]);
+      setHalaqat(halaqatRes.data || []);
+      setLevels(levelsRes.data || []);
+      if (levelsRes.data && levelsRes.data.length > 0) {
+        setSelectedLevel(levelsRes.data[0].name);
+      }
     };
-    fetchHalaqat();
+    fetchData();
   }, []);
 
   const handleAddNames = () => {
@@ -79,7 +88,7 @@ const BulkImport = () => {
       full_name: s.name,
       halaqa_id: s.halaqa_id,
       status: "active" as const,
-      current_level: "مبتدئ",
+      current_level: selectedLevel || "مبتدئ",
     }));
 
     const { error } = await supabase.from("students").insert(records);
@@ -126,6 +135,22 @@ const BulkImport = () => {
                 {halaqat.map((h) => (
                   <SelectItem key={h.id} value={h.id}>
                     {h.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>المستوى</Label>
+            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر المستوى" />
+              </SelectTrigger>
+              <SelectContent>
+                {levels.map((l) => (
+                  <SelectItem key={l.id} value={l.name}>
+                    {l.name}
                   </SelectItem>
                 ))}
               </SelectContent>

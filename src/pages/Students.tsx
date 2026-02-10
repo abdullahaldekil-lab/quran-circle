@@ -15,6 +15,7 @@ const Students = () => {
   const navigate = useNavigate();
   const [students, setStudents] = useState<any[]>([]);
   const [halaqat, setHalaqat] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [filterHalaqa, setFilterHalaqa] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -40,9 +41,15 @@ const Students = () => {
     setHalaqat(data || []);
   };
 
+  const fetchLevels = async () => {
+    const { data } = await supabase.from("memorization_levels").select("*").eq("active", true).order("sort_order");
+    setLevels(data || []);
+  };
+
   useEffect(() => {
     fetchStudents();
     fetchHalaqat();
+    fetchLevels();
   }, []);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -112,14 +119,14 @@ const Students = () => {
                 <Label>هاتف ولي الأمر</Label>
                 <Input value={form.guardian_phone} onChange={(e) => setForm({ ...form, guardian_phone: e.target.value })} dir="ltr" />
               </div>
-              <div className="space-y-2">
+               <div className="space-y-2">
                 <Label>المستوى</Label>
                 <Select value={form.current_level} onValueChange={(v) => setForm({ ...form, current_level: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="مبتدئ">مبتدئ</SelectItem>
-                    <SelectItem value="متوسط">متوسط</SelectItem>
-                    <SelectItem value="متقدم">متقدم</SelectItem>
+                    {levels.map((l) => (
+                      <SelectItem key={l.id} value={l.name}>{l.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

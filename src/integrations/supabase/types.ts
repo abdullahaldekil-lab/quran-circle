@@ -161,6 +161,45 @@ export type Database = {
           },
         ]
       }
+      memorization_levels: {
+        Row: {
+          active: boolean
+          created_at: string
+          daily_target: string | null
+          description: string | null
+          id: string
+          name: string
+          review_requirement: string | null
+          sort_order: number
+          suitable_for: string | null
+          target_memorization: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          daily_target?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          review_requirement?: string | null
+          sort_order?: number
+          suitable_for?: string | null
+          target_memorization?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          daily_target?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          review_requirement?: string | null
+          sort_order?: number
+          suitable_for?: string | null
+          target_memorization?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
