@@ -14,6 +14,7 @@ import Attendance from "./pages/Attendance";
 import Instructions from "./pages/Instructions";
 import StudentProfile from "./pages/StudentProfile";
 import BulkImport from "./pages/BulkImport";
+import Levels from "./pages/Levels";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
