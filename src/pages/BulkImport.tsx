@@ -142,6 +142,22 @@ const BulkImport = () => {
           </div>
 
           <div className="space-y-2">
+            <Label>المستوى</Label>
+            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر المستوى" />
+              </SelectTrigger>
+              <SelectContent>
+                {levels.map((l) => (
+                  <SelectItem key={l.id} value={l.name}>
+                    {l.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label>أسماء الطلاب (اسم واحد في كل سطر)</Label>
             <Textarea
               value={namesText}
