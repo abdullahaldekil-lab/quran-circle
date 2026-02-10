@@ -13,6 +13,7 @@ import {
   CheckSquare,
   Upload,
   GraduationCap,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,7 @@ const navItems = [
   { to: "/attendance", icon: CheckSquare, label: "الحضور" },
   { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
   { to: "/levels", icon: GraduationCap, label: "المستويات" },
+  { to: "/rankings", icon: Trophy, label: "الترتيب" },
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
 ];
 

@@ -15,6 +15,7 @@ import Instructions from "./pages/Instructions";
 import StudentProfile from "./pages/StudentProfile";
 import BulkImport from "./pages/BulkImport";
 import Levels from "./pages/Levels";
+import Rankings from "./pages/Rankings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
             <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
             <Route path="/levels" element={<ProtectedRoute><Levels /></ProtectedRoute>} />
+            <Route path="/rankings" element={<ProtectedRoute><Rankings /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
