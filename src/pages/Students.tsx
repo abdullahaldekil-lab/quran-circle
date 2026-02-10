@@ -112,14 +112,14 @@ const Students = () => {
                 <Label>هاتف ولي الأمر</Label>
                 <Input value={form.guardian_phone} onChange={(e) => setForm({ ...form, guardian_phone: e.target.value })} dir="ltr" />
               </div>
-              <div className="space-y-2">
+               <div className="space-y-2">
                 <Label>المستوى</Label>
                 <Select value={form.current_level} onValueChange={(v) => setForm({ ...form, current_level: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="مبتدئ">مبتدئ</SelectItem>
-                    <SelectItem value="متوسط">متوسط</SelectItem>
-                    <SelectItem value="متقدم">متقدم</SelectItem>
+                    {levels.map((l) => (
+                      <SelectItem key={l.id} value={l.name}>{l.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
