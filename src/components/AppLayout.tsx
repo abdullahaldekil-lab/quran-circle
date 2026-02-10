@@ -29,6 +29,7 @@ const navItems = [
   { to: "/levels", icon: GraduationCap, label: "المستويات" },
   { to: "/rankings", icon: Trophy, label: "الترتيب" },
   { to: "/rewards", icon: Gift, label: "الحوافز" },
+  { to: "/trips", icon: Bus, label: "الرحلات" },
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
 ];
 
