@@ -481,7 +481,6 @@ const UserManagement = () => {
                                 onClick={() =>
                                   resetPasswordMutation.mutate({
                                     user_id: s.id,
-                                    email: "", // will need email from auth
                                   })
                                 }
                               >

@@ -216,18 +216,30 @@ serve(async (req) => {
 
       case "reset_password": {
         const { user_id, email } = payload;
-        if (!email) throw new Error("Missing email");
+        
+        // Look up email from auth if not provided
+        let targetEmail = email;
+        if (!targetEmail && user_id) {
+          const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(user_id);
+          if (userError || !userData?.user?.email) throw new Error("لم يتم العثور على بريد المستخدم");
+          targetEmail = userData.user.email;
+        }
+        if (!targetEmail) throw new Error("Missing user_id or email");
 
-        const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
           type: "recovery",
-          email,
+          email: targetEmail,
         });
+        if (linkError) {
+          console.error("Reset password error:", linkError);
+          throw new Error("فشل في إنشاء رابط إعادة التعيين");
+        }
 
         await supabaseAdmin.from("admin_audit_log").insert({
           actor_user_id: caller.id,
           action_type: "password_reset",
           target_user_id: user_id,
-          details: `Password reset triggered`,
+          details: `Password reset triggered for ${targetEmail}`,
         });
 
         return new Response(
