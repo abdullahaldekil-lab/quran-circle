@@ -28,11 +28,15 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing authorization");
 
+    const token = authHeader.replace("Bearer ", "");
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user: caller } } = await callerClient.auth.getUser();
-    if (!caller) throw new Error("Unauthorized");
+    const { data: { user: caller }, error: authError } = await callerClient.auth.getUser(token);
+    if (authError || !caller) {
+      console.error("Auth error:", authError?.message);
+      throw new Error("Unauthorized");
+    }
 
     const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
