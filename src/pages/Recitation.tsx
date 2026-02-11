@@ -16,6 +16,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 const Recitation = () => {
   const { user } = useAuth();
+  const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
