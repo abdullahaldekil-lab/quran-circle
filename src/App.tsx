@@ -95,6 +95,7 @@ const AppRoutes = () => {
       <Route path="/trips" element={<ProtectedRoute path="/trips"><Trips /></ProtectedRoute>} />
       <Route path="/finance" element={<ProtectedRoute path="/finance"><Finance /></ProtectedRoute>} />
       <Route path="/strategic-plan" element={<ProtectedRoute path="/strategic-plan"><StrategicPlan /></ProtectedRoute>} />
+      <Route path="/strategy" element={<ProtectedRoute path="/strategic-plan"><StrategicPlan /></ProtectedRoute>} />
       <Route path="/kpi-dashboard" element={<ProtectedRoute path="/kpi-dashboard"><KpiDashboard /></ProtectedRoute>} />
       <Route path="/user-management" element={<ProtectedRoute path="/user-management"><UserManagement /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute path="/profile"><ProfileSettings /></ProtectedRoute>} />
