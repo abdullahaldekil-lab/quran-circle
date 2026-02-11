@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          actor_user_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           attendance_date: string
@@ -250,6 +277,9 @@ export type Database = {
       }
       guardian_profiles: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           full_name: string
           id: string
@@ -257,6 +287,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           full_name: string
           id: string
@@ -264,6 +297,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           full_name?: string
           id?: string
@@ -274,21 +310,27 @@ export type Database = {
       }
       guardian_students: {
         Row: {
+          active: boolean
           created_at: string
           guardian_id: string
           id: string
+          relationship: string | null
           student_id: string
         }
         Insert: {
+          active?: boolean
           created_at?: string
           guardian_id: string
           id?: string
+          relationship?: string | null
           student_id: string
         }
         Update: {
+          active?: boolean
           created_at?: string
           guardian_id?: string
           id?: string
+          relationship?: string | null
           student_id?: string
         }
         Relationships: [
@@ -455,6 +497,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          last_login_at: string | null
           phone: string | null
           position_title: string | null
           role: Database["public"]["Enums"]["staff_role"]
@@ -465,6 +508,7 @@ export type Database = {
           created_at?: string
           full_name: string
           id: string
+          last_login_at?: string | null
           phone?: string | null
           position_title?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
@@ -475,6 +519,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          last_login_at?: string | null
           phone?: string | null
           position_title?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
