@@ -8,19 +8,24 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Search, User, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, User, Users, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useRole } from "@/hooks/useRole";
+import CsvBulkImport from "@/components/CsvBulkImport";
 
 const PAGE_SIZE = 20;
 
 const Students = () => {
   const navigate = useNavigate();
+  const { isManager, isAdminStaff } = useRole();
+  const canBulkImport = isManager || isAdminStaff;
   const [students, setStudents] = useState<any[]>([]);
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [levels, setLevels] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [filterHalaqa, setFilterHalaqa] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [form, setForm] = useState({
@@ -103,13 +108,20 @@ const Students = () => {
           <h1 className="text-2xl font-bold">الطلاب</h1>
           <p className="text-muted-foreground text-sm">{totalCount} طالب مسجّل</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 ml-2" />
-              إضافة طالب
+        <div className="flex gap-2">
+          {canBulkImport && (
+            <Button variant="outline" onClick={() => setBulkOpen(true)}>
+              <Upload className="w-4 h-4 ml-2" />
+              استيراد جماعي
             </Button>
-          </DialogTrigger>
+          )}
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 ml-2" />
+                إضافة طالب
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>إضافة طالب جديد</DialogTitle>
@@ -153,6 +165,8 @@ const Students = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
+        <CsvBulkImport open={bulkOpen} onOpenChange={setBulkOpen} onComplete={fetchStudents} />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
