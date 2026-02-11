@@ -116,6 +116,39 @@ export type Database = {
         }
         Relationships: []
       }
+      buses: {
+        Row: {
+          active: boolean
+          bus_name: string
+          capacity: number
+          created_at: string
+          driver_name: string | null
+          driver_phone: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          bus_name: string
+          capacity?: number
+          created_at?: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          bus_name?: string
+          capacity?: number
+          created_at?: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           category: string
@@ -1022,6 +1055,45 @@ export type Database = {
           },
           {
             foreignKeyName: "student_badges_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_bus_assignments: {
+        Row: {
+          active: boolean
+          bus_id: string
+          created_at: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          active?: boolean
+          bus_id: string
+          created_at?: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          active?: boolean
+          bus_id?: string
+          created_at?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_bus_assignments_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_bus_assignments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
