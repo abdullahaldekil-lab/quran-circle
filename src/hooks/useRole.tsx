@@ -36,11 +36,11 @@ const rolePermissions: Record<StaffRole, string[]> = {
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/attendance",
-    "/bulk-import", "/trips", "/profile", "/buses",
+    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/attendance",
-    "/bulk-import", "/trips", "/profile", "/buses",
+    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
