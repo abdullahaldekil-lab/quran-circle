@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 
