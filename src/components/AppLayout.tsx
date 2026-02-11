@@ -43,6 +43,7 @@ const allNavItems = [
   { to: "/strategic-plan", icon: Target, label: "الخطة الاستراتيجية" },
   { to: "/kpi-dashboard", icon: BarChart3, label: "مؤشرات الأداء" },
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
+  { to: "/pre-registration", icon: UserCog, label: "التسجيل المسبق" },
   { to: "/documents", icon: FolderOpen, label: "المستندات" },
   { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
   { to: "/profile", icon: UserCog, label: "الملف الشخصي" },

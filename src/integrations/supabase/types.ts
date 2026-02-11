@@ -571,6 +571,79 @@ export type Database = {
         }
         Relationships: []
       }
+      pre_registrations: {
+        Row: {
+          converted_student_id: string | null
+          created_at: string
+          created_by: string | null
+          guardian_full_name: string
+          guardian_phone: string | null
+          id: string
+          relationship: string | null
+          requested_halaqa: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["pre_registration_status"]
+          student_full_name: string
+          student_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          converted_student_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          guardian_full_name: string
+          guardian_phone?: string | null
+          id?: string
+          relationship?: string | null
+          requested_halaqa?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["pre_registration_status"]
+          student_full_name: string
+          student_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          converted_student_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          guardian_full_name?: string
+          guardian_phone?: string | null
+          id?: string
+          relationship?: string | null
+          requested_halaqa?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["pre_registration_status"]
+          student_full_name?: string
+          student_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_registrations_converted_student_id_fkey"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_registrations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_registrations_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
@@ -1407,6 +1480,12 @@ export type Database = {
     Enums: {
       attendance_status: "present" | "absent" | "late" | "excused"
       instruction_status: "new" | "in_progress" | "completed"
+      pre_registration_status:
+        | "new"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "waiting_list"
       staff_role:
         | "manager"
         | "secretary"
@@ -1546,6 +1625,13 @@ export const Constants = {
     Enums: {
       attendance_status: ["present", "absent", "late", "excused"],
       instruction_status: ["new", "in_progress", "completed"],
+      pre_registration_status: [
+        "new",
+        "under_review",
+        "approved",
+        "rejected",
+        "waiting_list",
+      ],
       staff_role: [
         "manager",
         "secretary",

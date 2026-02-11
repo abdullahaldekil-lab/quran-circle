@@ -24,23 +24,23 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
-    "/user-management", "/profile", "/health", "/documents", "/buses",
+    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration",
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/attendance",
-    "/bulk-import", "/trips", "/profile", "/buses",
+    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/attendance",
-    "/bulk-import", "/trips", "/profile", "/buses",
+    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",

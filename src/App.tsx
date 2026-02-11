@@ -34,6 +34,7 @@ import NotFound from "./pages/NotFound";
 import NotAuthorized from "./pages/NotAuthorized";
 import Documents from "./pages/Documents";
 import Buses from "./pages/Buses";
+import PreRegistration from "./pages/PreRegistration";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +105,7 @@ const AppRoutes = () => {
       <Route path="/profile" element={<ProtectedRoute path="/profile"><ProfileSettings /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute path="/documents"><Documents /></ProtectedRoute>} />
       <Route path="/buses" element={<ProtectedRoute path="/buses"><Buses /></ProtectedRoute>} />
+      <Route path="/pre-registration" element={<ProtectedRoute path="/pre-registration"><PreRegistration /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
