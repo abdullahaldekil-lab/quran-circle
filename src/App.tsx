@@ -97,7 +97,7 @@ const AppRoutes = () => {
       <Route path="/kpi-dashboard" element={<ProtectedRoute path="/kpi-dashboard"><KpiDashboard /></ProtectedRoute>} />
       <Route path="/user-management" element={<ProtectedRoute path="/user-management"><UserManagement /></ProtectedRoute>} />
 
-      <Route path="/" element={<Navigate to="/health" replace />} />
+      <Route path="/" element={<Navigate to="/auth" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
