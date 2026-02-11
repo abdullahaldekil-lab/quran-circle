@@ -33,6 +33,7 @@ import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
 import NotAuthorized from "./pages/NotAuthorized";
 import Documents from "./pages/Documents";
+import Buses from "./pages/Buses";
 
 const queryClient = new QueryClient({
   defaultOptions: {
