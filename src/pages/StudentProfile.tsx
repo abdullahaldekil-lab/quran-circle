@@ -92,13 +92,23 @@ const StudentProfile = () => {
             <div className="flex-1">
               <h1 className="text-xl font-bold">{student.full_name}</h1>
               <p className="text-sm text-muted-foreground">{student.halaqat?.name || "بدون حلقة"}</p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge variant="secondary">{student.current_level}</Badge>
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   منذ {student.join_date}
                 </span>
               </div>
+              {(student.birth_date_gregorian || student.birth_date_hijri) && (
+                <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                  {student.birth_date_gregorian && (
+                    <p>تاريخ الميلاد (ميلادي): {student.birth_date_gregorian}</p>
+                  )}
+                  {student.birth_date_hijri && (
+                    <p>تاريخ الميلاد (هجري): {formatHijriArabic(student.birth_date_hijri)}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
