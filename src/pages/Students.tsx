@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Plus, Search, User, Users, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/useRole";
+import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import CsvBulkImport from "@/components/CsvBulkImport";
 import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 
@@ -19,6 +20,7 @@ const PAGE_SIZE = 20;
 const Students = () => {
   const navigate = useNavigate();
   const { isManager, isAdminStaff } = useRole();
+  const { allowedHalaqatIds, filterHalaqat: filterHalaqatAccess, loading: accessLoading } = useTeacherHalaqat();
   const canBulkImport = isManager || isAdminStaff;
   const [students, setStudents] = useState<any[]>([]);
   const [halaqat, setHalaqat] = useState<any[]>([]);
@@ -40,6 +42,7 @@ const Students = () => {
   });
 
   const fetchStudents = useCallback(async () => {
+    if (accessLoading) return;
     let query = supabase
       .from("students")
       .select("*, halaqat(name)", { count: "exact" })
@@ -49,6 +52,12 @@ const Students = () => {
 
     if (filterHalaqa !== "all") {
       query = query.eq("halaqa_id", filterHalaqa);
+    } else if (allowedHalaqatIds !== null && allowedHalaqatIds.length > 0) {
+      query = query.in("halaqa_id", allowedHalaqatIds);
+    } else if (allowedHalaqatIds !== null && allowedHalaqatIds.length === 0) {
+      setStudents([]);
+      setTotalCount(0);
+      return;
     }
     if (search) {
       query = query.ilike("full_name", `%${search}%`);
@@ -57,11 +66,11 @@ const Students = () => {
     const { data, count } = await query;
     setStudents(data || []);
     setTotalCount(count || 0);
-  }, [page, filterHalaqa, search]);
+  }, [page, filterHalaqa, search, allowedHalaqatIds, accessLoading]);
 
   const fetchHalaqat = async () => {
     const { data } = await supabase.from("halaqat").select("*").eq("active", true);
-    setHalaqat(data || []);
+    setHalaqat(filterHalaqatAccess(data || []));
   };
 
   const fetchLevels = async () => {

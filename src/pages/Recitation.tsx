@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 const Recitation = () => {
   const { user } = useAuth();
+  const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
@@ -34,9 +36,9 @@ const Recitation = () => {
 
   // Load halaqat and auto-select teacher's halaqa
   useEffect(() => {
-    if (!user) return;
+    if (!user || accessLoading) return;
     supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
-      const list = data || [];
+      const list = filterHalaqat(data || []);
       setHalaqat(list);
       const myHalaqa = list.find(
         (h) => h.teacher_id === user.id || h.assistant_teacher_id === user.id
@@ -45,7 +47,7 @@ const Recitation = () => {
         setSelectedHalaqa(myHalaqa.id);
       }
     });
-  }, [user]);
+  }, [user, accessLoading]);
 
   useEffect(() => {
     if (selectedHalaqa) {

@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
 import { formatHijriArabic } from "@/lib/hijri";
+import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 
 const PAGE_SIZE = 20;
 
 const StudentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
   const [student, setStudent] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [recordsPage, setRecordsPage] = useState(0);
@@ -58,10 +60,22 @@ const StudentProfile = () => {
     fetchRecords();
   }, [id, recordsPage]);
 
-  if (!student) {
+  if (!student || accessLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Block direct URL access to students outside teacher's halaqat
+  if (!canAccessStudent(student.halaqa_id)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <ShieldAlert className="w-12 h-12 text-destructive" />
+        <h2 className="text-lg font-bold">غير مصرح</h2>
+        <p className="text-muted-foreground text-sm">ليس لديك صلاحية الوصول لهذا الطالب</p>
+        <Button variant="outline" onClick={() => navigate(-1)}>رجوع</Button>
       </div>
     );
   }

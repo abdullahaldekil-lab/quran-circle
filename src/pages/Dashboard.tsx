@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 
@@ -16,22 +17,36 @@ const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promi
 const Dashboard = () => {
   const { profile, user, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
+  const { allowedHalaqatIds, loading: accessLoading } = useTeacherHalaqat();
   const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading || !user || accessLoading) return;
 
     let cancelled = false;
     const fetchStats = async () => {
       try {
         const today = new Date().toISOString().split("T")[0];
 
+        let studentsQuery = supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active");
+        let halaqatQuery = supabase.from("halaqat").select("id", { count: "exact", head: true }).eq("active", true);
+        let recitationsQuery = supabase.from("recitation_records").select("total_score").eq("record_date", today);
+
+        // Apply halaqa filter for teachers
+        if (allowedHalaqatIds !== null && allowedHalaqatIds.length > 0) {
+          studentsQuery = studentsQuery.in("halaqa_id", allowedHalaqatIds);
+          halaqatQuery = halaqatQuery.in("id", allowedHalaqatIds);
+          recitationsQuery = recitationsQuery.in("halaqa_id", allowedHalaqatIds);
+        } else if (allowedHalaqatIds !== null && allowedHalaqatIds.length === 0) {
+          setStats({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
+          setDataLoaded(true);
+          return;
+        }
+
         const [studentsRes, halaqatRes, recitationsRes] = await withTimeout(Promise.all([
-          supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
-          supabase.from("halaqat").select("id", { count: "exact", head: true }).eq("active", true),
-          supabase.from("recitation_records").select("total_score").eq("record_date", today),
+          studentsQuery, halaqatQuery, recitationsQuery,
         ]));
 
         if (cancelled) return;
@@ -68,7 +83,7 @@ const Dashboard = () => {
     };
     fetchStats();
     return () => { cancelled = true; };
-  }, [authLoading, user]);
+  }, [authLoading, user, accessLoading, allowedHalaqatIds]);
 
   const cards = [
     { title: "عدد الطلاب", value: stats.students, icon: Users, color: "text-primary" },
@@ -167,16 +182,19 @@ const Dashboard = () => {
 const RecentRecitations = () => {
   const [records, setRecords] = useState<any[]>([]);
   const { user } = useAuth();
+  const { allowedHalaqatIds } = useTeacherHalaqat();
   useEffect(() => {
     if (!user) return;
-    withTimeout(
-      supabase
-        .from("recitation_records")
-        .select("*, students(full_name), halaqat(name)")
-        .order("created_at", { ascending: false })
-        .limit(5)
-    ).then(({ data }) => setRecords(data || [])).catch(() => {});
-  }, [user]);
+    let query = supabase
+      .from("recitation_records")
+      .select("*, students(full_name), halaqat(name)")
+      .order("created_at", { ascending: false })
+      .limit(5);
+    if (allowedHalaqatIds !== null && allowedHalaqatIds.length > 0) {
+      query = query.in("halaqa_id", allowedHalaqatIds);
+    }
+    withTimeout(query).then(({ data }) => setRecords(data || [])).catch(() => {});
+  }, [user, allowedHalaqatIds]);
 
   if (!records.length) return <p className="text-muted-foreground text-sm">لا توجد تسميعات حتى الآن</p>;
 
