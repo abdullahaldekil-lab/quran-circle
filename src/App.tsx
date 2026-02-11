@@ -31,6 +31,7 @@ import KpiDashboard from "./pages/KpiDashboard";
 import UserManagement from "./pages/UserManagement";
 import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
+import NotAuthorized from "./pages/NotAuthorized";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,7 +55,7 @@ const ProtectedRoute = ({ children, path }: { children: React.ReactNode; path?: 
   }
 
   if (!session) return <Navigate to="/auth" replace />;
-  if (path && !hasAccess(path)) return <Navigate to="/dashboard" replace />;
+  if (path && !hasAccess(path)) return <Navigate to="/not-authorized" replace />;
   return <AppLayout>{children}</AppLayout>;
 };
 
@@ -100,6 +101,7 @@ const AppRoutes = () => {
       <Route path="/user-management" element={<ProtectedRoute path="/user-management"><UserManagement /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute path="/profile"><ProfileSettings /></ProtectedRoute>} />
 
+      <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

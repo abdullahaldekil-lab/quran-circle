@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 
-export type StaffRole = 
+export type StaffRole =
   | "manager"
   | "secretary"
   | "supervisor"
@@ -9,39 +9,80 @@ export type StaffRole =
   | "teacher"
   | "assistant_teacher";
 
-// Permission matrix per role
+// Role mapping to conceptual RBAC names:
+// manager          → super_admin (full access)
+// supervisor       → educational_admin
+// assistant_supervisor → educational_admin
+// secretary        → administrative_admin
+// admin_staff      → administrative_admin
+// teacher          → teacher
+// assistant_teacher → assistant_teacher
+
+// Route-level access per role
 const rolePermissions: Record<StaffRole, string[]> = {
   manager: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
-    "/finance", "/strategic-plan", "/kpi-dashboard", "/bulk-import",
-    "/user-management", "/profile",
+    "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
+    "/user-management", "/profile", "/health",
   ],
   supervisor: [
-    "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
-    "/instructions", "/levels", "/rankings", "/rewards", "/trips",
-    "/strategic-plan", "/kpi-dashboard", "/profile",
+    "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
+    "/strategic-plan", "/strategy", "/profile",
   ],
   assistant_supervisor: [
-    "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
-    "/instructions", "/levels", "/rankings", "/rewards", "/trips",
-    "/strategic-plan", "/kpi-dashboard", "/profile",
+    "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
+    "/strategic-plan", "/strategy", "/profile",
   ],
   secretary: [
-    "/dashboard", "/students", "/halaqat", "/attendance", "/trips",
-    "/finance", "/bulk-import", "/profile",
+    "/dashboard", "/students", "/halaqat", "/attendance",
+    "/bulk-import", "/trips", "/profile",
   ],
   admin_staff: [
-    "/dashboard", "/students", "/halaqat", "/attendance", "/trips",
-    "/finance", "/bulk-import", "/profile",
+    "/dashboard", "/students", "/halaqat", "/attendance",
+    "/bulk-import", "/trips", "/profile",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
-    "/instructions", "/levels", "/rankings", "/rewards", "/trips", "/profile",
+    "/rankings", "/trips", "/profile",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
     "/rankings", "/profile",
+  ],
+};
+
+// Resource-level write permissions per role
+type Resource =
+  | "students" | "halaqat" | "recitation" | "attendance"
+  | "instructions" | "levels" | "rankings" | "rewards"
+  | "trips" | "finance" | "strategic_goals" | "strategic_objectives"
+  | "strategic_tasks" | "user_management" | "bulk_import" | "guardians";
+
+const roleWritePermissions: Record<StaffRole, Resource[]> = {
+  manager: [
+    "students", "halaqat", "recitation", "attendance", "instructions",
+    "levels", "rankings", "rewards", "trips", "finance",
+    "strategic_goals", "strategic_objectives", "strategic_tasks",
+    "user_management", "bulk_import", "guardians",
+  ],
+  supervisor: [
+    "strategic_tasks", "strategic_objectives",
+  ],
+  assistant_supervisor: [
+    "strategic_tasks",
+  ],
+  secretary: [
+    "students", "attendance", "bulk_import", "trips",
+  ],
+  admin_staff: [
+    "students", "attendance", "bulk_import", "trips",
+  ],
+  teacher: [
+    "recitation", "attendance", "trips",
+  ],
+  assistant_teacher: [
+    "recitation", "attendance",
   ],
 };
 
@@ -52,10 +93,14 @@ export const useRole = () => {
   const allowedRoutes = rolePermissions[role] || rolePermissions.teacher;
 
   const hasAccess = (path: string) => {
-    // Check exact match or prefix match for dynamic routes like /students/:id
     return allowedRoutes.some(
       (route) => path === route || path.startsWith(route + "/")
     );
+  };
+
+  const canWrite = (resource: Resource): boolean => {
+    const perms = roleWritePermissions[role] || [];
+    return perms.includes(resource);
   };
 
   const isManager = role === "manager";
@@ -66,6 +111,7 @@ export const useRole = () => {
   return {
     role,
     hasAccess,
+    canWrite,
     allowedRoutes,
     isManager,
     isSupervisor,
