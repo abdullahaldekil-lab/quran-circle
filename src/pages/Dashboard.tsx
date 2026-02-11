@@ -23,17 +23,30 @@ const Dashboard = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading || !user || accessLoading) return;
 
     let cancelled = false;
     const fetchStats = async () => {
       try {
         const today = new Date().toISOString().split("T")[0];
 
+        let studentsQuery = supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active");
+        let halaqatQuery = supabase.from("halaqat").select("id", { count: "exact", head: true }).eq("active", true);
+        let recitationsQuery = supabase.from("recitation_records").select("total_score").eq("record_date", today);
+
+        // Apply halaqa filter for teachers
+        if (allowedHalaqatIds !== null && allowedHalaqatIds.length > 0) {
+          studentsQuery = studentsQuery.in("halaqa_id", allowedHalaqatIds);
+          halaqatQuery = halaqatQuery.in("id", allowedHalaqatIds);
+          recitationsQuery = recitationsQuery.in("halaqa_id", allowedHalaqatIds);
+        } else if (allowedHalaqatIds !== null && allowedHalaqatIds.length === 0) {
+          setStats({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
+          setDataLoaded(true);
+          return;
+        }
+
         const [studentsRes, halaqatRes, recitationsRes] = await withTimeout(Promise.all([
-          supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
-          supabase.from("halaqat").select("id", { count: "exact", head: true }).eq("active", true),
-          supabase.from("recitation_records").select("total_score").eq("record_date", today),
+          studentsQuery, halaqatQuery, recitationsQuery,
         ]));
 
         if (cancelled) return;
