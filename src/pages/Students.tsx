@@ -118,7 +118,7 @@ const Students = () => {
     }
     toast.success("تمت إضافة الطالب بنجاح");
     setDialogOpen(false);
-    setForm({ full_name: "", halaqa_id: "", guardian_name: "", guardian_phone: "", current_level: "مبتدئ" });
+    setForm({ full_name: "", halaqa_id: "", guardian_name: "", guardian_phone: "", current_level: "مبتدئ", birth_date_gregorian: "", birth_date_hijri: "" });
     fetchStudents();
   };
 
