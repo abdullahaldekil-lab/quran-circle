@@ -17,6 +17,7 @@ const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promi
 const Dashboard = () => {
   const { profile, user, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
+  const { allowedHalaqatIds, loading: accessLoading } = useTeacherHalaqat();
   const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
