@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { BookOpen } from "lucide-react";
+import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
 
 const Auth = () => {
   const { session, loading: authLoading } = useAuth();
@@ -61,9 +61,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-4">
-            <BookOpen className="w-8 h-8 text-primary-foreground" />
-          </div>
+          <img src={huwaylanLogo} alt="مجمع حويلان" className="w-20 h-20 object-contain mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-foreground">مجمع حويلان</h1>
           <p className="text-muted-foreground mt-2">لإدارة حلقات تحفيظ القرآن الكريم</p>
         </div>

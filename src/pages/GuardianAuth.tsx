@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { BookOpen, ShieldCheck } from "lucide-react";
+import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
 
 const GuardianAuth = () => {
   const navigate = useNavigate();
@@ -74,9 +74,7 @@ const GuardianAuth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-gold mb-4">
-            <ShieldCheck className="w-8 h-8 text-primary-foreground" />
-          </div>
+          <img src={huwaylanLogo} alt="مجمع حويلان" className="w-20 h-20 object-contain mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-foreground">بوابة ولي الأمر</h1>
           <p className="text-muted-foreground mt-2">مجمع حويلان لتحفيظ القرآن الكريم</p>
         </div>

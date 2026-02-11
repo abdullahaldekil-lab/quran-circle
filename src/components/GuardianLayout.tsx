@@ -6,9 +6,9 @@ import {
   LogOut,
   Menu,
   X,
-  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
 
 interface GuardianLayoutProps {
   children: React.ReactNode;
@@ -28,9 +28,7 @@ const GuardianLayout = ({ children, guardianName }: GuardianLayoutProps) => {
       <header className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg gradient-gold flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src={huwaylanLogo} alt="مجمع حويلان" className="w-9 h-9 rounded-lg object-contain" />
             <div>
               <span className="font-bold text-foreground text-sm">بوابة ولي الأمر</span>
               {guardianName && (
