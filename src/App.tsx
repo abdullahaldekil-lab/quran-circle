@@ -5,7 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
+import Health from "./pages/Health";
 import Auth from "./pages/Auth";
 import GuardianAuth from "./pages/GuardianAuth";
 import GuardianDashboard from "./pages/GuardianDashboard";
@@ -28,58 +31,92 @@ import KpiDashboard from "./pages/KpiDashboard";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
 
 const ProtectedRoute = ({ children, path }: { children: React.ReactNode; path?: string }) => {
   const { session, loading } = useAuth();
   const { hasAccess } = useRole();
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground">جارٍ تحميل الجلسة...</p>
       </div>
     );
   }
+
   if (!session) return <Navigate to="/auth" replace />;
   if (path && !hasAccess(path)) return <Navigate to="/dashboard" replace />;
   return <AppLayout>{children}</AppLayout>;
 };
 
+const AppRoutes = () => {
+  // Global unhandled rejection handler
+  useEffect(() => {
+    const handler = (e: PromiseRejectionEvent) => {
+      console.error("Unhandled rejection:", e.reason);
+      e.preventDefault();
+    };
+    window.addEventListener("unhandledrejection", handler);
+    return () => window.removeEventListener("unhandledrejection", handler);
+  }, []);
+
+  return (
+    <Routes>
+      {/* Safe boot - no auth, no DB */}
+      <Route path="/health" element={<Health />} />
+
+      {/* Public routes */}
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/guardian-auth" element={<GuardianAuth />} />
+      <Route path="/guardian" element={<GuardianDashboard />} />
+      <Route path="/guardian/child/:id" element={<GuardianChildProfile />} />
+
+      {/* Protected routes */}
+      <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />
+      <Route path="/students" element={<ProtectedRoute path="/students"><Students /></ProtectedRoute>} />
+      <Route path="/students/:id" element={<ProtectedRoute path="/students"><StudentProfile /></ProtectedRoute>} />
+      <Route path="/halaqat" element={<ProtectedRoute path="/halaqat"><Halaqat /></ProtectedRoute>} />
+      <Route path="/recitation" element={<ProtectedRoute path="/recitation"><Recitation /></ProtectedRoute>} />
+      <Route path="/attendance" element={<ProtectedRoute path="/attendance"><Attendance /></ProtectedRoute>} />
+      <Route path="/instructions" element={<ProtectedRoute path="/instructions"><Instructions /></ProtectedRoute>} />
+      <Route path="/bulk-import" element={<ProtectedRoute path="/bulk-import"><BulkImport /></ProtectedRoute>} />
+      <Route path="/levels" element={<ProtectedRoute path="/levels"><Levels /></ProtectedRoute>} />
+      <Route path="/rankings" element={<ProtectedRoute path="/rankings"><Rankings /></ProtectedRoute>} />
+      <Route path="/rewards" element={<ProtectedRoute path="/rewards"><Rewards /></ProtectedRoute>} />
+      <Route path="/trips" element={<ProtectedRoute path="/trips"><Trips /></ProtectedRoute>} />
+      <Route path="/finance" element={<ProtectedRoute path="/finance"><Finance /></ProtectedRoute>} />
+      <Route path="/strategic-plan" element={<ProtectedRoute path="/strategic-plan"><StrategicPlan /></ProtectedRoute>} />
+      <Route path="/kpi-dashboard" element={<ProtectedRoute path="/kpi-dashboard"><KpiDashboard /></ProtectedRoute>} />
+      <Route path="/user-management" element={<ProtectedRoute path="/user-management"><UserManagement /></ProtectedRoute>} />
+
+      <Route path="/" element={<Navigate to="/health" replace />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/guardian-auth" element={<GuardianAuth />} />
-            <Route path="/guardian" element={<GuardianDashboard />} />
-            <Route path="/guardian/child/:id" element={<GuardianChildProfile />} />
-            <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />
-            <Route path="/students" element={<ProtectedRoute path="/students"><Students /></ProtectedRoute>} />
-            <Route path="/students/:id" element={<ProtectedRoute path="/students"><StudentProfile /></ProtectedRoute>} />
-            <Route path="/halaqat" element={<ProtectedRoute path="/halaqat"><Halaqat /></ProtectedRoute>} />
-            <Route path="/recitation" element={<ProtectedRoute path="/recitation"><Recitation /></ProtectedRoute>} />
-            <Route path="/attendance" element={<ProtectedRoute path="/attendance"><Attendance /></ProtectedRoute>} />
-            <Route path="/instructions" element={<ProtectedRoute path="/instructions"><Instructions /></ProtectedRoute>} />
-            <Route path="/bulk-import" element={<ProtectedRoute path="/bulk-import"><BulkImport /></ProtectedRoute>} />
-            <Route path="/levels" element={<ProtectedRoute path="/levels"><Levels /></ProtectedRoute>} />
-            <Route path="/rankings" element={<ProtectedRoute path="/rankings"><Rankings /></ProtectedRoute>} />
-            <Route path="/rewards" element={<ProtectedRoute path="/rewards"><Rewards /></ProtectedRoute>} />
-            <Route path="/trips" element={<ProtectedRoute path="/trips"><Trips /></ProtectedRoute>} />
-            <Route path="/finance" element={<ProtectedRoute path="/finance"><Finance /></ProtectedRoute>} />
-            <Route path="/strategic-plan" element={<ProtectedRoute path="/strategic-plan"><StrategicPlan /></ProtectedRoute>} />
-            <Route path="/kpi-dashboard" element={<ProtectedRoute path="/kpi-dashboard"><KpiDashboard /></ProtectedRoute>} />
-            <Route path="/user-management" element={<ProtectedRoute path="/user-management"><UserManagement /></ProtectedRoute>} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

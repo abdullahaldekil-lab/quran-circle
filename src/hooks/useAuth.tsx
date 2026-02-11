@@ -26,37 +26,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        if (session?.user) {
-          const { data } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", session.user.id)
-            .maybeSingle();
-          setProfile(data);
-        } else {
-          setProfile(null);
-        }
-        setLoading(false);
-      }
-    );
+    let isMounted = true;
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
+    const fetchProfile = async (userId: string) => {
+      try {
         const { data } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", session.user.id)
+          .eq("id", userId)
           .maybeSingle();
-        setProfile(data);
+        if (isMounted) setProfile(data);
+      } catch (e) {
+        console.error("Profile fetch error:", e);
+        if (isMounted) setProfile(null);
       }
-      setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    // 1. Set up listener FIRST (but don't control initial loading from it)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        if (!isMounted) return;
+        setSession(newSession);
+        if (newSession?.user) {
+          // Use setTimeout to avoid Supabase deadlock on auth state change
+          setTimeout(() => {
+            if (isMounted) fetchProfile(newSession.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    // 2. Then get initial session
+    const initAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        setSession(initialSession);
+        if (initialSession?.user) {
+          await fetchProfile(initialSession.user.id);
+        }
+      } catch (e) {
+        console.error("Auth init error:", e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
