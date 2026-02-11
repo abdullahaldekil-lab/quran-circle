@@ -15,6 +15,7 @@ const PAGE_SIZE = 20;
 const StudentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
   const [student, setStudent] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [recordsPage, setRecordsPage] = useState(0);

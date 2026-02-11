@@ -70,7 +70,7 @@ const Students = () => {
 
   const fetchHalaqat = async () => {
     const { data } = await supabase.from("halaqat").select("*").eq("active", true);
-    setHalaqat(data || []);
+    setHalaqat(filterHalaqatAccess(data || []));
   };
 
   const fetchLevels = async () => {
