@@ -23,6 +23,7 @@ import {
   Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
 
 const allNavItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "لوحة التحكم" },
@@ -68,9 +69,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       >
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-gold flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-sidebar-primary-foreground" />
-            </div>
+            <img src={huwaylanLogo} alt="مجمع حويلان" className="w-10 h-10 rounded-xl object-contain" />
             <div>
               <h2 className="font-bold text-sidebar-foreground">مجمع حويلان</h2>
               <p className="text-xs text-sidebar-foreground/70">تحفيظ القرآن</p>
@@ -129,9 +128,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <img src={huwaylanLogo} alt="مجمع حويلان" className="w-8 h-8 rounded-lg object-contain" />
             <span className="font-bold text-foreground">مجمع حويلان</span>
           </div>
           <Button
