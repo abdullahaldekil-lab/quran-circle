@@ -22,6 +22,7 @@ import {
   BarChart3,
   Settings,
   UserCog,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
@@ -41,6 +42,7 @@ const allNavItems = [
   { to: "/strategic-plan", icon: Target, label: "الخطة الاستراتيجية" },
   { to: "/kpi-dashboard", icon: BarChart3, label: "مؤشرات الأداء" },
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
+  { to: "/documents", icon: FolderOpen, label: "المستندات" },
   { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
   { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
 ];
