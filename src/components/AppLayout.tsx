@@ -17,6 +17,7 @@ import {
   Gift,
   Bus,
   DollarSign,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -32,6 +33,7 @@ const navItems = [
   { to: "/rewards", icon: Gift, label: "الحوافز" },
   { to: "/trips", icon: Bus, label: "الرحلات" },
   { to: "/finance", icon: DollarSign, label: "المالية" },
+  { to: "/strategic-plan", icon: Target, label: "الخطة الاستراتيجية" },
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
 ];
 
