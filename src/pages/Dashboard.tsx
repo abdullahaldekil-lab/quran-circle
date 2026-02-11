@@ -182,16 +182,19 @@ const Dashboard = () => {
 const RecentRecitations = () => {
   const [records, setRecords] = useState<any[]>([]);
   const { user } = useAuth();
+  const { allowedHalaqatIds } = useTeacherHalaqat();
   useEffect(() => {
     if (!user) return;
-    withTimeout(
-      supabase
-        .from("recitation_records")
-        .select("*, students(full_name), halaqat(name)")
-        .order("created_at", { ascending: false })
-        .limit(5)
-    ).then(({ data }) => setRecords(data || [])).catch(() => {});
-  }, [user]);
+    let query = supabase
+      .from("recitation_records")
+      .select("*, students(full_name), halaqat(name)")
+      .order("created_at", { ascending: false })
+      .limit(5);
+    if (allowedHalaqatIds !== null && allowedHalaqatIds.length > 0) {
+      query = query.in("halaqa_id", allowedHalaqatIds);
+    }
+    withTimeout(query).then(({ data }) => setRecords(data || [])).catch(() => {});
+  }, [user, allowedHalaqatIds]);
 
   if (!records.length) return <p className="text-muted-foreground text-sm">لا توجد تسميعات حتى الآن</p>;
 
