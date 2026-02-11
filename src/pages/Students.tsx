@@ -109,6 +109,8 @@ const Students = () => {
       guardian_name: form.guardian_name || null,
       guardian_phone: form.guardian_phone || null,
       current_level: form.current_level,
+      birth_date_gregorian: form.birth_date_gregorian || null,
+      birth_date_hijri: form.birth_date_hijri || null,
     });
     if (error) {
       toast.error("حدث خطأ أثناء الإضافة");
