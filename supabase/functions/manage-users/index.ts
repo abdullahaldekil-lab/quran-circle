@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -18,13 +18,12 @@ serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
     if (!supabaseUrl || !serviceRoleKey || !anonKey) {
-      console.error("Missing env vars:", { supabaseUrl: !!supabaseUrl, serviceRoleKey: !!serviceRoleKey, anonKey: !!anonKey });
       throw new Error("Server configuration error");
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify caller is a manager
+    // Verify caller
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing authorization");
 
@@ -33,10 +32,7 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user: caller }, error: authError } = await callerClient.auth.getUser(token);
-    if (authError || !caller) {
-      console.error("Auth error:", authError?.message);
-      throw new Error("Unauthorized");
-    }
+    if (authError || !caller) throw new Error("Unauthorized");
 
     const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
@@ -44,18 +40,180 @@ serve(async (req) => {
       .eq("id", caller.id)
       .single();
 
-    if (!callerProfile || callerProfile.role !== "manager") {
-      throw new Error("Only managers can manage users");
-    }
+    const callerRole = callerProfile?.role;
+    const isManager = callerRole === "manager";
 
     const { action, ...payload } = await req.json();
 
+    // Actions that require manager role
+    const managerActions = [
+      "create_staff", "create_guardian", "approve_guardian",
+      "update_status", "update_role", "reset_password",
+      "link_guardian_student", "unlink_guardian_student",
+      "admin_set_password", "admin_edit_user", "admin_delete_user",
+    ];
+
+    // Actions any authenticated user can do
+    const selfActions = ["change_own_password", "update_own_profile"];
+
+    if (managerActions.includes(action) && !isManager) {
+      throw new Error("Only managers can perform this action");
+    }
+
+    if (!managerActions.includes(action) && !selfActions.includes(action)) {
+      if (action && !isManager) throw new Error(`Unknown action: ${action}`);
+    }
+
     switch (action) {
+      // ==================== SELF-SERVICE ACTIONS ====================
+
+      case "change_own_password": {
+        const { old_password, new_password } = payload;
+        if (!old_password || !new_password) throw new Error("يجب إدخال كلمة المرور القديمة والجديدة");
+        if (new_password.length < 8) throw new Error("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+
+        // Verify old password by trying to sign in
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(caller.id);
+        if (!userData?.user?.email) throw new Error("لم يتم العثور على بيانات المستخدم");
+
+        const { error: signInError } = await createClient(supabaseUrl, anonKey)
+          .auth.signInWithPassword({ email: userData.user.email, password: old_password });
+        if (signInError) throw new Error("كلمة المرور القديمة غير صحيحة");
+
+        // Update password
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(caller.id, {
+          password: new_password,
+        });
+        if (updateError) throw new Error("فشل تحديث كلمة المرور");
+
+        await supabaseAdmin.from("admin_audit_log").insert({
+          actor_user_id: caller.id,
+          action_type: "password_changed_self",
+          target_user_id: caller.id,
+          details: "User changed their own password",
+        });
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "update_own_profile": {
+        const { full_name, phone } = payload;
+        if (!full_name) throw new Error("الاسم مطلوب");
+
+        await supabaseAdmin
+          .from("profiles")
+          .update({ full_name, phone })
+          .eq("id", caller.id);
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // ==================== ADMIN ACTIONS ====================
+
+      case "admin_set_password": {
+        const { user_id, new_password } = payload;
+        if (!user_id || !new_password) throw new Error("يجب تحديد المستخدم وكلمة المرور الجديدة");
+        if (new_password.length < 8) throw new Error("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
+          password: new_password,
+        });
+        if (updateError) throw new Error("فشل تحديث كلمة المرور: " + updateError.message);
+
+        await supabaseAdmin.from("admin_audit_log").insert({
+          actor_user_id: caller.id,
+          action_type: "password_set_by_admin",
+          target_user_id: user_id,
+          details: "Admin set new password for user",
+        });
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "admin_edit_user": {
+        const { user_id, full_name, phone, position_title, role } = payload;
+        if (!user_id) throw new Error("يجب تحديد المستخدم");
+
+        const updateData: any = {};
+        if (full_name !== undefined) updateData.full_name = full_name;
+        if (phone !== undefined) updateData.phone = phone;
+        if (position_title !== undefined) updateData.position_title = position_title;
+        if (role !== undefined) updateData.role = role;
+
+        await supabaseAdmin
+          .from("profiles")
+          .update(updateData)
+          .eq("id", user_id);
+
+        await supabaseAdmin.from("admin_audit_log").insert({
+          actor_user_id: caller.id,
+          action_type: "user_edited",
+          target_user_id: user_id,
+          details: `Admin edited user profile: ${JSON.stringify(updateData)}`,
+        });
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "admin_delete_user": {
+        const { user_id } = payload;
+        if (!user_id) throw new Error("يجب تحديد المستخدم");
+        if (user_id === caller.id) throw new Error("لا يمكنك حذف حسابك");
+
+        // Prevent deleting last manager
+        const { data: managers } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("role", "manager")
+          .eq("active", true);
+        
+        const targetProfile = await supabaseAdmin
+          .from("profiles")
+          .select("role, full_name")
+          .eq("id", user_id)
+          .single();
+
+        if (targetProfile.data?.role === "manager" && managers && managers.length <= 1) {
+          throw new Error("لا يمكن حذف آخر مدير في النظام");
+        }
+
+        // Soft delete: deactivate + ban
+        await supabaseAdmin
+          .from("profiles")
+          .update({ active: false })
+          .eq("id", user_id);
+
+        await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876000h" });
+
+        await supabaseAdmin.from("admin_audit_log").insert({
+          actor_user_id: caller.id,
+          action_type: "user_deleted",
+          target_user_id: user_id,
+          details: `User soft-deleted: ${targetProfile.data?.full_name}`,
+        });
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       case "create_staff": {
         const { email, full_name, phone, role } = payload;
         if (!email || !full_name || !role) throw new Error("Missing required fields");
 
-        // Create user with a temporary password
         const tempPassword = crypto.randomUUID().slice(0, 12) + "Aa1!";
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
@@ -65,19 +223,11 @@ serve(async (req) => {
         });
         if (createError) throw createError;
 
-        // Update profile with role
         await supabaseAdmin
           .from("profiles")
           .update({ role, phone, full_name, position_title: null })
           .eq("id", newUser.user.id);
 
-        // Generate password reset link for invitation
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: "recovery",
-          email,
-        });
-
-        // Log audit
         await supabaseAdmin.from("admin_audit_log").insert({
           actor_user_id: caller.id,
           action_type: "user_created",
@@ -89,7 +239,6 @@ serve(async (req) => {
           JSON.stringify({
             success: true,
             user_id: newUser.user.id,
-            recovery_link: linkData?.properties?.action_link || null,
             temp_password: tempPassword,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -111,7 +260,6 @@ serve(async (req) => {
         });
         if (createError) throw createError;
 
-        // Update guardian profile approval status
         await supabaseAdmin
           .from("guardian_profiles")
           .update({ approval_status: "pending", phone })
@@ -161,16 +309,13 @@ serve(async (req) => {
         const { user_id, status, user_type } = payload;
         if (!user_id || !status) throw new Error("Missing fields");
 
-        if (user_type === "guardian") {
-          // For guardians, we can ban/unban via admin API
-        } else {
+        if (user_type !== "guardian") {
           await supabaseAdmin
             .from("profiles")
             .update({ active: status === "active" })
             .eq("id", user_id);
         }
 
-        // Ban/unban user in auth
         if (status === "suspended") {
           await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876000h" });
         } else if (status === "active") {
@@ -220,8 +365,6 @@ serve(async (req) => {
 
       case "reset_password": {
         const { user_id, email } = payload;
-        
-        // Look up email from auth if not provided
         let targetEmail = email;
         if (!targetEmail && user_id) {
           const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(user_id);
@@ -234,10 +377,7 @@ serve(async (req) => {
           type: "recovery",
           email: targetEmail,
         });
-        if (linkError) {
-          console.error("Reset password error:", linkError);
-          throw new Error("فشل في إنشاء رابط إعادة التعيين");
-        }
+        if (linkError) throw new Error("فشل في إنشاء رابط إعادة التعيين");
 
         await supabaseAdmin.from("admin_audit_log").insert({
           actor_user_id: caller.id,
@@ -264,7 +404,6 @@ serve(async (req) => {
             relationship: relationship || "أب",
             active: true,
           }, { onConflict: "guardian_id,student_id" });
-
         if (error) throw error;
 
         await supabaseAdmin.from("admin_audit_log").insert({
