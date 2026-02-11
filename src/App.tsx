@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useRole } from "@/hooks/useRole";
 import AppLayout from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import GuardianAuth from "./pages/GuardianAuth";
@@ -27,8 +28,9 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children, path }: { children: React.ReactNode; path?: string }) => {
   const { session, loading } = useAuth();
+  const { hasAccess } = useRole();
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -37,6 +39,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   if (!session) return <Navigate to="/auth" replace />;
+  if (path && !hasAccess(path)) return <Navigate to="/dashboard" replace />;
   return <AppLayout>{children}</AppLayout>;
 };
 
@@ -52,20 +55,20 @@ const App = () => (
             <Route path="/guardian-auth" element={<GuardianAuth />} />
             <Route path="/guardian" element={<GuardianDashboard />} />
             <Route path="/guardian/child/:id" element={<GuardianChildProfile />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
-            <Route path="/students/:id" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
-            <Route path="/halaqat" element={<ProtectedRoute><Halaqat /></ProtectedRoute>} />
-            <Route path="/recitation" element={<ProtectedRoute><Recitation /></ProtectedRoute>} />
-            <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
-            <Route path="/instructions" element={<ProtectedRoute><Instructions /></ProtectedRoute>} />
-            <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
-            <Route path="/levels" element={<ProtectedRoute><Levels /></ProtectedRoute>} />
-            <Route path="/rankings" element={<ProtectedRoute><Rankings /></ProtectedRoute>} />
-            <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
-            <Route path="/trips" element={<ProtectedRoute><Trips /></ProtectedRoute>} />
-            <Route path="/finance" element={<ProtectedRoute><Finance /></ProtectedRoute>} />
-            <Route path="/strategic-plan" element={<ProtectedRoute><StrategicPlan /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />
+            <Route path="/students" element={<ProtectedRoute path="/students"><Students /></ProtectedRoute>} />
+            <Route path="/students/:id" element={<ProtectedRoute path="/students"><StudentProfile /></ProtectedRoute>} />
+            <Route path="/halaqat" element={<ProtectedRoute path="/halaqat"><Halaqat /></ProtectedRoute>} />
+            <Route path="/recitation" element={<ProtectedRoute path="/recitation"><Recitation /></ProtectedRoute>} />
+            <Route path="/attendance" element={<ProtectedRoute path="/attendance"><Attendance /></ProtectedRoute>} />
+            <Route path="/instructions" element={<ProtectedRoute path="/instructions"><Instructions /></ProtectedRoute>} />
+            <Route path="/bulk-import" element={<ProtectedRoute path="/bulk-import"><BulkImport /></ProtectedRoute>} />
+            <Route path="/levels" element={<ProtectedRoute path="/levels"><Levels /></ProtectedRoute>} />
+            <Route path="/rankings" element={<ProtectedRoute path="/rankings"><Rankings /></ProtectedRoute>} />
+            <Route path="/rewards" element={<ProtectedRoute path="/rewards"><Rewards /></ProtectedRoute>} />
+            <Route path="/trips" element={<ProtectedRoute path="/trips"><Trips /></ProtectedRoute>} />
+            <Route path="/finance" element={<ProtectedRoute path="/finance"><Finance /></ProtectedRoute>} />
+            <Route path="/strategic-plan" element={<ProtectedRoute path="/strategic-plan"><StrategicPlan /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
