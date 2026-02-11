@@ -6,10 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { CheckSquare, X, Clock, AlertCircle, Check } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
+import { useAuth } from "@/hooks/useAuth";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
 const Attendance = () => {
+  const { user } = useAuth();
+  const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
@@ -17,8 +21,16 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => setHalaqat(data || []));
-  }, []);
+    if (accessLoading) return;
+    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
+      const filtered = filterHalaqat(data || []);
+      setHalaqat(filtered);
+      // Auto-select if teacher has only one halaqa
+      if (filtered.length === 1 && !selectedHalaqa) {
+        setSelectedHalaqa(filtered[0].id);
+      }
+    });
+  }, [accessLoading]);
 
   useEffect(() => {
     if (selectedHalaqa) {
@@ -62,7 +74,6 @@ const Attendance = () => {
       status,
     }));
 
-    // Upsert attendance
     const { error } = await supabase
       .from("attendance")
       .upsert(records, { onConflict: "student_id,attendance_date" });
@@ -102,6 +113,14 @@ const Attendance = () => {
     const next = order[(order.indexOf(current) + 1) % order.length];
     setAttendance({ ...attendance, [studentId]: next });
   };
+
+  if (accessLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
