@@ -22,6 +22,7 @@ import {
   BarChart3,
   Settings,
   UserCog,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
