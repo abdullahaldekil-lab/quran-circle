@@ -45,6 +45,7 @@ const allNavItems = [
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
   { to: "/pre-registration", icon: UserCog, label: "التسجيل المسبق" },
   { to: "/enrollment-requests", icon: ClipboardList, label: "طلبات الالتحاق" },
+  { to: "/preparation", icon: Clock, label: "وقت التحضير" },
   { to: "/documents", icon: FolderOpen, label: "المستندات" },
   { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
   { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
