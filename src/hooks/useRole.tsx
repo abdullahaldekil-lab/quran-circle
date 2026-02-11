@@ -24,23 +24,23 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
-    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration",
+    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests",
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/attendance",
-    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration",
+    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/attendance",
-    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration",
+    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",

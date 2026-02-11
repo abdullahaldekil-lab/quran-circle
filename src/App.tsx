@@ -35,6 +35,8 @@ import NotAuthorized from "./pages/NotAuthorized";
 import Documents from "./pages/Documents";
 import Buses from "./pages/Buses";
 import PreRegistration from "./pages/PreRegistration";
+import Enroll from "./pages/Enroll";
+import EnrollmentRequests from "./pages/EnrollmentRequests";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +85,7 @@ const AppRoutes = () => {
       <Route path="/guardian-auth" element={<GuardianAuth />} />
       <Route path="/guardian" element={<GuardianDashboard />} />
       <Route path="/guardian/child/:id" element={<GuardianChildProfile />} />
+      <Route path="/enroll" element={<Enroll />} />
 
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />
@@ -106,6 +109,7 @@ const AppRoutes = () => {
       <Route path="/documents" element={<ProtectedRoute path="/documents"><Documents /></ProtectedRoute>} />
       <Route path="/buses" element={<ProtectedRoute path="/buses"><Buses /></ProtectedRoute>} />
       <Route path="/pre-registration" element={<ProtectedRoute path="/pre-registration"><PreRegistration /></ProtectedRoute>} />
+      <Route path="/enrollment-requests" element={<ProtectedRoute path="/enrollment-requests"><EnrollmentRequests /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
