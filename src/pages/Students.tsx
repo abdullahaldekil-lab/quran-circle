@@ -35,6 +35,8 @@ const Students = () => {
     guardian_name: "",
     guardian_phone: "",
     current_level: "مبتدئ",
+    birth_date_gregorian: "",
+    birth_date_hijri: "",
   });
 
   const fetchStudents = useCallback(async () => {
