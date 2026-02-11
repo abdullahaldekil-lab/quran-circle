@@ -82,6 +82,24 @@ const Students = () => {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check halaqa capacity before adding
+    if (form.halaqa_id) {
+      const { count } = await supabase
+        .from("students")
+        .select("id", { count: "exact", head: true })
+        .eq("halaqa_id", form.halaqa_id)
+        .eq("status", "active");
+      
+      const selectedHalaqa = halaqat.find((h) => h.id === form.halaqa_id);
+      const max = selectedHalaqa?.capacity_max || 25;
+      
+      if ((count || 0) >= max) {
+        toast.error(`تم اكتمال العدد في هذه الحلقة (${max} طالب).`);
+        return;
+      }
+    }
+
     const { error } = await supabase.from("students").insert({
       full_name: form.full_name,
       halaqa_id: form.halaqa_id || null,

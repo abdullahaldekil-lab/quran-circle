@@ -431,6 +431,7 @@ export type Database = {
         Row: {
           active: boolean
           assistant_teacher_id: string | null
+          capacity_max: number
           created_at: string
           id: string
           location: string | null
@@ -441,6 +442,7 @@ export type Database = {
         Insert: {
           active?: boolean
           assistant_teacher_id?: string | null
+          capacity_max?: number
           created_at?: string
           id?: string
           location?: string | null
@@ -451,6 +453,7 @@ export type Database = {
         Update: {
           active?: boolean
           assistant_teacher_id?: string | null
+          capacity_max?: number
           created_at?: string
           id?: string
           location?: string | null

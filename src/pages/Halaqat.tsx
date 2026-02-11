@@ -6,30 +6,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen } from "lucide-react";
+import { Plus, BookOpen, Users, User } from "lucide-react";
 
 const Halaqat = () => {
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
-  const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
+  const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [studentsDialogId, setStudentsDialogId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", teacher_id: "", location: "", schedule: "" });
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes] = await Promise.all([
       supabase.from("halaqat").select("*, profiles:teacher_id(full_name)").eq("active", true),
       supabase.from("profiles").select("id, full_name").in("role", ["teacher", "assistant_teacher"]),
-      supabase.from("students").select("halaqa_id").eq("status", "active"),
+      supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
     ]);
     setHalaqat(halaqatRes.data || []);
     setTeachers(teachersRes.data || []);
-    
-    const counts: Record<string, number> = {};
+
+    const grouped: Record<string, any[]> = {};
     (studentsRes.data || []).forEach((s: any) => {
-      if (s.halaqa_id) counts[s.halaqa_id] = (counts[s.halaqa_id] || 0) + 1;
+      if (s.halaqa_id) {
+        if (!grouped[s.halaqa_id]) grouped[s.halaqa_id] = [];
+        grouped[s.halaqa_id].push(s);
+      }
     });
-    setStudentCounts(counts);
+    setStudentsByHalaqa(grouped);
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -47,6 +53,12 @@ const Halaqat = () => {
     setDialogOpen(false);
     setForm({ name: "", teacher_id: "", location: "", schedule: "" });
     fetchData();
+  };
+
+  const getCapacityStatus = (count: number, max: number) => {
+    if (count >= max) return { label: "مكتمل", color: "bg-green-500 text-white" };
+    if (count >= max * 0.8) return { label: "قارب الاكتمال", color: "bg-yellow-500 text-white" };
+    return { label: "ناقص", color: "bg-orange-500 text-white" };
   };
 
   return (
@@ -93,25 +105,79 @@ const Halaqat = () => {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {halaqat.map((h) => (
-          <Card key={h.id} className="animate-slide-in hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-primary-foreground" />
+        {halaqat.map((h) => {
+          const students = studentsByHalaqa[h.id] || [];
+          const count = students.length;
+          const max = h.capacity_max || 25;
+          const pct = Math.min((count / max) * 100, 100);
+          const status = getCapacityStatus(count, max);
+
+          return (
+            <Card key={h.id} className="animate-slide-in hover:shadow-md transition-shadow">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                    <CardTitle className="text-base">{h.name}</CardTitle>
+                  </div>
+                  <Badge className={status.color}>{status.label}</Badge>
                 </div>
-                <CardTitle className="text-base">{h.name}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p className="text-muted-foreground">المعلم: {h.profiles?.full_name || "غير محدد"}</p>
-              <p className="text-muted-foreground">عدد الطلاب: {studentCounts[h.id] || 0}</p>
-              {h.location && <p className="text-muted-foreground">المكان: {h.location}</p>}
-              {h.schedule && <p className="text-muted-foreground">الجدول: {h.schedule}</p>}
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p className="text-muted-foreground">المعلم: {h.profiles?.full_name || "غير محدد"}</p>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Users className="w-3 h-3" /> الطلاب
+                    </span>
+                    <span className="font-medium">{count} / {max}</span>
+                  </div>
+                  <Progress value={pct} className="h-2" />
+                </div>
+
+                {h.location && <p className="text-muted-foreground">المكان: {h.location}</p>}
+                {h.schedule && <p className="text-muted-foreground">الجدول: {h.schedule}</p>}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-1"
+                  onClick={() => setStudentsDialogId(h.id)}
+                >
+                  <User className="w-3 h-3 ml-1" />
+                  عرض الطلاب ({count})
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Students list dialog */}
+      <Dialog open={!!studentsDialogId} onOpenChange={() => setStudentsDialogId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              طلاب الحلقة: {halaqat.find((h) => h.id === studentsDialogId)?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            {(studentsByHalaqa[studentsDialogId || ""] || []).length === 0 ? (
+              <p className="text-center text-muted-foreground py-6">لا يوجد طلاب</p>
+            ) : (
+              (studentsByHalaqa[studentsDialogId || ""] || []).map((s: any) => (
+                <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg border">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">{s.full_name}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
