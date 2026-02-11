@@ -15,7 +15,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -44,6 +56,8 @@ import {
   KeyRound,
   Ban,
   UserCheck,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
@@ -56,12 +70,6 @@ const roleLabels: Record<string, string> = {
   assistant_teacher: "معلم مساعد",
 };
 
-const statusLabels: Record<string, string> = {
-  active: "نشط",
-  inactive: "غير نشط",
-  suspended: "موقوف",
-};
-
 const approvalLabels: Record<string, string> = {
   pending: "بانتظار الموافقة",
   approved: "مُعتمد",
@@ -69,7 +77,6 @@ const approvalLabels: Record<string, string> = {
 };
 
 const callEdgeFunction = async (action: string, payload: any) => {
-  const { data: { session } } = await supabase.auth.getSession();
   const res = await supabase.functions.invoke("manage-users", {
     body: { action, ...payload },
   });
@@ -89,6 +96,21 @@ const UserManagement = () => {
   const [createGuardianOpen, setCreateGuardianOpen] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [selectedGuardian, setSelectedGuardian] = useState<string | null>(null);
+
+  // Password dialog state
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordTarget, setPasswordTarget] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Edit user dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ full_name: "", phone: "", position_title: "", role: "" });
+
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   // Staff list
   const { data: staffList = [], isLoading: staffLoading } = useQuery({
@@ -161,12 +183,8 @@ const UserManagement = () => {
     enabled: isManager,
   });
 
-  // Pending guardians
-  const pendingGuardians = guardianList.filter(
-    (g: any) => g.approval_status === "pending"
-  );
+  const pendingGuardians = guardianList.filter((g: any) => g.approval_status === "pending");
 
-  // Filtered staff
   const filteredStaff = staffList.filter((s: any) => {
     const matchSearch =
       !search ||
@@ -235,9 +253,34 @@ const UserManagement = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const resetPasswordMutation = useMutation({
-    mutationFn: (data: any) => callEdgeFunction("reset_password", data),
-    onSuccess: () => toast.success("تم إرسال رابط إعادة التعيين"),
+  const adminSetPasswordMutation = useMutation({
+    mutationFn: (data: any) => callEdgeFunction("admin_set_password", data),
+    onSuccess: () => {
+      toast.success("تم تعيين كلمة المرور الجديدة بنجاح");
+      setPasswordDialogOpen(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const adminEditUserMutation = useMutation({
+    mutationFn: (data: any) => callEdgeFunction("admin_edit_user", data),
+    onSuccess: () => {
+      toast.success("تم تحديث بيانات المستخدم");
+      queryClient.invalidateQueries({ queryKey: ["staff-users"] });
+      setEditDialogOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const adminDeleteUserMutation = useMutation({
+    mutationFn: (data: any) => callEdgeFunction("admin_delete_user", data),
+    onSuccess: () => {
+      toast.success("تم تعطيل المستخدم بنجاح");
+      queryClient.invalidateQueries({ queryKey: ["staff-users"] });
+      setDeleteDialogOpen(false);
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -259,6 +302,45 @@ const UserManagement = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const openPasswordDialog = (staff: any) => {
+    setPasswordTarget(staff);
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordDialogOpen(true);
+  };
+
+  const openEditDialog = (staff: any) => {
+    setEditTarget(staff);
+    setEditForm({
+      full_name: staff.full_name || "",
+      phone: staff.phone || "",
+      position_title: staff.position_title || "",
+      role: staff.role || "teacher",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (staff: any) => {
+    setDeleteTarget(staff);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleSetPassword = () => {
+    if (!newPassword || newPassword.length < 8) {
+      toast.error("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("كلمة المرور غير متطابقة");
+      return;
+    }
+    adminSetPasswordMutation.mutate({ user_id: passwordTarget.id, new_password: newPassword });
+  };
+
+  const handleEditUser = () => {
+    adminEditUserMutation.mutate({ user_id: editTarget.id, ...editForm });
+  };
+
   const actionLabels: Record<string, string> = {
     user_created: "إنشاء حساب",
     guardian_invited: "دعوة ولي أمر",
@@ -267,6 +349,10 @@ const UserManagement = () => {
     status_changed: "تغيير الحالة",
     role_changed: "تغيير الدور",
     password_reset: "إعادة تعيين كلمة المرور",
+    password_set_by_admin: "تعيين كلمة مرور من المدير",
+    password_changed_self: "تغيير كلمة المرور الذاتي",
+    user_edited: "تعديل بيانات مستخدم",
+    user_deleted: "حذف مستخدم",
     guardian_linked: "ربط ولي أمر بطالب",
     guardian_unlinked: "إلغاء ربط ولي أمر",
   };
@@ -276,9 +362,7 @@ const UserManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">إدارة المستخدمين</h1>
-          <p className="text-muted-foreground">
-            إدارة حسابات الموظفين وأولياء الأمور
-          </p>
+          <p className="text-muted-foreground">إدارة حسابات الموظفين وأولياء الأمور</p>
         </div>
         {isManager && (
           <div className="flex gap-2">
@@ -396,15 +480,11 @@ const UserManagement = () => {
                 <TableBody>
                   {staffLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        جارٍ التحميل...
-                      </TableCell>
+                      <TableCell colSpan={6} className="text-center py-8">جارٍ التحميل...</TableCell>
                     </TableRow>
                   ) : filteredStaff.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        لا توجد نتائج
-                      </TableCell>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">لا توجد نتائج</TableCell>
                     </TableRow>
                   ) : (
                     filteredStaff.map((s: any) => (
@@ -412,25 +492,7 @@ const UserManagement = () => {
                         <TableCell className="font-medium">{s.full_name}</TableCell>
                         <TableCell dir="ltr">{s.phone || "-"}</TableCell>
                         <TableCell>
-                          {isManager ? (
-                            <Select
-                              value={s.role}
-                              onValueChange={(val) =>
-                                updateRoleMutation.mutate({ user_id: s.id, new_role: val })
-                              }
-                            >
-                              <SelectTrigger className="w-32 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(roleLabels).map(([k, v]) => (
-                                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Badge variant="secondary">{roleLabels[s.role] || s.role}</Badge>
-                          )}
+                          <Badge variant="secondary">{roleLabels[s.role] || s.role}</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={s.active ? "default" : "destructive"}>
@@ -443,6 +505,22 @@ const UserManagement = () => {
                         {isManager && (
                           <TableCell>
                             <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="تعديل البيانات"
+                                onClick={() => openEditDialog(s)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="تعيين كلمة مرور"
+                                onClick={() => openPasswordDialog(s)}
+                              >
+                                <KeyRound className="w-4 h-4" />
+                              </Button>
                               {s.active ? (
                                 <Button
                                   variant="ghost"
@@ -474,18 +552,16 @@ const UserManagement = () => {
                                   <CheckCircle className="w-4 h-4 text-primary" />
                                 </Button>
                               )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="إعادة تعيين كلمة المرور"
-                                onClick={() =>
-                                  resetPasswordMutation.mutate({
-                                    user_id: s.id,
-                                  })
-                                }
-                              >
-                                <KeyRound className="w-4 h-4" />
-                              </Button>
+                              {s.id !== user?.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="حذف المستخدم"
+                                  onClick={() => openDeleteDialog(s)}
+                                >
+                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         )}
@@ -515,15 +591,11 @@ const UserManagement = () => {
                 <TableBody>
                   {guardianLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
-                        جارٍ التحميل...
-                      </TableCell>
+                      <TableCell colSpan={5} className="text-center py-8">جارٍ التحميل...</TableCell>
                     </TableRow>
                   ) : guardianList.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        لا يوجد أولياء أمور
-                      </TableCell>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">لا يوجد أولياء أمور</TableCell>
                     </TableRow>
                   ) : (
                     guardianList.map((g: any) => (
@@ -567,10 +639,7 @@ const UserManagement = () => {
                                     size="icon"
                                     title="اعتماد"
                                     onClick={() =>
-                                      approveGuardianMutation.mutate({
-                                        guardian_id: g.id,
-                                        approved: true,
-                                      })
+                                      approveGuardianMutation.mutate({ guardian_id: g.id, approved: true })
                                     }
                                   >
                                     <CheckCircle className="w-4 h-4 text-primary" />
@@ -580,10 +649,7 @@ const UserManagement = () => {
                                     size="icon"
                                     title="رفض"
                                     onClick={() =>
-                                      approveGuardianMutation.mutate({
-                                        guardian_id: g.id,
-                                        approved: false,
-                                      })
+                                      approveGuardianMutation.mutate({ guardian_id: g.id, approved: false })
                                     }
                                   >
                                     <XCircle className="w-4 h-4 text-destructive" />
@@ -610,31 +676,19 @@ const UserManagement = () => {
             </CardHeader>
             <CardContent>
               {pendingGuardians.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  لا توجد طلبات معلقة
-                </p>
+                <p className="text-center text-muted-foreground py-8">لا توجد طلبات معلقة</p>
               ) : (
                 <div className="space-y-3">
                   {pendingGuardians.map((g: any) => (
-                    <div
-                      key={g.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
+                    <div key={g.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <p className="font-medium">{g.full_name}</p>
-                        <p className="text-sm text-muted-foreground" dir="ltr">
-                          {g.phone}
-                        </p>
+                        <p className="text-sm text-muted-foreground" dir="ltr">{g.phone}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() =>
-                            approveGuardianMutation.mutate({
-                              guardian_id: g.id,
-                              approved: true,
-                            })
-                          }
+                          onClick={() => approveGuardianMutation.mutate({ guardian_id: g.id, approved: true })}
                           disabled={approveGuardianMutation.isPending}
                         >
                           <CheckCircle className="w-4 h-4 ml-1" />
@@ -643,12 +697,7 @@ const UserManagement = () => {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() =>
-                            approveGuardianMutation.mutate({
-                              guardian_id: g.id,
-                              approved: false,
-                            })
-                          }
+                          onClick={() => approveGuardianMutation.mutate({ guardian_id: g.id, approved: false })}
                           disabled={approveGuardianMutation.isPending}
                         >
                           <XCircle className="w-4 h-4 ml-1" />
@@ -682,9 +731,7 @@ const UserManagement = () => {
                   <TableBody>
                     {auditLog.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                          لا توجد سجلات
-                        </TableCell>
+                        <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">لا توجد سجلات</TableCell>
                       </TableRow>
                     ) : (
                       auditLog.map((log: any) => (
@@ -716,25 +763,18 @@ const UserManagement = () => {
             <DialogTitle>ربط ولي الأمر بطالب</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Current links */}
             {guardianLinks.length > 0 && (
               <div className="space-y-2">
                 <Label>الطلاب المرتبطون حالياً:</Label>
                 {guardianLinks.map((link: any) => (
-                  <div
-                    key={link.id}
-                    className="flex items-center justify-between p-2 bg-muted rounded"
-                  >
+                  <div key={link.id} className="flex items-center justify-between p-2 bg-muted rounded">
                     <span className="text-sm">{link.students?.full_name}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-destructive"
                       onClick={() =>
-                        unlinkMutation.mutate({
-                          guardian_id: selectedGuardian,
-                          student_id: link.student_id,
-                        })
+                        unlinkMutation.mutate({ guardian_id: selectedGuardian, student_id: link.student_id })
                       }
                     >
                       إلغاء الربط
@@ -743,82 +783,158 @@ const UserManagement = () => {
                 ))}
               </div>
             )}
-
             <LinkStudentForm
               students={students}
               linkedIds={guardianLinks.map((l: any) => l.student_id)}
               onLink={(studentId, relationship) =>
-                linkGuardianMutation.mutate({
-                  guardian_id: selectedGuardian,
-                  student_id: studentId,
-                  relationship,
-                })
+                linkGuardianMutation.mutate({ guardian_id: selectedGuardian, student_id: studentId, relationship })
               }
               loading={linkGuardianMutation.isPending}
             />
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Admin Set Password Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعيين كلمة مرور جديدة</DialogTitle>
+            <DialogDescription>
+              تعيين كلمة مرور جديدة للمستخدم: {passwordTarget?.full_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>كلمة المرور الجديدة *</Label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                dir="ltr"
+                minLength={8}
+                placeholder="8 أحرف على الأقل"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>تأكيد كلمة المرور *</Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                dir="ltr"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>إلغاء</Button>
+            <Button onClick={handleSetPassword} disabled={adminSetPasswordMutation.isPending}>
+              {adminSetPasswordMutation.isPending ? "جارٍ التحديث..." : "تعيين كلمة المرور"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعديل بيانات المستخدم</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>الاسم الكامل *</Label>
+              <Input
+                value={editForm.full_name}
+                onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>رقم الهاتف</Label>
+              <Input
+                value={editForm.phone}
+                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                dir="ltr"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>المسمى الوظيفي</Label>
+              <Input
+                value={editForm.position_title}
+                onChange={(e) => setEditForm({ ...editForm, position_title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>الدور</Label>
+              <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(roleLabels).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>إلغاء</Button>
+            <Button onClick={handleEditUser} disabled={adminEditUserMutation.isPending}>
+              {adminEditUserMutation.isPending ? "جارٍ الحفظ..." : "حفظ التغييرات"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف المستخدم</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف المستخدم "{deleteTarget?.full_name}"؟
+              سيتم تعطيل الحساب ولن يتمكن من تسجيل الدخول.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => adminDeleteUserMutation.mutate({ user_id: deleteTarget?.id })}
+            >
+              {adminDeleteUserMutation.isPending ? "جارٍ الحذف..." : "حذف المستخدم"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
 // --- Sub-components ---
 
-const CreateStaffForm = ({
-  onSubmit,
-  loading,
-}: {
-  onSubmit: (data: any) => void;
-  loading: boolean;
-}) => {
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    role: "teacher",
-  });
+const CreateStaffForm = ({ onSubmit, loading }: { onSubmit: (data: any) => void; loading: boolean }) => {
+  const [form, setForm] = useState({ full_name: "", email: "", phone: "", role: "teacher" });
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(form);
-      }}
-      className="space-y-4"
-    >
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
       <div className="space-y-2">
         <Label>الاسم الكامل *</Label>
-        <Input
-          value={form.full_name}
-          onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-          required
-        />
+        <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
       </div>
       <div className="space-y-2">
         <Label>البريد الإلكتروني *</Label>
-        <Input
-          type="email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          required
-          dir="ltr"
-        />
+        <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required dir="ltr" />
       </div>
       <div className="space-y-2">
         <Label>رقم الهاتف</Label>
-        <Input
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          dir="ltr"
-        />
+        <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} dir="ltr" />
       </div>
       <div className="space-y-2">
         <Label>الدور *</Label>
         <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             {Object.entries(roleLabels).map(([k, v]) => (
               <SelectItem key={k} value={k}>{v}</SelectItem>
@@ -833,52 +949,22 @@ const CreateStaffForm = ({
   );
 };
 
-const CreateGuardianForm = ({
-  onSubmit,
-  loading,
-}: {
-  onSubmit: (data: any) => void;
-  loading: boolean;
-}) => {
-  const [form, setForm] = useState({
-    full_name: "",
-    phone: "",
-    email: "",
-  });
+const CreateGuardianForm = ({ onSubmit, loading }: { onSubmit: (data: any) => void; loading: boolean }) => {
+  const [form, setForm] = useState({ full_name: "", phone: "", email: "" });
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(form);
-      }}
-      className="space-y-4"
-    >
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
       <div className="space-y-2">
         <Label>اسم ولي الأمر *</Label>
-        <Input
-          value={form.full_name}
-          onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-          required
-        />
+        <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
       </div>
       <div className="space-y-2">
         <Label>رقم الهاتف *</Label>
-        <Input
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          required
-          dir="ltr"
-        />
+        <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required dir="ltr" />
       </div>
       <div className="space-y-2">
         <Label>البريد الإلكتروني (اختياري)</Label>
-        <Input
-          type="email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          dir="ltr"
-        />
+        <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} dir="ltr" />
       </div>
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "جارٍ الإنشاء..." : "دعوة ولي الأمر"}
@@ -888,15 +974,10 @@ const CreateGuardianForm = ({
 };
 
 const LinkStudentForm = ({
-  students,
-  linkedIds,
-  onLink,
-  loading,
+  students, linkedIds, onLink, loading,
 }: {
-  students: any[];
-  linkedIds: string[];
-  onLink: (studentId: string, relationship: string) => void;
-  loading: boolean;
+  students: any[]; linkedIds: string[];
+  onLink: (studentId: string, relationship: string) => void; loading: boolean;
 }) => {
   const [studentId, setStudentId] = useState("");
   const [relationship, setRelationship] = useState("أب");
@@ -907,9 +988,7 @@ const LinkStudentForm = ({
       <div className="space-y-2">
         <Label>اختر الطالب</Label>
         <Select value={studentId} onValueChange={setStudentId}>
-          <SelectTrigger>
-            <SelectValue placeholder="اختر طالباً..." />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="اختر طالباً..." /></SelectTrigger>
           <SelectContent>
             {available.map((s) => (
               <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
@@ -920,9 +999,7 @@ const LinkStudentForm = ({
       <div className="space-y-2">
         <Label>صلة القرابة</Label>
         <Select value={relationship} onValueChange={setRelationship}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="أب">أب</SelectItem>
             <SelectItem value="أم">أم</SelectItem>
@@ -930,11 +1007,7 @@ const LinkStudentForm = ({
           </SelectContent>
         </Select>
       </div>
-      <Button
-        onClick={() => studentId && onLink(studentId, relationship)}
-        disabled={!studentId || loading}
-        className="w-full"
-      >
+      <Button onClick={() => studentId && onLink(studentId, relationship)} disabled={!studentId || loading} className="w-full">
         {loading ? "جارٍ الربط..." : "ربط"}
       </Button>
     </div>
