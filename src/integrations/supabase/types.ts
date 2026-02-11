@@ -736,6 +736,41 @@ export type Database = {
           },
         ]
       }
+      preparation_config: {
+        Row: {
+          base_prayer: string
+          duration_minutes: number
+          id: string
+          offset_minutes: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          base_prayer?: string
+          duration_minutes?: number
+          id?: string
+          offset_minutes?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          base_prayer?: string
+          duration_minutes?: number
+          id?: string
+          offset_minutes?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preparation_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
