@@ -83,7 +83,7 @@ const Dashboard = () => {
     };
     fetchStats();
     return () => { cancelled = true; };
-  }, [authLoading, user]);
+  }, [authLoading, user, accessLoading, allowedHalaqatIds]);
 
   const cards = [
     { title: "عدد الطلاب", value: stats.students, icon: Users, color: "text-primary" },
