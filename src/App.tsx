@@ -38,6 +38,7 @@ import PreRegistration from "./pages/PreRegistration";
 import Enroll from "./pages/Enroll";
 import EnrollmentRequests from "./pages/EnrollmentRequests";
 import Preparation from "./pages/Preparation";
+import AcademicCalendar from "./pages/AcademicCalendar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
