@@ -20,6 +20,7 @@ import {
   DollarSign,
   Target,
   BarChart3,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -38,6 +39,7 @@ const allNavItems = [
   { to: "/strategic-plan", icon: Target, label: "الخطة الاستراتيجية" },
   { to: "/kpi-dashboard", icon: BarChart3, label: "مؤشرات الأداء" },
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
+  { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
 ];
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {

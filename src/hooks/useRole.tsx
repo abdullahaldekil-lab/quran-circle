@@ -26,6 +26,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/strategic-plan",
     "/kpi-dashboard",
     "/bulk-import",
+    "/user-management",
   ],
   supervisor: [
     "/dashboard",
