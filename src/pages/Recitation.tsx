@@ -31,9 +31,21 @@ const Recitation = () => {
     notes: "",
   });
 
+  // Load halaqat and auto-select teacher's halaqa
   useEffect(() => {
-    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => setHalaqat(data || []));
-  }, []);
+    if (!user) return;
+    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
+      const list = data || [];
+      setHalaqat(list);
+      // Auto-select teacher's own halaqa
+      const myHalaqa = list.find(
+        (h) => h.teacher_id === user.id || h.assistant_teacher_id === user.id
+      );
+      if (myHalaqa && !selectedHalaqa) {
+        setSelectedHalaqa(myHalaqa.id);
+      }
+    });
+  }, [user]);
 
   useEffect(() => {
     if (selectedHalaqa) {
