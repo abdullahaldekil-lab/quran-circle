@@ -5,18 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckSquare, X, Clock, AlertCircle, Check, Sun } from "lucide-react";
+import { CheckSquare, X, Clock, AlertCircle, Check, Sun, CalendarOff } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useAuth } from "@/hooks/useAuth";
+import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
-
 type WindowStatus = "not_open" | "on_time" | "late" | "closed";
 
 const Attendance = () => {
   const { user } = useAuth();
   const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
+  const calendar = useAcademicCalendar();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
@@ -28,12 +29,10 @@ const Attendance = () => {
   const [countdown, setCountdown] = useState("");
   const [now, setNow] = useState(new Date());
 
-  // Config: fixed for Phase 1
-  const OFFSET_START = 30; // minutes after Asr
-  const OFFSET_LATE = 45;  // minutes after Asr
-  const SESSION_DURATION = 120; // minutes total session
+  const OFFSET_START = 30;
+  const OFFSET_LATE = 45;
+  const SESSION_DURATION = 120;
 
-  // Fetch prayer times
   const fetchPrayerTimes = useCallback(async () => {
     try {
       const { data, error } = await supabase.functions.invoke("prayer-times");
@@ -45,66 +44,50 @@ const Attendance = () => {
     }
   }, []);
 
-  useEffect(() => { fetchPrayerTimes(); }, [fetchPrayerTimes]);
+  useEffect(() => {
+    if (calendar.status === "active") fetchPrayerTimes();
+  }, [calendar.status, fetchPrayerTimes]);
 
-  // Live clock
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate window status
   useEffect(() => {
-    if (!asrTime) return;
+    if (!asrTime || calendar.status !== "active") return;
     const [h, m] = asrTime.split(":").map(Number);
-
-    const startTime = new Date();
-    startTime.setHours(h, m + OFFSET_START, 0, 0);
-
-    const lateTime = new Date();
-    lateTime.setHours(h, m + OFFSET_LATE, 0, 0);
-
-    const endTime = new Date();
-    endTime.setMinutes(startTime.getMinutes() + SESSION_DURATION);
-    endTime.setHours(startTime.getHours());
-    endTime.setMinutes(startTime.getMinutes() + SESSION_DURATION);
-    // Recalculate properly
+    const startTime = new Date(); startTime.setHours(h, m + OFFSET_START, 0, 0);
+    const lateTime = new Date(); lateTime.setHours(h, m + OFFSET_LATE, 0, 0);
     const endMs = startTime.getTime() + SESSION_DURATION * 60 * 1000;
-    const endDate = new Date(endMs);
-
     const nowMs = now.getTime();
 
     if (nowMs < startTime.getTime()) {
       setWindowStatus("not_open");
-      const diff = startTime.getTime() - nowMs;
-      setCountdown(formatCountdown(diff));
-    } else if (nowMs >= startTime.getTime() && nowMs < lateTime.getTime()) {
+      setCountdown(formatCountdown(startTime.getTime() - nowMs));
+    } else if (nowMs < lateTime.getTime()) {
       setWindowStatus("on_time");
-      const diff = lateTime.getTime() - nowMs;
-      setCountdown(formatCountdown(diff));
-    } else if (nowMs >= lateTime.getTime() && nowMs < endDate.getTime()) {
+      setCountdown(formatCountdown(lateTime.getTime() - nowMs));
+    } else if (nowMs < endMs) {
       setWindowStatus("late");
-      const diff = endDate.getTime() - nowMs;
-      setCountdown(formatCountdown(diff));
+      setCountdown(formatCountdown(endMs - nowMs));
     } else {
       setWindowStatus("closed");
       setCountdown("");
     }
-  }, [now, asrTime]);
+  }, [now, asrTime, calendar.status]);
 
   const formatCountdown = (ms: number) => {
-    const totalSecs = Math.floor(ms / 1000);
-    const hrs = Math.floor(totalSecs / 3600);
-    const mins = Math.floor((totalSecs % 3600) / 60);
-    const secs = totalSecs % 60;
+    const t = Math.floor(ms / 1000);
+    const hrs = Math.floor(t / 3600);
+    const mins = Math.floor((t % 3600) / 60);
+    const secs = t % 60;
     if (hrs > 0) return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
     return `${mins}:${String(secs).padStart(2, "0")}`;
   };
 
   const formatTime = (timeStr: string, offsetMin: number) => {
     const [h, m] = timeStr.split(":").map(Number);
-    const d = new Date();
-    d.setHours(h, m + offsetMin, 0, 0);
+    const d = new Date(); d.setHours(h, m + offsetMin, 0, 0);
     return d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true });
   };
 
@@ -113,45 +96,28 @@ const Attendance = () => {
     supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
       const filtered = filterHalaqat(data || []);
       setHalaqat(filtered);
-      if (filtered.length === 1 && !selectedHalaqa) {
-        setSelectedHalaqa(filtered[0].id);
-      }
+      if (filtered.length === 1 && !selectedHalaqa) setSelectedHalaqa(filtered[0].id);
     });
   }, [accessLoading]);
 
   useEffect(() => {
-    if (selectedHalaqa) {
-      supabase
-        .from("students")
-        .select("*")
-        .eq("halaqa_id", selectedHalaqa)
-        .eq("status", "active")
-        .order("full_name")
-        .then(({ data }) => {
-          setStudents(data || []);
-          // Default: auto-determine based on window
-          const init: Record<string, AttendanceStatus> = {};
-          (data || []).forEach((s: any) => {
-            init[s.id] = windowStatus === "late" ? "late" : "present";
-          });
-          setAttendance(init);
-        });
-
-      // Load existing attendance for today
-      const today = new Date().toISOString().split("T")[0];
-      supabase
-        .from("attendance")
-        .select("student_id, status")
-        .eq("halaqa_id", selectedHalaqa)
-        .eq("attendance_date", today)
-        .then(({ data }) => {
-          if (data?.length) {
-            const existing: Record<string, AttendanceStatus> = {};
-            data.forEach((a: any) => { existing[a.student_id] = a.status; });
-            setAttendance((prev) => ({ ...prev, ...existing }));
-          }
-        });
-    }
+    if (!selectedHalaqa) return;
+    supabase.from("students").select("*").eq("halaqa_id", selectedHalaqa).eq("status", "active").order("full_name")
+      .then(({ data }) => {
+        setStudents(data || []);
+        const init: Record<string, AttendanceStatus> = {};
+        (data || []).forEach((s: any) => { init[s.id] = windowStatus === "late" ? "late" : "present"; });
+        setAttendance(init);
+      });
+    const today = new Date().toISOString().split("T")[0];
+    supabase.from("attendance").select("student_id, status").eq("halaqa_id", selectedHalaqa).eq("attendance_date", today)
+      .then(({ data }) => {
+        if (data?.length) {
+          const existing: Record<string, AttendanceStatus> = {};
+          data.forEach((a: any) => { existing[a.student_id] = a.status; });
+          setAttendance((prev) => ({ ...prev, ...existing }));
+        }
+      });
   }, [selectedHalaqa]);
 
   const handleSave = async () => {
@@ -159,46 +125,25 @@ const Attendance = () => {
     const today = new Date().toISOString().split("T")[0];
     const markedAt = new Date().toISOString();
     const records = Object.entries(attendance).map(([student_id, status]) => ({
-      student_id,
-      halaqa_id: selectedHalaqa,
-      attendance_date: today,
-      status,
-      marked_at: markedAt,
+      student_id, halaqa_id: selectedHalaqa, attendance_date: today, status, marked_at: markedAt,
     }));
-
-    const { error } = await supabase
-      .from("attendance")
-      .upsert(records, { onConflict: "student_id,attendance_date" });
-
+    const { error } = await supabase.from("attendance").upsert(records, { onConflict: "student_id,attendance_date" });
     setSaving(false);
-    if (error) {
-      toast.error("حدث خطأ أثناء الحفظ");
-      return;
-    }
+    if (error) { toast.error("حدث خطأ أثناء الحفظ"); return; }
     toast.success("تم حفظ الحضور بنجاح");
   };
 
   const statusIcons: Record<AttendanceStatus, any> = {
-    present: <Check className="w-4 h-4" />,
-    absent: <X className="w-4 h-4" />,
-    late: <Clock className="w-4 h-4" />,
-    excused: <AlertCircle className="w-4 h-4" />,
+    present: <Check className="w-4 h-4" />, absent: <X className="w-4 h-4" />,
+    late: <Clock className="w-4 h-4" />, excused: <AlertCircle className="w-4 h-4" />,
   };
-
-  const statusLabels: Record<AttendanceStatus, string> = {
-    present: "حاضر",
-    absent: "غائب",
-    late: "متأخر",
-    excused: "معذور",
-  };
-
+  const statusLabels: Record<AttendanceStatus, string> = { present: "حاضر", absent: "غائب", late: "متأخر", excused: "معذور" };
   const statusColors: Record<AttendanceStatus, string> = {
     present: "bg-success/10 text-success border-success/30",
     absent: "bg-destructive/10 text-destructive border-destructive/30",
     late: "bg-warning/10 text-warning border-warning/30",
     excused: "bg-info/10 text-info border-info/30",
   };
-
   const WINDOW_STATUS_MAP: Record<WindowStatus, { label: string; color: string }> = {
     not_open: { label: "لم يُفتح بعد", color: "bg-muted text-muted-foreground" },
     on_time: { label: "مفتوح – في الوقت", color: "bg-green-100 text-green-800" },
@@ -209,14 +154,44 @@ const Attendance = () => {
   const cycleStatus = (studentId: string) => {
     const order: AttendanceStatus[] = ["present", "absent", "late", "excused"];
     const current = attendance[studentId] || "present";
-    const next = order[(order.indexOf(current) + 1) % order.length];
-    setAttendance({ ...attendance, [studentId]: next });
+    setAttendance({ ...attendance, [studentId]: order[(order.indexOf(current) + 1) % order.length] });
   };
 
-  if (accessLoading) {
+  if (accessLoading || calendar.loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Weekend or Holiday → disable attendance
+  if (calendar.status !== "active") {
+    return (
+      <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-bold">الحضور والغياب</h1>
+          <p className="text-muted-foreground text-sm">
+            {new Date().toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <Card className="border-2 border-muted">
+          <CardContent className="p-8 text-center space-y-4">
+            <CalendarOff className="w-16 h-16 mx-auto text-muted-foreground" />
+            <h2 className="text-xl font-bold">
+              {calendar.status === "weekend" ? "إجازة نهاية الأسبوع" : "إجازة رسمية"}
+            </h2>
+            {calendar.holidayTitle && (
+              <Badge variant="secondary" className="text-sm px-4 py-1">{calendar.holidayTitle}</Badge>
+            )}
+            <p className="text-muted-foreground text-sm">الحضور معطّل تلقائياً في أيام الإجازة</p>
+            {calendar.nextActiveDay && (
+              <p className="text-sm text-primary font-medium">
+                أقرب يوم دراسي: {calendar.nextActiveDay}
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -231,7 +206,6 @@ const Attendance = () => {
         </p>
       </div>
 
-      {/* Asr-Based Attendance Window Card */}
       {asrTime && (
         <Card className={windowStatus === "on_time" ? "border-green-500 border-2" : windowStatus === "late" ? "border-yellow-500 border-2" : ""}>
           <CardHeader className="pb-2">
@@ -252,11 +226,11 @@ const Attendance = () => {
                 <p className="text-xs text-muted-foreground">العصر</p>
                 <p className="text-sm font-bold">{asrTime}</p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/30">
+              <div className="p-2 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">بداية الحضور</p>
                 <p className="text-sm font-bold">{formatTime(asrTime, OFFSET_START)}</p>
               </div>
-              <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30">
+              <div className="p-2 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">حد التأخر</p>
                 <p className="text-sm font-bold">{formatTime(asrTime, OFFSET_LATE)}</p>
               </div>
@@ -266,9 +240,7 @@ const Attendance = () => {
                 <p className="text-xs text-muted-foreground mb-1">
                   {windowStatus === "not_open" ? "يفتح بعد" : windowStatus === "on_time" ? "التأخر بعد" : "يُغلق بعد"}
                 </p>
-                <p className="text-3xl font-bold font-mono tabular-nums text-primary">
-                  {countdown}
-                </p>
+                <p className="text-3xl font-bold font-mono tabular-nums text-primary">{countdown}</p>
               </div>
             )}
           </CardContent>
@@ -278,9 +250,7 @@ const Attendance = () => {
       <Select value={selectedHalaqa} onValueChange={setSelectedHalaqa}>
         <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
         <SelectContent>
-          {halaqat.map((h) => (
-            <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-          ))}
+          {halaqat.map((h) => (<SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>))}
         </SelectContent>
       </Select>
 
@@ -290,11 +260,8 @@ const Attendance = () => {
             {students.map((student) => {
               const status = attendance[student.id] || "present";
               return (
-                <button
-                  key={student.id}
-                  onClick={() => cycleStatus(student.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${statusColors[status]}`}
-                >
+                <button key={student.id} onClick={() => cycleStatus(student.id)}
+                  className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${statusColors[status]}`}>
                   <span className="font-medium text-sm">{student.full_name}</span>
                   <div className="flex items-center gap-2 text-xs font-medium">
                     {statusIcons[status]}
@@ -304,7 +271,6 @@ const Attendance = () => {
               );
             })}
           </div>
-
           <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
             <CheckSquare className="w-4 h-4 ml-2" />
             {saving ? "جارٍ الحفظ..." : "حفظ الحضور"}
