@@ -12,6 +12,7 @@ import { Plus, Search, User, Users, ChevronLeft, ChevronRight, Upload } from "lu
 import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/useRole";
 import CsvBulkImport from "@/components/CsvBulkImport";
+import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 
 const PAGE_SIZE = 20;
 
@@ -34,6 +35,8 @@ const Students = () => {
     guardian_name: "",
     guardian_phone: "",
     current_level: "مبتدئ",
+    birth_date_gregorian: "",
+    birth_date_hijri: "",
   });
 
   const fetchStudents = useCallback(async () => {
@@ -106,6 +109,8 @@ const Students = () => {
       guardian_name: form.guardian_name || null,
       guardian_phone: form.guardian_phone || null,
       current_level: form.current_level,
+      birth_date_gregorian: form.birth_date_gregorian || null,
+      birth_date_hijri: form.birth_date_hijri || null,
     });
     if (error) {
       toast.error("حدث خطأ أثناء الإضافة");
@@ -113,7 +118,7 @@ const Students = () => {
     }
     toast.success("تمت إضافة الطالب بنجاح");
     setDialogOpen(false);
-    setForm({ full_name: "", halaqa_id: "", guardian_name: "", guardian_phone: "", current_level: "مبتدئ" });
+    setForm({ full_name: "", halaqa_id: "", guardian_name: "", guardian_phone: "", current_level: "مبتدئ", birth_date_gregorian: "", birth_date_hijri: "" });
     fetchStudents();
   };
 
@@ -167,6 +172,41 @@ const Students = () => {
               <div className="space-y-2">
                 <Label>هاتف ولي الأمر</Label>
                 <Input value={form.guardian_phone} onChange={(e) => setForm({ ...form, guardian_phone: e.target.value })} dir="ltr" />
+              </div>
+              <div className="space-y-2">
+                <Label>تاريخ الميلاد (ميلادي)</Label>
+                <Input
+                  type="date"
+                  value={form.birth_date_gregorian}
+                  onChange={(e) => {
+                    const greg = e.target.value;
+                    let hijri = "";
+                    if (greg) {
+                      try { hijri = gregorianToHijri(new Date(greg)); } catch {}
+                    }
+                    setForm({ ...form, birth_date_gregorian: greg, birth_date_hijri: hijri });
+                  }}
+                  dir="ltr"
+                  className="text-right"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>تاريخ الميلاد (هجري) - مثال: 1440/06/15</Label>
+                <Input
+                  value={form.birth_date_hijri}
+                  onChange={(e) => {
+                    const hijri = e.target.value;
+                    let greg = "";
+                    if (hijri && /^\d{4}\/\d{2}\/\d{2}$/.test(hijri)) {
+                      const d = hijriToGregorian(hijri);
+                      if (d) greg = d.toISOString().split("T")[0];
+                    }
+                    setForm({ ...form, birth_date_hijri: hijri, birth_date_gregorian: greg || form.birth_date_gregorian });
+                  }}
+                  placeholder="1440/06/15"
+                  dir="ltr"
+                  className="text-right"
+                />
               </div>
                <div className="space-y-2">
                 <Label>المستوى</Label>

@@ -1309,6 +1309,8 @@ export type Database = {
       }
       students: {
         Row: {
+          birth_date_gregorian: string | null
+          birth_date_hijri: string | null
           created_at: string
           current_level: string | null
           full_name: string
@@ -1323,6 +1325,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          birth_date_gregorian?: string | null
+          birth_date_hijri?: string | null
           created_at?: string
           current_level?: string | null
           full_name: string
@@ -1337,6 +1341,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          birth_date_gregorian?: string | null
+          birth_date_hijri?: string | null
           created_at?: string
           current_level?: string | null
           full_name?: string
