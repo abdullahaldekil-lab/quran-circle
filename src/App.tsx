@@ -103,6 +103,7 @@ const AppRoutes = () => {
       <Route path="/user-management" element={<ProtectedRoute path="/user-management"><UserManagement /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute path="/profile"><ProfileSettings /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute path="/documents"><Documents /></ProtectedRoute>} />
+      <Route path="/buses" element={<ProtectedRoute path="/buses"><Buses /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
