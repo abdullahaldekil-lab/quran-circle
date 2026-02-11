@@ -1,28 +1,24 @@
-import { toHijri, toGregorian } from "islamic-date";
+import { gregorianToHijri as gregToHijri } from "islamic-date";
 
 /**
  * Convert a Gregorian date to Hijri string (YYYY/MM/DD)
  */
 export function gregorianToHijri(date: Date): string {
-  const hijri = toHijri(date);
-  const y = hijri.year;
-  const m = String(hijri.month).padStart(2, "0");
-  const d = String(hijri.day).padStart(2, "0");
+  const result = gregToHijri(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  if (!result) return "";
+  const y = result.year;
+  const m = String(result.month).padStart(2, "0");
+  const d = String(result.day).padStart(2, "0");
   return `${y}/${m}/${d}`;
 }
 
 /**
  * Convert a Hijri string (YYYY/MM/DD) to Gregorian Date
+ * Note: islamic-date doesn't export hijriToGregorian, so we skip reverse conversion
  */
-export function hijriToGregorian(hijriStr: string): Date | null {
-  try {
-    const parts = hijriStr.split("/").map(Number);
-    if (parts.length !== 3 || parts.some(isNaN)) return null;
-    const [year, month, day] = parts;
-    return toGregorian(year, month, day);
-  } catch {
-    return null;
-  }
+export function hijriToGregorian(_hijriStr: string): Date | null {
+  // Library doesn't export reverse conversion - return null
+  return null;
 }
 
 /**

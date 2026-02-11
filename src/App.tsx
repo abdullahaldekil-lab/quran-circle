@@ -37,6 +37,7 @@ import Buses from "./pages/Buses";
 import PreRegistration from "./pages/PreRegistration";
 import Enroll from "./pages/Enroll";
 import EnrollmentRequests from "./pages/EnrollmentRequests";
+import Preparation from "./pages/Preparation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -110,6 +111,7 @@ const AppRoutes = () => {
       <Route path="/buses" element={<ProtectedRoute path="/buses"><Buses /></ProtectedRoute>} />
       <Route path="/pre-registration" element={<ProtectedRoute path="/pre-registration"><PreRegistration /></ProtectedRoute>} />
       <Route path="/enrollment-requests" element={<ProtectedRoute path="/enrollment-requests"><EnrollmentRequests /></ProtectedRoute>} />
+      <Route path="/preparation" element={<ProtectedRoute path="/preparation"><Preparation /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
