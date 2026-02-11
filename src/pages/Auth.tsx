@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,26 +10,28 @@ import { toast } from "sonner";
 import { BookOpen } from "lucide-react";
 
 const Auth = () => {
-  const navigate = useNavigate();
+  const { session, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [authError, setAuthError] = useState("");
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) navigate("/dashboard");
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/dashboard");
-    });
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  // Single check: if already authenticated, redirect ONCE
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">جارٍ التحقق...</p>
+      </div>
+    );
+  }
+  if (session) return <Navigate to="/dashboard" replace />;
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setAuthError("");
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -47,6 +50,7 @@ const Auth = () => {
         toast.success("تم إنشاء الحساب. يرجى تأكيد البريد الإلكتروني");
       }
     } catch (error: any) {
+      setAuthError(error.message);
       toast.error(error.message);
     } finally {
       setLoading(false);
@@ -112,21 +116,25 @@ const Auth = () => {
                 {loading ? "جارٍ التحميل..." : isLogin ? "دخول" : "إنشاء حساب"}
               </Button>
             </form>
+            {authError && (
+              <div className="mt-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">
+                {authError}
+              </div>
+            )}
             <div className="mt-4 text-center space-y-2">
               <button
                 type="button"
                 className="text-sm text-primary hover:underline block w-full"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => { setIsLogin(!isLogin); setAuthError(""); }}
               >
                 {isLogin ? "ليس لديك حساب؟ أنشئ واحداً" : "لديك حساب؟ سجّل الدخول"}
               </button>
-              <button
-                type="button"
+              <a
+                href="/guardian-auth"
                 className="text-xs text-muted-foreground hover:underline block w-full"
-                onClick={() => navigate("/guardian-auth")}
               >
                 دخول كولي أمر
-              </button>
+              </a>
             </div>
           </CardContent>
         </Card>
