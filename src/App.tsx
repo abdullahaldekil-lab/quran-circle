@@ -109,6 +109,7 @@ const AppRoutes = () => {
       <Route path="/documents" element={<ProtectedRoute path="/documents"><Documents /></ProtectedRoute>} />
       <Route path="/buses" element={<ProtectedRoute path="/buses"><Buses /></ProtectedRoute>} />
       <Route path="/pre-registration" element={<ProtectedRoute path="/pre-registration"><PreRegistration /></ProtectedRoute>} />
+      <Route path="/enrollment-requests" element={<ProtectedRoute path="/enrollment-requests"><EnrollmentRequests /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
