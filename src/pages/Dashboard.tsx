@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 
 const Dashboard = () => {
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
 
@@ -18,7 +19,7 @@ const Dashboard = () => {
         supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("halaqat").select("id", { count: "exact", head: true }).eq("active", true),
         supabase.from("recitation_records").select("total_score").eq("record_date", today),
-        supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
+        supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
       ]);
 
       const scores = recitationsRes.data?.map((r) => Number(r.total_score)).filter(Boolean) || [];
@@ -33,14 +34,13 @@ const Dashboard = () => {
 
       // Generate alerts
       const newAlerts: { type: string; message: string }[] = [];
-      const totalStudents = allStudentsRes.data?.length || 0;
+      const totalStudents = allStudentsRes.count || 0;
       const todayCount = recitationsRes.data?.length || 0;
 
       if (totalStudents > 0 && todayCount < totalStudents * 0.5) {
         newAlerts.push({ type: "warning", message: `تم تسميع ${todayCount} من ${totalStudents} طالب فقط اليوم` });
       }
 
-      // Check for low scores
       const lowScores = (recitationsRes.data || []).filter((r) => Number(r.total_score) < 50);
       if (lowScores.length > 0) {
         newAlerts.push({ type: "error", message: `${lowScores.length} طالب حصلوا على أقل من 50 درجة اليوم` });
@@ -110,24 +110,27 @@ const Dashboard = () => {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">آخر التسميعات</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RecentRecitations />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">التعليمات الجديدة</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RecentInstructions />
-          </CardContent>
-        </Card>
-      </div>
+      {/* Hide detailed sections on mobile for performance */}
+      {!isMobile && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">آخر التسميعات</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RecentRecitations />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">التعليمات الجديدة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RecentInstructions />
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

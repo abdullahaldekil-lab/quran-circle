@@ -5,9 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Trophy, TrendingUp, CheckCircle, Medal, Award, Star } from "lucide-react";
 
 const TOTAL_PAGES = 604;
+const INITIAL_SHOW = 20;
+const LOAD_MORE_SIZE = 20;
 
 interface StudentRanking {
   id: string;
@@ -27,19 +30,20 @@ const Rankings = () => {
   const [filterHalaqa, setFilterHalaqa] = useState("all");
   const [rankings, setRankings] = useState<StudentRanking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCount, setShowCount] = useState(INITIAL_SHOW);
 
   useEffect(() => {
     supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => setHalaqat(data || []));
   }, []);
 
   useEffect(() => {
+    setShowCount(INITIAL_SHOW);
     fetchRankings();
   }, [filterHalaqa]);
 
   const fetchRankings = async () => {
     setLoading(true);
 
-    // Fetch students
     let studentsQuery = supabase
       .from("students")
       .select("id, full_name, halaqa_id, join_date, total_memorized_pages, halaqat(name)")
@@ -58,7 +62,6 @@ const Rankings = () => {
 
     const studentIds = students.map((s) => s.id);
 
-    // Fetch recitation records and attendance in parallel
     const [recitationsRes, attendanceRes] = await Promise.all([
       supabase
         .from("recitation_records")
@@ -73,7 +76,6 @@ const Rankings = () => {
     const recitations = recitationsRes.data || [];
     const attendance = attendanceRes.data || [];
 
-    // Build rankings
     const ranked: StudentRanking[] = students.map((s) => {
       const studentRecitations = recitations.filter((r) => r.student_id === s.id);
       const studentAttendance = attendance.filter((a) => a.student_id === s.id);
@@ -117,13 +119,11 @@ const Rankings = () => {
     setLoading(false);
   };
 
-  // Sort functions for each ranking type
   const fastestMemorizers = [...rankings]
     .filter((r) => r.memorization_days !== null)
     .sort((a, b) => {
       if (a.memorization_days! !== b.memorization_days!) return a.memorization_days! - b.memorization_days!;
       if (b.avg_score !== a.avg_score) return b.avg_score - a.avg_score;
-      if (a.avg_mistakes !== b.avg_mistakes) return a.avg_mistakes - b.avg_mistakes;
       return b.attendance_rate - a.attendance_rate;
     });
 
@@ -150,6 +150,9 @@ const Rankings = () => {
     renderValue: (s: StudentRanking) => React.ReactNode;
     emptyMessage: string;
   }) => {
+    const visibleData = data.slice(0, showCount);
+    const hasMore = data.length > showCount;
+
     if (loading) {
       return (
         <div className="flex justify-center py-12">
@@ -169,7 +172,7 @@ const Rankings = () => {
 
     return (
       <div className="space-y-2">
-        {data.map((student, index) => (
+        {visibleData.map((student, index) => (
           <div
             key={student.id}
             className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
@@ -184,6 +187,13 @@ const Rankings = () => {
             <div className="text-left shrink-0">{renderValue(student)}</div>
           </div>
         ))}
+        {hasMore && (
+          <div className="text-center pt-4">
+            <Button variant="outline" size="sm" onClick={() => setShowCount(showCount + LOAD_MORE_SIZE)}>
+              عرض المزيد ({data.length - showCount} متبقي)
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
@@ -270,7 +280,6 @@ const Rankings = () => {
                 )}
               />
 
-              {/* Progress for non-completed students */}
               {rankings.filter((r) => r.memorization_days === null).length > 0 && (
                 <div className="mt-6 pt-4 border-t">
                   <h3 className="text-sm font-semibold mb-3 text-muted-foreground">تقدم الحفظ الحالي</h3>
