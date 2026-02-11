@@ -24,6 +24,7 @@ import {
   UserCog,
   FolderOpen,
   Clock,
+  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
