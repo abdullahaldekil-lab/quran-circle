@@ -60,10 +60,22 @@ const StudentProfile = () => {
     fetchRecords();
   }, [id, recordsPage]);
 
-  if (!student) {
+  if (!student || accessLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Block direct URL access to students outside teacher's halaqat
+  if (!canAccessStudent(student.halaqa_id)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <ShieldAlert className="w-12 h-12 text-destructive" />
+        <h2 className="text-lg font-bold">غير مصرح</h2>
+        <p className="text-muted-foreground text-sm">ليس لديك صلاحية الوصول لهذا الطالب</p>
+        <Button variant="outline" onClick={() => navigate(-1)}>رجوع</Button>
       </div>
     );
   }
