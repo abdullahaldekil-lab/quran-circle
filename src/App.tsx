@@ -24,6 +24,7 @@ import Rewards from "./pages/Rewards";
 import Trips from "./pages/Trips";
 import Finance from "./pages/Finance";
 import StrategicPlan from "./pages/StrategicPlan";
+import KpiDashboard from "./pages/KpiDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/trips" element={<ProtectedRoute path="/trips"><Trips /></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute path="/finance"><Finance /></ProtectedRoute>} />
             <Route path="/strategic-plan" element={<ProtectedRoute path="/strategic-plan"><StrategicPlan /></ProtectedRoute>} />
+            <Route path="/kpi-dashboard" element={<ProtectedRoute path="/kpi-dashboard"><KpiDashboard /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

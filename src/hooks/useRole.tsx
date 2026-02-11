@@ -24,6 +24,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/trips",
     "/finance",
     "/strategic-plan",
+    "/kpi-dashboard",
     "/bulk-import",
   ],
   supervisor: [
@@ -38,6 +39,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/rewards",
     "/trips",
     "/strategic-plan",
+    "/kpi-dashboard",
   ],
   assistant_supervisor: [
     "/dashboard",
@@ -51,6 +53,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/rewards",
     "/trips",
     "/strategic-plan",
+    "/kpi-dashboard",
   ],
   secretary: [
     "/dashboard",
