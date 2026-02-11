@@ -44,11 +44,11 @@ const rolePermissions: Record<StaffRole, string[]> = {
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
-    "/rankings", "/trips", "/profile", "/buses",
+    "/rankings", "/trips", "/profile", "/buses", "/preparation",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
-    "/rankings", "/profile",
+    "/rankings", "/profile", "/preparation",
   ],
 };
 
