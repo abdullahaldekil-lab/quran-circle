@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckSquare, X, Clock, AlertCircle, Check } from "lucide-react";
+import { CheckSquare, X, Clock, AlertCircle, Check, Sun } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useAuth } from "@/hooks/useAuth";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
+
+type WindowStatus = "not_open" | "on_time" | "late" | "closed";
 
 const Attendance = () => {
   const { user } = useAuth();
@@ -19,13 +22,97 @@ const Attendance = () => {
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
   const [saving, setSaving] = useState(false);
+  const [asrTime, setAsrTime] = useState<string | null>(null);
+  const [hijriDate, setHijriDate] = useState<string | null>(null);
+  const [windowStatus, setWindowStatus] = useState<WindowStatus>("not_open");
+  const [countdown, setCountdown] = useState("");
+  const [now, setNow] = useState(new Date());
+
+  // Config: fixed for Phase 1
+  const OFFSET_START = 30; // minutes after Asr
+  const OFFSET_LATE = 45;  // minutes after Asr
+  const SESSION_DURATION = 120; // minutes total session
+
+  // Fetch prayer times
+  const fetchPrayerTimes = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("prayer-times");
+      if (error) throw error;
+      setAsrTime(data?.asr || null);
+      setHijriDate(data?.hijri_date || null);
+    } catch {
+      console.error("Failed to fetch prayer times");
+    }
+  }, []);
+
+  useEffect(() => { fetchPrayerTimes(); }, [fetchPrayerTimes]);
+
+  // Live clock
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate window status
+  useEffect(() => {
+    if (!asrTime) return;
+    const [h, m] = asrTime.split(":").map(Number);
+
+    const startTime = new Date();
+    startTime.setHours(h, m + OFFSET_START, 0, 0);
+
+    const lateTime = new Date();
+    lateTime.setHours(h, m + OFFSET_LATE, 0, 0);
+
+    const endTime = new Date();
+    endTime.setMinutes(startTime.getMinutes() + SESSION_DURATION);
+    endTime.setHours(startTime.getHours());
+    endTime.setMinutes(startTime.getMinutes() + SESSION_DURATION);
+    // Recalculate properly
+    const endMs = startTime.getTime() + SESSION_DURATION * 60 * 1000;
+    const endDate = new Date(endMs);
+
+    const nowMs = now.getTime();
+
+    if (nowMs < startTime.getTime()) {
+      setWindowStatus("not_open");
+      const diff = startTime.getTime() - nowMs;
+      setCountdown(formatCountdown(diff));
+    } else if (nowMs >= startTime.getTime() && nowMs < lateTime.getTime()) {
+      setWindowStatus("on_time");
+      const diff = lateTime.getTime() - nowMs;
+      setCountdown(formatCountdown(diff));
+    } else if (nowMs >= lateTime.getTime() && nowMs < endDate.getTime()) {
+      setWindowStatus("late");
+      const diff = endDate.getTime() - nowMs;
+      setCountdown(formatCountdown(diff));
+    } else {
+      setWindowStatus("closed");
+      setCountdown("");
+    }
+  }, [now, asrTime]);
+
+  const formatCountdown = (ms: number) => {
+    const totalSecs = Math.floor(ms / 1000);
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    if (hrs > 0) return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  };
+
+  const formatTime = (timeStr: string, offsetMin: number) => {
+    const [h, m] = timeStr.split(":").map(Number);
+    const d = new Date();
+    d.setHours(h, m + offsetMin, 0, 0);
+    return d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true });
+  };
 
   useEffect(() => {
     if (accessLoading) return;
     supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
       const filtered = filterHalaqat(data || []);
       setHalaqat(filtered);
-      // Auto-select if teacher has only one halaqa
       if (filtered.length === 1 && !selectedHalaqa) {
         setSelectedHalaqa(filtered[0].id);
       }
@@ -42,8 +129,11 @@ const Attendance = () => {
         .order("full_name")
         .then(({ data }) => {
           setStudents(data || []);
+          // Default: auto-determine based on window
           const init: Record<string, AttendanceStatus> = {};
-          (data || []).forEach((s: any) => { init[s.id] = "present"; });
+          (data || []).forEach((s: any) => {
+            init[s.id] = windowStatus === "late" ? "late" : "present";
+          });
           setAttendance(init);
         });
 
@@ -67,11 +157,13 @@ const Attendance = () => {
   const handleSave = async () => {
     setSaving(true);
     const today = new Date().toISOString().split("T")[0];
+    const markedAt = new Date().toISOString();
     const records = Object.entries(attendance).map(([student_id, status]) => ({
       student_id,
       halaqa_id: selectedHalaqa,
       attendance_date: today,
       status,
+      marked_at: markedAt,
     }));
 
     const { error } = await supabase
@@ -107,6 +199,13 @@ const Attendance = () => {
     excused: "bg-info/10 text-info border-info/30",
   };
 
+  const WINDOW_STATUS_MAP: Record<WindowStatus, { label: string; color: string }> = {
+    not_open: { label: "لم يُفتح بعد", color: "bg-muted text-muted-foreground" },
+    on_time: { label: "مفتوح – في الوقت", color: "bg-green-100 text-green-800" },
+    late: { label: "مفتوح – متأخر", color: "bg-yellow-100 text-yellow-800" },
+    closed: { label: "مُغلق", color: "bg-red-100 text-red-800" },
+  };
+
   const cycleStatus = (studentId: string) => {
     const order: AttendanceStatus[] = ["present", "absent", "late", "excused"];
     const current = attendance[studentId] || "present";
@@ -128,8 +227,53 @@ const Attendance = () => {
         <h1 className="text-2xl font-bold">الحضور والغياب</h1>
         <p className="text-muted-foreground text-sm">
           {new Date().toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          {hijriDate && ` — ${hijriDate}`}
         </p>
       </div>
+
+      {/* Asr-Based Attendance Window Card */}
+      {asrTime && (
+        <Card className={windowStatus === "on_time" ? "border-green-500 border-2" : windowStatus === "late" ? "border-yellow-500 border-2" : ""}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Sun className="w-5 h-5 text-primary" />
+              نافذة الحضور (صلاة العصر)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">الحالة</span>
+              <Badge className={WINDOW_STATUS_MAP[windowStatus].color}>
+                {WINDOW_STATUS_MAP[windowStatus].label}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="p-2 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">العصر</p>
+                <p className="text-sm font-bold">{asrTime}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/30">
+                <p className="text-xs text-muted-foreground">بداية الحضور</p>
+                <p className="text-sm font-bold">{formatTime(asrTime, OFFSET_START)}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30">
+                <p className="text-xs text-muted-foreground">حد التأخر</p>
+                <p className="text-sm font-bold">{formatTime(asrTime, OFFSET_LATE)}</p>
+              </div>
+            </div>
+            {windowStatus !== "closed" && countdown && (
+              <div className="text-center pt-1">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {windowStatus === "not_open" ? "يفتح بعد" : windowStatus === "on_time" ? "التأخر بعد" : "يُغلق بعد"}
+                </p>
+                <p className="text-3xl font-bold font-mono tabular-nums text-primary">
+                  {countdown}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Select value={selectedHalaqa} onValueChange={setSelectedHalaqa}>
         <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>

@@ -47,6 +47,7 @@ export type Database = {
           created_at: string
           halaqa_id: string
           id: string
+          marked_at: string | null
           note: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           student_id: string
@@ -56,6 +57,7 @@ export type Database = {
           created_at?: string
           halaqa_id: string
           id?: string
+          marked_at?: string | null
           note?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id: string
@@ -65,6 +67,7 @@ export type Database = {
           created_at?: string
           halaqa_id?: string
           id?: string
+          marked_at?: string | null
           note?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id?: string
