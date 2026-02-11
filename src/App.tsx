@@ -31,6 +31,7 @@ import KpiDashboard from "./pages/KpiDashboard";
 import UserManagement from "./pages/UserManagement";
 import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
+import NotAuthorized from "./pages/NotAuthorized";
 
 const queryClient = new QueryClient({
   defaultOptions: {
