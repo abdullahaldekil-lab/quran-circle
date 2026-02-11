@@ -173,6 +173,41 @@ const Students = () => {
                 <Label>هاتف ولي الأمر</Label>
                 <Input value={form.guardian_phone} onChange={(e) => setForm({ ...form, guardian_phone: e.target.value })} dir="ltr" />
               </div>
+              <div className="space-y-2">
+                <Label>تاريخ الميلاد (ميلادي)</Label>
+                <Input
+                  type="date"
+                  value={form.birth_date_gregorian}
+                  onChange={(e) => {
+                    const greg = e.target.value;
+                    let hijri = "";
+                    if (greg) {
+                      try { hijri = gregorianToHijri(new Date(greg)); } catch {}
+                    }
+                    setForm({ ...form, birth_date_gregorian: greg, birth_date_hijri: hijri });
+                  }}
+                  dir="ltr"
+                  className="text-right"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>تاريخ الميلاد (هجري) - مثال: 1440/06/15</Label>
+                <Input
+                  value={form.birth_date_hijri}
+                  onChange={(e) => {
+                    const hijri = e.target.value;
+                    let greg = "";
+                    if (hijri && /^\d{4}\/\d{2}\/\d{2}$/.test(hijri)) {
+                      const d = hijriToGregorian(hijri);
+                      if (d) greg = d.toISOString().split("T")[0];
+                    }
+                    setForm({ ...form, birth_date_hijri: hijri, birth_date_gregorian: greg || form.birth_date_gregorian });
+                  }}
+                  placeholder="1440/06/15"
+                  dir="ltr"
+                  className="text-right"
+                />
+              </div>
                <div className="space-y-2">
                 <Label>المستوى</Label>
                 <Select value={form.current_level} onValueChange={(v) => setForm({ ...form, current_level: v })}>
