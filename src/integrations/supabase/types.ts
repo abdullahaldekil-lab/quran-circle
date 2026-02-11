@@ -193,6 +193,98 @@ export type Database = {
           },
         ]
       }
+      enrollment_requests: {
+        Row: {
+          assigned_halaqa_id: string | null
+          converted_guardian_id: string | null
+          converted_student_id: string | null
+          created_at: string
+          guardian_full_name: string
+          guardian_phone: string
+          id: string
+          ip_address: string | null
+          notes: string | null
+          preferred_time: string | null
+          rejection_reason: string | null
+          requested_halaqa_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["enrollment_request_status"]
+          student_birth_year: number | null
+          student_full_name: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_halaqa_id?: string | null
+          converted_guardian_id?: string | null
+          converted_student_id?: string | null
+          created_at?: string
+          guardian_full_name: string
+          guardian_phone: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          preferred_time?: string | null
+          rejection_reason?: string | null
+          requested_halaqa_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["enrollment_request_status"]
+          student_birth_year?: number | null
+          student_full_name: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_halaqa_id?: string | null
+          converted_guardian_id?: string | null
+          converted_student_id?: string | null
+          created_at?: string
+          guardian_full_name?: string
+          guardian_phone?: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          preferred_time?: string | null
+          rejection_reason?: string | null
+          requested_halaqa_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["enrollment_request_status"]
+          student_birth_year?: number | null
+          student_full_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_requests_assigned_halaqa_id_fkey"
+            columns: ["assigned_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_requests_converted_student_id_fkey"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_requests_requested_halaqa_id_fkey"
+            columns: ["requested_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_accounts: {
         Row: {
           account_name: string
@@ -1479,6 +1571,11 @@ export type Database = {
     }
     Enums: {
       attendance_status: "present" | "absent" | "late" | "excused"
+      enrollment_request_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "waiting_list"
       instruction_status: "new" | "in_progress" | "completed"
       pre_registration_status:
         | "new"
@@ -1624,6 +1721,12 @@ export const Constants = {
   public: {
     Enums: {
       attendance_status: ["present", "absent", "late", "excused"],
+      enrollment_request_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "waiting_list",
+      ],
       instruction_status: ["new", "in_progress", "completed"],
       pre_registration_status: [
         "new",
