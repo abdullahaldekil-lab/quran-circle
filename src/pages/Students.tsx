@@ -20,6 +20,7 @@ const PAGE_SIZE = 20;
 const Students = () => {
   const navigate = useNavigate();
   const { isManager, isAdminStaff } = useRole();
+  const { allowedHalaqatIds, filterHalaqat: filterHalaqatAccess, loading: accessLoading } = useTeacherHalaqat();
   const canBulkImport = isManager || isAdminStaff;
   const [students, setStudents] = useState<any[]>([]);
   const [halaqat, setHalaqat] = useState<any[]>([]);
