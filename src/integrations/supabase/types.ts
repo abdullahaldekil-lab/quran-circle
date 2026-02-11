@@ -89,6 +89,54 @@ export type Database = {
           },
         ]
       }
+      attendance_audit_log: {
+        Row: {
+          attendance_date: string
+          attendance_id: string
+          edited_at: string
+          edited_by: string
+          id: string
+          new_status: string
+          old_status: string
+          student_id: string
+        }
+        Insert: {
+          attendance_date: string
+          attendance_id: string
+          edited_at?: string
+          edited_by: string
+          id?: string
+          new_status: string
+          old_status: string
+          student_id: string
+        }
+        Update: {
+          attendance_date?: string
+          attendance_id?: string
+          edited_at?: string
+          edited_by?: string
+          id?: string
+          new_status?: string
+          old_status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_audit_log_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_audit_log_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           category: string
