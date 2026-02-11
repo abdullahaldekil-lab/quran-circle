@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Save, ChevronLeft, ChevronRight, ClipboardList, Mic } from "lucide-react";
+import { Save, ChevronLeft, ChevronRight, ClipboardList, Mic, History, ChevronDown, ChevronUp } from "lucide-react";
 import AudioRecorder from "@/components/AudioRecorder";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const Recitation = () => {
   const { user } = useAuth();
@@ -37,7 +38,6 @@ const Recitation = () => {
     supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
       const list = data || [];
       setHalaqat(list);
-      // Auto-select teacher's own halaqa
       const myHalaqa = list.find(
         (h) => h.teacher_id === user.id || h.assistant_teacher_id === user.id
       );
@@ -158,6 +158,9 @@ const Recitation = () => {
             </CardContent>
           </Card>
 
+          {/* Student Recitation History */}
+          <StudentHistory studentId={currentStudent.id} />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -252,6 +255,92 @@ const Recitation = () => {
         </div>
       )}
     </div>
+  );
+};
+
+/** Collapsible history of past recitations for a student (lazy-loaded) */
+const StudentHistory = ({ studentId }: { studentId: string }) => {
+  const [open, setOpen] = useState(false);
+  const [records, setRecords] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  // Reset when student changes
+  useEffect(() => {
+    setOpen(false);
+    setRecords([]);
+    setLoaded(false);
+  }, [studentId]);
+
+  // Lazy-load only when opened
+  useEffect(() => {
+    if (!open || loaded) return;
+    supabase
+      .from("recitation_records")
+      .select("id, record_date, memorized_from, memorized_to, review_from, review_to, total_score, mistakes_count, notes")
+      .eq("student_id", studentId)
+      .order("record_date", { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        setRecords(data || []);
+        setLoaded(true);
+      });
+  }, [open, loaded, studentId]);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+            <CardTitle className="text-base flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <History className="w-5 h-5 text-primary" />
+                السجل السابق
+              </span>
+              {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0">
+            {!loaded ? (
+              <div className="flex justify-center py-4">
+                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : records.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">لا توجد تسميعات سابقة</p>
+            ) : (
+              <div className="space-y-2">
+                {records.map((r) => {
+                  const score = Number(r.total_score);
+                  const sc = score >= 80 ? "text-success" : score >= 60 ? "text-warning" : "text-destructive";
+                  return (
+                    <div key={r.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 border text-sm">
+                      <div className="space-y-0.5">
+                        <p className="font-medium">{r.record_date}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {r.memorized_from && r.memorized_to
+                            ? `حفظ: ${r.memorized_from} → ${r.memorized_to}`
+                            : r.review_from && r.review_to
+                            ? `مراجعة: ${r.review_from} → ${r.review_to}`
+                            : "—"}
+                        </p>
+                        {r.notes && <p className="text-xs text-muted-foreground line-clamp-1">{r.notes}</p>}
+                      </div>
+                      <div className="text-left">
+                        <p className={`text-lg font-bold ${sc}`}>{r.total_score ?? "—"}</p>
+                        {r.mistakes_count != null && (
+                          <p className="text-xs text-muted-foreground">{r.mistakes_count} أخطاء</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };
 
