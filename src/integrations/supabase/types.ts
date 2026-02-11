@@ -1401,6 +1401,61 @@ export type Database = {
           },
         ]
       }
+      temporary_access_overrides: {
+        Row: {
+          created_at: string
+          end_date: string
+          granted_by: string
+          halaqa_id: string
+          id: string
+          reason: string | null
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          granted_by: string
+          halaqa_id: string
+          id?: string
+          reason?: string | null
+          start_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          granted_by?: string
+          halaqa_id?: string
+          id?: string
+          reason?: string | null
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temporary_access_overrides_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temporary_access_overrides_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temporary_access_overrides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_attendance: {
         Row: {
           created_at: string
