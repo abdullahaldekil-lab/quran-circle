@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useRole } from "@/hooks/useRole";
 import {
   LayoutDashboard,
   Users,
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
+const allNavItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "لوحة التحكم" },
   { to: "/students", icon: Users, label: "الطلاب" },
   { to: "/halaqat", icon: BookOpen, label: "الحلقات" },
@@ -39,8 +40,11 @@ const navItems = [
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { profile, signOut } = useAuth();
+  const { hasAccess } = useRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+
+  const navItems = allNavItems.filter((item) => hasAccess(item.to));
 
   return (
     <div className="min-h-screen flex">
