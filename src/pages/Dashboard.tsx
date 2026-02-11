@@ -5,55 +5,70 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 
+const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promise<T> => {
+  const p = Promise.resolve(promise);
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+  ]);
+};
+
 const Dashboard = () => {
-  const { profile } = useAuth();
+  const { profile, user, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
   const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
+    if (authLoading || !user) return;
+
+    let cancelled = false;
     const fetchStats = async () => {
-      const today = new Date().toISOString().split("T")[0];
+      try {
+        const today = new Date().toISOString().split("T")[0];
 
-      const [studentsRes, halaqatRes, recitationsRes, allStudentsRes] = await Promise.all([
-        supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
-        supabase.from("halaqat").select("id", { count: "exact", head: true }).eq("active", true),
-        supabase.from("recitation_records").select("total_score").eq("record_date", today),
-        supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
-      ]);
+        const [studentsRes, halaqatRes, recitationsRes] = await withTimeout(Promise.all([
+          supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
+          supabase.from("halaqat").select("id", { count: "exact", head: true }).eq("active", true),
+          supabase.from("recitation_records").select("total_score").eq("record_date", today),
+        ]));
 
-      const scores = recitationsRes.data?.map((r) => Number(r.total_score)).filter(Boolean) || [];
-      const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+        if (cancelled) return;
 
-      setStats({
-        students: studentsRes.count || 0,
-        halaqat: halaqatRes.count || 0,
-        todayRecitations: recitationsRes.data?.length || 0,
-        avgScore: Math.round(avg),
-      });
+        const scores = recitationsRes.data?.map((r) => Number(r.total_score)).filter(Boolean) || [];
+        const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+        const totalStudents = studentsRes.count || 0;
+        const todayCount = recitationsRes.data?.length || 0;
 
-      // Generate alerts
-      const newAlerts: { type: string; message: string }[] = [];
-      const totalStudents = allStudentsRes.count || 0;
-      const todayCount = recitationsRes.data?.length || 0;
+        setStats({
+          students: totalStudents,
+          halaqat: halaqatRes.count || 0,
+          todayRecitations: todayCount,
+          avgScore: Math.round(avg),
+        });
 
-      if (totalStudents > 0 && todayCount < totalStudents * 0.5) {
-        newAlerts.push({ type: "warning", message: `تم تسميع ${todayCount} من ${totalStudents} طالب فقط اليوم` });
+        const newAlerts: { type: string; message: string }[] = [];
+        if (totalStudents > 0 && todayCount < totalStudents * 0.5) {
+          newAlerts.push({ type: "warning", message: `تم تسميع ${todayCount} من ${totalStudents} طالب فقط اليوم` });
+        }
+        const lowScores = (recitationsRes.data || []).filter((r) => Number(r.total_score) < 50);
+        if (lowScores.length > 0) {
+          newAlerts.push({ type: "error", message: `${lowScores.length} طالب حصلوا على أقل من 50 درجة اليوم` });
+        }
+        if (todayCount > 0 && avg >= 80) {
+          newAlerts.push({ type: "success", message: `أداء ممتاز اليوم! متوسط الدرجات ${Math.round(avg)}` });
+        }
+        setAlerts(newAlerts);
+      } catch (e) {
+        console.error("Dashboard fetch error:", e);
+      } finally {
+        if (!cancelled) setDataLoaded(true);
       }
-
-      const lowScores = (recitationsRes.data || []).filter((r) => Number(r.total_score) < 50);
-      if (lowScores.length > 0) {
-        newAlerts.push({ type: "error", message: `${lowScores.length} طالب حصلوا على أقل من 50 درجة اليوم` });
-      }
-
-      if (todayCount > 0 && avg >= 80) {
-        newAlerts.push({ type: "success", message: `أداء ممتاز اليوم! متوسط الدرجات ${Math.round(avg)}` });
-      }
-
-      setAlerts(newAlerts);
     };
     fetchStats();
-  }, []);
+    return () => { cancelled = true; };
+  }, [authLoading, user]);
 
   const cards = [
     { title: "عدد الطلاب", value: stats.students, icon: Users, color: "text-primary" },
@@ -61,6 +76,14 @@ const Dashboard = () => {
     { title: "تسميعات اليوم", value: stats.todayRecitations, icon: ClipboardList, color: "text-info" },
     { title: "متوسط الدرجات", value: stats.avgScore, icon: TrendingUp, color: "text-success" },
   ];
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -96,55 +119,64 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {cards.map((card) => (
-          <Card key={card.title} className="animate-slide-in">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-              <card.icon className={`w-5 h-5 ${card.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl lg:text-3xl font-bold">{card.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Hide detailed sections on mobile for performance */}
-      {!isMobile && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">آخر التسميعات</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentRecitations />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">التعليمات الجديدة</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentInstructions />
-            </CardContent>
-          </Card>
+      {!dataLoaded ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {cards.map((card) => (
+              <Card key={card.title} className="animate-slide-in">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
+                  <card.icon className={`w-5 h-5 ${card.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl lg:text-3xl font-bold">{card.value}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {!isMobile && (
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">آخر التسميعات</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RecentRecitations />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">التعليمات الجديدة</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RecentInstructions />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 };
-
 const RecentRecitations = () => {
   const [records, setRecords] = useState<any[]>([]);
+  const { user } = useAuth();
   useEffect(() => {
-    supabase
-      .from("recitation_records")
-      .select("*, students(full_name), halaqat(name)")
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .then(({ data }) => setRecords(data || []));
-  }, []);
+    if (!user) return;
+    withTimeout(
+      supabase
+        .from("recitation_records")
+        .select("*, students(full_name), halaqat(name)")
+        .order("created_at", { ascending: false })
+        .limit(5)
+    ).then(({ data }) => setRecords(data || [])).catch(() => {});
+  }, [user]);
 
   if (!records.length) return <p className="text-muted-foreground text-sm">لا توجد تسميعات حتى الآن</p>;
 
@@ -167,15 +199,18 @@ const RecentRecitations = () => {
 
 const RecentInstructions = () => {
   const [items, setItems] = useState<any[]>([]);
+  const { user } = useAuth();
   useEffect(() => {
-    supabase
-      .from("instructions")
-      .select("*")
-      .eq("status", "new")
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .then(({ data }) => setItems(data || []));
-  }, []);
+    if (!user) return;
+    withTimeout(
+      supabase
+        .from("instructions")
+        .select("*")
+        .eq("status", "new")
+        .order("created_at", { ascending: false })
+        .limit(5)
+    ).then(({ data }) => setItems(data || [])).catch(() => {});
+  }, [user]);
 
   if (!items.length) return <p className="text-muted-foreground text-sm">لا توجد تعليمات جديدة</p>;
 
