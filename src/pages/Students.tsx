@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Plus, Search, User, Users, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/useRole";
+import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import CsvBulkImport from "@/components/CsvBulkImport";
 import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 
