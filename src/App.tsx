@@ -54,7 +54,7 @@ const ProtectedRoute = ({ children, path }: { children: React.ReactNode; path?: 
   }
 
   if (!session) return <Navigate to="/auth" replace />;
-  if (path && !hasAccess(path)) return <Navigate to="/dashboard" replace />;
+  if (path && !hasAccess(path)) return <Navigate to="/not-authorized" replace />;
   return <AppLayout>{children}</AppLayout>;
 };
 
