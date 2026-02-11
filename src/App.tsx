@@ -35,6 +35,8 @@ import NotAuthorized from "./pages/NotAuthorized";
 import Documents from "./pages/Documents";
 import Buses from "./pages/Buses";
 import PreRegistration from "./pages/PreRegistration";
+import Enroll from "./pages/Enroll";
+import EnrollmentRequests from "./pages/EnrollmentRequests";
 
 const queryClient = new QueryClient({
   defaultOptions: {
