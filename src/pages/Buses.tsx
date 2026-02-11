@@ -167,7 +167,7 @@ const Buses = () => {
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">عدد الباصات</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{buses.length}</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">طلاب معيّنون</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{totalAssigned}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">بدون باص</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-orange-500">{unassignedCount > 0 ? unassignedCount : 0}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">بدون باص</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-destructive">{unassignedCount > 0 ? unassignedCount : 0}</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">نسبة التعيين</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{totalStudents > 0 ? Math.round((totalAssigned / totalStudents) * 100) : 0}%</p></CardContent></Card>
       </div>
 
