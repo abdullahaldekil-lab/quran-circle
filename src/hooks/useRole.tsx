@@ -24,31 +24,31 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
-    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation",
+    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/attendance",
-    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation",
+    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/attendance",
-    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation",
+    "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
-    "/rankings", "/trips", "/profile", "/buses", "/preparation",
+    "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
-    "/rankings", "/profile", "/preparation",
+    "/rankings", "/profile", "/preparation", "/academic-calendar",
   ],
 };
 
