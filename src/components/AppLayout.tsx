@@ -16,7 +16,7 @@ import {
   GraduationCap,
   Trophy,
   Gift,
-  Bus,
+  Bus as BusIcon,
   DollarSign,
   Target,
   BarChart3,
