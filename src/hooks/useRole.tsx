@@ -32,7 +32,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration",
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/attendance",
