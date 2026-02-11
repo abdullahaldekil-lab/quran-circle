@@ -19,6 +19,7 @@ import {
   Bus,
   DollarSign,
   Target,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -35,6 +36,7 @@ const allNavItems = [
   { to: "/trips", icon: Bus, label: "الرحلات" },
   { to: "/finance", icon: DollarSign, label: "المالية" },
   { to: "/strategic-plan", icon: Target, label: "الخطة الاستراتيجية" },
+  { to: "/kpi-dashboard", icon: BarChart3, label: "مؤشرات الأداء" },
   { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
 ];
 
