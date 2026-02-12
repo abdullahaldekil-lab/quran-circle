@@ -211,7 +211,6 @@ const Halaqat = () => {
               </CardContent>
             </Card>
           );
-          );
         })}
       </div>
 
