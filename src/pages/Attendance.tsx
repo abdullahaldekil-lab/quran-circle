@@ -152,12 +152,12 @@ const Attendance = () => {
 
     if (error) { setSaving(false); toast.error("حدث خطأ أثناء الحفظ"); return; }
 
-    // Log audit entries for changed statuses (past dates)
-    if (!isToday && user) {
+    // Log audit entries for changed statuses (when editing existing records)
+    if (user && Object.keys(originalAttendance).length > 0) {
       const auditEntries = Object.entries(attendance)
         .filter(([sid, status]) => originalAttendance[sid] && originalAttendance[sid] !== status)
         .map(([student_id, new_status]) => ({
-          attendance_id: student_id, // used as reference
+          attendance_id: student_id,
           student_id,
           attendance_date: selectedDate,
           old_status: originalAttendance[student_id] || "unknown",
