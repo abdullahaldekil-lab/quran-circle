@@ -25,34 +25,114 @@ import {
   FolderOpen,
   Clock,
   CalendarDays,
+  ChevronDown,
+  School,
+  Award,
+  Briefcase,
+  UserPlus,
+  ShieldCheck,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
 
-const allNavItems = [
+interface NavItem {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+}
+
+interface NavGroup {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  color: string;
+  items: NavItem[];
+}
+
+const standaloneItems: NavItem[] = [
   { to: "/dashboard", icon: LayoutDashboard, label: "لوحة التحكم" },
-  { to: "/students", icon: Users, label: "الطلاب" },
-  { to: "/halaqat", icon: BookOpen, label: "الحلقات" },
-  { to: "/recitation", icon: ClipboardList, label: "التسميع" },
-  { to: "/attendance", icon: CheckSquare, label: "الحضور" },
-  { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
-  { to: "/levels", icon: GraduationCap, label: "المستويات" },
-  { to: "/rankings", icon: Trophy, label: "الترتيب" },
-  { to: "/rewards", icon: Gift, label: "الحوافز" },
-  { to: "/trips", icon: BusIcon, label: "الرحلات" },
-  { to: "/buses", icon: BusIcon, label: "الباصات" },
-  { to: "/finance", icon: DollarSign, label: "المالية" },
-  { to: "/strategic-plan", icon: Target, label: "الخطة الاستراتيجية" },
-  { to: "/kpi-dashboard", icon: BarChart3, label: "مؤشرات الأداء" },
-  { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
-  { to: "/pre-registration", icon: UserCog, label: "التسجيل المسبق" },
-  { to: "/enrollment-requests", icon: ClipboardList, label: "طلبات الالتحاق" },
-  { to: "/preparation", icon: Clock, label: "وقت التحضير" },
-  { to: "/academic-calendar", icon: CalendarDays, label: "التقويم الأكاديمي" },
-  { to: "/attendance-audit", icon: ClipboardList, label: "سجل تدقيق الحضور" },
-  { to: "/documents", icon: FolderOpen, label: "المستندات" },
-  { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
-  { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
+];
+
+const navGroups: NavGroup[] = [
+  {
+    id: "academic",
+    label: "الشؤون الأكاديمية",
+    icon: School,
+    color: "text-emerald-400",
+    items: [
+      { to: "/students", icon: Users, label: "الطلاب" },
+      { to: "/halaqat", icon: BookOpen, label: "الحلقات" },
+      { to: "/recitation", icon: ClipboardList, label: "التسميع" },
+      { to: "/levels", icon: GraduationCap, label: "المستويات" },
+      { to: "/preparation", icon: Clock, label: "وقت التحضير" },
+    ],
+  },
+  {
+    id: "attendance",
+    label: "الحضور والانضباط",
+    icon: CheckSquare,
+    color: "text-sky-400",
+    items: [
+      { to: "/attendance", icon: CheckSquare, label: "الحضور" },
+      { to: "/attendance-audit", icon: ClipboardList, label: "سجل التدقيق" },
+      { to: "/academic-calendar", icon: CalendarDays, label: "التقويم الأكاديمي" },
+    ],
+  },
+  {
+    id: "rewards",
+    label: "التحفيز والمكافآت",
+    icon: Award,
+    color: "text-amber-400",
+    items: [
+      { to: "/rankings", icon: Trophy, label: "الترتيب" },
+      { to: "/rewards", icon: Gift, label: "الحوافز" },
+    ],
+  },
+  {
+    id: "operations",
+    label: "العمليات والخدمات",
+    icon: Briefcase,
+    color: "text-violet-400",
+    items: [
+      { to: "/trips", icon: BusIcon, label: "الرحلات" },
+      { to: "/buses", icon: BusIcon, label: "الباصات" },
+      { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
+      { to: "/documents", icon: FolderOpen, label: "المستندات" },
+    ],
+  },
+  {
+    id: "finance",
+    label: "المالية والتخطيط",
+    icon: DollarSign,
+    color: "text-teal-400",
+    items: [
+      { to: "/finance", icon: DollarSign, label: "المالية" },
+      { to: "/strategic-plan", icon: Target, label: "الخطة الاستراتيجية" },
+      { to: "/kpi-dashboard", icon: BarChart3, label: "مؤشرات الأداء" },
+    ],
+  },
+  {
+    id: "enrollment",
+    label: "القبول والتسجيل",
+    icon: UserPlus,
+    color: "text-rose-400",
+    items: [
+      { to: "/pre-registration", icon: UserCog, label: "التسجيل المسبق" },
+      { to: "/enrollment-requests", icon: ClipboardList, label: "طلبات الالتحاق" },
+      { to: "/bulk-import", icon: Upload, label: "إضافة جماعية" },
+    ],
+  },
+  {
+    id: "admin",
+    label: "الإدارة والإعدادات",
+    icon: ShieldCheck,
+    color: "text-orange-400",
+    items: [
+      { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
+      { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
+    ],
+  },
 ];
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
@@ -61,7 +141,31 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  const navItems = allNavItems.filter((item) => hasAccess(item.to));
+  // Determine which groups are open based on active route
+  const getInitialOpenGroups = () => {
+    const open: Record<string, boolean> = {};
+    navGroups.forEach((group) => {
+      if (group.items.some((item) => location.pathname.startsWith(item.to))) {
+        open[group.id] = true;
+      }
+    });
+    return open;
+  };
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(getInitialOpenGroups);
+
+  const toggleGroup = (id: string) => {
+    setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const filteredStandalone = standaloneItems.filter((item) => hasAccess(item.to));
+
+  const filteredGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasAccess(item.to)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <div className="min-h-screen flex">
@@ -89,14 +193,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {/* Standalone items */}
+          {filteredStandalone.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-sidebar-accent text-sidebar-primary"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -107,6 +212,57 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               {item.label}
             </NavLink>
           ))}
+
+          {/* Grouped items */}
+          {filteredGroups.map((group) => {
+            const isOpen = openGroups[group.id] || false;
+            const hasActiveChild = group.items.some((item) =>
+              location.pathname.startsWith(item.to)
+            );
+
+            return (
+              <div key={group.id}>
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    hasActiveChild
+                      ? "bg-sidebar-accent/60 text-sidebar-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
+                  }`}
+                >
+                  <group.icon className={`w-5 h-5 ${group.color} shrink-0`} />
+                  <span className="flex-1 text-right">{group.label}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-sidebar-foreground/50 transition-transform duration-200 ${
+                      isOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div className="mt-0.5 mr-4 border-r border-sidebar-border/40 pr-2 space-y-0.5">
+                    {group.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                              : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                          }`
+                        }
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {item.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
