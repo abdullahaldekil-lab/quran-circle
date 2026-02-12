@@ -117,24 +117,29 @@ const Attendance = () => {
   // Fetch students & attendance for selected date
   useEffect(() => {
     if (!selectedHalaqa) return;
-    supabase.from("students").select("*").eq("halaqa_id", selectedHalaqa).eq("status", "active").order("full_name")
-      .then(({ data }) => {
-        setStudents(data || []);
-        const init: Record<string, AttendanceStatus> = {};
-        (data || []).forEach((s: any) => { init[s.id] = "present"; });
-        setAttendance(init);
-        setOriginalAttendance({});
-      });
+    const fetchData = async () => {
+      const [studentsRes, attendanceRes] = await Promise.all([
+        supabase.from("students").select("*").eq("halaqa_id", selectedHalaqa).eq("status", "active").order("full_name"),
+        supabase.from("attendance").select("student_id, status").eq("halaqa_id", selectedHalaqa).eq("attendance_date", selectedDate),
+      ]);
 
-    supabase.from("attendance").select("student_id, status").eq("halaqa_id", selectedHalaqa).eq("attendance_date", selectedDate)
-      .then(({ data }) => {
-        if (data?.length) {
-          const existing: Record<string, AttendanceStatus> = {};
-          data.forEach((a: any) => { existing[a.student_id] = a.status; });
-          setAttendance((prev) => ({ ...prev, ...existing }));
-          setOriginalAttendance(existing);
-        }
-      });
+      const studentList = studentsRes.data || [];
+      setStudents(studentList);
+
+      // Build default attendance (all present)
+      const init: Record<string, AttendanceStatus> = {};
+      studentList.forEach((s: any) => { init[s.id] = "present"; });
+
+      // Overlay existing attendance records
+      const existing: Record<string, AttendanceStatus> = {};
+      if (attendanceRes.data?.length) {
+        attendanceRes.data.forEach((a: any) => { existing[a.student_id] = a.status; });
+      }
+
+      setAttendance({ ...init, ...existing });
+      setOriginalAttendance(existing);
+    };
+    fetchData();
   }, [selectedHalaqa, selectedDate]);
 
   const handleSave = async () => {
