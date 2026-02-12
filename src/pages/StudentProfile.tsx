@@ -195,6 +195,16 @@ const StudentProfile = () => {
                 </div>
               )}
             </div>
+            {isManager && (
+              <div className="flex flex-col gap-2 shrink-0">
+                <Button variant="outline" size="icon" onClick={openEdit}>
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
