@@ -39,6 +39,7 @@ import Enroll from "./pages/Enroll";
 import EnrollmentRequests from "./pages/EnrollmentRequests";
 import Preparation from "./pages/Preparation";
 import AcademicCalendar from "./pages/AcademicCalendar";
+import AttendanceAuditLog from "./pages/AttendanceAuditLog";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,6 +115,7 @@ const AppRoutes = () => {
       <Route path="/enrollment-requests" element={<ProtectedRoute path="/enrollment-requests"><EnrollmentRequests /></ProtectedRoute>} />
       <Route path="/preparation" element={<ProtectedRoute path="/preparation"><Preparation /></ProtectedRoute>} />
       <Route path="/academic-calendar" element={<ProtectedRoute path="/academic-calendar"><AcademicCalendar /></ProtectedRoute>} />
+      <Route path="/attendance-audit" element={<ProtectedRoute path="/attendance-audit"><AttendanceAuditLog /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
