@@ -126,12 +126,12 @@ const AttendanceAuditLog = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>الطالب</TableHead>
-                  <TableHead>تاريخ الحضور</TableHead>
-                  <TableHead>الحالة السابقة</TableHead>
-                  <TableHead>الحالة الجديدة</TableHead>
-                  <TableHead>عُدّل بواسطة</TableHead>
-                  <TableHead>وقت التعديل</TableHead>
+                  <TableHead className="text-right w-[18%]">الطالب</TableHead>
+                  <TableHead className="text-right w-[14%]">تاريخ الحضور</TableHead>
+                  <TableHead className="text-center w-[14%]">الحالة السابقة</TableHead>
+                  <TableHead className="text-center w-[14%]">الحالة الجديدة</TableHead>
+                  <TableHead className="text-right w-[16%]">عُدّل بواسطة</TableHead>
+                  <TableHead className="text-right w-[24%]">وقت التعديل</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
