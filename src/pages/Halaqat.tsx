@@ -237,6 +237,57 @@ const Halaqat = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Halaqa Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>تعديل الحلقة</DialogTitle></DialogHeader>
+          <form onSubmit={handleEditHalaqa} className="space-y-4">
+            <div className="space-y-2">
+              <Label>اسم الحلقة</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
+              <Label>المعلم</Label>
+              <Select value={editForm.teacher_id} onValueChange={(v) => setEditForm({ ...editForm, teacher_id: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر المعلم" /></SelectTrigger>
+                <SelectContent>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>المكان</Label>
+              <Input value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>الجدول</Label>
+              <Input value={editForm.schedule} onChange={(e) => setEditForm({ ...editForm, schedule: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>الحد الأقصى للطلاب</Label>
+              <Input type="number" value={editForm.capacity_max} onChange={(e) => setEditForm({ ...editForm, capacity_max: Number(e.target.value) })} min={1} />
+            </div>
+            <Button type="submit" className="w-full">حفظ التعديلات</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Halaqa Confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذه الحلقة؟</AlertDialogTitle>
+            <AlertDialogDescription>سيتم تعطيل الحلقة "{halaqat.find(h => h.id === deleteId)?.name}". يمكن استعادتها لاحقاً.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteHalaqa} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
