@@ -161,6 +161,7 @@ const StudentProfile = () => {
   const recordsTotalPages = Math.ceil(recordsTotal / PAGE_SIZE);
 
   return (
+    <>
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto">
       <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
         <ArrowRight className="w-4 h-4 ml-1" />
