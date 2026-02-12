@@ -49,6 +49,7 @@ const allNavItems = [
   { to: "/enrollment-requests", icon: ClipboardList, label: "طلبات الالتحاق" },
   { to: "/preparation", icon: Clock, label: "وقت التحضير" },
   { to: "/academic-calendar", icon: CalendarDays, label: "التقويم الأكاديمي" },
+  { to: "/attendance-audit", icon: ClipboardList, label: "سجل تدقيق الحضور" },
   { to: "/documents", icon: FolderOpen, label: "المستندات" },
   { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
   { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
