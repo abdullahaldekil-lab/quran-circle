@@ -17,6 +17,7 @@ import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import StudentLevelProgress from "@/components/StudentLevelProgress";
+import MadarijStudentSection from "@/components/MadarijStudentSection";
 
 const PAGE_SIZE = 20;
 
@@ -213,6 +214,9 @@ const StudentProfile = () => {
 
       {/* Student Level Progress (Memorization Track) */}
       <StudentLevelProgress studentId={id!} isManager={isManager} />
+
+      {/* Madarij Section */}
+      <MadarijStudentSection studentId={id!} isManager={isManager} />
 
       {/* Progress */}
       <Card>

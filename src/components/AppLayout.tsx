@@ -66,6 +66,7 @@ const navGroups: NavGroup[] = [
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
+      { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
     ],
   },
   {

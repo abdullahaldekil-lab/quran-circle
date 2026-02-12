@@ -24,15 +24,15 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
-    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit",
+    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/attendance",
@@ -44,7 +44,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
-    "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar",
+    "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
