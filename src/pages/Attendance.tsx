@@ -53,7 +53,7 @@ const Attendance = () => {
 
   const canEdit = canEditDate(selectedDate);
 
-  const OFFSET_START = 30;
+  const OFFSET_START = 0;
   const OFFSET_LATE = 45;
   const SESSION_DURATION = 120;
 
@@ -310,14 +310,10 @@ const Attendance = () => {
               <span className="text-sm text-muted-foreground">الحالة</span>
               <Badge className={WINDOW_STATUS_MAP[windowStatus].color}>{WINDOW_STATUS_MAP[windowStatus].label}</Badge>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="grid grid-cols-2 gap-2 text-center">
               <div className="p-2 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">العصر</p>
+                <p className="text-xs text-muted-foreground">أذان العصر (بداية الحضور)</p>
                 <p className="text-sm font-bold">{asrTime}</p>
-              </div>
-              <div className="p-2 rounded-lg bg-muted/30">
-                <p className="text-xs text-muted-foreground">بداية الحضور</p>
-                <p className="text-sm font-bold">{formatTime(asrTime, OFFSET_START)}</p>
               </div>
               <div className="p-2 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">حد التأخر</p>
