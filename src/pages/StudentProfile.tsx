@@ -318,6 +318,89 @@ const StudentProfile = () => {
         </TabsContent>
       </Tabs>
     </div>
+
+      {/* Edit Student Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>تعديل بيانات الطالب</DialogTitle></DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>اسم الطالب</Label>
+              <Input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
+              <Label>الحلقة</Label>
+              <Select value={editForm.halaqa_id} onValueChange={(v) => setEditForm({ ...editForm, halaqa_id: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                <SelectContent>
+                  {halaqat.map((h) => (
+                    <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>اسم ولي الأمر</Label>
+              <Input value={editForm.guardian_name} onChange={(e) => setEditForm({ ...editForm, guardian_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>هاتف ولي الأمر</Label>
+              <Input value={editForm.guardian_phone} onChange={(e) => setEditForm({ ...editForm, guardian_phone: e.target.value })} dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>تاريخ الميلاد (ميلادي)</Label>
+              <Input type="date" value={editForm.birth_date_gregorian} onChange={(e) => {
+                const greg = e.target.value;
+                let hijri = "";
+                if (greg) { try { hijri = gregorianToHijri(new Date(greg)); } catch {} }
+                setEditForm({ ...editForm, birth_date_gregorian: greg, birth_date_hijri: hijri });
+              }} dir="ltr" className="text-right" />
+            </div>
+            <div className="space-y-2">
+              <Label>تاريخ الميلاد (هجري)</Label>
+              <Input value={editForm.birth_date_hijri} onChange={(e) => {
+                const hijri = e.target.value;
+                let greg = "";
+                if (hijri && /^\d{4}\/\d{2}\/\d{2}$/.test(hijri)) {
+                  const d = hijriToGregorian(hijri);
+                  if (d) greg = d.toISOString().split("T")[0];
+                }
+                setEditForm({ ...editForm, birth_date_hijri: hijri, birth_date_gregorian: greg || editForm.birth_date_gregorian });
+              }} placeholder="1440/06/15" dir="ltr" className="text-right" />
+            </div>
+            <div className="space-y-2">
+              <Label>المستوى</Label>
+              <Select value={editForm.current_level} onValueChange={(v) => setEditForm({ ...editForm, current_level: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {levels.map((l) => (
+                    <SelectItem key={l.id} value={l.name}>{l.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>ملاحظات</Label>
+              <Input value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
+            </div>
+            <Button type="submit" className="w-full">حفظ التعديلات</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذا الطالب؟</AlertDialogTitle>
+            <AlertDialogDescription>سيتم تعطيل حساب الطالب "{student?.full_name}". يمكن استعادته لاحقاً.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
   );
 };
 
