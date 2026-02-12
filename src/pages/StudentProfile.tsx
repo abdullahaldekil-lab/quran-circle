@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
-import { formatHijriArabic } from "@/lib/hijri";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2 } from "lucide-react";
+import { formatHijriArabic, gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
+import { useRole } from "@/hooks/useRole";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
 
@@ -16,12 +23,21 @@ const StudentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
+  const { isManager } = useRole();
   const [student, setStudent] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [recordsPage, setRecordsPage] = useState(0);
   const [recordsTotal, setRecordsTotal] = useState(0);
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, total: 0 });
   const [activeTab, setActiveTab] = useState("records");
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [halaqat, setHalaqat] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
+  const [editForm, setEditForm] = useState({
+    full_name: "", halaqa_id: "", guardian_name: "", guardian_phone: "",
+    current_level: "", birth_date_gregorian: "", birth_date_hijri: "", notes: "",
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -43,6 +59,61 @@ const StudentProfile = () => {
     };
     fetchData();
   }, [id]);
+
+  // Fetch halaqat and levels for edit form
+  useEffect(() => {
+    const fetchMeta = async () => {
+      const [hRes, lRes] = await Promise.all([
+        supabase.from("halaqat").select("id, name").eq("active", true),
+        supabase.from("memorization_levels").select("*").eq("active", true).order("sort_order"),
+      ]);
+      setHalaqat(hRes.data || []);
+      setLevels(lRes.data || []);
+    };
+    fetchMeta();
+  }, []);
+
+  const openEdit = () => {
+    if (!student) return;
+    setEditForm({
+      full_name: student.full_name || "",
+      halaqa_id: student.halaqa_id || "",
+      guardian_name: student.guardian_name || "",
+      guardian_phone: student.guardian_phone || "",
+      current_level: student.current_level || "",
+      birth_date_gregorian: student.birth_date_gregorian || "",
+      birth_date_hijri: student.birth_date_hijri || "",
+      notes: student.notes || "",
+    });
+    setEditOpen(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from("students").update({
+      full_name: editForm.full_name,
+      halaqa_id: editForm.halaqa_id || null,
+      guardian_name: editForm.guardian_name || null,
+      guardian_phone: editForm.guardian_phone || null,
+      current_level: editForm.current_level || null,
+      birth_date_gregorian: editForm.birth_date_gregorian || null,
+      birth_date_hijri: editForm.birth_date_hijri || null,
+      notes: editForm.notes || null,
+    }).eq("id", id!);
+    if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
+    toast.success("تم تعديل بيانات الطالب");
+    setEditOpen(false);
+    // Refresh student data
+    const { data } = await supabase.from("students").select("*, halaqat(name)").eq("id", id!).maybeSingle();
+    setStudent(data);
+  };
+
+  const handleDelete = async () => {
+    const { error } = await supabase.from("students").update({ status: "inactive" as any }).eq("id", id!);
+    if (error) { toast.error("حدث خطأ أثناء الحذف"); return; }
+    toast.success("تم حذف الطالب");
+    navigate("/students");
+  };
 
   // Fetch recitation records with pagination
   useEffect(() => {
@@ -90,6 +161,7 @@ const StudentProfile = () => {
   const recordsTotalPages = Math.ceil(recordsTotal / PAGE_SIZE);
 
   return (
+    <>
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto">
       <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
         <ArrowRight className="w-4 h-4 ml-1" />
@@ -124,6 +196,16 @@ const StudentProfile = () => {
                 </div>
               )}
             </div>
+            {isManager && (
+              <div className="flex flex-col gap-2 shrink-0">
+                <Button variant="outline" size="icon" onClick={openEdit}>
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -237,6 +319,90 @@ const StudentProfile = () => {
         </TabsContent>
       </Tabs>
     </div>
+
+      {/* Edit Student Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>تعديل بيانات الطالب</DialogTitle></DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>اسم الطالب</Label>
+              <Input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
+              <Label>الحلقة</Label>
+              <Select value={editForm.halaqa_id} onValueChange={(v) => setEditForm({ ...editForm, halaqa_id: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                <SelectContent>
+                  {halaqat.map((h) => (
+                    <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>اسم ولي الأمر</Label>
+              <Input value={editForm.guardian_name} onChange={(e) => setEditForm({ ...editForm, guardian_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>هاتف ولي الأمر</Label>
+              <Input value={editForm.guardian_phone} onChange={(e) => setEditForm({ ...editForm, guardian_phone: e.target.value })} dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>تاريخ الميلاد (ميلادي)</Label>
+              <Input type="date" value={editForm.birth_date_gregorian} onChange={(e) => {
+                const greg = e.target.value;
+                let hijri = "";
+                if (greg) { try { hijri = gregorianToHijri(new Date(greg)); } catch {} }
+                setEditForm({ ...editForm, birth_date_gregorian: greg, birth_date_hijri: hijri });
+              }} dir="ltr" className="text-right" />
+            </div>
+            <div className="space-y-2">
+              <Label>تاريخ الميلاد (هجري)</Label>
+              <Input value={editForm.birth_date_hijri} onChange={(e) => {
+                const hijri = e.target.value;
+                let greg = "";
+                if (hijri && /^\d{4}\/\d{2}\/\d{2}$/.test(hijri)) {
+                  const d = hijriToGregorian(hijri);
+                  if (d) greg = d.toISOString().split("T")[0];
+                }
+                setEditForm({ ...editForm, birth_date_hijri: hijri, birth_date_gregorian: greg || editForm.birth_date_gregorian });
+              }} placeholder="1440/06/15" dir="ltr" className="text-right" />
+            </div>
+            <div className="space-y-2">
+              <Label>المستوى</Label>
+              <Select value={editForm.current_level} onValueChange={(v) => setEditForm({ ...editForm, current_level: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {levels.map((l) => (
+                    <SelectItem key={l.id} value={l.name}>{l.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>ملاحظات</Label>
+              <Input value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
+            </div>
+            <Button type="submit" className="w-full">حفظ التعديلات</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذا الطالب؟</AlertDialogTitle>
+            <AlertDialogDescription>سيتم تعطيل حساب الطالب "{student?.full_name}". يمكن استعادته لاحقاً.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

@@ -5,19 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2 } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
 
 const Halaqat = () => {
+  const { isManager } = useRole();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [studentsDialogId, setStudentsDialogId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", teacher_id: "", location: "", schedule: "" });
+  const [editOpen, setEditOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", teacher_id: "", location: "", schedule: "", capacity_max: 25 });
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes] = await Promise.all([
@@ -59,6 +67,44 @@ const Halaqat = () => {
     if (count >= max) return { label: "مكتمل", color: "bg-green-500 text-white" };
     if (count >= max * 0.8) return { label: "قارب الاكتمال", color: "bg-yellow-500 text-white" };
     return { label: "ناقص", color: "bg-orange-500 text-white" };
+  };
+
+  const openEditHalaqa = (h: any) => {
+    setEditId(h.id);
+    setEditForm({
+      name: h.name,
+      teacher_id: h.teacher_id || "",
+      location: h.location || "",
+      schedule: h.schedule || "",
+      capacity_max: h.capacity_max || 25,
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditHalaqa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editId) return;
+    const { error } = await supabase.from("halaqat").update({
+      name: editForm.name,
+      teacher_id: editForm.teacher_id || null,
+      location: editForm.location || null,
+      schedule: editForm.schedule || null,
+      capacity_max: editForm.capacity_max,
+    }).eq("id", editId);
+    if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
+    toast.success("تم تعديل الحلقة");
+    setEditOpen(false);
+    fetchData();
+  };
+
+  const handleDeleteHalaqa = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from("halaqat").update({ active: false }).eq("id", deleteId);
+    if (error) { toast.error("حدث خطأ أثناء الحذف"); return; }
+    toast.success("تم حذف الحلقة");
+    setDeleteOpen(false);
+    setDeleteId(null);
+    fetchData();
   };
 
   return (
@@ -141,15 +187,27 @@ const Halaqat = () => {
                 {h.location && <p className="text-muted-foreground">المكان: {h.location}</p>}
                 {h.schedule && <p className="text-muted-foreground">الجدول: {h.schedule}</p>}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-1"
-                  onClick={() => setStudentsDialogId(h.id)}
-                >
-                  <User className="w-3 h-3 ml-1" />
-                  عرض الطلاب ({count})
-                </Button>
+                <div className="flex gap-2 mt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setStudentsDialogId(h.id)}
+                  >
+                    <User className="w-3 h-3 ml-1" />
+                    عرض الطلاب ({count})
+                  </Button>
+                  {isManager && (
+                    <>
+                      <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => { setDeleteId(h.id); setDeleteOpen(true); }}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );
@@ -178,6 +236,57 @@ const Halaqat = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Halaqa Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>تعديل الحلقة</DialogTitle></DialogHeader>
+          <form onSubmit={handleEditHalaqa} className="space-y-4">
+            <div className="space-y-2">
+              <Label>اسم الحلقة</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
+              <Label>المعلم</Label>
+              <Select value={editForm.teacher_id} onValueChange={(v) => setEditForm({ ...editForm, teacher_id: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر المعلم" /></SelectTrigger>
+                <SelectContent>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>المكان</Label>
+              <Input value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>الجدول</Label>
+              <Input value={editForm.schedule} onChange={(e) => setEditForm({ ...editForm, schedule: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>الحد الأقصى للطلاب</Label>
+              <Input type="number" value={editForm.capacity_max} onChange={(e) => setEditForm({ ...editForm, capacity_max: Number(e.target.value) })} min={1} />
+            </div>
+            <Button type="submit" className="w-full">حفظ التعديلات</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Halaqa Confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذه الحلقة؟</AlertDialogTitle>
+            <AlertDialogDescription>سيتم تعطيل الحلقة "{halaqat.find(h => h.id === deleteId)?.name}". يمكن استعادتها لاحقاً.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteHalaqa} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
