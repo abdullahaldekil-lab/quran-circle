@@ -39,6 +39,7 @@ import Enroll from "./pages/Enroll";
 import EnrollmentRequests from "./pages/EnrollmentRequests";
 import Preparation from "./pages/Preparation";
 import AcademicCalendar from "./pages/AcademicCalendar";
+import AttendanceAuditLog from "./pages/AttendanceAuditLog";
 
 const queryClient = new QueryClient({
   defaultOptions: {
