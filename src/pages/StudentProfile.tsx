@@ -23,12 +23,21 @@ const StudentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
+  const { isManager } = useRole();
   const [student, setStudent] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [recordsPage, setRecordsPage] = useState(0);
   const [recordsTotal, setRecordsTotal] = useState(0);
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, total: 0 });
   const [activeTab, setActiveTab] = useState("records");
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [halaqat, setHalaqat] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
+  const [editForm, setEditForm] = useState({
+    full_name: "", halaqa_id: "", guardian_name: "", guardian_phone: "",
+    current_level: "", birth_date_gregorian: "", birth_date_hijri: "", notes: "",
+  });
 
   useEffect(() => {
     if (!id) return;
