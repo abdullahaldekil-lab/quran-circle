@@ -16,6 +16,7 @@ import { formatHijriArabic, gregorianToHijri, hijriToGregorian } from "@/lib/hij
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
+import StudentLevelProgress from "@/components/StudentLevelProgress";
 
 const PAGE_SIZE = 20;
 
@@ -209,6 +210,9 @@ const StudentProfile = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Student Level Progress (Memorization Track) */}
+      <StudentLevelProgress studentId={id!} isManager={isManager} />
 
       {/* Progress */}
       <Card>
