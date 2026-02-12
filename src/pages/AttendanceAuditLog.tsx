@@ -137,20 +137,20 @@ const AttendanceAuditLog = () => {
               <TableBody>
                 {filtered.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell className="font-medium">{entry.student_name}</TableCell>
-                    <TableCell>{entry.attendance_date}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium text-right">{entry.student_name}</TableCell>
+                    <TableCell className="text-right">{entry.attendance_date}</TableCell>
+                    <TableCell className="text-center">
                       <Badge variant={statusVariant(entry.old_status)}>
                         {statusLabels[entry.old_status] || entry.old_status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <Badge variant={statusVariant(entry.new_status)}>
                         {statusLabels[entry.new_status] || entry.new_status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{entry.editor_name}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
+                    <TableCell className="text-right">{entry.editor_name}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs text-right">
                       {new Date(entry.edited_at).toLocaleString("ar-SA", {
                         timeZone: "Asia/Riyadh",
                       })}
