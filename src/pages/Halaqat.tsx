@@ -69,6 +69,44 @@ const Halaqat = () => {
     return { label: "ناقص", color: "bg-orange-500 text-white" };
   };
 
+  const openEditHalaqa = (h: any) => {
+    setEditId(h.id);
+    setEditForm({
+      name: h.name,
+      teacher_id: h.teacher_id || "",
+      location: h.location || "",
+      schedule: h.schedule || "",
+      capacity_max: h.capacity_max || 25,
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditHalaqa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editId) return;
+    const { error } = await supabase.from("halaqat").update({
+      name: editForm.name,
+      teacher_id: editForm.teacher_id || null,
+      location: editForm.location || null,
+      schedule: editForm.schedule || null,
+      capacity_max: editForm.capacity_max,
+    }).eq("id", editId);
+    if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
+    toast.success("تم تعديل الحلقة");
+    setEditOpen(false);
+    fetchData();
+  };
+
+  const handleDeleteHalaqa = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from("halaqat").update({ active: false }).eq("id", deleteId);
+    if (error) { toast.error("حدث خطأ أثناء الحذف"); return; }
+    toast.success("تم حذف الحلقة");
+    setDeleteOpen(false);
+    setDeleteId(null);
+    fetchData();
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
