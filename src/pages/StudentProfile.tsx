@@ -114,7 +114,6 @@ const StudentProfile = () => {
     toast.success("تم حذف الطالب");
     navigate("/students");
   };
-  }, [id]);
 
   // Fetch recitation records with pagination
   useEffect(() => {
