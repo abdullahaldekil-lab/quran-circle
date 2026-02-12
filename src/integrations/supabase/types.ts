@@ -836,6 +836,329 @@ export type Database = {
         }
         Relationships: []
       }
+      madarij_daily_progress: {
+        Row: {
+          created_at: string
+          enrollment_id: string
+          execution: string | null
+          grade: number | null
+          id: string
+          linking: string | null
+          listening: number | null
+          memorization: string | null
+          mistakes_count: number | null
+          progress_date: string
+          repetition_after: number | null
+          repetition_before: number | null
+          review: string | null
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          enrollment_id: string
+          execution?: string | null
+          grade?: number | null
+          id?: string
+          linking?: string | null
+          listening?: number | null
+          memorization?: string | null
+          mistakes_count?: number | null
+          progress_date?: string
+          repetition_after?: number | null
+          repetition_before?: number | null
+          review?: string | null
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          enrollment_id?: string
+          execution?: string | null
+          grade?: number | null
+          id?: string
+          linking?: string | null
+          listening?: number | null
+          memorization?: string | null
+          mistakes_count?: number | null
+          progress_date?: string
+          repetition_after?: number | null
+          repetition_before?: number | null
+          review?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "madarij_daily_progress_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_daily_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      madarij_enrollments: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          end_date: string | null
+          hizb_number: number
+          id: string
+          level_track_id: string | null
+          part_number: number
+          start_date: string
+          status: string
+          student_id: string
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          hizb_number?: number
+          id?: string
+          level_track_id?: string | null
+          part_number?: number
+          start_date?: string
+          status?: string
+          student_id: string
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          hizb_number?: number
+          id?: string
+          level_track_id?: string | null
+          part_number?: number
+          start_date?: string
+          status?: string
+          student_id?: string
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "madarij_enrollments_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "level_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_enrollments_level_track_id_fkey"
+            columns: ["level_track_id"]
+            isOneToOne: false
+            referencedRelation: "level_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_enrollments_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      madarij_hizb_exams: {
+        Row: {
+          created_at: string
+          enrollment_id: string
+          examiner_name: string | null
+          extra_points: number | null
+          final_grade: number | null
+          id: string
+          memorization_grade: number | null
+          pass_date: string | null
+          passed: boolean | null
+          review_total: number | null
+          segment1_errors: number | null
+          segment1_grade: number | null
+          segment1_warnings: number | null
+          segment2_errors: number | null
+          segment2_grade: number | null
+          segment2_warnings: number | null
+          segment3_errors: number | null
+          segment3_grade: number | null
+          segment3_warnings: number | null
+          segment4_errors: number | null
+          segment4_grade: number | null
+          segment4_warnings: number | null
+          segment5_errors: number | null
+          segment5_grade: number | null
+          segment5_warnings: number | null
+          student_id: string
+          supervisor_approval: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enrollment_id: string
+          examiner_name?: string | null
+          extra_points?: number | null
+          final_grade?: number | null
+          id?: string
+          memorization_grade?: number | null
+          pass_date?: string | null
+          passed?: boolean | null
+          review_total?: number | null
+          segment1_errors?: number | null
+          segment1_grade?: number | null
+          segment1_warnings?: number | null
+          segment2_errors?: number | null
+          segment2_grade?: number | null
+          segment2_warnings?: number | null
+          segment3_errors?: number | null
+          segment3_grade?: number | null
+          segment3_warnings?: number | null
+          segment4_errors?: number | null
+          segment4_grade?: number | null
+          segment4_warnings?: number | null
+          segment5_errors?: number | null
+          segment5_grade?: number | null
+          segment5_warnings?: number | null
+          student_id: string
+          supervisor_approval?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enrollment_id?: string
+          examiner_name?: string | null
+          extra_points?: number | null
+          final_grade?: number | null
+          id?: string
+          memorization_grade?: number | null
+          pass_date?: string | null
+          passed?: boolean | null
+          review_total?: number | null
+          segment1_errors?: number | null
+          segment1_grade?: number | null
+          segment1_warnings?: number | null
+          segment2_errors?: number | null
+          segment2_grade?: number | null
+          segment2_warnings?: number | null
+          segment3_errors?: number | null
+          segment3_grade?: number | null
+          segment3_warnings?: number | null
+          segment4_errors?: number | null
+          segment4_grade?: number | null
+          segment4_warnings?: number | null
+          segment5_errors?: number | null
+          segment5_grade?: number | null
+          segment5_warnings?: number | null
+          student_id?: string
+          supervisor_approval?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "madarij_hizb_exams_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_hizb_exams_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      madarij_mistakes: {
+        Row: {
+          ayah: string | null
+          created_at: string
+          enrollment_id: string
+          id: string
+          mistake_text: string
+          student_id: string
+          surah: string | null
+        }
+        Insert: {
+          ayah?: string | null
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          mistake_text: string
+          student_id: string
+          surah?: string | null
+        }
+        Update: {
+          ayah?: string | null
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          mistake_text?: string
+          student_id?: string
+          surah?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "madarij_mistakes_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_mistakes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      madarij_tracks: {
+        Row: {
+          active: boolean
+          created_at: string
+          days_required: number
+          description: string | null
+          id: string
+          name: string
+          repetition_rules: Json | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          days_required?: number
+          description?: string | null
+          id?: string
+          name: string
+          repetition_rules?: Json | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          days_required?: number
+          description?: string | null
+          id?: string
+          name?: string
+          repetition_rules?: Json | null
+        }
+        Relationships: []
+      }
       memorization_levels: {
         Row: {
           active: boolean
