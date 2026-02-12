@@ -187,17 +187,30 @@ const Halaqat = () => {
                 {h.location && <p className="text-muted-foreground">المكان: {h.location}</p>}
                 {h.schedule && <p className="text-muted-foreground">الجدول: {h.schedule}</p>}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-1"
-                  onClick={() => setStudentsDialogId(h.id)}
-                >
-                  <User className="w-3 h-3 ml-1" />
-                  عرض الطلاب ({count})
-                </Button>
+                <div className="flex gap-2 mt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setStudentsDialogId(h.id)}
+                  >
+                    <User className="w-3 h-3 ml-1" />
+                    عرض الطلاب ({count})
+                  </Button>
+                  {isManager && (
+                    <>
+                      <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => { setDeleteId(h.id); setDeleteOpen(true); }}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </CardContent>
             </Card>
+          );
           );
         })}
       </div>
