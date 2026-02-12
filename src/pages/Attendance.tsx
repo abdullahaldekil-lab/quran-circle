@@ -53,7 +53,7 @@ const Attendance = () => {
 
   const canEdit = canEditDate(selectedDate);
 
-  const OFFSET_START = 30;
+  const OFFSET_START = 0;
   const OFFSET_LATE = 45;
   const SESSION_DURATION = 120;
 
