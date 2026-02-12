@@ -60,6 +60,62 @@ const StudentProfile = () => {
     fetchData();
   }, [id]);
 
+  // Fetch halaqat and levels for edit form
+  useEffect(() => {
+    const fetchMeta = async () => {
+      const [hRes, lRes] = await Promise.all([
+        supabase.from("halaqat").select("id, name").eq("active", true),
+        supabase.from("memorization_levels").select("*").eq("active", true).order("sort_order"),
+      ]);
+      setHalaqat(hRes.data || []);
+      setLevels(lRes.data || []);
+    };
+    fetchMeta();
+  }, []);
+
+  const openEdit = () => {
+    if (!student) return;
+    setEditForm({
+      full_name: student.full_name || "",
+      halaqa_id: student.halaqa_id || "",
+      guardian_name: student.guardian_name || "",
+      guardian_phone: student.guardian_phone || "",
+      current_level: student.current_level || "",
+      birth_date_gregorian: student.birth_date_gregorian || "",
+      birth_date_hijri: student.birth_date_hijri || "",
+      notes: student.notes || "",
+    });
+    setEditOpen(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from("students").update({
+      full_name: editForm.full_name,
+      halaqa_id: editForm.halaqa_id || null,
+      guardian_name: editForm.guardian_name || null,
+      guardian_phone: editForm.guardian_phone || null,
+      current_level: editForm.current_level || null,
+      birth_date_gregorian: editForm.birth_date_gregorian || null,
+      birth_date_hijri: editForm.birth_date_hijri || null,
+      notes: editForm.notes || null,
+    }).eq("id", id!);
+    if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
+    toast.success("تم تعديل بيانات الطالب");
+    setEditOpen(false);
+    // Refresh student data
+    const { data } = await supabase.from("students").select("*, halaqat(name)").eq("id", id!).maybeSingle();
+    setStudent(data);
+  };
+
+  const handleDelete = async () => {
+    const { error } = await supabase.from("students").update({ status: "inactive" as any }).eq("id", id!);
+    if (error) { toast.error("حدث خطأ أثناء الحذف"); return; }
+    toast.success("تم حذف الطالب");
+    navigate("/students");
+  };
+  }, [id]);
+
   // Fetch recitation records with pagination
   useEffect(() => {
     if (!id) return;
