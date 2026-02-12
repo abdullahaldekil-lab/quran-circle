@@ -402,6 +402,7 @@ const StudentProfile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </>
   );
 };
 
