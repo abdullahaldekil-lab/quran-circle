@@ -17,24 +17,27 @@ const Halaqat = () => {
   const { isManager } = useRole();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [levelTracks, setLevelTracks] = useState<any[]>([]);
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [studentsDialogId, setStudentsDialogId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", teacher_id: "", location: "", schedule: "" });
+  const [form, setForm] = useState({ name: "", teacher_id: "", location: "", schedule: "", level_track_id: "" });
   const [editOpen, setEditOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", teacher_id: "", location: "", schedule: "", capacity_max: 25 });
+  const [editForm, setEditForm] = useState({ name: "", teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "" });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchData = async () => {
-    const [halaqatRes, teachersRes, studentsRes] = await Promise.all([
+    const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
       supabase.from("halaqat").select("*, profiles:teacher_id(full_name)").eq("active", true),
       supabase.from("profiles").select("id, full_name").in("role", ["teacher", "assistant_teacher"]),
       supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
+      supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
     ]);
     setHalaqat(halaqatRes.data || []);
     setTeachers(teachersRes.data || []);
+    setLevelTracks(tracksRes.data || []);
 
     const grouped: Record<string, any[]> = {};
     (studentsRes.data || []).forEach((s: any) => {
@@ -55,11 +58,12 @@ const Halaqat = () => {
       teacher_id: form.teacher_id || null,
       location: form.location || null,
       schedule: form.schedule || null,
+      level_track_id: form.level_track_id || null,
     });
     if (error) { toast.error("حدث خطأ"); return; }
     toast.success("تمت إضافة الحلقة");
     setDialogOpen(false);
-    setForm({ name: "", teacher_id: "", location: "", schedule: "" });
+    setForm({ name: "", teacher_id: "", location: "", schedule: "", level_track_id: "" });
     fetchData();
   };
 
@@ -77,6 +81,7 @@ const Halaqat = () => {
       location: h.location || "",
       schedule: h.schedule || "",
       capacity_max: h.capacity_max || 25,
+      level_track_id: h.level_track_id || "",
     });
     setEditOpen(true);
   };
@@ -90,6 +95,7 @@ const Halaqat = () => {
       location: editForm.location || null,
       schedule: editForm.schedule || null,
       capacity_max: editForm.capacity_max,
+      level_track_id: editForm.level_track_id || null,
     }).eq("id", editId);
     if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
     toast.success("تم تعديل الحلقة");
@@ -144,6 +150,17 @@ const Halaqat = () => {
                 <Label>الجدول</Label>
                 <Input value={form.schedule} onChange={(e) => setForm({ ...form, schedule: e.target.value })} placeholder="مثال: السبت - الخميس 4:00 - 6:00" />
               </div>
+              <div className="space-y-2">
+                <Label>مسار الحفظ</Label>
+                <Select value={form.level_track_id} onValueChange={(v) => setForm({ ...form, level_track_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="اختر المسار (اختياري)" /></SelectTrigger>
+                  <SelectContent>
+                    {levelTracks.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button type="submit" className="w-full">إضافة</Button>
             </form>
           </DialogContent>
@@ -173,6 +190,9 @@ const Halaqat = () => {
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <p className="text-muted-foreground">المعلم: {h.profiles?.full_name || "غير محدد"}</p>
+                {h.level_track_id && (
+                  <p className="text-muted-foreground">المسار: {levelTracks.find(t => t.id === h.level_track_id)?.name || "—"}</p>
+                )}
 
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
@@ -268,6 +288,17 @@ const Halaqat = () => {
             <div className="space-y-2">
               <Label>الحد الأقصى للطلاب</Label>
               <Input type="number" value={editForm.capacity_max} onChange={(e) => setEditForm({ ...editForm, capacity_max: Number(e.target.value) })} min={1} />
+            </div>
+            <div className="space-y-2">
+              <Label>مسار الحفظ</Label>
+              <Select value={editForm.level_track_id} onValueChange={(v) => setEditForm({ ...editForm, level_track_id: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر المسار (اختياري)" /></SelectTrigger>
+                <SelectContent>
+                  {levelTracks.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Button type="submit" className="w-full">حفظ التعديلات</Button>
           </form>

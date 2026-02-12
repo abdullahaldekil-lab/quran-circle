@@ -107,15 +107,83 @@ const Recitation = () => {
       notes: form.notes || null,
       audio_url: audioUrl || null,
     });
-    setSaving(false);
     if (error) {
+      setSaving(false);
       toast.error("حدث خطأ أثناء الحفظ");
       return;
     }
+
+    // Auto-progress: advance student level if score >= 80
+    if (totalScore >= 80) {
+      await advanceStudentLevel(currentStudent.id);
+    }
+
+    setSaving(false);
     toast.success(`تم حفظ تسميع ${currentStudent.full_name} - الدرجة: ${totalScore}`);
     if (currentIndex < students.length - 1) {
       setCurrentIndex(currentIndex + 1);
       resetForm();
+    }
+  };
+
+  /** Advance student to next part/branch/level automatically */
+  const advanceStudentLevel = async (studentId: string) => {
+    try {
+      const { data: sl } = await supabase.from("student_levels").select("*").eq("student_id", studentId).maybeSingle();
+      if (!sl) return;
+
+      const { data: allBranches } = await supabase.from("level_branches").select("*").eq("level_track_id", sl.level_track_id).order("sort_order");
+      const { data: allParts } = await supabase.from("level_parts").select("*").eq("branch_id", sl.branch_id).order("sort_order");
+      const { data: allTracks } = await supabase.from("level_tracks").select("*").eq("active", true).order("sort_order");
+
+      if (!allBranches || !allParts || !allTracks) return;
+
+      const currentPartIndex = allParts.findIndex(p => p.part_number === sl.part_number);
+      
+      if (currentPartIndex < allParts.length - 1) {
+        // Next part in same branch
+        await supabase.from("student_levels").update({
+          part_number: allParts[currentPartIndex + 1].part_number,
+          updated_by_manager: false,
+        }).eq("id", sl.id);
+        toast.info("تم الانتقال للجزء التالي تلقائياً");
+      } else {
+        // Completed all parts in branch, move to next branch
+        const currentBranchIndex = allBranches.findIndex(b => b.id === sl.branch_id);
+        if (currentBranchIndex < allBranches.length - 1) {
+          const nextBranch = allBranches[currentBranchIndex + 1];
+          await supabase.from("student_levels").update({
+            branch_id: nextBranch.id,
+            part_number: 1,
+            updated_by_manager: false,
+          }).eq("id", sl.id);
+          toast.info(`تم الانتقال للفرع ${nextBranch.branch_number} تلقائياً`);
+        } else {
+          // Completed all branches in level, move to next level
+          const currentTrackIndex = allTracks.findIndex(t => t.id === sl.level_track_id);
+          if (currentTrackIndex < allTracks.length - 1) {
+            const nextTrack = allTracks[currentTrackIndex + 1];
+            const { data: nextBranches } = await supabase.from("level_branches").select("*").eq("level_track_id", nextTrack.id).order("sort_order").limit(1);
+            await supabase.from("student_levels").update({
+              level_track_id: nextTrack.id,
+              branch_id: nextBranches?.[0]?.id || null,
+              part_number: 1,
+              updated_by_manager: false,
+              completion_date: null,
+            }).eq("id", sl.id);
+            toast.success(`🎉 تم الانتقال لمستوى ${nextTrack.name}`);
+          } else {
+            // All levels completed - graduate
+            await supabase.from("student_levels").update({
+              completion_date: new Date().toISOString().split("T")[0],
+              progress_percentage: 100,
+            }).eq("id", sl.id);
+            toast.success("🎓 أتم الطالب جميع المستويات - الخريجين!");
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Auto-progress error:", err);
     }
   };
 

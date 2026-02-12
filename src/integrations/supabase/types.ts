@@ -577,6 +577,7 @@ export type Database = {
           capacity_max: number
           created_at: string
           id: string
+          level_track_id: string | null
           location: string | null
           name: string
           schedule: string | null
@@ -588,6 +589,7 @@ export type Database = {
           capacity_max?: number
           created_at?: string
           id?: string
+          level_track_id?: string | null
           location?: string | null
           name: string
           schedule?: string | null
@@ -599,6 +601,7 @@ export type Database = {
           capacity_max?: number
           created_at?: string
           id?: string
+          level_track_id?: string | null
           location?: string | null
           name?: string
           schedule?: string | null
@@ -610,6 +613,13 @@ export type Database = {
             columns: ["assistant_teacher_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_level_track_id_fkey"
+            columns: ["level_track_id"]
+            isOneToOne: false
+            referencedRelation: "level_tracks"
             referencedColumns: ["id"]
           },
           {
@@ -715,6 +725,116 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      level_branches: {
+        Row: {
+          branch_number: number
+          created_at: string
+          description: string | null
+          id: string
+          level_track_id: string
+          sort_order: number
+        }
+        Insert: {
+          branch_number: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          level_track_id: string
+          sort_order?: number
+        }
+        Update: {
+          branch_number?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          level_track_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_branches_level_track_id_fkey"
+            columns: ["level_track_id"]
+            isOneToOne: false
+            referencedRelation: "level_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      level_parts: {
+        Row: {
+          branch_id: string
+          created_at: string
+          id: string
+          level_track_id: string
+          part_number: number
+          sort_order: number
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          id?: string
+          level_track_id: string
+          part_number: number
+          sort_order?: number
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          id?: string
+          level_track_id?: string
+          part_number?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "level_parts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "level_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_parts_level_track_id_fkey"
+            columns: ["level_track_id"]
+            isOneToOne: false
+            referencedRelation: "level_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      level_tracks: {
+        Row: {
+          active: boolean
+          branches_count: number
+          created_at: string
+          description: string | null
+          id: string
+          level_number: number
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          branches_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          level_number: number
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          branches_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          level_number?: number
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
       }
       memorization_levels: {
         Row: {
@@ -1391,6 +1511,70 @@ export type Database = {
             foreignKeyName: "student_bus_assignments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_levels: {
+        Row: {
+          branch_id: string | null
+          completion_date: string | null
+          created_at: string
+          id: string
+          level_track_id: string
+          part_number: number
+          progress_percentage: number
+          start_date: string
+          student_id: string
+          updated_at: string
+          updated_by_manager: boolean
+        }
+        Insert: {
+          branch_id?: string | null
+          completion_date?: string | null
+          created_at?: string
+          id?: string
+          level_track_id: string
+          part_number?: number
+          progress_percentage?: number
+          start_date?: string
+          student_id: string
+          updated_at?: string
+          updated_by_manager?: boolean
+        }
+        Update: {
+          branch_id?: string | null
+          completion_date?: string | null
+          created_at?: string
+          id?: string
+          level_track_id?: string
+          part_number?: number
+          progress_percentage?: number
+          start_date?: string
+          student_id?: string
+          updated_at?: string
+          updated_by_manager?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_levels_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "level_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_levels_level_track_id_fkey"
+            columns: ["level_track_id"]
+            isOneToOne: false
+            referencedRelation: "level_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_levels_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
