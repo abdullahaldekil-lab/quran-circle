@@ -14,12 +14,18 @@ import { Plus, BookOpen, Users, User, Pencil, Trash2 } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 
 const Halaqat = () => {
+  const { isManager } = useRole();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [studentsDialogId, setStudentsDialogId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", teacher_id: "", location: "", schedule: "" });
+  const [editOpen, setEditOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", teacher_id: "", location: "", schedule: "", capacity_max: 25 });
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes] = await Promise.all([
