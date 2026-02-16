@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckSquare, X, Clock, AlertCircle, Check, Sun, CalendarOff, CalendarDays } from "lucide-react";
+import { CheckSquare, X, Clock, AlertCircle, Check, Sun, CalendarOff, CalendarDays, Lock, Unlock } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,11 +14,17 @@ import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
-type WindowStatus = "not_open" | "on_time" | "late" | "closed";
+
+// Teacher permission window & status thresholds (minutes relative to Asr adhan)
+const TEACHER_WINDOW_OPEN = -10;   // Asr - 10 min
+const TEACHER_WINDOW_CLOSE = 120;  // Asr + 2 hours
+const ON_TIME_THRESHOLD = 45;      // Asr + 45 min => late after this
+
+type TeacherWindowStatus = "before_open" | "open" | "closed";
 
 const Attendance = () => {
   const { user } = useAuth();
-  const { isManager, isSupervisor } = useRole();
+  const { isManager, isAdminStaff, isSupervisor, role } = useRole();
   const { filterHalaqat, loading: accessLoading, isReadOnly: halaqaReadOnly } = useTeacherHalaqat();
   const calendar = useAcademicCalendar();
   const [halaqat, setHalaqat] = useState<any[]>([]);
@@ -29,7 +35,7 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
   const [asrTime, setAsrTime] = useState<string | null>(null);
   const [hijriDate, setHijriDate] = useState<string | null>(null);
-  const [windowStatus, setWindowStatus] = useState<WindowStatus>("not_open");
+  const [teacherWindow, setTeacherWindow] = useState<TeacherWindowStatus>("before_open");
   const [countdown, setCountdown] = useState("");
   const [now, setNow] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -38,24 +44,19 @@ const Attendance = () => {
   const todayStr = new Date().toISOString().split("T")[0];
   const isToday = selectedDate === todayStr;
 
+  // Admin = manager or secretary/admin_staff — no time restrictions
+  const isAdmin = isManager || isAdminStaff;
+
   // Edit permission logic
   const canEditDate = useCallback((dateStr: string): boolean => {
-    if (isManager) return true;
+    if (isAdmin) return true; // Admin: anytime, any date
     if (isSupervisor || halaqaReadOnly) return false;
-    // Teachers: today + previous 2 days
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
-    const diffDays = Math.floor((today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays >= 0 && diffDays <= 2;
-  }, [isManager, isSupervisor, halaqaReadOnly]);
+    // Teachers: only today, only within window
+    if (dateStr !== todayStr) return false;
+    return teacherWindow === "open";
+  }, [isAdmin, isSupervisor, halaqaReadOnly, todayStr, teacherWindow]);
 
   const canEdit = canEditDate(selectedDate);
-
-  const OFFSET_START = 0;
-  const OFFSET_LATE = 45;
-  const SESSION_DURATION = 120;
 
   const fetchPrayerTimes = useCallback(async () => {
     try {
@@ -77,17 +78,29 @@ const Attendance = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Compute teacher window status & countdown
   useEffect(() => {
     if (!asrTime || !isToday || calendar.status !== "active") return;
     const [h, m] = asrTime.split(":").map(Number);
-    const startTime = new Date(); startTime.setHours(h, m + OFFSET_START, 0, 0);
-    const lateTime = new Date(); lateTime.setHours(h, m + OFFSET_LATE, 0, 0);
-    const endMs = startTime.getTime() + SESSION_DURATION * 60 * 1000;
+
+    const openTime = new Date();
+    openTime.setHours(h, m + TEACHER_WINDOW_OPEN, 0, 0);
+
+    const closeTime = new Date();
+    closeTime.setHours(h, m + TEACHER_WINDOW_CLOSE, 0, 0);
+
     const nowMs = now.getTime();
-    if (nowMs < startTime.getTime()) { setWindowStatus("not_open"); setCountdown(formatCountdown(startTime.getTime() - nowMs)); }
-    else if (nowMs < lateTime.getTime()) { setWindowStatus("on_time"); setCountdown(formatCountdown(lateTime.getTime() - nowMs)); }
-    else if (nowMs < endMs) { setWindowStatus("late"); setCountdown(formatCountdown(endMs - nowMs)); }
-    else { setWindowStatus("closed"); setCountdown(""); }
+
+    if (nowMs < openTime.getTime()) {
+      setTeacherWindow("before_open");
+      setCountdown(formatCountdown(openTime.getTime() - nowMs));
+    } else if (nowMs < closeTime.getTime()) {
+      setTeacherWindow("open");
+      setCountdown(formatCountdown(closeTime.getTime() - nowMs));
+    } else {
+      setTeacherWindow("closed");
+      setCountdown("");
+    }
   }, [now, asrTime, isToday, calendar.status]);
 
   const formatCountdown = (ms: number) => {
@@ -99,10 +112,22 @@ const Attendance = () => {
     return `${mins}:${String(secs).padStart(2, "0")}`;
   };
 
-  const formatTime = (timeStr: string, offsetMin: number) => {
-    const [h, m] = timeStr.split(":").map(Number);
+  const formatTimeFromAsr = (offsetMin: number) => {
+    if (!asrTime) return "";
+    const [h, m] = asrTime.split(":").map(Number);
     const d = new Date(); d.setHours(h, m + offsetMin, 0, 0);
     return d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true });
+  };
+
+  // Determine status based on current time relative to Asr
+  const getAutoStatus = (): AttendanceStatus => {
+    if (!asrTime) return "present";
+    const [h, m] = asrTime.split(":").map(Number);
+    const lateThreshold = new Date();
+    lateThreshold.setHours(h, m + ON_TIME_THRESHOLD, 0, 0);
+
+    if (now.getTime() >= lateThreshold.getTime()) return "late";
+    return "present";
   };
 
   useEffect(() => {
@@ -126,9 +151,10 @@ const Attendance = () => {
       const studentList = studentsRes.data || [];
       setStudents(studentList);
 
-      // Build default attendance (all present)
+      // Build default attendance based on auto-status (for new records)
+      const autoStatus = isAdmin ? "present" : getAutoStatus();
       const init: Record<string, AttendanceStatus> = {};
-      studentList.forEach((s: any) => { init[s.id] = "present"; });
+      studentList.forEach((s: any) => { init[s.id] = autoStatus; });
 
       // Overlay existing attendance records
       const existing: Record<string, AttendanceStatus> = {};
@@ -145,16 +171,33 @@ const Attendance = () => {
   const handleSave = async () => {
     setSaving(true);
     const markedAt = new Date().toISOString();
-    const records = Object.entries(attendance).map(([student_id, status]) => ({
+
+    // For teachers: apply auto-status logic on save
+    const finalAttendance = { ...attendance };
+    if (!isAdmin && asrTime) {
+      const [h, m] = asrTime.split(":").map(Number);
+      const lateThreshold = new Date();
+      lateThreshold.setHours(h, m + ON_TIME_THRESHOLD, 0, 0);
+      const isLateNow = now.getTime() >= lateThreshold.getTime();
+
+      Object.entries(finalAttendance).forEach(([sid, status]) => {
+        if (status === "present" && isLateNow) {
+          // If teacher marks "present" after late threshold, auto-set to "late"
+          finalAttendance[sid] = "late";
+        }
+      });
+    }
+
+    const records = Object.entries(finalAttendance).map(([student_id, status]) => ({
       student_id, halaqa_id: selectedHalaqa, attendance_date: selectedDate, status, marked_at: markedAt,
     }));
     const { error } = await supabase.from("attendance").upsert(records, { onConflict: "student_id,attendance_date" });
 
     if (error) { setSaving(false); toast.error("حدث خطأ أثناء الحفظ"); return; }
 
-    // Log audit entries for changed statuses (when editing existing records)
+    // Log audit entries for changed statuses
     if (user && Object.keys(originalAttendance).length > 0) {
-      const auditEntries = Object.entries(attendance)
+      const auditEntries = Object.entries(finalAttendance)
         .filter(([sid, status]) => originalAttendance[sid] && originalAttendance[sid] !== status)
         .map(([student_id, new_status]) => ({
           attendance_id: student_id,
@@ -170,7 +213,8 @@ const Attendance = () => {
     }
 
     setSaving(false);
-    setOriginalAttendance({ ...attendance });
+    setAttendance(finalAttendance);
+    setOriginalAttendance({ ...finalAttendance });
     toast.success("تم حفظ الحضور بنجاح");
   };
 
@@ -185,18 +229,22 @@ const Attendance = () => {
     late: "bg-warning/10 text-warning border-warning/30",
     excused: "bg-info/10 text-info border-info/30",
   };
-  const WINDOW_STATUS_MAP: Record<WindowStatus, { label: string; color: string }> = {
-    not_open: { label: "لم يُفتح بعد", color: "bg-muted text-muted-foreground" },
-    on_time: { label: "مفتوح – في الوقت", color: "bg-green-100 text-green-800" },
-    late: { label: "مفتوح – متأخر", color: "bg-yellow-100 text-yellow-800" },
-    closed: { label: "مُغلق", color: "bg-red-100 text-red-800" },
+
+  const TEACHER_WINDOW_MAP: Record<TeacherWindowStatus, { label: string; color: string; icon: any }> = {
+    before_open: { label: "مغلق – لم يحن الوقت", color: "bg-muted text-muted-foreground", icon: <Lock className="w-4 h-4" /> },
+    open: { label: "مفتوح – يمكنك التحضير", color: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300", icon: <Unlock className="w-4 h-4" /> },
+    closed: { label: "مُغلق – انتهى الوقت", color: "bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-300", icon: <Lock className="w-4 h-4" /> },
   };
 
   const cycleStatus = (studentId: string) => {
     if (!canEdit) return;
-    const order: AttendanceStatus[] = ["present", "absent", "late", "excused"];
+    // Admin can cycle all 4 statuses; teachers only present/absent
+    const order: AttendanceStatus[] = isAdmin
+      ? ["present", "absent", "late", "excused"]
+      : ["present", "absent"];
     const current = attendance[studentId] || "present";
-    setAttendance({ ...attendance, [studentId]: order[(order.indexOf(current) + 1) % order.length] });
+    const idx = order.indexOf(current);
+    setAttendance({ ...attendance, [studentId]: order[(idx + 1) % order.length] });
   };
 
   const handleDateSelect = (date: string) => {
@@ -216,8 +264,8 @@ const Attendance = () => {
   const selDay = new Date(selectedDate).getDay();
   const isSelectedWeekend = selDay === 5 || selDay === 6;
 
-  // For today: use calendar hook; for past dates: check weekend only (holidays checked via DB in calendar)
-  if (isToday && calendar.status !== "active") {
+  // For today: use calendar hook; for past dates: check weekend only
+  if (isToday && calendar.status !== "active" && !isAdmin) {
     return (
       <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
         <div>
@@ -237,7 +285,6 @@ const Attendance = () => {
             {calendar.nextActiveDay && <p className="text-sm text-primary font-medium">أقرب يوم دراسي: {calendar.nextActiveDay}</p>}
           </CardContent>
         </Card>
-        {/* Still show calendar for historical access */}
         {selectedHalaqa && (
           <Card>
             <CardHeader className="pb-2">
@@ -278,6 +325,9 @@ const Attendance = () => {
           <Badge variant={canEdit ? "default" : "secondary"} className="text-xs">
             {canEdit ? "قابل للتعديل" : "للعرض فقط"}
           </Badge>
+          {isAdmin && (
+            <Badge variant="outline" className="text-xs">وصول إداري بلا قيود</Badge>
+          )}
           <Button variant="ghost" size="sm" onClick={() => { setSelectedDate(todayStr); setShowCalendar(false); }}>
             العودة لليوم
           </Button>
@@ -301,44 +351,86 @@ const Attendance = () => {
         </Card>
       )}
 
-      {/* Today Asr window (only on today) */}
-      {isToday && asrTime && calendar.status === "active" && (
-        <Card className={windowStatus === "on_time" ? "border-green-500 border-2" : windowStatus === "late" ? "border-yellow-500 border-2" : ""}>
+      {/* Teacher Attendance Window Info (teachers only, today) */}
+      {isToday && asrTime && calendar.status === "active" && !isAdmin && (
+        <Card className={teacherWindow === "open" ? "border-green-500 border-2" : teacherWindow === "closed" ? "border-destructive/50 border-2" : ""}>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Sun className="w-5 h-5 text-primary" />
-              نافذة الحضور (صلاة العصر)
+              نافذة التحضير (بريدة)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">الحالة</span>
-              <Badge className={WINDOW_STATUS_MAP[windowStatus].color}>{WINDOW_STATUS_MAP[windowStatus].label}</Badge>
+              <Badge className={`${TEACHER_WINDOW_MAP[teacherWindow].color} flex items-center gap-1`}>
+                {TEACHER_WINDOW_MAP[teacherWindow].icon}
+                {TEACHER_WINDOW_MAP[teacherWindow].label}
+              </Badge>
             </div>
+
             <div className="grid grid-cols-2 gap-2 text-center">
               <div className="p-2 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">أذان العصر (بداية الحضور)</p>
+                <p className="text-xs text-muted-foreground">أذان العصر</p>
                 <p className="text-sm font-bold">{asrTime}</p>
               </div>
               <div className="p-2 rounded-lg bg-muted/30">
-                <p className="text-xs text-muted-foreground">حد التأخر</p>
-                <p className="text-sm font-bold">{formatTime(asrTime, OFFSET_LATE)}</p>
+                <p className="text-xs text-muted-foreground">فتح النافذة</p>
+                <p className="text-sm font-bold">{formatTimeFromAsr(TEACHER_WINDOW_OPEN)}</p>
               </div>
             </div>
-            {windowStatus !== "closed" && countdown && (
+
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+                <p className="text-xs text-muted-foreground">حد التأخر (العصر+45د)</p>
+                <p className="text-sm font-bold">{formatTimeFromAsr(ON_TIME_THRESHOLD)}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
+                <p className="text-xs text-muted-foreground">إغلاق النافذة (العصر+2س)</p>
+                <p className="text-sm font-bold">{formatTimeFromAsr(TEACHER_WINDOW_CLOSE)}</p>
+              </div>
+            </div>
+
+            {teacherWindow !== "closed" && countdown && (
               <div className="text-center pt-1">
                 <p className="text-xs text-muted-foreground mb-1">
-                  {windowStatus === "not_open" ? "يفتح بعد" : windowStatus === "on_time" ? "التأخر بعد" : "يُغلق بعد"}
+                  {teacherWindow === "before_open" ? "تفتح النافذة بعد" : "تغلق النافذة بعد"}
                 </p>
                 <p className="text-3xl font-bold font-mono tabular-nums text-primary">{countdown}</p>
               </div>
+            )}
+
+            {teacherWindow === "before_open" && (
+              <p className="text-xs text-center text-muted-foreground">
+                سيُفتح التحضير قبل أذان العصر بـ 10 دقائق ويغلق بعد ساعتين من الأذان.
+              </p>
             )}
           </CardContent>
         </Card>
       )}
 
+      {/* Admin: show Asr info card (simpler) */}
+      {isToday && asrTime && calendar.status === "active" && isAdmin && (
+        <Card className="border-primary/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sun className="w-5 h-5 text-primary" />
+                <span className="text-sm font-medium">أذان العصر (بريدة)</span>
+              </div>
+              <span className="text-sm font-bold">{asrTime}</span>
+            </div>
+            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+              <span>حد التأخر: {formatTimeFromAsr(ON_TIME_THRESHOLD)}</span>
+              <span>•</span>
+              <Badge variant="outline" className="text-xs">وصول إداري – بلا قيود زمنية</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Weekend/holiday message for past selected dates */}
-      {!isToday && isSelectedWeekend && (
+      {!isToday && isSelectedWeekend && !isAdmin && (
         <Card className="border-muted">
           <CardContent className="p-6 text-center">
             <CalendarOff className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
@@ -348,8 +440,18 @@ const Attendance = () => {
       )}
 
       {/* Student list */}
-      {selectedHalaqa && students.length > 0 && !isSelectedWeekend && (
+      {selectedHalaqa && students.length > 0 && (!isSelectedWeekend || isAdmin) && (
         <>
+          {/* Status note for teachers */}
+          {!isAdmin && isToday && asrTime && teacherWindow === "open" && (
+            <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 text-center">
+              {now.getTime() >= (() => { const [h,m] = asrTime.split(":").map(Number); const d = new Date(); d.setHours(h, m + ON_TIME_THRESHOLD, 0, 0); return d.getTime(); })()
+                ? "⚠️ الوقت الحالي بعد حد التأخر — الطلاب المحددون كـ«حاضر» سيُسجلون تلقائياً كـ«متأخر» عند الحفظ"
+                : "✅ الوقت الحالي ضمن فترة الحضور — الطلاب سيُسجلون كـ«حاضر (في الوقت)»"
+              }
+            </div>
+          )}
+
           <div className="space-y-2">
             {students.map((student) => {
               const status = attendance[student.id] || "present";

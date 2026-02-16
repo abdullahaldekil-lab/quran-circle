@@ -15,7 +15,8 @@ serve(async (req) => {
     const today = new Date();
     const dateStr = `${String(today.getDate()).padStart(2, "0")}-${String(today.getMonth() + 1).padStart(2, "0")}-${today.getFullYear()}`;
     
-    const url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=24.7136&longitude=46.6753&method=4&timezonestring=Asia/Riyadh`;
+    // Buraidah, Saudi Arabia coordinates
+    const url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=26.3260&longitude=43.9750&method=4&timezonestring=Asia/Riyadh`;
     
     const response = await fetch(url);
     if (!response.ok) {
