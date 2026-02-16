@@ -1,1 +1,7 @@
 project_id = "ijzivmrodhxtjnjxsgvo"
+
+[functions.manage-users]
+verify_jwt = false
+
+[functions.prayer-times]
+verify_jwt = false
