@@ -92,8 +92,13 @@ export const useRole = () => {
 
   const allowedRoutes = rolePermissions[role] || rolePermissions.teacher;
 
+  // Add permissions-management route for manager
+  const finalAllowedRoutes = role === "manager" 
+    ? [...allowedRoutes, "/permissions-management"] 
+    : allowedRoutes;
+
   const hasAccess = (path: string) => {
-    return allowedRoutes.some(
+    return finalAllowedRoutes.some(
       (route) => path === route || path.startsWith(route + "/")
     );
   };

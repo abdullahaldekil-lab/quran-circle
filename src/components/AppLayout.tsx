@@ -131,6 +131,7 @@ const navGroups: NavGroup[] = [
     color: "text-orange-400",
     items: [
       { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
+      { to: "/permissions-management", icon: ShieldCheck, label: "إدارة الصلاحيات" },
       { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
     ],
   },
