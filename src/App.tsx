@@ -42,6 +42,7 @@ import AcademicCalendar from "./pages/AcademicCalendar";
 import AttendanceAuditLog from "./pages/AttendanceAuditLog";
 import Madarij from "./pages/Madarij";
 import MadarijEnrollment from "./pages/MadarijEnrollment";
+import PermissionsManagement from "./pages/PermissionsManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -120,6 +121,7 @@ const AppRoutes = () => {
       <Route path="/attendance-audit" element={<ProtectedRoute path="/attendance-audit"><AttendanceAuditLog /></ProtectedRoute>} />
       <Route path="/madarij" element={<ProtectedRoute path="/madarij"><Madarij /></ProtectedRoute>} />
       <Route path="/madarij/:enrollmentId" element={<ProtectedRoute path="/madarij"><MadarijEnrollment /></ProtectedRoute>} />
+      <Route path="/permissions-management" element={<ProtectedRoute path="/permissions-management"><PermissionsManagement /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
