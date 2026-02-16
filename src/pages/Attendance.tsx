@@ -24,7 +24,7 @@ type TeacherWindowStatus = "before_open" | "open" | "closed";
 
 const Attendance = () => {
   const { user } = useAuth();
-  const { isManager, isAdminStaff, isSupervisor, role } = useRole();
+  const { isManager, isAdminStaff, isSupervisor, isTeacher, role } = useRole();
   const { filterHalaqat, loading: accessLoading, isReadOnly: halaqaReadOnly } = useTeacherHalaqat();
   const calendar = useAcademicCalendar();
   const [halaqat, setHalaqat] = useState<any[]>([]);
@@ -132,12 +132,29 @@ const Attendance = () => {
 
   useEffect(() => {
     if (accessLoading) return;
-    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
-      const filtered = filterHalaqat(data || []);
-      setHalaqat(filtered);
-      if (filtered.length === 1 && !selectedHalaqa) setSelectedHalaqa(filtered[0].id);
-    });
-  }, [accessLoading]);
+    const fetchHalaqat = async () => {
+      if (isTeacher && user) {
+        // Teacher: directly fetch their assigned halaqa(s)
+        const { data } = await supabase
+          .from("halaqat")
+          .select("*")
+          .eq("active", true)
+          .or(`teacher_id.eq.${user.id},assistant_teacher_id.eq.${user.id}`);
+        const teacherHalaqat = data || [];
+        setHalaqat(teacherHalaqat);
+        if (teacherHalaqat.length > 0 && !selectedHalaqa) {
+          setSelectedHalaqa(teacherHalaqat[0].id);
+        }
+      } else {
+        // Admin/Supervisor: show all accessible halaqat
+        const { data } = await supabase.from("halaqat").select("*").eq("active", true);
+        const filtered = filterHalaqat(data || []);
+        setHalaqat(filtered);
+        if (filtered.length === 1 && !selectedHalaqa) setSelectedHalaqa(filtered[0].id);
+      }
+    };
+    fetchHalaqat();
+  }, [accessLoading, user, isTeacher]);
 
   // Fetch students & attendance for selected date
   useEffect(() => {
@@ -334,13 +351,34 @@ const Attendance = () => {
         </div>
       )}
 
-      {/* Halaqa selector */}
-      <Select value={selectedHalaqa} onValueChange={setSelectedHalaqa}>
-        <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
-        <SelectContent>
-          {halaqat.map((h) => (<SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>))}
-        </SelectContent>
-      </Select>
+      {/* Halaqa selector: admin sees dropdown, teacher sees fixed label */}
+      {isTeacher ? (
+        halaqat.length > 0 ? (
+          <Card className="border-primary/20">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="w-5 h-5 text-primary" />
+                <span className="font-medium">حلقتك: {halaqat.find(h => h.id === selectedHalaqa)?.name || "—"}</span>
+              </div>
+              <Badge variant="secondary">{students.length}/25</Badge>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-destructive/30">
+            <CardContent className="p-8 text-center space-y-2">
+              <AlertCircle className="w-12 h-12 mx-auto text-destructive/60" />
+              <p className="font-bold text-destructive">لا توجد حلقة مرتبطة بحسابك. راجع الإدارة.</p>
+            </CardContent>
+          </Card>
+        )
+      ) : (
+        <Select value={selectedHalaqa} onValueChange={setSelectedHalaqa}>
+          <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+          <SelectContent>
+            {halaqat.map((h) => (<SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>))}
+          </SelectContent>
+        </Select>
+      )}
 
       {/* Calendar panel */}
       {showCalendar && selectedHalaqa && (
@@ -439,7 +477,15 @@ const Attendance = () => {
         </Card>
       )}
 
-      {/* Student list */}
+      {/* No students message for teachers */}
+      {selectedHalaqa && students.length === 0 && isTeacher && halaqat.length > 0 && (
+        <Card className="border-muted">
+          <CardContent className="p-8 text-center space-y-2">
+            <AlertCircle className="w-10 h-10 mx-auto text-muted-foreground" />
+            <p className="font-medium">لا يوجد طلاب مسجلين في هذه الحلقة حتى الآن.</p>
+          </CardContent>
+        </Card>
+      )}
       {selectedHalaqa && students.length > 0 && (!isSelectedWeekend || isAdmin) && (
         <>
           {/* Status note for teachers */}
