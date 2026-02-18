@@ -26,6 +26,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -578,6 +579,9 @@ export default function NarrationSession() {
               <UserPlus className="w-4 h-4 text-primary" />
               إضافة طالب للجلسة
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              ابحث عن طالب وأضفه إلى جلسة السرد الحالية
+            </DialogDescription>
           </DialogHeader>
 
           {/* حقل البحث */}
