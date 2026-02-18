@@ -30,7 +30,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowRight, Printer, Save, ScrollText, CheckCircle2, XCircle, Users, UserPlus, Search } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ArrowRight, Printer, Save, ScrollText, CheckCircle2, XCircle, Users, UserPlus, Search, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import NarrationPrintTemplate from "@/components/NarrationPrintTemplate";
 
@@ -49,6 +50,7 @@ interface StudentResult {
   student_name: string;
   hizb_from: number;
   hizb_to: number;
+  total_hizbat: number; // مجموع الأحزاب المعروضة (قد تكون متفرقة)
   mistakes_count: number;
   lahn_count: number;
   warnings_count: number;
@@ -71,6 +73,7 @@ export default function NarrationSession() {
   const [isDirty, setIsDirty] = useState(false);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteStudentId, setDeleteStudentId] = useState<string | null>(null);
 
   const isManager = role === "manager";
   const canWrite = isManager || role === "teacher" || role === "assistant_teacher";
@@ -179,6 +182,7 @@ export default function NarrationSession() {
             student_name: s.full_name,
             hizb_from: existing.hizb_from,
             hizb_to: existing.hizb_to,
+            total_hizbat: existing.total_hizbat ?? (existing.hizb_to - existing.hizb_from + 1),
             mistakes_count: existing.mistakes_count,
             lahn_count: existing.lahn_count,
             warnings_count: existing.warnings_count,
@@ -193,11 +197,12 @@ export default function NarrationSession() {
           student_name: s.full_name,
           hizb_from: 1,
           hizb_to: 1,
+          total_hizbat: 1,
           mistakes_count: 0,
           lahn_count: 0,
           warnings_count: 0,
           grade: maxGrade,
-          status: "pending",
+          status: "pending" as const,
           notes: "",
           manual_entry: false,
         };
@@ -268,6 +273,7 @@ export default function NarrationSession() {
       student_name: student.full_name,
       hizb_from: 1,
       hizb_to: 1,
+      total_hizbat: 1,
       mistakes_count: 0,
       lahn_count: 0,
       warnings_count: 0,
@@ -282,6 +288,27 @@ export default function NarrationSession() {
     setSearchQuery("");
   };
 
+  // حذف طالب من الجلسة
+  const deleteStudent = async (studentId: string) => {
+    const row = rows.find((r) => r.student_id === studentId);
+    // إذا كانت النتيجة محفوظة في قاعدة البيانات، احذفها
+    if (row?.id) {
+      const { error } = await supabase
+        .from("narration_results" as any)
+        .delete()
+        .eq("id", row.id);
+      if (error) {
+        toast({ title: `خطأ في الحذف: ${error.message}`, variant: "destructive" });
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["narration-results", sessionId] });
+    }
+    setRows((prev) => prev.filter((r) => r.student_id !== studentId));
+    setIsDirty(false);
+    setDeleteStudentId(null);
+    toast({ title: "تم حذف الطالب من الجلسة" });
+  };
+
   // حفظ الكل
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -291,6 +318,7 @@ export default function NarrationSession() {
         student_id: r.student_id,
         hizb_from: r.hizb_from,
         hizb_to: r.hizb_to,
+        total_hizbat: r.total_hizbat,
         mistakes_count: r.mistakes_count,
         lahn_count: r.lahn_count,
         warnings_count: r.warnings_count,
@@ -439,14 +467,16 @@ export default function NarrationSession() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right min-w-[140px]">اسم الطالب</TableHead>
-                  <TableHead className="text-center w-20">من حزب</TableHead>
-                  <TableHead className="text-center w-20">إلى حزب</TableHead>
+                  <TableHead className="text-center w-28">من حزب</TableHead>
+                  <TableHead className="text-center w-28">إلى حزب</TableHead>
+                  <TableHead className="text-center w-28">مج. الأحزاب</TableHead>
                   <TableHead className="text-center w-20">أخطاء</TableHead>
                   <TableHead className="text-center w-20">لحون</TableHead>
                   <TableHead className="text-center w-20">تنبيهات</TableHead>
                   <TableHead className="text-center w-20">الدرجة</TableHead>
                   <TableHead className="text-center w-28">الحالة</TableHead>
                   <TableHead className="text-right min-w-[120px]">ملاحظات</TableHead>
+                  {canWrite && <TableHead className="w-10"></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -456,6 +486,7 @@ export default function NarrationSession() {
                     className={row.status === "absent" ? "opacity-50" : ""}
                   >
                     <TableCell className="font-medium text-sm">{row.student_name}</TableCell>
+                    {/* من حزب */}
                     <TableCell>
                       <Input
                         type="number"
@@ -467,6 +498,7 @@ export default function NarrationSession() {
                         className="w-16 text-center h-8 text-sm"
                       />
                     </TableCell>
+                    {/* إلى حزب */}
                     <TableCell>
                       <Input
                         type="number"
@@ -476,6 +508,19 @@ export default function NarrationSession() {
                         onChange={(e) => updateRow(i, "hizb_to", Number(e.target.value))}
                         disabled={!canWrite || row.status === "absent"}
                         className="w-16 text-center h-8 text-sm"
+                      />
+                    </TableCell>
+                    {/* مجموع الأحزاب المعروضة (للأحزاب المتفرقة) */}
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={60}
+                        value={row.total_hizbat}
+                        onChange={(e) => updateRow(i, "total_hizbat", Number(e.target.value))}
+                        disabled={!canWrite || row.status === "absent"}
+                        className="w-16 text-center h-8 text-sm font-semibold text-primary"
+                        title="مجموع الأحزاب الفعلية المعروضة (يمكن تعديله للأحزاب المتفرقة)"
                       />
                     </TableCell>
                     <TableCell>
@@ -552,6 +597,19 @@ export default function NarrationSession() {
                         className="h-8 text-xs min-w-[100px]"
                       />
                     </TableCell>
+                    {canWrite && (
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteStudentId(row.student_id)}
+                          title="حذف الطالب من الجلسة"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -643,6 +701,28 @@ export default function NarrationSession() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog تأكيد حذف الطالب */}
+      <AlertDialog open={!!deleteStudentId} onOpenChange={(open) => { if (!open) setDeleteStudentId(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من إزالة هذا الطالب من جلسة السرد؟
+              {rows.find(r => r.student_id === deleteStudentId)?.id && " سيتم حذف نتيجته المحفوظة نهائياً."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteStudentId && deleteStudent(deleteStudentId)}
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
