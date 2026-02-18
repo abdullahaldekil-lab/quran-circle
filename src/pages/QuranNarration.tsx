@@ -316,7 +316,7 @@ export default function QuranNarration() {
                     <SelectTrigger>
                       <SelectValue placeholder="اختر الحلقة" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" className="z-[200]">
                       {halaqat.map((h) => (
                         <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
                       ))}
