@@ -1,195 +1,117 @@
 
-# نظام "يوم السرد القرآني" - خطة التنفيذ الشاملة
+# ربط وإضافة الطلاب إلى جلسات السرد
 
-## ما تم فهمه من Google Sheets
+## المشكلة الحالية
 
-الجدول الذي شاركته يوضح نموذج تقرير جلسة السرد مع الأعمدة التالية لكل حلقة:
+بعد فحص الكود وقاعدة البيانات، وجدت مشكلتين:
 
-| الحلقة | الحضور | المطلوبة (أحزاب) | المعروضة | المجتازة | الرسوب | المتبقية | % الإجتياز | % الرسوب | % المتبقي | % العامة |
-|---|---|---|---|---|---|---|---|---|---|---|
-| أبي سعيد الخدري | 22 | 111 | 76 | 60 | 16 | 27 | 127% | 21% | 24% | 31% |
-| ...  | ... | ... | ... | ... | ... | ... | ... | ... | ... | ... |
-| إجماليات المجمع | 62 | 524 | 252 | 174 | 78 | 257 | 591% | 121% | 166% | 39% |
+**المشكلة الأولى — خطأ في استعلام الطلاب:**
+في `NarrationSession.tsx` السطر 113، يتم جلب الطلاب بـ `.eq("active", true)` لكن جدول `students` لا يحتوي على عمود `active`، بل يستخدم عمود `status` بقيمة `'active'`. هذا يتسبب في عدم ظهور أي طلاب في الجلسة.
 
-هذا يعني أن النظام يحتاج إلى:
-- تسجيل الحضور + الأحزاب المطلوبة لكل جلسة
-- تسجيل نتيجة كل طالب (عرض، اجتياز، رسوب، متبقي)
-- توليد تقرير ملخص شبيه بهذا الجدول تلقائيًا
+**المشكلة الثانية — لا توجد آلية لإضافة طلاب من خارج الحلقة:**
+الآلية الحالية تجلب فقط طلاب الحلقة المرتبطة بالجلسة، دون إمكانية إضافة طالب من حلقة أخرى (مفيد ليوم السرد الجماعي).
 
 ---
 
-## هيكل قاعدة البيانات (3 جداول جديدة)
+## التعديلات المطلوبة
 
-### `narration_settings` — إعدادات السرد (صف واحد)
-```
-min_grade          integer    DEFAULT 70   -- الحد الأدنى للاجتياز
-max_grade          integer    DEFAULT 100  -- الحد الأقصى
-deduction_per_mistake  numeric DEFAULT 2  -- خصم لكل خطأ
-deduction_per_lahn     numeric DEFAULT 1  -- خصم لكل لحن
-deduction_per_warning  numeric DEFAULT 0.5
-```
+### 1. إصلاح استعلام الطلاب في `NarrationSession.tsx`
+تغيير `.eq("active", true)` إلى `.eq("status", "active")` لجلب الطلاب النشطين بشكل صحيح.
 
-### `narration_sessions` — جلسات السرد
-```
-session_date   date      -- تاريخ الجلسة
-halaqa_id      uuid → halaqat
-title          text      -- عنوان/وصف الجلسة
-notes          text
-created_by     uuid
-```
+### 2. إضافة زر "إضافة طالب" يدويًا في `NarrationSession.tsx`
+زر يفتح نافذة بحث تتيح:
+- البحث عن أي طالب في النظام (من أي حلقة)
+- عرض اسم الطالب + اسم حلقته
+- إضافته مباشرةً إلى جدول النتائج في الجلسة الحالية
 
-### `narration_results` — نتائج الطلاب في الجلسة
-```
-session_id       uuid → narration_sessions (CASCADE DELETE)
-student_id       uuid → students
-hizb_from        integer    -- من الحزب
-hizb_to          integer    -- إلى الحزب
-mistakes_count   integer    DEFAULT 0
-lahn_count       integer    DEFAULT 0
-warnings_count   integer    DEFAULT 0
-grade            numeric    -- محسوبة تلقائياً أو يدوية
-status           text       -- 'pass' / 'fail' / 'absent' / 'pending'
-notes            text
-manual_entry     boolean    DEFAULT false
-```
+### 3. منع إضافة طالب مكرر
+إذا كان الطالب موجوداً بالفعل في الجلسة (سواء عبر الحلقة أو الإضافة اليدوية)، يُمنع إضافته مجدداً مع رسالة تنبيه.
 
 ---
 
-## المعادلة الأساسية للدرجة
+## تفاصيل التنفيذ التقني
 
-```
-grade = max_grade
-      - (mistakes × deduction_per_mistake)
-      - (lahon × deduction_per_lahn)
-      - (warnings × deduction_per_warning)
-```
-مقيّدة بين [0, max_grade]. إذا grade ≥ min_grade → status = 'pass'، وإلا 'fail'.
+### الملف الوحيد المعدّل: `src/pages/NarrationSession.tsx`
 
----
+**التعديل 1 — إصلاح الاستعلام (السطر 113):**
+```typescript
+// قبل (خطأ):
+.eq("active", true)
 
-## المنطق الإحصائي للتقرير (مستوحى من Google Sheets)
-
-لكل حلقة في جلسة:
-- **الحضور**: عدد الطلاب الذين عُرضوا (status ≠ 'absent')
-- **المطلوبة**: إجمالي الأحزاب التي يجب عرضها (hizb_to - hizb_from + 1 لكل طالب حاضر)
-- **المعروضة**: إجمالي الأحزاب التي عُرضت فعلياً
-- **المجتازة**: إجمالي الأحزاب المجتازة (status = 'pass')
-- **الرسوب**: إجمالي الأحزاب الراسبة (status = 'fail')
-- **المتبقية**: المطلوبة - المعروضة
-- **% الإجتياز**: (المجتازة / المطلوبة) × 100
-- **% الرسوب**: (الرسوب / المطلوبة) × 100
-- **% المتبقي**: (المتبقية / المطلوبة) × 100
-- **% العامة (نسبة السرد)**: (المعروضة / المطلوبة) × 100
-
----
-
-## الصفحات الجديدة
-
-### 1. `src/pages/QuranNarration.tsx` — الصفحة الرئيسية
-
-**قسم الإحصائيات العلوية (4 بطاقات):**
-- إجمالي الجلسات
-- إجمالي الطلاب المشاركين
-- متوسط نسبة الاجتياز
-- إجمالي الأحزاب المعروضة
-
-**جدول الجلسات:**
-- التاريخ / الحلقة / العنوان / عدد الحضور / نسبة الاجتياز
-- أزرار: عرض التفاصيل / تعديل / حذف / طباعة التقرير
-
-**زر "جلسة جديدة"** (للمدير والمعلم):
-- نموذج: التاريخ، الحلقة، العنوان، الملاحظات
-- بعد الإنشاء → ينتقل مباشرة لصفحة إدخال النتائج
-
-**تبويب الإعدادات** (للمدير فقط):
-- تعديل min_grade / max_grade / الخصومات الثلاثة
-
-### 2. `src/pages/NarrationSession.tsx` — إدخال نتائج جلسة
-
-**رأس الصفحة:**
-- اسم الجلسة / التاريخ / اسم الحلقة
-- زر الطباعة / زر الرجوع
-
-**جدول الطلاب التفاعلي:**
-لكل طالب في الحلقة صف يحتوي:
-| اسم الطالب | من حزب | إلى حزب | أخطاء | لحون | تنبيهات | الدرجة (محسوبة) | الحالة | ملاحظات |
-|---|---|---|---|---|---|---|---|---|
-- تُحسب الدرجة والحالة لحظياً عند تغيير الأخطاء/اللحون/التنبيهات
-- خيار إدخال الدرجة يدوياً (يفعّل manual_entry)
-- الحالة: اجتاز / راسب / غائب
-
-**أزرار الإجراء:**
-- حفظ الكل (upsert)
-- طباعة التقرير
-
-**ملخص سريع في الأسفل:**
-- إجمالي الحضور / المجتازين / الراسبين / الغائبين
-
-### 3. `src/components/NarrationPrintTemplate.tsx` — قالب الطباعة
-
-ورقة A4 تحاكي الجدول في Google Sheets:
-
-**رأس الصفحة:**
-- اسم المجمع + شعاره + "يوم السرد القرآني"
-- التاريخ / الحلقة / المعلم
-
-**الجدول الرئيسي (مطابق للنموذج المرسل):**
-
-| الحلقة | الحضور | المطلوبة | المعروضة | المجتازة | الرسوب | المتبقية | % الإجتياز | % الرسوب | % المتبقي | % العامة |
-|---|---|---|---|---|---|---|---|---|---|---|
-
-**ملخص المجمع** (صف الإجماليات)
-
-**جدول تفصيلي بالطلاب:**
-- اسم الطالب / الحزب / الدرجة / الحالة / الملاحظات
-
----
-
-## التعديلات على الملفات الحالية
-
-### `src/hooks/useRole.tsx`
-إضافة `/quran-narration` لجميع الأدوار:
-- manager, supervisor, assistant_supervisor → عرض كامل
-- teacher, assistant_teacher → عرض + إنشاء جلسات
-- secretary, admin_staff → عرض فقط
-
-### `src/App.tsx`
-تسجيل مسارين جديدين:
-- `/quran-narration` → `<QuranNarration />`
-- `/quran-narration/:sessionId` → `<NarrationSession />`
-
-### `src/components/AppLayout.tsx`
-إضافة رابط في مجموعة "الشؤون الأكاديمية":
-```tsx
-{ to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" }
+// بعد (صحيح):
+.eq("status", "active")
 ```
 
----
+**التعديل 2 — إضافة state وquery للبحث:**
+```typescript
+const [showAddStudent, setShowAddStudent] = useState(false);
+const [searchQuery, setSearchQuery] = useState("");
+```
 
-## سياسات الأمان (RLS)
+```typescript
+// جلب جميع الطلاب النشطين للبحث
+const { data: allStudents = [] } = useQuery({
+  queryKey: ["all-students-search"],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from("students")
+      .select("id, full_name, halaqa_id, halaqat(name)")
+      .eq("status", "active")
+      .order("full_name");
+    return data || [];
+  },
+  enabled: showAddStudent, // يُجلب فقط عند فتح النافذة
+});
+```
 
-| الجدول | القراءة | الكتابة |
-|---|---|---|
-| narration_settings | جميع الموظفين | المدير فقط |
-| narration_sessions | جميع الموظفين | المدير + المعلمين |
-| narration_results | جميع الموظفين | المدير + المعلمين |
+**التعديل 3 — دالة إضافة الطالب:**
+```typescript
+const addStudentManually = (student: { id: string; full_name: string }) => {
+  // منع الإضافة المكررة
+  if (rows.some((r) => r.student_id === student.id)) {
+    toast({ title: "الطالب موجود بالفعل في الجلسة", variant: "destructive" });
+    return;
+  }
+  const maxGrade = settings?.max_grade ?? 100;
+  const newRow: StudentResult = {
+    student_id: student.id,
+    student_name: student.full_name,
+    hizb_from: 1,
+    hizb_to: 1,
+    mistakes_count: 0,
+    lahn_count: 0,
+    warnings_count: 0,
+    grade: maxGrade,
+    status: "pending",
+    notes: "",
+    manual_entry: false,
+  };
+  setRows((prev) => [...prev, newRow]);
+  setIsDirty(true);
+  setShowAddStudent(false);
+  setSearchQuery("");
+};
+```
+
+**التعديل 4 — Dialog البحث والإضافة في الواجهة:**
+زر "إضافة طالب" يظهر فقط لأصحاب صلاحية الكتابة (`canWrite`) بجانب عنوان "نتائج الطلاب" في رأس الجدول. النافذة تحتوي على:
+- حقل بحث بالاسم
+- قائمة نتائج تُصفّى لحظيًا
+- يظهر اسم الطالب + اسم حلقته
+- الطلاب المضافون بالفعل تظهر بلون رمادي مع نص "مضاف"
+- زر إضافة لكل طالب
 
 ---
 
 ## ترتيب التنفيذ
 
-1. Migration SQL: الجداول الثلاثة + RLS + بيانات أولية للإعدادات
-2. إنشاء `src/pages/QuranNarration.tsx`
-3. إنشاء `src/pages/NarrationSession.tsx`
-4. إنشاء `src/components/NarrationPrintTemplate.tsx`
-5. تعديل `src/hooks/useRole.tsx`
-6. تعديل `src/App.tsx`
-7. تعديل `src/components/AppLayout.tsx`
-
----
+1. إصلاح الاستعلام (`.eq("active", true)` → `.eq("status", "active")`)
+2. إضافة state للبحث والـ Dialog
+3. إضافة query لجلب جميع الطلاب
+4. إضافة دالة `addStudentManually`
+5. إضافة زر + Dialog في واجهة المستخدم
 
 ## ما لن يتغير
-
-- لا حذف لأي جدول أو موديول قائم
-- الجداول الحالية (halaqat, students, profiles) تبقى كما هي
+- جداول قاعدة البيانات لا تحتاج أي تعديل
+- منطق الحفظ (`upsert`) يعمل بشكل صحيح مع الطلاب المضافين يدويًا
 - جميع الصفحات الأخرى لا تتأثر
