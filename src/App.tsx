@@ -43,6 +43,8 @@ import AttendanceAuditLog from "./pages/AttendanceAuditLog";
 import Madarij from "./pages/Madarij";
 import MadarijEnrollment from "./pages/MadarijEnrollment";
 import PermissionsManagement from "./pages/PermissionsManagement";
+import QuranNarration from "./pages/QuranNarration";
+import NarrationSession from "./pages/NarrationSession";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -122,6 +124,8 @@ const AppRoutes = () => {
       <Route path="/madarij" element={<ProtectedRoute path="/madarij"><Madarij /></ProtectedRoute>} />
       <Route path="/madarij/:enrollmentId" element={<ProtectedRoute path="/madarij"><MadarijEnrollment /></ProtectedRoute>} />
       <Route path="/permissions-management" element={<ProtectedRoute path="/permissions-management"><PermissionsManagement /></ProtectedRoute>} />
+      <Route path="/quran-narration" element={<ProtectedRoute path="/quran-narration"><QuranNarration /></ProtectedRoute>} />
+      <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />

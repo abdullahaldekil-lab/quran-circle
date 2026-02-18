@@ -1198,6 +1198,146 @@ export type Database = {
         }
         Relationships: []
       }
+      narration_results: {
+        Row: {
+          created_at: string
+          grade: number
+          hizb_from: number
+          hizb_to: number
+          id: string
+          lahn_count: number
+          manual_entry: boolean
+          mistakes_count: number
+          notes: string | null
+          session_id: string
+          status: string
+          student_id: string
+          updated_at: string
+          warnings_count: number
+        }
+        Insert: {
+          created_at?: string
+          grade?: number
+          hizb_from?: number
+          hizb_to?: number
+          id?: string
+          lahn_count?: number
+          manual_entry?: boolean
+          mistakes_count?: number
+          notes?: string | null
+          session_id: string
+          status?: string
+          student_id: string
+          updated_at?: string
+          warnings_count?: number
+        }
+        Update: {
+          created_at?: string
+          grade?: number
+          hizb_from?: number
+          hizb_to?: number
+          id?: string
+          lahn_count?: number
+          manual_entry?: boolean
+          mistakes_count?: number
+          notes?: string | null
+          session_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+          warnings_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narration_results_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "narration_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narration_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      narration_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          halaqa_id: string | null
+          id: string
+          notes: string | null
+          session_date: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          halaqa_id?: string | null
+          id?: string
+          notes?: string | null
+          session_date?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          halaqa_id?: string | null
+          id?: string
+          notes?: string | null
+          session_date?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narration_sessions_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      narration_settings: {
+        Row: {
+          created_at: string
+          deduction_per_lahn: number
+          deduction_per_mistake: number
+          deduction_per_warning: number
+          id: string
+          max_grade: number
+          min_grade: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deduction_per_lahn?: number
+          deduction_per_mistake?: number
+          deduction_per_warning?: number
+          id?: string
+          max_grade?: number
+          min_grade?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deduction_per_lahn?: number
+          deduction_per_mistake?: number
+          deduction_per_warning?: number
+          id?: string
+          max_grade?: number
+          min_grade?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       permissions: {
         Row: {
           category: string

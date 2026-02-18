@@ -31,6 +31,7 @@ import {
   Briefcase,
   UserPlus,
   ShieldCheck,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ const navGroups: NavGroup[] = [
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
+      { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
     ],
   },
   {
