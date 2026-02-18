@@ -23,7 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowRight, Printer, Save, ScrollText, CheckCircle2, XCircle, Users } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ArrowRight, Printer, Save, ScrollText, CheckCircle2, XCircle, Users, UserPlus, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import NarrationPrintTemplate from "@/components/NarrationPrintTemplate";
 
@@ -62,6 +68,8 @@ export default function NarrationSession() {
 
   const [rows, setRows] = useState<StudentResult[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [showAddStudent, setShowAddStudent] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isManager = role === "manager";
   const canWrite = isManager || role === "teacher" || role === "assistant_teacher";
@@ -111,12 +119,32 @@ export default function NarrationSession() {
         .from("students")
         .select("id, full_name")
         .eq("halaqa_id", session.halaqa_id)
-        .eq("active", true)
+        .eq("status", "active")
         .order("full_name");
       if (error) throw error;
       return (data as { id: string; full_name: string }[]) || [];
     },
     enabled: !!session?.halaqa_id,
+  });
+
+  // جلب جميع الطلاب النشطين للبحث (يُفعَّل فقط عند فتح نافذة الإضافة)
+  const { data: allStudents = [] } = useQuery<{
+    id: string;
+    full_name: string;
+    halaqa_id: string | null;
+    halaqat: { name: string } | null;
+  }[]>({
+    queryKey: ["all-students-search"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("students")
+        .select("id, full_name, halaqa_id, halaqat(name)")
+        .eq("status", "active")
+        .order("full_name");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: showAddStudent,
   });
 
   // جلب النتائج الموجودة
@@ -225,6 +253,32 @@ export default function NarrationSession() {
       }
       return updated;
     });
+  };
+
+  // إضافة طالب يدوياً من خارج الحلقة
+  const addStudentManually = (student: { id: string; full_name: string }) => {
+    if (rows.some((r) => r.student_id === student.id)) {
+      toast({ title: "الطالب موجود بالفعل في الجلسة", variant: "destructive" });
+      return;
+    }
+    const maxGrade = settings?.max_grade ?? 100;
+    const newRow: StudentResult = {
+      student_id: student.id,
+      student_name: student.full_name,
+      hizb_from: 1,
+      hizb_to: 1,
+      mistakes_count: 0,
+      lahn_count: 0,
+      warnings_count: 0,
+      grade: maxGrade,
+      status: "pending",
+      notes: "",
+      manual_entry: false,
+    };
+    setRows((prev) => [...prev, newRow]);
+    setIsDirty(true);
+    setShowAddStudent(false);
+    setSearchQuery("");
   };
 
   // حفظ الكل
@@ -349,15 +403,28 @@ export default function NarrationSession() {
       {/* جدول الإدخال */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" />
-            نتائج الطلاب
-            {isDirty && (
-              <Badge variant="outline" className="text-chart-4 border-chart-4/30 text-xs">
-                يوجد تغييرات غير محفوظة
-              </Badge>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              نتائج الطلاب
+              {isDirty && (
+                <Badge variant="outline" className="text-chart-4 border-chart-4/30 text-xs">
+                  يوجد تغييرات غير محفوظة
+                </Badge>
+              )}
+            </CardTitle>
+            {canWrite && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setShowAddStudent(true)}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                إضافة طالب
+              </Button>
             )}
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           {rows.length === 0 ? (
@@ -502,6 +569,76 @@ export default function NarrationSession() {
           />
         </div>
       )}
+
+      {/* Dialog إضافة طالب */}
+      <Dialog open={showAddStudent} onOpenChange={(open) => { setShowAddStudent(open); if (!open) setSearchQuery(""); }}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-right">
+              <UserPlus className="w-4 h-4 text-primary" />
+              إضافة طالب للجلسة
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* حقل البحث */}
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="ابحث باسم الطالب..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-9 text-right"
+              autoFocus
+            />
+          </div>
+
+          {/* قائمة النتائج */}
+          <div className="max-h-72 overflow-y-auto space-y-1">
+            {allStudents.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-6">جارٍ التحميل...</p>
+            ) : (() => {
+              const filtered = allStudents.filter((s) =>
+                s.full_name.includes(searchQuery) || searchQuery === ""
+              );
+              if (filtered.length === 0) {
+                return <p className="text-center text-sm text-muted-foreground py-6">لا توجد نتائج</p>;
+              }
+              return filtered.map((student) => {
+                const alreadyAdded = rows.some((r) => r.student_id === student.id);
+                return (
+                  <div
+                    key={student.id}
+                    className={`flex items-center justify-between p-2.5 rounded-lg border transition-colors ${
+                      alreadyAdded
+                        ? "opacity-50 bg-muted border-border"
+                        : "bg-background border-border hover:bg-accent/50"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{student.full_name}</p>
+                      {student.halaqat && (
+                        <p className="text-xs text-muted-foreground">{student.halaqat.name}</p>
+                      )}
+                    </div>
+                    {alreadyAdded ? (
+                      <Badge variant="secondary" className="text-xs shrink-0 mr-2">مضاف</Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 shrink-0 mr-2"
+                        onClick={() => addStudentManually(student)}
+                      >
+                        إضافة
+                      </Button>
+                    )}
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
