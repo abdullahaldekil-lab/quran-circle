@@ -1212,6 +1212,7 @@ export type Database = {
           session_id: string
           status: string
           student_id: string
+          total_hizbat: number
           updated_at: string
           warnings_count: number
         }
@@ -1228,6 +1229,7 @@ export type Database = {
           session_id: string
           status?: string
           student_id: string
+          total_hizbat?: number
           updated_at?: string
           warnings_count?: number
         }
@@ -1244,6 +1246,7 @@ export type Database = {
           session_id?: string
           status?: string
           student_id?: string
+          total_hizbat?: number
           updated_at?: string
           warnings_count?: number
         }
