@@ -406,6 +406,10 @@ export default function QuranNarration() {
             <BookOpen className="w-4 h-4" />
             الجلسات
           </TabsTrigger>
+          <TabsTrigger value="reports" className="gap-2" onClick={() => navigate("/quran-narration/reports")}>
+            <BarChart3 className="w-4 h-4" />
+            التقارير
+          </TabsTrigger>
           {isManager && (
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="w-4 h-4" />
@@ -618,6 +622,73 @@ export default function QuranNarration() {
                     <div className="p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
                       <p className="font-medium mb-1">معادلة الدرجة:</p>
                       <p>الدرجة = {settings.max_grade} − (أخطاء × {settings.deduction_per_mistake}) − (لحون × {settings.deduction_per_lahn}) − (تنبيهات × {settings.deduction_per_warning})</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-1.5">
+                        <Label>أوجه لكل حزب</Label>
+                        <Input
+                          type="number"
+                          defaultValue={(settings as any).pages_per_hizb ?? 10}
+                          onChange={(e) =>
+                            setSettingsForm((p) => ({ ...p, pages_per_hizb: Number(e.target.value) }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>الحد الأدنى للأحزاب</Label>
+                        <Input
+                          type="number"
+                          defaultValue={(settings as any).min_hizb_required ?? 1}
+                          onChange={(e) =>
+                            setSettingsForm((p) => ({ ...p, min_hizb_required: Number(e.target.value) }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>الحد الأدنى للأوجه</Label>
+                        <Input
+                          type="number"
+                          defaultValue={(settings as any).min_pages_required ?? 10}
+                          onChange={(e) =>
+                            setSettingsForm((p) => ({ ...p, min_pages_required: Number(e.target.value) }))
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-1.5">
+                        <Label>وزن الحفظ</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          defaultValue={(settings as any).memorization_weight ?? 0.5}
+                          onChange={(e) =>
+                            setSettingsForm((p) => ({ ...p, memorization_weight: Number(e.target.value) }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>وزن الإتقان</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          defaultValue={(settings as any).mastery_weight ?? 0.3}
+                          onChange={(e) =>
+                            setSettingsForm((p) => ({ ...p, mastery_weight: Number(e.target.value) }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>وزن الأداء</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          defaultValue={(settings as any).performance_weight ?? 0.2}
+                          onChange={(e) =>
+                            setSettingsForm((p) => ({ ...p, performance_weight: Number(e.target.value) }))
+                          }
+                        />
+                      </div>
                     </div>
                     <Button onClick={handleSettingsSave} disabled={settingsMutation.isPending}>
                       {settingsMutation.isPending ? "جارٍ الحفظ..." : "حفظ الإعدادات"}

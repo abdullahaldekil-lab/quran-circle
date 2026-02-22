@@ -1198,6 +1198,113 @@ export type Database = {
         }
         Relationships: []
       }
+      narration_attempts: {
+        Row: {
+          created_at: string
+          grade: number
+          id: string
+          lahn_count: number
+          manual_entry: boolean
+          mistakes_count: number
+          narration_type: string
+          notes: string | null
+          session_id: string
+          status: string
+          student_id: string
+          total_hizb_count: number
+          total_pages_approx: number
+          updated_at: string
+          warnings_count: number
+        }
+        Insert: {
+          created_at?: string
+          grade?: number
+          id?: string
+          lahn_count?: number
+          manual_entry?: boolean
+          mistakes_count?: number
+          narration_type?: string
+          notes?: string | null
+          session_id: string
+          status?: string
+          student_id: string
+          total_hizb_count?: number
+          total_pages_approx?: number
+          updated_at?: string
+          warnings_count?: number
+        }
+        Update: {
+          created_at?: string
+          grade?: number
+          id?: string
+          lahn_count?: number
+          manual_entry?: boolean
+          mistakes_count?: number
+          narration_type?: string
+          notes?: string | null
+          session_id?: string
+          status?: string
+          student_id?: string
+          total_hizb_count?: number
+          total_pages_approx?: number
+          updated_at?: string
+          warnings_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narration_attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "narration_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narration_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      narration_ranges: {
+        Row: {
+          attempt_id: string
+          created_at: string
+          from_hizb: number
+          hizb_count: number
+          id: string
+          section: string
+          to_hizb: number
+        }
+        Insert: {
+          attempt_id: string
+          created_at?: string
+          from_hizb?: number
+          hizb_count?: number
+          id?: string
+          section?: string
+          to_hizb?: number
+        }
+        Update: {
+          attempt_id?: string
+          created_at?: string
+          from_hizb?: number
+          hizb_count?: number
+          id?: string
+          section?: string
+          to_hizb?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narration_ranges_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "narration_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       narration_results: {
         Row: {
           created_at: string
@@ -1315,8 +1422,14 @@ export type Database = {
           deduction_per_mistake: number
           deduction_per_warning: number
           id: string
+          mastery_weight: number
           max_grade: number
+          memorization_weight: number
           min_grade: number
+          min_hizb_required: number
+          min_pages_required: number
+          pages_per_hizb: number
+          performance_weight: number
           updated_at: string
         }
         Insert: {
@@ -1325,8 +1438,14 @@ export type Database = {
           deduction_per_mistake?: number
           deduction_per_warning?: number
           id?: string
+          mastery_weight?: number
           max_grade?: number
+          memorization_weight?: number
           min_grade?: number
+          min_hizb_required?: number
+          min_pages_required?: number
+          pages_per_hizb?: number
+          performance_weight?: number
           updated_at?: string
         }
         Update: {
@@ -1335,8 +1454,14 @@ export type Database = {
           deduction_per_mistake?: number
           deduction_per_warning?: number
           id?: string
+          mastery_weight?: number
           max_grade?: number
+          memorization_weight?: number
           min_grade?: number
+          min_hizb_required?: number
+          min_pages_required?: number
+          pages_per_hizb?: number
+          performance_weight?: number
           updated_at?: string
         }
         Relationships: []
