@@ -46,6 +46,7 @@ import PermissionsManagement from "./pages/PermissionsManagement";
 import QuranNarration from "./pages/QuranNarration";
 import NarrationSession from "./pages/NarrationSession";
 import NarrationReports from "./pages/NarrationReports";
+import StudentNarrationProgress from "./pages/StudentNarrationProgress";
 import StaffAttendance from "./pages/StaffAttendance";
 import StaffAttendanceLog from "./pages/StaffAttendanceLog";
 import StaffShiftManagement from "./pages/StaffShiftManagement";
@@ -131,6 +132,7 @@ const AppRoutes = () => {
       <Route path="/quran-narration" element={<ProtectedRoute path="/quran-narration"><QuranNarration /></ProtectedRoute>} />
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
+      <Route path="/students/:id/narration-progress" element={<ProtectedRoute path="/students"><StudentNarrationProgress /></ProtectedRoute>} />
 
       <Route path="/staff-attendance" element={<ProtectedRoute path="/staff-attendance"><StaffAttendance /></ProtectedRoute>} />
       <Route path="/staff-attendance-log" element={<ProtectedRoute path="/staff-attendance-log"><StaffAttendanceLog /></ProtectedRoute>} />
