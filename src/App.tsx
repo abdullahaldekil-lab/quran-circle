@@ -46,6 +46,9 @@ import PermissionsManagement from "./pages/PermissionsManagement";
 import QuranNarration from "./pages/QuranNarration";
 import NarrationSession from "./pages/NarrationSession";
 import NarrationReports from "./pages/NarrationReports";
+import StaffAttendance from "./pages/StaffAttendance";
+import StaffAttendanceLog from "./pages/StaffAttendanceLog";
+import StaffShiftManagement from "./pages/StaffShiftManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -128,6 +131,10 @@ const AppRoutes = () => {
       <Route path="/quran-narration" element={<ProtectedRoute path="/quran-narration"><QuranNarration /></ProtectedRoute>} />
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
+
+      <Route path="/staff-attendance" element={<ProtectedRoute path="/staff-attendance"><StaffAttendance /></ProtectedRoute>} />
+      <Route path="/staff-attendance-log" element={<ProtectedRoute path="/staff-attendance-log"><StaffAttendanceLog /></ProtectedRoute>} />
+      <Route path="/staff-shifts" element={<ProtectedRoute path="/staff-shifts"><StaffShiftManagement /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />

@@ -1605,8 +1605,11 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
+          department: string | null
           full_name: string
           id: string
+          is_staff: boolean
+          job_title: string | null
           last_login_at: string | null
           phone: string | null
           position_title: string | null
@@ -1616,8 +1619,11 @@ export type Database = {
         Insert: {
           active?: boolean
           created_at?: string
+          department?: string | null
           full_name: string
           id: string
+          is_staff?: boolean
+          job_title?: string | null
           last_login_at?: string | null
           phone?: string | null
           position_title?: string | null
@@ -1627,8 +1633,11 @@ export type Database = {
         Update: {
           active?: boolean
           created_at?: string
+          department?: string | null
           full_name?: string
           id?: string
+          is_staff?: boolean
+          job_title?: string | null
           last_login_at?: string | null
           phone?: string | null
           position_title?: string | null
@@ -1879,6 +1888,102 @@ export type Database = {
           is_system?: boolean
           name?: string
           name_ar?: string
+        }
+        Relationships: []
+      }
+      staff_attendance: {
+        Row: {
+          attendance_date: string
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string
+          early_leave_minutes: number
+          id: string
+          late_minutes: number
+          notes: string | null
+          shift_id: string | null
+          staff_id: string
+          status: string
+          total_work_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          attendance_date?: string
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          early_leave_minutes?: number
+          id?: string
+          late_minutes?: number
+          notes?: string | null
+          shift_id?: string | null
+          staff_id: string
+          status?: string
+          total_work_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          attendance_date?: string
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          early_leave_minutes?: number
+          id?: string
+          late_minutes?: number
+          notes?: string | null
+          shift_id?: string | null
+          staff_id?: string
+          status?: string
+          total_work_minutes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_attendance_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "staff_attendance_shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_attendance_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_attendance_shifts: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_time: string
+          grace_in_minutes: number
+          grace_out_minutes: number
+          id: string
+          name: string
+          start_time: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_time: string
+          grace_in_minutes?: number
+          grace_out_minutes?: number
+          id?: string
+          name: string
+          start_time: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_time?: string
+          grace_in_minutes?: number
+          grace_out_minutes?: number
+          id?: string
+          name?: string
+          start_time?: string
         }
         Relationships: []
       }
