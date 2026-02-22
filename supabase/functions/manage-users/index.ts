@@ -102,12 +102,15 @@ serve(async (req) => {
       }
 
       case "update_own_profile": {
-        const { full_name, phone } = payload;
+        const { full_name, phone, avatar_url } = payload;
         if (!full_name) throw new Error("الاسم مطلوب");
+
+        const updateData: any = { full_name, phone };
+        if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
 
         await supabaseAdmin
           .from("profiles")
-          .update({ full_name, phone })
+          .update(updateData)
           .eq("id", caller.id);
 
         return new Response(
