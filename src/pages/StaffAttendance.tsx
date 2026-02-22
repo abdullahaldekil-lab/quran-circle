@@ -9,11 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, LogIn, LogOut, Users, Clock, AlertTriangle, UserX } from "lucide-react";
+import { CalendarIcon, LogIn, LogOut, Users, Clock, AlertTriangle, UserX, CalendarOff } from "lucide-react";
 
 interface StaffProfile {
   id: string;
@@ -63,6 +63,32 @@ const StaffAttendance = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedShiftId, setSelectedShiftId] = useState<string>("");
   const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+  // Check if selected date is a weekend or holiday
+  const isWeekend = useMemo(() => {
+    const day = selectedDate.getDay();
+    return day === 5 || day === 6; // Friday or Saturday
+  }, [selectedDate]);
+
+  const { data: holidayData } = useQuery({
+    queryKey: ["holiday-check", dateStr],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("holidays")
+        .select("title")
+        .lte("start_date", dateStr)
+        .gte("end_date", dateStr)
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const isHoliday = !!holidayData;
+  const isDayOff = isWeekend || isHoliday;
+  const dayOffReason = isWeekend
+    ? "عطلة نهاية الأسبوع (الجمعة والسبت)"
+    : holidayData?.title || "إجازة رسمية";
 
   const { data: staffList = [] } = useQuery({
     queryKey: ["staff-profiles"],
@@ -142,6 +168,7 @@ const StaffAttendance = () => {
 
   const checkInMutation = useMutation({
     mutationFn: async (staffId: string) => {
+      if (isDayOff) throw new Error("لا يمكن تسجيل الحضور في أيام العطل");
       if (!activeShift) throw new Error("يرجى اختيار فترة الدوام");
       const now = new Date();
       const { status, late_minutes } = computeStatus(now, activeShift);
@@ -231,118 +258,132 @@ const StaffAttendance = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Users className="w-8 h-8 text-emerald-500" />
-            <div>
-              <p className="text-2xl font-bold">{summary.present}</p>
-              <p className="text-sm text-muted-foreground">حاضر</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Clock className="w-8 h-8 text-amber-500" />
-            <div>
-              <p className="text-2xl font-bold">{summary.late}</p>
-              <p className="text-sm text-muted-foreground">متأخر</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <AlertTriangle className="w-8 h-8 text-orange-500" />
-            <div>
-              <p className="text-2xl font-bold">{summary.earlyLeave}</p>
-              <p className="text-sm text-muted-foreground">خروج مبكر</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <UserX className="w-8 h-8 text-destructive" />
-            <div>
-              <p className="text-2xl font-bold">{summary.absent}</p>
-              <p className="text-sm text-muted-foreground">غائب</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Day Off Banner */}
+      {isDayOff && (
+        <Alert variant="destructive" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200">
+          <CalendarOff className="h-5 w-5" />
+          <AlertTitle>يوم عطلة — {dayOffReason}</AlertTitle>
+          <AlertDescription>
+            تسجيل الحضور والانصراف معطّل في هذا اليوم. اختر يوم عمل آخر.
+          </AlertDescription>
+        </Alert>
+      )}
 
-      {/* Staff Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>قائمة العاملين - {format(selectedDate, "yyyy-MM-dd")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!activeShift ? (
-            <p className="text-center text-muted-foreground py-8">يرجى إضافة فترة دوام أولاً من صفحة "جداول الدوام"</p>
-          ) : staffList.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">لا يوجد عاملون مسجلون</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">الاسم</TableHead>
-                  <TableHead className="text-right">القسم</TableHead>
-                  <TableHead className="text-right">المسمى</TableHead>
-                  <TableHead className="text-right">الدخول</TableHead>
-                  <TableHead className="text-right">الخروج</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
-                  {canManage && <TableHead className="text-right">إجراءات</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {staffList.map((staff) => {
-                  const record = recordMap[staff.id];
-                  const statusInfo = record ? STATUS_MAP[record.status] || STATUS_MAP.absent : STATUS_MAP.absent;
-                  return (
-                    <TableRow key={staff.id}>
-                      <TableCell className="font-medium">{staff.full_name}</TableCell>
-                      <TableCell>{staff.department || "—"}</TableCell>
-                      <TableCell>{staff.job_title || "—"}</TableCell>
-                      <TableCell>
-                        {record?.check_in_time
-                          ? format(new Date(record.check_in_time), "HH:mm")
-                          : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {record?.check_out_time
-                          ? format(new Date(record.check_out_time), "HH:mm")
-                          : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-                        {record?.late_minutes > 0 && (
-                          <span className="text-xs text-muted-foreground mr-1">({record.late_minutes} د)</span>
-                        )}
-                      </TableCell>
-                      {canManage && (
+      {/* Summary Cards */}
+      {!isDayOff && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <Users className="w-8 h-8 text-emerald-500" />
+              <div>
+                <p className="text-2xl font-bold">{summary.present}</p>
+                <p className="text-sm text-muted-foreground">حاضر</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <Clock className="w-8 h-8 text-amber-500" />
+              <div>
+                <p className="text-2xl font-bold">{summary.late}</p>
+                <p className="text-sm text-muted-foreground">متأخر</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <AlertTriangle className="w-8 h-8 text-orange-500" />
+              <div>
+                <p className="text-2xl font-bold">{summary.earlyLeave}</p>
+                <p className="text-sm text-muted-foreground">خروج مبكر</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <UserX className="w-8 h-8 text-destructive" />
+              <div>
+                <p className="text-2xl font-bold">{summary.absent}</p>
+                <p className="text-sm text-muted-foreground">غائب</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {!isDayOff && (
+        <Card>
+          <CardHeader>
+            <CardTitle>قائمة العاملين - {format(selectedDate, "yyyy-MM-dd")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!activeShift ? (
+              <p className="text-center text-muted-foreground py-8">يرجى إضافة فترة دوام أولاً من صفحة "جداول الدوام"</p>
+            ) : staffList.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">لا يوجد عاملون مسجلون</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-right">الاسم</TableHead>
+                    <TableHead className="text-right">القسم</TableHead>
+                    <TableHead className="text-right">المسمى</TableHead>
+                    <TableHead className="text-right">الدخول</TableHead>
+                    <TableHead className="text-right">الخروج</TableHead>
+                    <TableHead className="text-right">الحالة</TableHead>
+                    {canManage && <TableHead className="text-right">إجراءات</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {staffList.map((staff) => {
+                    const record = recordMap[staff.id];
+                    const statusInfo = record ? STATUS_MAP[record.status] || STATUS_MAP.absent : STATUS_MAP.absent;
+                    return (
+                      <TableRow key={staff.id}>
+                        <TableCell className="font-medium">{staff.full_name}</TableCell>
+                        <TableCell>{staff.department || "—"}</TableCell>
+                        <TableCell>{staff.job_title || "—"}</TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            {!record?.check_in_time && (
-                              <Button size="sm" variant="outline" onClick={() => checkInMutation.mutate(staff.id)} disabled={checkInMutation.isPending}>
-                                <LogIn className="w-4 h-4 ml-1" />حضور
-                              </Button>
-                            )}
-                            {record?.check_in_time && !record?.check_out_time && (
-                              <Button size="sm" variant="outline" onClick={() => checkOutMutation.mutate(staff.id)} disabled={checkOutMutation.isPending}>
-                                <LogOut className="w-4 h-4 ml-1" />انصراف
-                              </Button>
-                            )}
-                          </div>
+                          {record?.check_in_time
+                            ? format(new Date(record.check_in_time), "HH:mm")
+                            : "—"}
                         </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                        <TableCell>
+                          {record?.check_out_time
+                            ? format(new Date(record.check_out_time), "HH:mm")
+                            : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                          {record?.late_minutes > 0 && (
+                            <span className="text-xs text-muted-foreground mr-1">({record.late_minutes} د)</span>
+                          )}
+                        </TableCell>
+                        {canManage && (
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {!record?.check_in_time && (
+                                <Button size="sm" variant="outline" onClick={() => checkInMutation.mutate(staff.id)} disabled={checkInMutation.isPending}>
+                                  <LogIn className="w-4 h-4 ml-1" />حضور
+                                </Button>
+                              )}
+                              {record?.check_in_time && !record?.check_out_time && (
+                                <Button size="sm" variant="outline" onClick={() => checkOutMutation.mutate(staff.id)} disabled={checkOutMutation.isPending}>
+                                  <LogOut className="w-4 h-4 ml-1" />انصراف
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
