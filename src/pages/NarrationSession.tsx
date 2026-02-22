@@ -9,13 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -36,30 +29,16 @@ import { useToast } from "@/hooks/use-toast";
 import NarrationPrintTemplate from "@/components/NarrationPrintTemplate";
 import NarrationAttemptDialog from "@/components/narration/NarrationAttemptDialog";
 import type { NarrationRange, NarrationSettingsFull, NarrationAttemptData } from "@/components/narration/NarrationValidation";
+import { calcTotalHizbCount } from "@/components/narration/NarrationValidation";
 
-interface NarrationSettings {
-  id: string;
-  min_grade: number;
-  max_grade: number;
-  deduction_per_mistake: number;
-  deduction_per_lahn: number;
-  deduction_per_warning: number;
-  pages_per_hizb?: number;
-  min_hizb_required?: number;
-  min_pages_required?: number;
-  memorization_weight?: number;
-  mastery_weight?: number;
-  performance_weight?: number;
-}
-
-interface StudentResult {
-  id?: string;
+interface StudentRow {
   student_id: string;
   student_name: string;
-  hizb_from: number;
-  hizb_to: number;
-  total_hizbat: number;
+  attempt_id?: string;
   narration_type: "regular" | "multi";
+  ranges: NarrationRange[];
+  total_hizb_count: number;
+  total_pages_approx: number;
   mistakes_count: number;
   lahn_count: number;
   warnings_count: number;
@@ -67,9 +46,6 @@ interface StudentResult {
   status: "pass" | "fail" | "absent" | "pending";
   notes: string;
   manual_entry: boolean;
-  // New: attempt data from narration_attempts
-  attempt_id?: string;
-  ranges?: NarrationRange[];
 }
 
 export default function NarrationSession() {
@@ -81,11 +57,12 @@ export default function NarrationSession() {
   const queryClient = useQueryClient();
   const printRef = useRef<HTMLDivElement>(null);
 
-  const [rows, setRows] = useState<StudentResult[]>([]);
-  const [isDirty, setIsDirty] = useState(false);
+  const [rows, setRows] = useState<StudentRow[]>([]);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteStudentId, setDeleteStudentId] = useState<string | null>(null);
+  const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
+  const [savingAttempt, setSavingAttempt] = useState(false);
 
   const isManager = role === "manager";
   const canWrite = isManager || role === "teacher" || role === "assistant_teacher";
@@ -122,7 +99,7 @@ export default function NarrationSession() {
         .limit(1)
         .single();
       if (error) throw error;
-      return (data as unknown) as NarrationSettings;
+      return (data as unknown) as NarrationSettingsFull;
     },
   });
 
@@ -143,7 +120,7 @@ export default function NarrationSession() {
     enabled: !!session?.halaqa_id,
   });
 
-  // جلب جميع الطلاب النشطين للبحث (يُفعَّل فقط عند فتح نافذة الإضافة)
+  // جلب جميع الطلاب النشطين للبحث
   const { data: allStudents = [] } = useQuery<{
     id: string;
     full_name: string;
@@ -163,132 +140,99 @@ export default function NarrationSession() {
     enabled: showAddStudent,
   });
 
-  // جلب النتائج الموجودة
-  const { data: existingResults = [] } = useQuery({
-    queryKey: ["narration-results", sessionId],
+  // جلب المحاولات الموجودة مع النطاقات
+  const { data: existingAttempts = [] } = useQuery({
+    queryKey: ["narration-attempts", sessionId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("narration_results" as any)
+        .from("narration_attempts" as any)
         .select("*")
         .eq("session_id", sessionId!);
       if (error) throw error;
-      return (data as unknown) as (StudentResult & { id: string; session_id: string })[];
+      const attempts = (data as unknown) as any[];
+      // Fetch ranges for all attempts
+      if (attempts.length === 0) return [];
+      const attemptIds = attempts.map((a: any) => a.id);
+      const { data: rangesData, error: rangesError } = await supabase
+        .from("narration_ranges" as any)
+        .select("*")
+        .in("attempt_id", attemptIds);
+      if (rangesError) throw rangesError;
+      const rangesMap = new Map<string, NarrationRange[]>();
+      for (const r of (rangesData as unknown as any[])) {
+        const list = rangesMap.get(r.attempt_id) || [];
+        list.push({ id: r.id, section: r.section, from_hizb: r.from_hizb, to_hizb: r.to_hizb, hizb_count: r.hizb_count });
+        rangesMap.set(r.attempt_id, list);
+      }
+      return attempts.map((a: any) => ({ ...a, ranges: rangesMap.get(a.id) || [] }));
     },
     enabled: !!sessionId,
   });
 
-  // بناء الصفوف عند تحميل الطلاب والنتائج
+  // بناء الصفوف
   useEffect(() => {
-    if (students.length === 0) return;
-    const resultMap = new Map(existingResults.map((r) => [r.student_id, r]));
+    if (students.length === 0 && existingAttempts.length === 0) return;
+    const attemptMap = new Map(existingAttempts.map((a: any) => [a.student_id, a]));
     const maxGrade = settings?.max_grade ?? 100;
-    const minGrade = settings?.min_grade ?? 70;
 
-    setRows(
-      students.map((s) => {
-        const existing = resultMap.get(s.id);
-        if (existing) {
-          return {
-            id: existing.id,
-            student_id: s.id,
-            student_name: s.full_name,
-            hizb_from: existing.hizb_from,
-            hizb_to: existing.hizb_to,
-            total_hizbat: existing.total_hizbat ?? (existing.hizb_to - existing.hizb_from + 1),
-            narration_type: "regular" as const,
-            mistakes_count: existing.mistakes_count,
-            lahn_count: existing.lahn_count,
-            warnings_count: existing.warnings_count,
-            grade: existing.grade,
-            status: existing.status as StudentResult["status"],
-            notes: existing.notes || "",
-            manual_entry: existing.manual_entry,
-          };
-        }
-        return {
-          student_id: s.id,
-          student_name: s.full_name,
-          hizb_from: 1,
-          hizb_to: 1,
-          total_hizbat: 1,
-          narration_type: "regular" as const,
-          mistakes_count: 0,
-          lahn_count: 0,
-          warnings_count: 0,
-          grade: maxGrade,
-          status: "pending" as const,
-          notes: "",
-          manual_entry: false,
-        };
-      })
-    );
-  }, [students, existingResults, settings]);
-
-  // حساب الدرجة تلقائياً
-  const calcGrade = (row: StudentResult, s: NarrationSettings) => {
-    if (row.manual_entry) return row.grade;
-    const raw =
-      s.max_grade -
-      row.mistakes_count * s.deduction_per_mistake -
-      row.lahn_count * s.deduction_per_lahn -
-      row.warnings_count * s.deduction_per_warning;
-    return Math.max(0, Math.min(s.max_grade, raw));
-  };
-
-  const updateRow = (
-    index: number,
-    field: keyof StudentResult,
-    value: string | number | boolean
-  ) => {
-    setIsDirty(true);
-    setRows((prev) => {
-      const updated = [...prev];
-      const row = { ...updated[index], [field]: value };
-
-      if (field === "status" && value === "absent") {
-        updated[index] = { ...row, status: "absent" };
-        return updated;
+    // Students from halaqa
+    const halaqaRows: StudentRow[] = students.map((s) => {
+      const existing = attemptMap.get(s.id);
+      if (existing) {
+        return mapAttemptToRow(s.id, s.full_name, existing);
       }
-
-      if (settings && !row.manual_entry && field !== "manual_entry" && field !== "grade") {
-        const newGrade = calcGrade(row as StudentResult, settings);
-        const newStatus: StudentResult["status"] =
-          row.status === "absent"
-            ? "absent"
-            : newGrade >= settings.min_grade
-            ? "pass"
-            : "fail";
-        updated[index] = { ...row, grade: newGrade, status: newStatus };
-      } else if (field === "manual_entry" && value === false && settings) {
-        const newGrade = calcGrade(row as StudentResult, settings);
-        const newStatus: StudentResult["status"] =
-          newGrade >= settings.min_grade ? "pass" : "fail";
-        updated[index] = { ...row, grade: newGrade, status: newStatus };
-      } else if (field === "grade" && settings) {
-        const newStatus: StudentResult["status"] =
-          Number(value) >= settings.min_grade ? "pass" : "fail";
-        updated[index] = { ...row, manual_entry: true, status: newStatus };
-      } else {
-        updated[index] = row;
-      }
-      return updated;
+      return makeEmptyRow(s.id, s.full_name, maxGrade);
     });
-  };
 
-  // إضافة طالب يدوياً من خارج الحلقة
-  const addStudentManually = (student: { id: string; full_name: string }) => {
-    if (rows.some((r) => r.student_id === student.id)) {
-      toast({ title: "الطالب موجود بالفعل في الجلسة", variant: "destructive" });
-      return;
-    }
-    const maxGrade = settings?.max_grade ?? 100;
-    const newRow: StudentResult = {
-      student_id: student.id,
-      student_name: student.full_name,
-      hizb_from: 1,
-      hizb_to: 1,
-      total_hizbat: 1,
+    // Students that have attempts but are not in the halaqa
+    const halaqaStudentIds = new Set(students.map((s) => s.id));
+    const extraRows: StudentRow[] = existingAttempts
+      .filter((a: any) => !halaqaStudentIds.has(a.student_id))
+      .map((a: any) => mapAttemptToRow(a.student_id, a.student_id, a)); // name will be resolved below
+
+    setRows([...halaqaRows, ...extraRows]);
+  }, [students, existingAttempts, settings]);
+
+  // Resolve names for extra students
+  useEffect(() => {
+    const unknownIds = rows.filter(r => r.student_name === r.student_id).map(r => r.student_id);
+    if (unknownIds.length === 0) return;
+    (async () => {
+      const { data } = await (supabase as any).from("students").select("id, full_name").in("id", unknownIds);
+      if (data && data.length > 0) {
+        const nameMap = new Map(data.map((d: any) => [d.id, d.full_name]));
+        setRows(prev => prev.map(r => nameMap.has(r.student_id) ? { ...r, student_name: nameMap.get(r.student_id) as string } : r));
+      }
+    })();
+  }, [rows.length]);
+
+  function mapAttemptToRow(studentId: string, studentName: string, attempt: any): StudentRow {
+    return {
+      student_id: studentId,
+      student_name: studentName,
+      attempt_id: attempt.id,
+      narration_type: attempt.narration_type || "regular",
+      ranges: attempt.ranges || [],
+      total_hizb_count: Number(attempt.total_hizb_count) || 0,
+      total_pages_approx: Number(attempt.total_pages_approx) || 0,
+      mistakes_count: attempt.mistakes_count || 0,
+      lahn_count: attempt.lahn_count || 0,
+      warnings_count: attempt.warnings_count || 0,
+      grade: Number(attempt.grade) || 0,
+      status: attempt.status || "pending",
+      notes: attempt.notes || "",
+      manual_entry: attempt.manual_entry || false,
+    };
+  }
+
+  function makeEmptyRow(studentId: string, studentName: string, maxGrade: number): StudentRow {
+    return {
+      student_id: studentId,
+      student_name: studentName,
       narration_type: "regular",
+      ranges: [{ section: "regular", from_hizb: 1, to_hizb: 1, hizb_count: 1 }],
+      total_hizb_count: 1,
+      total_pages_approx: (settings?.pages_per_hizb ?? 10),
       mistakes_count: 0,
       lahn_count: 0,
       warnings_count: 0,
@@ -297,73 +241,99 @@ export default function NarrationSession() {
       notes: "",
       manual_entry: false,
     };
-    setRows((prev) => [...prev, newRow]);
-    setIsDirty(true);
+  }
+
+  // إضافة طالب يدوياً
+  const addStudentManually = (student: { id: string; full_name: string }) => {
+    if (rows.some((r) => r.student_id === student.id)) {
+      toast({ title: "الطالب موجود بالفعل في الجلسة", variant: "destructive" });
+      return;
+    }
+    const maxGrade = settings?.max_grade ?? 100;
+    setRows((prev) => [...prev, makeEmptyRow(student.id, student.full_name, maxGrade)]);
     setShowAddStudent(false);
     setSearchQuery("");
   };
 
-  // حذف طالب من الجلسة
+  // حذف طالب
   const deleteStudent = async (studentId: string) => {
     const row = rows.find((r) => r.student_id === studentId);
-    // إذا كانت النتيجة محفوظة في قاعدة البيانات، احذفها
-    if (row?.id) {
-      const { error } = await supabase
-        .from("narration_results" as any)
-        .delete()
-        .eq("id", row.id);
+    if (row?.attempt_id) {
+      // Delete ranges first, then attempt
+      await supabase.from("narration_ranges" as any).delete().eq("attempt_id", row.attempt_id);
+      const { error } = await supabase.from("narration_attempts" as any).delete().eq("id", row.attempt_id);
       if (error) {
         toast({ title: `خطأ في الحذف: ${error.message}`, variant: "destructive" });
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["narration-results", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
     }
     setRows((prev) => prev.filter((r) => r.student_id !== studentId));
-    setIsDirty(false);
     setDeleteStudentId(null);
     toast({ title: "تم حذف الطالب من الجلسة" });
   };
 
-  // حفظ الكل
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const upsertData = rows.map((r) => ({
-        ...(r.id ? { id: r.id } : {}),
+  // حفظ محاولة طالب واحد (من Dialog)
+  const saveStudentAttempt = async (studentId: string, data: NarrationAttemptData) => {
+    setSavingAttempt(true);
+    try {
+      const row = rows.find((r) => r.student_id === studentId);
+      const attemptPayload = {
         session_id: sessionId!,
-        student_id: r.student_id,
-        hizb_from: r.hizb_from,
-        hizb_to: r.hizb_to,
-        total_hizbat: r.total_hizbat,
-        mistakes_count: r.mistakes_count,
-        lahn_count: r.lahn_count,
-        warnings_count: r.warnings_count,
-        grade: r.grade,
-        status: r.status,
-        notes: r.notes || null,
-        manual_entry: r.manual_entry,
-      }));
+        student_id: studentId,
+        narration_type: data.narration_type,
+        total_hizb_count: data.total_hizb_count,
+        total_pages_approx: data.total_pages_approx,
+        mistakes_count: data.mistakes_count,
+        lahn_count: data.lahn_count,
+        warnings_count: data.warnings_count,
+        grade: data.grade,
+        status: data.status,
+        manual_entry: data.manual_entry,
+        notes: data.notes || null,
+      };
 
-      const { error } = await supabase
-        .from("narration_results" as any)
-        .upsert(upsertData, { onConflict: "session_id,student_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["narration-results", sessionId] });
-      queryClient.invalidateQueries({ queryKey: ["narration-results-all"] });
-      setIsDirty(false);
-      toast({ title: "تم حفظ النتائج بنجاح ✓" });
-    },
-    onError: (err: any) => {
-      toast({ title: `حدث خطأ: ${err.message}`, variant: "destructive" });
-    },
-  });
+      let attemptId = row?.attempt_id;
 
-  const handlePrint = () => {
-    window.print();
+      if (attemptId) {
+        // Update existing
+        const { error } = await supabase.from("narration_attempts" as any).update(attemptPayload).eq("id", attemptId);
+        if (error) throw error;
+        // Delete old ranges and insert new
+        await supabase.from("narration_ranges" as any).delete().eq("attempt_id", attemptId);
+      } else {
+        // Insert new
+        const { data: created, error } = await supabase.from("narration_attempts" as any).insert(attemptPayload).select().single();
+        if (error) throw error;
+        attemptId = (created as any).id;
+      }
+
+      // Insert ranges
+      if (data.ranges.length > 0 && attemptId) {
+        const rangesPayload = data.ranges.map((r) => ({
+          attempt_id: attemptId,
+          section: r.section,
+          from_hizb: r.from_hizb,
+          to_hizb: r.to_hizb,
+          hizb_count: r.to_hizb - r.from_hizb + 1,
+        }));
+        const { error: rangeError } = await supabase.from("narration_ranges" as any).insert(rangesPayload);
+        if (rangeError) throw rangeError;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
+      setEditingStudent(null);
+      toast({ title: "تم حفظ النتيجة بنجاح ✓" });
+    } catch (err: any) {
+      toast({ title: `خطأ: ${err.message}`, variant: "destructive" });
+    } finally {
+      setSavingAttempt(false);
+    }
   };
 
-  // الإحصائيات السريعة
+  const handlePrint = () => { window.print(); };
+
+  // الإحصائيات
   const stats = {
     total: rows.length,
     present: rows.filter((r) => r.status !== "absent" && r.status !== "pending").length,
@@ -375,11 +345,7 @@ export default function NarrationSession() {
 
   const avgGrade =
     stats.present > 0
-      ? (rows
-          .filter((r) => r.status !== "absent" && r.status !== "pending")
-          .reduce((s, r) => s + r.grade, 0) /
-          stats.present
-        ).toFixed(1)
+      ? (rows.filter((r) => r.status !== "absent" && r.status !== "pending").reduce((s, r) => s + r.grade, 0) / stats.present).toFixed(1)
       : "—";
 
   return (
@@ -404,16 +370,6 @@ export default function NarrationSession() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {canWrite && (
-            <Button
-              onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending || !isDirty}
-              className="gap-2"
-            >
-              <Save className="w-4 h-4" />
-              {saveMutation.isPending ? "جارٍ الحفظ..." : "حفظ الكل"}
-            </Button>
-          )}
           <Button variant="outline" className="gap-2 print:hidden" onClick={handlePrint}>
             <Printer className="w-4 h-4" />
             طباعة
@@ -444,26 +400,16 @@ export default function NarrationSession() {
         ))}
       </div>
 
-      {/* جدول الإدخال */}
+      {/* جدول النتائج */}
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
               نتائج الطلاب
-              {isDirty && (
-                <Badge variant="outline" className="text-chart-4 border-chart-4/30 text-xs">
-                  يوجد تغييرات غير محفوظة
-                </Badge>
-              )}
             </CardTitle>
             {canWrite && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => setShowAddStudent(true)}
-              >
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowAddStudent(true)}>
                 <UserPlus className="w-3.5 h-3.5" />
                 إضافة طالب
               </Button>
@@ -482,147 +428,66 @@ export default function NarrationSession() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right min-w-[140px]">اسم الطالب</TableHead>
-                  <TableHead className="text-center w-28">من حزب</TableHead>
-                  <TableHead className="text-center w-28">إلى حزب</TableHead>
-                  <TableHead className="text-center w-28">مج. الأحزاب</TableHead>
+                  <TableHead className="text-center w-24">نوع السرد</TableHead>
+                  <TableHead className="text-center w-20">الأحزاب</TableHead>
+                  <TableHead className="text-center w-20">الأوجه</TableHead>
                   <TableHead className="text-center w-20">أخطاء</TableHead>
                   <TableHead className="text-center w-20">لحون</TableHead>
                   <TableHead className="text-center w-20">تنبيهات</TableHead>
                   <TableHead className="text-center w-20">الدرجة</TableHead>
-                  <TableHead className="text-center w-28">الحالة</TableHead>
-                  <TableHead className="text-right min-w-[120px]">ملاحظات</TableHead>
-                  {canWrite && <TableHead className="w-10"></TableHead>}
+                  <TableHead className="text-center w-24">الحالة</TableHead>
+                  {canWrite && <TableHead className="w-20 text-center">إجراءات</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row, i) => (
+                {rows.map((row) => (
                   <TableRow
                     key={row.student_id}
                     className={row.status === "absent" ? "opacity-50" : ""}
                   >
                     <TableCell className="font-medium text-sm">{row.student_name}</TableCell>
-                    {/* من حزب */}
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={60}
-                        value={row.hizb_from}
-                        onChange={(e) => updateRow(i, "hizb_from", Number(e.target.value))}
-                        disabled={!canWrite || row.status === "absent"}
-                        className="w-16 text-center h-8 text-sm"
-                      />
+                    <TableCell className="text-center">
+                      <Badge variant="outline" className="text-xs">
+                        {row.narration_type === "regular" ? "منتظم" : "متعدد"}
+                      </Badge>
                     </TableCell>
-                    {/* إلى حزب */}
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={60}
-                        value={row.hizb_to}
-                        onChange={(e) => updateRow(i, "hizb_to", Number(e.target.value))}
-                        disabled={!canWrite || row.status === "absent"}
-                        className="w-16 text-center h-8 text-sm"
-                      />
+                    <TableCell className="text-center font-semibold text-primary">{row.total_hizb_count}</TableCell>
+                    <TableCell className="text-center text-muted-foreground">{row.total_pages_approx}</TableCell>
+                    <TableCell className="text-center">{row.mistakes_count}</TableCell>
+                    <TableCell className="text-center">{row.lahn_count}</TableCell>
+                    <TableCell className="text-center">{row.warnings_count}</TableCell>
+                    <TableCell className={`text-center font-semibold ${
+                      row.status === "pass" ? "text-chart-2" : row.status === "fail" ? "text-destructive" : ""
+                    }`}>
+                      {row.status === "absent" ? "—" : row.grade}
                     </TableCell>
-                    {/* مجموع الأحزاب المعروضة (للأحزاب المتفرقة) */}
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={60}
-                        value={row.total_hizbat}
-                        onChange={(e) => updateRow(i, "total_hizbat", Number(e.target.value))}
-                        disabled={!canWrite || row.status === "absent"}
-                        className="w-16 text-center h-8 text-sm font-semibold text-primary"
-                        title="مجموع الأحزاب الفعلية المعروضة (يمكن تعديله للأحزاب المتفرقة)"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={row.mistakes_count}
-                        onChange={(e) => updateRow(i, "mistakes_count", Number(e.target.value))}
-                        disabled={!canWrite || row.status === "absent"}
-                        className="w-16 text-center h-8 text-sm"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={row.lahn_count}
-                        onChange={(e) => updateRow(i, "lahn_count", Number(e.target.value))}
-                        disabled={!canWrite || row.status === "absent"}
-                        className="w-16 text-center h-8 text-sm"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={row.warnings_count}
-                        onChange={(e) => updateRow(i, "warnings_count", Number(e.target.value))}
-                        disabled={!canWrite || row.status === "absent"}
-                        className="w-16 text-center h-8 text-sm"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={settings?.max_grade ?? 100}
-                        step="0.5"
-                        value={row.grade}
-                        onChange={(e) => updateRow(i, "grade", Number(e.target.value))}
-                        disabled={!canWrite || row.status === "absent"}
-                        className={`w-16 text-center h-8 text-sm font-semibold ${
-                          row.status === "pass"
-                            ? "text-chart-2"
-                            : row.status === "fail"
-                            ? "text-destructive"
-                            : ""
-                        }`}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={row.status}
-                        onValueChange={(v) => updateRow(i, "status", v)}
-                        disabled={!canWrite}
-                      >
-                        <SelectTrigger className="h-8 text-xs w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">معلّق</SelectItem>
-                          <SelectItem value="pass">اجتاز ✓</SelectItem>
-                          <SelectItem value="fail">راسب ✗</SelectItem>
-                          <SelectItem value="absent">غائب</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        placeholder="ملاحظة..."
-                        value={row.notes}
-                        onChange={(e) => updateRow(i, "notes", e.target.value)}
-                        disabled={!canWrite}
-                        className="h-8 text-xs min-w-[100px]"
-                      />
+                    <TableCell className="text-center">
+                      <Badge variant={row.status === "pass" ? "default" : row.status === "fail" ? "destructive" : "secondary"} className="text-xs">
+                        {row.status === "pass" ? "ناجح" : row.status === "fail" ? "راسب" : row.status === "absent" ? "غائب" : "معلّق"}
+                      </Badge>
                     </TableCell>
                     {canWrite && (
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => setDeleteStudentId(row.student_id)}
-                          title="حذف الطالب من الجلسة"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-primary"
+                            onClick={() => setEditingStudent(row)}
+                            title="تعديل النتيجة"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => setDeleteStudentId(row.student_id)}
+                            title="حذف"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
@@ -633,15 +498,59 @@ export default function NarrationSession() {
         </CardContent>
       </Card>
 
-      {/* قالب الطباعة (مخفي في العرض العادي) */}
+      {/* قالب الطباعة */}
       {session && (
         <div className="hidden print:block" ref={printRef}>
           <NarrationPrintTemplate
             session={session}
-            rows={rows}
-            settings={settings}
+            rows={rows.map(r => ({
+              student_id: r.student_id,
+              student_name: r.student_name,
+              narration_type: r.narration_type,
+              ranges: r.ranges,
+              total_hizb_count: r.total_hizb_count,
+              total_pages_approx: r.total_pages_approx,
+              mistakes_count: r.mistakes_count,
+              lahn_count: r.lahn_count,
+              warnings_count: r.warnings_count,
+              grade: r.grade,
+              status: r.status,
+              notes: r.notes,
+              manual_entry: r.manual_entry,
+            }))}
+            settings={settings ? {
+              min_grade: settings.min_grade,
+              max_grade: settings.max_grade,
+              deduction_per_mistake: settings.deduction_per_mistake,
+              deduction_per_lahn: settings.deduction_per_lahn,
+              deduction_per_warning: settings.deduction_per_warning,
+            } : undefined}
           />
         </div>
+      )}
+
+      {/* Dialog إدخال/تعديل النتيجة */}
+      {settings && editingStudent && (
+        <NarrationAttemptDialog
+          open={!!editingStudent}
+          onClose={() => setEditingStudent(null)}
+          student={{ student_id: editingStudent.student_id, student_name: editingStudent.student_name }}
+          settings={settings}
+          existing={editingStudent.attempt_id ? {
+            id: editingStudent.attempt_id,
+            narration_type: editingStudent.narration_type,
+            ranges: editingStudent.ranges,
+            mistakes_count: editingStudent.mistakes_count,
+            lahn_count: editingStudent.lahn_count,
+            warnings_count: editingStudent.warnings_count,
+            grade: editingStudent.grade,
+            status: editingStudent.status,
+            manual_entry: editingStudent.manual_entry,
+            notes: editingStudent.notes,
+          } : null}
+          onSave={(data) => saveStudentAttempt(editingStudent.student_id, data)}
+          saving={savingAttempt}
+        />
       )}
 
       {/* Dialog إضافة طالب */}
@@ -656,8 +565,6 @@ export default function NarrationSession() {
               ابحث عن طالب وأضفه إلى جلسة السرد الحالية
             </DialogDescription>
           </DialogHeader>
-
-          {/* حقل البحث */}
           <div className="relative">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -668,44 +575,29 @@ export default function NarrationSession() {
               autoFocus
             />
           </div>
-
-          {/* قائمة النتائج */}
           <div className="max-h-72 overflow-y-auto space-y-1">
             {allStudents.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-6">جارٍ التحميل...</p>
             ) : (() => {
-              const filtered = allStudents.filter((s) =>
-                s.full_name.includes(searchQuery) || searchQuery === ""
-              );
-              if (filtered.length === 0) {
-                return <p className="text-center text-sm text-muted-foreground py-6">لا توجد نتائج</p>;
-              }
+              const filtered = allStudents.filter((s) => s.full_name.includes(searchQuery) || searchQuery === "");
+              if (filtered.length === 0) return <p className="text-center text-sm text-muted-foreground py-6">لا توجد نتائج</p>;
               return filtered.map((student) => {
                 const alreadyAdded = rows.some((r) => r.student_id === student.id);
                 return (
                   <div
                     key={student.id}
                     className={`flex items-center justify-between p-2.5 rounded-lg border transition-colors ${
-                      alreadyAdded
-                        ? "opacity-50 bg-muted border-border"
-                        : "bg-background border-border hover:bg-accent/50"
+                      alreadyAdded ? "opacity-50 bg-muted border-border" : "bg-background border-border hover:bg-accent/50"
                     }`}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{student.full_name}</p>
-                      {student.halaqat && (
-                        <p className="text-xs text-muted-foreground">{student.halaqat.name}</p>
-                      )}
+                      {student.halaqat && <p className="text-xs text-muted-foreground">{student.halaqat.name}</p>}
                     </div>
                     {alreadyAdded ? (
                       <Badge variant="secondary" className="text-xs shrink-0 mr-2">مضاف</Badge>
                     ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7 shrink-0 mr-2"
-                        onClick={() => addStudentManually(student)}
-                      >
+                      <Button size="sm" variant="outline" className="text-xs h-7 shrink-0 mr-2" onClick={() => addStudentManually(student)}>
                         إضافة
                       </Button>
                     )}
@@ -717,14 +609,14 @@ export default function NarrationSession() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog تأكيد حذف الطالب */}
+      {/* Dialog تأكيد حذف */}
       <AlertDialog open={!!deleteStudentId} onOpenChange={(open) => { if (!open) setDeleteStudentId(null); }}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
             <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
             <AlertDialogDescription>
               هل أنت متأكد من إزالة هذا الطالب من جلسة السرد؟
-              {rows.find(r => r.student_id === deleteStudentId)?.id && " سيتم حذف نتيجته المحفوظة نهائياً."}
+              {rows.find(r => r.student_id === deleteStudentId)?.attempt_id && " سيتم حذف نتيجته المحفوظة نهائياً."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
