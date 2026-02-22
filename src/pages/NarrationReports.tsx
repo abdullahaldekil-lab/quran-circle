@@ -21,9 +21,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, BarChart3, Trophy, BookOpen, Printer, TrendingUp } from "lucide-react";
+import { ArrowRight, BarChart3, Trophy, BookOpen, Printer, TrendingUp, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import NarrationCertificate from "@/components/narration/NarrationCertificate";
+import {
+  exportSessionToExcel, exportSessionToPdf,
+  exportOverallToExcel, exportOverallToPdf,
+  exportBulkCertificatesPdf,
+} from "@/utils/narrationExport";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LineChart, Line, PieChart, Pie, BarChart, Bar,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, Legend,
@@ -261,18 +269,69 @@ export default function NarrationReports() {
         </TabsContent>
 
         <TabsContent value="session" className="space-y-4 mt-4">
-          <Select value={selectedSession} onValueChange={setSelectedSession}>
-            <SelectTrigger className="w-full max-w-sm">
-              <SelectValue placeholder="اختر الجلسة" />
-            </SelectTrigger>
-            <SelectContent>
-              {sessions.map((s: any) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {new Date(s.session_date).toLocaleDateString("ar-SA")} — {s.halaqat?.name || s.title || "جلسة"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={selectedSession} onValueChange={setSelectedSession}>
+              <SelectTrigger className="w-full max-w-sm">
+                <SelectValue placeholder="اختر الجلسة" />
+              </SelectTrigger>
+              <SelectContent>
+                {sessions.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {new Date(s.session_date).toLocaleDateString("ar-SA")} — {s.halaqat?.name || s.title || "جلسة"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {selectedSession && presented.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 ml-1" />
+                    تصدير النتائج
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => exportSessionToExcel({
+                    sessionDate: new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"),
+                    sessionTitle: selectedSessionData?.title || "",
+                    halaqaName: selectedSessionData?.halaqat?.name || "",
+                    attempts,
+                  })}>
+                    <FileSpreadsheet className="w-4 h-4 ml-2" />
+                    تصدير Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSessionToPdf({
+                    sessionDate: new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"),
+                    sessionTitle: selectedSessionData?.title || "",
+                    halaqaName: selectedSessionData?.halaqat?.name || "",
+                    attempts,
+                  })}>
+                    <FileText className="w-4 h-4 ml-2" />
+                    تصدير PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    const rankedCerts = [...presented]
+                      .sort((a: any, b: any) => Number(b.grade) - Number(a.grade))
+                      .map((a: any, i: number) => ({
+                        studentName: a.students?.full_name || "—",
+                        halaqaName: a.students?.halaqat?.name || selectedSessionData?.halaqat?.name || "—",
+                        totalHizb: Number(a.total_hizb_count),
+                        grade: Number(a.grade),
+                        maxGrade: settings?.max_grade || 100,
+                        status: a.status as "pass" | "fail",
+                        halaqaRank: i + 1,
+                        sessionDate: selectedSessionData?.session_date || "",
+                      }));
+                    exportBulkCertificatesPdf(rankedCerts, new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"));
+                  }}>
+                    <Printer className="w-4 h-4 ml-2" />
+                    تصدير جميع الشهادات PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
 
           {selectedSession && (
             <>
@@ -353,13 +412,33 @@ export default function NarrationReports() {
         </TabsContent>
 
         <TabsContent value="overall" className="space-y-4 mt-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-primary" />
+              ترتيب الحلقات حسب الأداء
+            </h2>
+            {halaqatStats.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 ml-1" />
+                    تصدير التقرير
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => exportOverallToExcel(halaqatStats)}>
+                    <FileSpreadsheet className="w-4 h-4 ml-2" />
+                    تصدير Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportOverallToPdf(halaqatStats)}>
+                    <FileText className="w-4 h-4 ml-2" />
+                    تصدير PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-primary" />
-                ترتيب الحلقات حسب الأداء
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
