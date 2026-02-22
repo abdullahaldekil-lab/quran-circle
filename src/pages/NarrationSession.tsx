@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowRight, Printer, Save, ScrollText, CheckCircle2, XCircle, Users, UserPlus, Search, Trash2, Pencil } from "lucide-react";
+import { ArrowRight, Printer, Save, ScrollText, CheckCircle2, XCircle, Users, UserPlus, Search, Trash2, Pencil, ListChecks } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import NarrationPrintTemplate from "@/components/NarrationPrintTemplate";
 import NarrationAttemptDialog from "@/components/narration/NarrationAttemptDialog";
@@ -63,6 +64,9 @@ export default function NarrationSession() {
   const [deleteStudentId, setDeleteStudentId] = useState<string | null>(null);
   const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
   const [savingAttempt, setSavingAttempt] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const [bulkNarrationOpen, setBulkNarrationOpen] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const isManager = role === "manager";
   const canWrite = isManager || role === "teacher" || role === "assistant_teacher";
@@ -333,6 +337,81 @@ export default function NarrationSession() {
 
   const handlePrint = () => { window.print(); };
 
+  // Multi-select helpers
+  const toggleStudent = (studentId: string) => {
+    setSelectedStudents(prev => {
+      const next = new Set(prev);
+      if (next.has(studentId)) next.delete(studentId); else next.add(studentId);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedStudents.size === rows.length) {
+      setSelectedStudents(new Set());
+    } else {
+      setSelectedStudents(new Set(rows.map(r => r.student_id)));
+    }
+  };
+
+  // Bulk save narration for selected students
+  const saveBulkNarration = async (data: NarrationAttemptData) => {
+    setBulkSaving(true);
+    try {
+      const studentIds = Array.from(selectedStudents);
+      for (const studentId of studentIds) {
+        const row = rows.find(r => r.student_id === studentId);
+        const attemptPayload = {
+          session_id: sessionId!,
+          student_id: studentId,
+          narration_type: data.narration_type,
+          total_hizb_count: data.total_hizb_count,
+          total_pages_approx: data.total_pages_approx,
+          mistakes_count: data.mistakes_count,
+          lahn_count: data.lahn_count,
+          warnings_count: data.warnings_count,
+          grade: data.grade,
+          status: data.status,
+          manual_entry: data.manual_entry,
+          notes: data.notes || null,
+        };
+
+        let attemptId = row?.attempt_id;
+
+        if (attemptId) {
+          const { error } = await supabase.from("narration_attempts" as any).update(attemptPayload).eq("id", attemptId);
+          if (error) throw error;
+          await supabase.from("narration_ranges" as any).delete().eq("attempt_id", attemptId);
+        } else {
+          const { data: created, error } = await supabase.from("narration_attempts" as any).insert(attemptPayload).select().single();
+          if (error) throw error;
+          attemptId = (created as any).id;
+        }
+
+        if (data.ranges.length > 0 && attemptId) {
+          const rangesPayload = data.ranges.map((r) => ({
+            attempt_id: attemptId,
+            section: r.section,
+            from_hizb: r.from_hizb,
+            to_hizb: r.to_hizb,
+            hizb_count: r.to_hizb - r.from_hizb + 1,
+          }));
+          const { error: rangeError } = await supabase.from("narration_ranges" as any).insert(rangesPayload);
+          if (rangeError) throw rangeError;
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
+      setBulkNarrationOpen(false);
+      setSelectedStudents(new Set());
+      toast({ title: `تم حفظ النتائج لـ ${studentIds.length} طالب ✓` });
+    } catch (err: any) {
+      toast({ title: `خطأ: ${err.message}`, variant: "destructive" });
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   // الإحصائيات
   const stats = {
     total: rows.length,
@@ -408,12 +487,20 @@ export default function NarrationSession() {
               <Users className="w-4 h-4 text-primary" />
               نتائج الطلاب
             </CardTitle>
-            {canWrite && (
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowAddStudent(true)}>
-                <UserPlus className="w-3.5 h-3.5" />
-                إضافة طالب
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {canWrite && selectedStudents.size > 0 && (
+                <Button size="sm" className="gap-1.5 text-xs" onClick={() => setBulkNarrationOpen(true)}>
+                  <ListChecks className="w-3.5 h-3.5" />
+                  سرد جماعي ({selectedStudents.size})
+                </Button>
+              )}
+              {canWrite && (
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowAddStudent(true)}>
+                  <UserPlus className="w-3.5 h-3.5" />
+                  إضافة طالب
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
@@ -427,6 +514,15 @@ export default function NarrationSession() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  {canWrite && (
+                    <TableHead className="w-10 text-center">
+                      <Checkbox
+                        checked={selectedStudents.size === rows.length && rows.length > 0}
+                        onCheckedChange={toggleAll}
+                        aria-label="تحديد الكل"
+                      />
+                    </TableHead>
+                  )}
                   <TableHead className="text-right min-w-[140px]">اسم الطالب</TableHead>
                   <TableHead className="text-center w-24">نوع السرد</TableHead>
                   <TableHead className="text-center w-20">الأحزاب</TableHead>
@@ -443,8 +539,17 @@ export default function NarrationSession() {
                 {rows.map((row) => (
                   <TableRow
                     key={row.student_id}
-                    className={row.status === "absent" ? "opacity-50" : ""}
+                    className={`${row.status === "absent" ? "opacity-50" : ""} ${selectedStudents.has(row.student_id) ? "bg-primary/5" : ""}`}
                   >
+                    {canWrite && (
+                      <TableCell className="text-center">
+                        <Checkbox
+                          checked={selectedStudents.has(row.student_id)}
+                          onCheckedChange={() => toggleStudent(row.student_id)}
+                          aria-label={`تحديد ${row.student_name}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell className="font-medium text-sm">{row.student_name}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline" className="text-xs">
@@ -630,6 +735,22 @@ export default function NarrationSession() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog سرد جماعي */}
+      {settings && bulkNarrationOpen && selectedStudents.size > 0 && (
+        <NarrationAttemptDialog
+          open={bulkNarrationOpen}
+          onClose={() => setBulkNarrationOpen(false)}
+          student={{
+            student_id: "bulk",
+            student_name: `سرد جماعي (${selectedStudents.size} طالب)`,
+          }}
+          settings={settings}
+          existing={null}
+          onSave={saveBulkNarration}
+          saving={bulkSaving}
+        />
+      )}
     </div>
   );
 }
