@@ -1267,6 +1267,60 @@ export type Database = {
           },
         ]
       }
+      narration_goals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          halaqa_id: string
+          id: string
+          notes: string | null
+          semester: string
+          start_date: string
+          target_hizb_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          halaqa_id: string
+          id?: string
+          notes?: string | null
+          semester?: string
+          start_date?: string
+          target_hizb_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          halaqa_id?: string
+          id?: string
+          notes?: string | null
+          semester?: string
+          start_date?: string
+          target_hizb_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narration_goals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narration_goals_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       narration_ranges: {
         Row: {
           attempt_id: string
