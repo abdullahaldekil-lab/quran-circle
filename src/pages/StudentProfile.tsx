@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2 } from "lucide-react";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3 } from "lucide-react";
 import { formatHijriArabic, gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
@@ -264,7 +264,7 @@ const StudentProfile = () => {
 
       {/* Tabs: Records vs Audio (lazy-loaded) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="grid grid-cols-2 w-full">
+        <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="records">
             <TrendingUp className="w-4 h-4 ml-1" />
             سجل التسميعات
@@ -272,6 +272,10 @@ const StudentProfile = () => {
           <TabsTrigger value="audio">
             <Mic className="w-4 h-4 ml-1" />
             التسجيلات الصوتية
+          </TabsTrigger>
+          <TabsTrigger value="narration">
+            <BarChart3 className="w-4 h-4 ml-1" />
+            تقدم السرد
           </TabsTrigger>
         </TabsList>
 
@@ -324,6 +328,10 @@ const StudentProfile = () => {
 
         <TabsContent value="audio">
           <AudioTab studentId={id!} />
+        </TabsContent>
+
+        <TabsContent value="narration">
+          <NarrationSummaryTab studentId={id!} />
         </TabsContent>
       </Tabs>
     </div>
@@ -411,6 +419,83 @@ const StudentProfile = () => {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+};
+
+// Narration summary tab with link to full page
+const NarrationSummaryTab = ({ studentId }: { studentId: string }) => {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({ count: 0, totalHizb: 0, best: 0, avg: 0 });
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data } = await supabase
+        .from("narration_attempts")
+        .select("grade, total_hizb_count")
+        .eq("student_id", studentId);
+      const attempts = data || [];
+      if (attempts.length) {
+        const grades = attempts.map((a) => Number(a.grade));
+        setStats({
+          count: attempts.length,
+          totalHizb: attempts.reduce((s, a) => s + Number(a.total_hizb_count), 0),
+          best: Math.max(...grades),
+          avg: Math.round(grades.reduce((s, g) => s + g, 0) / grades.length),
+        });
+      }
+      setLoaded(true);
+    };
+    fetchStats();
+  }, [studentId]);
+
+  if (!loaded) {
+    return (
+      <Card>
+        <CardContent className="py-12 flex justify-center">
+          <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-6 space-y-4">
+        {stats.count === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">لا توجد جلسات سرد</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-lg font-bold text-primary">{stats.count}</p>
+                <p className="text-xs text-muted-foreground">جلسة</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-lg font-bold text-primary">{stats.totalHizb}</p>
+                <p className="text-xs text-muted-foreground">حزب مسرود</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-lg font-bold text-success">{stats.best}</p>
+                <p className="text-xs text-muted-foreground">أفضل درجة</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-lg font-bold">{stats.avg}</p>
+                <p className="text-xs text-muted-foreground">متوسط الدرجات</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate(`/students/${studentId}/narration-progress`)}
+            >
+              <BarChart3 className="w-4 h-4 ml-2" />
+              عرض التفاصيل والرسوم البيانية
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
