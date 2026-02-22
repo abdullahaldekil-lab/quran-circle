@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/useRole";
@@ -21,9 +21,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, BarChart3, Trophy, BookOpen, Printer } from "lucide-react";
+import { ArrowRight, BarChart3, Trophy, BookOpen, Printer, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import NarrationCertificate from "@/components/narration/NarrationCertificate";
+import {
+  LineChart, Line, PieChart, Pie, BarChart, Bar,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, Legend,
+} from "recharts";
 
 export default function NarrationReports() {
   const navigate = useNavigate();
@@ -126,6 +130,35 @@ export default function NarrationReports() {
     };
   }).sort((a, b) => b.passRate - a.passRate);
 
+  // --- Chart data ---
+  const PIE_COLORS = ["hsl(142, 71%, 45%)", "hsl(0, 84%, 60%)", "hsl(45, 93%, 47%)", "hsl(215, 20%, 65%)"];
+
+  const passRateOverTime = useMemo(() => {
+    return sessions.map((s: any) => {
+      const sa = allAttempts.filter((a: any) => a.session_id === s.id);
+      const presented = sa.filter((a: any) => a.status !== "absent" && a.status !== "pending");
+      const passed = sa.filter((a: any) => a.status === "pass");
+      const rate = presented.length > 0 ? Math.round((passed.length / presented.length) * 100) : 0;
+      return {
+        date: new Date(s.session_date).toLocaleDateString("ar-SA", { month: "short", day: "numeric" }),
+        rate,
+      };
+    }).reverse();
+  }, [sessions, allAttempts]);
+
+  const statusDistribution = useMemo(() => {
+    const counts = { pass: 0, fail: 0, absent: 0, pending: 0 };
+    allAttempts.forEach((a: any) => {
+      if (a.status in counts) counts[a.status as keyof typeof counts]++;
+    });
+    return [
+      { name: "ناجح", value: counts.pass },
+      { name: "راسب", value: counts.fail },
+      { name: "غائب", value: counts.absent },
+      { name: "معلق", value: counts.pending },
+    ].filter(d => d.value > 0);
+  }, [allAttempts]);
+
   const printCert = () => {
     if (certRef.current) {
       const w = window.open("", "_blank");
@@ -151,9 +184,81 @@ export default function NarrationReports() {
 
       <Tabs defaultValue="session" dir="rtl">
         <TabsList>
+          <TabsTrigger value="dashboard">لوحة المؤشرات</TabsTrigger>
           <TabsTrigger value="session">تقارير الجلسة</TabsTrigger>
           <TabsTrigger value="overall">تقارير المجمع</TabsTrigger>
         </TabsList>
+
+        {/* Dashboard Tab */}
+        <TabsContent value="dashboard" className="space-y-4 mt-4">
+          {/* Pass Rate Over Time */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                تطور نسب الاجتياز عبر الجلسات
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={passRateOverTime}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(v: number) => [`${v}%`, "نسبة الاجتياز"]} />
+                  <Line type="monotone" dataKey="rate" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--primary))" }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Pie + Bar side by side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Pie Chart - Status Distribution */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  توزيع حالات الطلاب
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie data={statusDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      {statusDistribution.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Bar Chart - Halaqat Comparison */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  مقارنة أداء الحلقات
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={halaqatStats} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" domain={[0, 100]} unit="%" tick={{ fontSize: 12 }} />
+                    <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(v: number) => [`${v}%`, "نسبة الاجتياز"]} />
+                    <Bar dataKey="passRate" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="session" className="space-y-4 mt-4">
           <Select value={selectedSession} onValueChange={setSelectedSession}>
