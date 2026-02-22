@@ -31,9 +31,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowRight, Printer, Save, ScrollText, CheckCircle2, XCircle, Users, UserPlus, Search, Trash2 } from "lucide-react";
+import { ArrowRight, Printer, Save, ScrollText, CheckCircle2, XCircle, Users, UserPlus, Search, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import NarrationPrintTemplate from "@/components/NarrationPrintTemplate";
+import NarrationAttemptDialog from "@/components/narration/NarrationAttemptDialog";
+import type { NarrationRange, NarrationSettingsFull, NarrationAttemptData } from "@/components/narration/NarrationValidation";
 
 interface NarrationSettings {
   id: string;
@@ -42,6 +44,12 @@ interface NarrationSettings {
   deduction_per_mistake: number;
   deduction_per_lahn: number;
   deduction_per_warning: number;
+  pages_per_hizb?: number;
+  min_hizb_required?: number;
+  min_pages_required?: number;
+  memorization_weight?: number;
+  mastery_weight?: number;
+  performance_weight?: number;
 }
 
 interface StudentResult {
@@ -50,7 +58,8 @@ interface StudentResult {
   student_name: string;
   hizb_from: number;
   hizb_to: number;
-  total_hizbat: number; // مجموع الأحزاب المعروضة (قد تكون متفرقة)
+  total_hizbat: number;
+  narration_type: "regular" | "multi";
   mistakes_count: number;
   lahn_count: number;
   warnings_count: number;
@@ -58,6 +67,9 @@ interface StudentResult {
   status: "pass" | "fail" | "absent" | "pending";
   notes: string;
   manual_entry: boolean;
+  // New: attempt data from narration_attempts
+  attempt_id?: string;
+  ranges?: NarrationRange[];
 }
 
 export default function NarrationSession() {
@@ -183,6 +195,7 @@ export default function NarrationSession() {
             hizb_from: existing.hizb_from,
             hizb_to: existing.hizb_to,
             total_hizbat: existing.total_hizbat ?? (existing.hizb_to - existing.hizb_from + 1),
+            narration_type: "regular" as const,
             mistakes_count: existing.mistakes_count,
             lahn_count: existing.lahn_count,
             warnings_count: existing.warnings_count,
@@ -198,6 +211,7 @@ export default function NarrationSession() {
           hizb_from: 1,
           hizb_to: 1,
           total_hizbat: 1,
+          narration_type: "regular" as const,
           mistakes_count: 0,
           lahn_count: 0,
           warnings_count: 0,
@@ -274,6 +288,7 @@ export default function NarrationSession() {
       hizb_from: 1,
       hizb_to: 1,
       total_hizbat: 1,
+      narration_type: "regular",
       mistakes_count: 0,
       lahn_count: 0,
       warnings_count: 0,
