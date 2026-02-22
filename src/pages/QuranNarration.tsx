@@ -44,7 +44,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface NarrationSession {
@@ -89,6 +90,16 @@ export default function QuranNarration() {
     notes: "",
   });
   const [settingsForm, setSettingsForm] = useState<Partial<NarrationSettings>>({});
+  const [showGoalDialog, setShowGoalDialog] = useState(false);
+  const [editGoal, setEditGoal] = useState<any>(null);
+  const [goalForm, setGoalForm] = useState({
+    halaqa_id: "",
+    semester: "الفصل الأول 1446",
+    target_hizb_count: 50,
+    start_date: "",
+    end_date: "",
+    notes: "",
+  });
 
   const isManager = role === "manager";
   const canWrite = isManager || role === "teacher" || role === "assistant_teacher";
@@ -149,6 +160,19 @@ export default function QuranNarration() {
     },
   });
 
+  // جلب أهداف السرد
+  const { data: narrationGoals = [] } = useQuery({
+    queryKey: ["narration-goals"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("narration_goals" as any)
+        .select("*, halaqat(name)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
   // حساب إحصائيات كل جلسة
   const getSessionStats = (sessionId: string) => {
     const results = allResults.filter((r) => r.session_id === sessionId);
@@ -160,12 +184,62 @@ export default function QuranNarration() {
     };
   };
 
+  // حساب الأحزاب الفعلية لكل حلقة
+  const getActualHizbForHalaqa = (halaqaId: string) => {
+    const halaqaSessions = sessions.filter((s) => s.halaqa_id === halaqaId);
+    const sessionIds = new Set(halaqaSessions.map((s) => s.id));
+    return allResults
+      .filter((r) => sessionIds.has(r.session_id) && r.status === "pass")
+      .reduce((sum, r) => sum + (Number(r.total_hizb_count) || 0), 0);
+  };
+
   // إحصائيات عامة
   const totalSessions = sessions.length;
   const totalParticipants = allResults.length;
   const totalPassed = allResults.filter((r) => r.status === "pass").length;
   const avgPassRate = totalParticipants > 0 ? Math.round((totalPassed / totalParticipants) * 100) : 0;
-  const totalHizbPresented = allResults.filter((r) => r.status !== "absent" && r.status !== "pending").length;
+
+  // Goal mutations
+  const goalMutation = useMutation({
+    mutationFn: async (data: typeof goalForm & { id?: string }) => {
+      const payload = {
+        halaqa_id: data.halaqa_id,
+        semester: data.semester,
+        target_hizb_count: data.target_hizb_count,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
+        notes: data.notes || null,
+        created_by: profile?.id,
+      };
+      if (data.id) {
+        const { error } = await supabase.from("narration_goals" as any).update(payload).eq("id", data.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("narration_goals" as any).insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["narration-goals"] });
+      setShowGoalDialog(false);
+      setEditGoal(null);
+      setGoalForm({ halaqa_id: "", semester: "الفصل الأول 1446", target_hizb_count: 50, start_date: "", end_date: "", notes: "" });
+      toast({ title: editGoal ? "تم تحديث الهدف" : "تم إنشاء الهدف بنجاح" });
+    },
+    onError: () => toast({ title: "حدث خطأ", variant: "destructive" }),
+  });
+
+  const deleteGoalMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("narration_goals" as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["narration-goals"] });
+      toast({ title: "تم حذف الهدف" });
+    },
+    onError: () => toast({ title: "حدث خطأ في الحذف", variant: "destructive" }),
+  });
 
   // إنشاء/تعديل جلسة
   const sessionMutation = useMutation({
@@ -416,6 +490,10 @@ export default function QuranNarration() {
               الإعدادات
             </TabsTrigger>
           )}
+          <TabsTrigger value="goals" className="gap-2">
+            <Target className="w-4 h-4" />
+            أهداف السرد
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sessions" className="mt-4">
@@ -699,6 +777,203 @@ export default function QuranNarration() {
             </Card>
           </TabsContent>
         )}
+        <TabsContent value="goals" className="mt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              أهداف وخطط السرد لكل حلقة
+            </h3>
+            {canWrite && (
+              <Dialog open={showGoalDialog} onOpenChange={(open) => {
+                setShowGoalDialog(open);
+                if (!open) {
+                  setEditGoal(null);
+                  setGoalForm({ halaqa_id: "", semester: "الفصل الأول 1446", target_hizb_count: 50, start_date: "", end_date: "", notes: "" });
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2" size="sm">
+                    <Plus className="w-4 h-4" />
+                    إضافة هدف
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle>{editGoal ? "تعديل الهدف" : "إضافة هدف سرد جديد"}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div className="space-y-1.5">
+                      <Label>الحلقة *</Label>
+                      <Select value={goalForm.halaqa_id} onValueChange={(v) => setGoalForm((p) => ({ ...p, halaqa_id: v }))}>
+                        <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                        <SelectContent position="popper" className="z-[200]">
+                          {halaqat.map((h) => (
+                            <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>الفصل الدراسي</Label>
+                      <Input
+                        placeholder="مثال: الفصل الأول 1446"
+                        value={goalForm.semester}
+                        onChange={(e) => setGoalForm((p) => ({ ...p, semester: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>عدد الأحزاب المستهدفة *</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={goalForm.target_hizb_count}
+                        onChange={(e) => setGoalForm((p) => ({ ...p, target_hizb_count: Number(e.target.value) }))}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>تاريخ البداية</Label>
+                        <Input type="date" value={goalForm.start_date} onChange={(e) => setGoalForm((p) => ({ ...p, start_date: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>تاريخ النهاية</Label>
+                        <Input type="date" value={goalForm.end_date} onChange={(e) => setGoalForm((p) => ({ ...p, end_date: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>ملاحظات</Label>
+                      <Textarea
+                        placeholder="ملاحظات إضافية"
+                        value={goalForm.notes}
+                        onChange={(e) => setGoalForm((p) => ({ ...p, notes: e.target.value }))}
+                        rows={2}
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end pt-2">
+                      <Button variant="outline" onClick={() => { setShowGoalDialog(false); setEditGoal(null); }}>إلغاء</Button>
+                      <Button
+                        onClick={() => goalMutation.mutate(editGoal ? { ...goalForm, id: editGoal.id } : goalForm)}
+                        disabled={goalMutation.isPending || !goalForm.halaqa_id}
+                      >
+                        {goalMutation.isPending ? "جارٍ الحفظ..." : editGoal ? "حفظ التعديلات" : "إضافة الهدف"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+
+          {narrationGoals.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Target className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+                <p className="text-muted-foreground">لم يتم تحديد أهداف سرد بعد</p>
+                <p className="text-sm text-muted-foreground mt-1">أضف أهدافاً لمتابعة تقدم الحلقات</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {narrationGoals.map((goal: any) => {
+                const actual = getActualHizbForHalaqa(goal.halaqa_id);
+                const target = goal.target_hizb_count || 1;
+                const progressPct = Math.min(100, Math.round((actual / target) * 100));
+                const halaqaName = goal.halaqat?.name || "حلقة غير محددة";
+
+                return (
+                  <Card key={goal.id} className="relative overflow-hidden">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-base">{halaqaName}</CardTitle>
+                          <p className="text-xs text-muted-foreground mt-1">{goal.semester}</p>
+                        </div>
+                        <div className="flex gap-1">
+                          {canWrite && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => {
+                                setEditGoal(goal);
+                                setGoalForm({
+                                  halaqa_id: goal.halaqa_id,
+                                  semester: goal.semester,
+                                  target_hizb_count: goal.target_hizb_count,
+                                  start_date: goal.start_date || "",
+                                  end_date: goal.end_date || "",
+                                  notes: goal.notes || "",
+                                });
+                                setShowGoalDialog(true);
+                              }}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          {isManager && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent dir="rtl">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>حذف الهدف</AlertDialogTitle>
+                                  <AlertDialogDescription>هل أنت متأكد من حذف هدف السرد لهذه الحلقة؟</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                  <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteGoalMutation.mutate(goal.id)}>حذف</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">التقدم</span>
+                        <span className="font-semibold">
+                          {actual} / {target} حزب
+                        </span>
+                      </div>
+                      <Progress value={progressPct} className="h-3" />
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{progressPct}% مكتمل</span>
+                        <span>
+                          المتبقي: {Math.max(0, target - actual)} حزب
+                        </span>
+                      </div>
+                      <div className={`text-xs font-medium px-2 py-1 rounded-md text-center ${
+                        progressPct >= 100
+                          ? "bg-emerald-500/10 text-emerald-700"
+                          : progressPct >= 70
+                          ? "bg-primary/10 text-primary"
+                          : progressPct >= 40
+                          ? "bg-amber-500/10 text-amber-700"
+                          : "bg-destructive/10 text-destructive"
+                      }`}>
+                        {progressPct >= 100
+                          ? "✅ تم تحقيق الهدف"
+                          : progressPct >= 70
+                          ? "في المسار الصحيح"
+                          : progressPct >= 40
+                          ? "يحتاج مزيداً من الجهد"
+                          : "متأخر عن المستهدف"}
+                      </div>
+                      {goal.notes && (
+                        <p className="text-xs text-muted-foreground border-t pt-2 mt-2">{goal.notes}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
       </Tabs>
     </div>
   );
