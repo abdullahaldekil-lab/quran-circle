@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowRight, BookOpen, Trophy, TrendingUp, BarChart3, Hash } from "lucide-react";
+import { ArrowRight, BookOpen, Trophy, TrendingUp, BarChart3, Hash, Award, Star, Flame, Zap } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -45,24 +45,30 @@ const StudentNarrationProgress = () => {
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
+  const [badges, setBadges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-    const fetch = async () => {
-      const [studentRes, attRes] = await Promise.all([
+    const fetchData = async () => {
+      const [studentRes, attRes, badgesRes] = await Promise.all([
         supabase.from("students").select("full_name, halaqat(name)").eq("id", id).maybeSingle(),
         supabase
           .from("narration_attempts")
           .select("id, session_id, grade, mistakes_count, lahn_count, warnings_count, total_hizb_count, status, narration_type, notes, created_at, session:narration_sessions(session_date, title)")
           .eq("student_id", id)
           .order("created_at", { ascending: true }),
+        supabase
+          .from("student_badges")
+          .select("id, earned_at, source_detail, badge:badges(name, description, icon, category)")
+          .eq("student_id", id),
       ]);
       setStudent(studentRes.data);
       setAttempts((attRes.data as any) || []);
+      setBadges((badgesRes.data as any) || []);
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [id]);
 
   const stats = useMemo(() => {
@@ -155,6 +161,43 @@ const StudentNarrationProgress = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Earned Badges */}
+      {badges.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Award className="w-5 h-5 text-primary" />
+              الشارات المكتسبة
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {badges.map((sb: any) => {
+                const iconName = sb.badge?.icon;
+                const IconComp =
+                  iconName === "trophy" ? Trophy :
+                  iconName === "flame" ? Flame :
+                  iconName === "zap" ? Zap :
+                  iconName === "star" ? Star :
+                  BookOpen;
+                return (
+                  <div
+                    key={sb.id}
+                    className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2"
+                  >
+                    <IconComp className="w-5 h-5 text-primary shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">{sb.badge?.name}</p>
+                      <p className="text-xs text-muted-foreground">{sb.source_detail}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Grade Line Chart */}
       {gradeChartData.length > 1 && (
