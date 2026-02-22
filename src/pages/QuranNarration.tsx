@@ -109,15 +109,15 @@ export default function QuranNarration() {
     },
   });
 
-  // جلب إحصائيات كل جلسة
+  // جلب إحصائيات كل جلسة من narration_attempts
   const { data: allResults = [] } = useQuery({
-    queryKey: ["narration-results-all"],
+    queryKey: ["narration-attempts-all"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("narration_results" as any)
-        .select("session_id, status, grade");
+        .from("narration_attempts" as any)
+        .select("session_id, status, grade, total_hizb_count");
       if (error) throw error;
-      return (data as unknown) as { session_id: string; status: string; grade: number }[];
+      return (data as unknown) as { session_id: string; status: string; grade: number; total_hizb_count: number }[];
     },
   });
 
