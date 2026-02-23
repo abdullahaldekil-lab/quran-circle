@@ -50,6 +50,9 @@ import StudentNarrationProgress from "./pages/StudentNarrationProgress";
 import StaffAttendance from "./pages/StaffAttendance";
 import StaffAttendanceLog from "./pages/StaffAttendanceLog";
 import StaffShiftManagement from "./pages/StaffShiftManagement";
+import NotificationTemplates from "./pages/NotificationTemplates";
+import NotificationLog from "./pages/NotificationLog";
+import NotificationPreferences from "./pages/NotificationPreferences";
 
 const queryClient = new QueryClient({
   defaultOptions: {
