@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
+import NotificationBell from "@/components/NotificationBell";
 
 interface NavItem {
   to: string;
