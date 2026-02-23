@@ -50,6 +50,9 @@ import StudentNarrationProgress from "./pages/StudentNarrationProgress";
 import StaffAttendance from "./pages/StaffAttendance";
 import StaffAttendanceLog from "./pages/StaffAttendanceLog";
 import StaffShiftManagement from "./pages/StaffShiftManagement";
+import NotificationTemplates from "./pages/NotificationTemplates";
+import NotificationLog from "./pages/NotificationLog";
+import NotificationPreferences from "./pages/NotificationPreferences";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -137,6 +140,10 @@ const AppRoutes = () => {
       <Route path="/staff-attendance" element={<ProtectedRoute path="/staff-attendance"><StaffAttendance /></ProtectedRoute>} />
       <Route path="/staff-attendance-log" element={<ProtectedRoute path="/staff-attendance-log"><StaffAttendanceLog /></ProtectedRoute>} />
       <Route path="/staff-shifts" element={<ProtectedRoute path="/staff-shifts"><StaffShiftManagement /></ProtectedRoute>} />
+
+      <Route path="/notification-templates" element={<ProtectedRoute path="/notification-templates"><NotificationTemplates /></ProtectedRoute>} />
+      <Route path="/notification-log" element={<ProtectedRoute path="/notification-log"><NotificationLog /></ProtectedRoute>} />
+      <Route path="/notification-preferences" element={<ProtectedRoute path="/notification-preferences"><NotificationPreferences /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />

@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
+import NotificationBell from "@/components/NotificationBell";
 
 interface NavItem {
   to: string;
@@ -145,6 +146,9 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
       { to: "/permissions-management", icon: ShieldCheck, label: "إدارة الصلاحيات" },
+      { to: "/notification-templates", icon: MessageSquare, label: "قوالب الإشعارات" },
+      { to: "/notification-log", icon: ClipboardList, label: "سجل الإشعارات" },
+      { to: "/notification-preferences", icon: CheckSquare, label: "تفضيلات الإشعارات" },
       { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
     ],
   },
@@ -314,14 +318,22 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <img src={huwaylanLogo} alt="مجمع حويلان" className="w-8 h-8 rounded-lg object-contain" />
             <span className="font-bold text-foreground">مجمع حويلان</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
         </header>
+
+        {/* Desktop notification bell */}
+        <div className="hidden lg:flex justify-end p-4 pb-0">
+          <NotificationBell />
+        </div>
 
         <div className="p-4 lg:p-8">{children}</div>
       </main>
