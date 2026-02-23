@@ -58,12 +58,14 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration",
     "/staff-attendance-log",
+    "/notification-preferences",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
     "/rankings", "/profile", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance-log",
+    "/notification-preferences",
   ],
 };
 
