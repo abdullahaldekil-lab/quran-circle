@@ -46,7 +46,7 @@ const NotificationLog = () => {
       setLoading(true);
       let query = supabase
         .from("notifications")
-        .select("*, profiles:user_id(full_name)")
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(200);
 
@@ -54,6 +54,16 @@ const NotificationLog = () => {
       if (statusFilter !== "all") query = query.eq("status", statusFilter);
 
       const { data } = await query;
+
+      // Fetch profile names separately
+      const items = (data || []) as any[];
+      const userIds = [...new Set(items.map((n) => n.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.full_name]));
+      const enriched = items.map((n) => ({ ...n, profiles: { full_name: profileMap.get(n.user_id) || "—" } }));
       setNotifications((data as NotificationRow[]) || []);
       setLoading(false);
     };
