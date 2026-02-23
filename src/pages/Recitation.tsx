@@ -119,6 +119,16 @@ const Recitation = () => {
       await advanceStudentLevel(currentStudent.id);
     }
 
+    // Send notification to guardians about new recitation
+    const { data: guardianLinks } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", currentStudent.id).eq("active", true);
+    if (guardianLinks && guardianLinks.length > 0) {
+      sendNotification({
+        templateCode: "NEW_RECITATION",
+        recipientIds: guardianLinks.map((l: any) => l.guardian_id),
+        variables: { studentName: currentStudent.full_name, score: String(totalScore) },
+      }).catch(console.error);
+    }
+
     setSaving(false);
     toast.success(`تم حفظ تسميع ${currentStudent.full_name} - الدرجة: ${totalScore}`);
     if (currentIndex < students.length - 1) {
