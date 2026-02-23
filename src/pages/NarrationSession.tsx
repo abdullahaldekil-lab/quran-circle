@@ -31,6 +31,7 @@ import NarrationPrintTemplate from "@/components/NarrationPrintTemplate";
 import NarrationAttemptDialog from "@/components/narration/NarrationAttemptDialog";
 import type { NarrationRange, NarrationSettingsFull, NarrationAttemptData } from "@/components/narration/NarrationValidation";
 import { calcTotalHizbCount } from "@/components/narration/NarrationValidation";
+import { sendNotification } from "@/utils/sendNotification";
 
 interface StudentRow {
   student_id: string;
@@ -328,6 +329,18 @@ export default function NarrationSession() {
       queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
       setEditingStudent(null);
       toast({ title: "تم حفظ النتيجة بنجاح ✓" });
+
+      // Send narration notification to guardians
+      if (data.status === "pass" && row) {
+        const { data: guardianLinks } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", row.student_id).eq("active", true);
+        if (guardianLinks && guardianLinks.length > 0) {
+          sendNotification({
+            templateCode: "NARRATION_PASSED",
+            recipientIds: guardianLinks.map((l: any) => l.guardian_id),
+            variables: { studentName: row.student_name, grade: String(data.grade) },
+          }).catch(console.error);
+        }
+      }
     } catch (err: any) {
       toast({ title: `خطأ: ${err.message}`, variant: "destructive" });
     } finally {

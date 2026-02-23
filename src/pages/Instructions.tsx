@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { sendNotification } from "@/utils/sendNotification";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,16 @@ const Instructions = () => {
       priority: form.priority,
     });
     if (error) { toast.error("حدث خطأ"); return; }
+
+    // Send notification to the assigned teacher
+    if (form.to_teacher_id) {
+      sendNotification({
+        templateCode: "NEW_INSTRUCTION",
+        recipientIds: [form.to_teacher_id],
+        variables: { title: form.title, managerName: user?.user_metadata?.full_name || "المدير" },
+      }).catch(console.error);
+    }
+
     toast.success("تم إرسال التعليمات");
     setDialogOpen(false);
     setForm({ title: "", body: "", to_teacher_id: "", priority: "normal" });

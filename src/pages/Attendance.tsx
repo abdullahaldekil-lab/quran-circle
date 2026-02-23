@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
+import { sendNotification } from "@/utils/sendNotification";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
@@ -226,6 +227,42 @@ const Attendance = () => {
         }));
       if (auditEntries.length > 0) {
         await supabase.from("attendance_audit_log").insert(auditEntries);
+      }
+    }
+
+    // Send automatic notifications for absent/late students
+    const absentStudents = Object.entries(finalAttendance).filter(([, s]) => s === "absent");
+    const lateStudents = Object.entries(finalAttendance).filter(([, s]) => s === "late");
+
+    if (absentStudents.length > 0) {
+      const absentNames = absentStudents.map(([sid]) => students.find((s: any) => s.id === sid)?.full_name || "").filter(Boolean);
+      // Notify guardians via edge function
+      for (const [sid] of absentStudents) {
+        const student = students.find((s: any) => s.id === sid);
+        if (!student) continue;
+        const { data: links } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", sid).eq("active", true);
+        if (links && links.length > 0) {
+          sendNotification({
+            templateCode: "STUDENT_ABSENT",
+            recipientIds: links.map((l: any) => l.guardian_id),
+            variables: { studentName: student.full_name, date: selectedDate },
+          }).catch(console.error);
+        }
+      }
+    }
+
+    if (lateStudents.length > 0) {
+      for (const [sid] of lateStudents) {
+        const student = students.find((s: any) => s.id === sid);
+        if (!student) continue;
+        const { data: links } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", sid).eq("active", true);
+        if (links && links.length > 0) {
+          sendNotification({
+            templateCode: "STUDENT_LATE",
+            recipientIds: links.map((l: any) => l.guardian_id),
+            variables: { studentName: student.full_name, date: selectedDate },
+          }).catch(console.error);
+        }
       }
     }
 

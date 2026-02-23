@@ -12,6 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { Save, ChevronLeft, ChevronRight, ClipboardList, Mic, History, ChevronDown, ChevronUp } from "lucide-react";
 import AudioRecorder from "@/components/AudioRecorder";
+import { sendNotification } from "@/utils/sendNotification";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const Recitation = () => {
@@ -116,6 +117,16 @@ const Recitation = () => {
     // Auto-progress: advance student level if score >= 80
     if (totalScore >= 80) {
       await advanceStudentLevel(currentStudent.id);
+    }
+
+    // Send notification to guardians about new recitation
+    const { data: guardianLinks } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", currentStudent.id).eq("active", true);
+    if (guardianLinks && guardianLinks.length > 0) {
+      sendNotification({
+        templateCode: "NEW_RECITATION",
+        recipientIds: guardianLinks.map((l: any) => l.guardian_id),
+        variables: { studentName: currentStudent.full_name, score: String(totalScore) },
+      }).catch(console.error);
     }
 
     setSaving(false);
