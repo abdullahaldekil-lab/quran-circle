@@ -31,6 +31,7 @@ import NarrationPrintTemplate from "@/components/NarrationPrintTemplate";
 import NarrationAttemptDialog from "@/components/narration/NarrationAttemptDialog";
 import type { NarrationRange, NarrationSettingsFull, NarrationAttemptData } from "@/components/narration/NarrationValidation";
 import { calcTotalHizbCount } from "@/components/narration/NarrationValidation";
+import { sendNotification } from "@/utils/sendNotification";
 
 interface StudentRow {
   student_id: string;
