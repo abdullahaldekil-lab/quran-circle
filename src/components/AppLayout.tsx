@@ -146,6 +146,9 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/user-management", icon: Settings, label: "إدارة المستخدمين" },
       { to: "/permissions-management", icon: ShieldCheck, label: "إدارة الصلاحيات" },
+      { to: "/notification-templates", icon: MessageSquare, label: "قوالب الإشعارات" },
+      { to: "/notification-log", icon: ClipboardList, label: "سجل الإشعارات" },
+      { to: "/notification-preferences", icon: CheckSquare, label: "تفضيلات الإشعارات" },
       { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
     ],
   },
