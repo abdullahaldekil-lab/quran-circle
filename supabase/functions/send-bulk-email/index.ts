@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: "مجمع حويلان <noreply@quran-circle.lovable.app>",
+              from: "مجمع حويلان <admin@quran-circle.enter.com.sa>",
               to: [email],
               subject,
               html: `<div dir="rtl" style="font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto;">
