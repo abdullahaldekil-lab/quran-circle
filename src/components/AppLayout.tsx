@@ -151,6 +151,8 @@ const navGroups: NavGroup[] = [
       { to: "/notification-templates", icon: MessageSquare, label: "قوالب الإشعارات" },
       { to: "/notification-log", icon: ClipboardList, label: "سجل الإشعارات" },
       { to: "/notification-preferences", icon: CheckSquare, label: "تفضيلات الإشعارات" },
+      { to: "/send-notification", icon: Send, label: "إرسال إشعار" },
+      { to: "/bulk-email", icon: Mail, label: "بريد جماعي" },
       { to: "/profile", icon: UserCog, label: "الملف الشخصي" },
     ],
   },
