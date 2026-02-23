@@ -64,7 +64,7 @@ const NotificationLog = () => {
         .in("id", userIds);
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.full_name]));
       const enriched = items.map((n) => ({ ...n, profiles: { full_name: profileMap.get(n.user_id) || "—" } }));
-      setNotifications((data as NotificationRow[]) || []);
+      setNotifications(enriched as NotificationRow[]);
       setLoading(false);
     };
     fetch();
