@@ -1520,6 +1520,92 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_templates: {
+        Row: {
+          body: string
+          category: string
+          code: string
+          created_at: string
+          default_channels: string[]
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          category?: string
+          code: string
+          created_at?: string
+          default_channels?: string[]
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          code?: string
+          created_at?: string
+          default_channels?: string[]
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          meta_data: Json | null
+          read_at: string | null
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          channel?: string
+          created_at?: string
+          id?: string
+          meta_data?: Json | null
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          meta_data?: Json | null
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           category: string
@@ -2773,6 +2859,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_notification_preferences: {
+        Row: {
+          academic_notifications: boolean
+          attendance_notifications: boolean
+          created_at: string
+          enable_email: boolean
+          enable_in_app: boolean
+          enable_whatsapp: boolean
+          id: string
+          rewards_notifications: boolean
+          system_notifications: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academic_notifications?: boolean
+          attendance_notifications?: boolean
+          created_at?: string
+          enable_email?: boolean
+          enable_in_app?: boolean
+          enable_whatsapp?: boolean
+          id?: string
+          rewards_notifications?: boolean
+          system_notifications?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academic_notifications?: boolean
+          attendance_notifications?: boolean
+          created_at?: string
+          enable_email?: boolean
+          enable_in_app?: boolean
+          enable_whatsapp?: boolean
+          id?: string
+          rewards_notifications?: boolean
+          system_notifications?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_permissions: {
         Row: {
