@@ -318,14 +318,22 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <img src={huwaylanLogo} alt="مجمع حويلان" className="w-8 h-8 rounded-lg object-contain" />
             <span className="font-bold text-foreground">مجمع حويلان</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
         </header>
+
+        {/* Desktop notification bell */}
+        <div className="hidden lg:flex justify-end p-4 pb-0">
+          <NotificationBell />
+        </div>
 
         <div className="p-4 lg:p-8">{children}</div>
       </main>
