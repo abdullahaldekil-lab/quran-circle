@@ -331,7 +331,7 @@ export default function NarrationSession() {
       toast({ title: "تم حفظ النتيجة بنجاح ✓" });
 
       // Send narration notification to guardians
-      if (data.status === "passed" && row) {
+      if (data.status === "pass" && row) {
         const { data: guardianLinks } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", row.student_id).eq("active", true);
         if (guardianLinks && guardianLinks.length > 0) {
           sendNotification({
