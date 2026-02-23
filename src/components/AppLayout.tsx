@@ -32,6 +32,8 @@ import {
   UserPlus,
   ShieldCheck,
   ScrollText,
+  Send,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
