@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
+import { sendNotification } from "@/utils/sendNotification";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
