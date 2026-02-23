@@ -146,6 +146,8 @@ const AppRoutes = () => {
       <Route path="/notification-templates" element={<ProtectedRoute path="/notification-templates"><NotificationTemplates /></ProtectedRoute>} />
       <Route path="/notification-log" element={<ProtectedRoute path="/notification-log"><NotificationLog /></ProtectedRoute>} />
       <Route path="/notification-preferences" element={<ProtectedRoute path="/notification-preferences"><NotificationPreferences /></ProtectedRoute>} />
+      <Route path="/send-notification" element={<ProtectedRoute path="/send-notification"><SendNotification /></ProtectedRoute>} />
+      <Route path="/bulk-email" element={<ProtectedRoute path="/bulk-email"><BulkEmail /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />

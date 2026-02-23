@@ -28,6 +28,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/notification-templates", "/notification-log", "/notification-preferences",
+    "/send-notification", "/bulk-email",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
