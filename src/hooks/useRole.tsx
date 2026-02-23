@@ -34,24 +34,28 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
+    "/notification-preferences",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
+    "/notification-preferences",
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/attendance",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
+    "/notification-preferences",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/attendance",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
+    "/notification-preferences",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
