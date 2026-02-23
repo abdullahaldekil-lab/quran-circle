@@ -53,6 +53,8 @@ import StaffShiftManagement from "./pages/StaffShiftManagement";
 import NotificationTemplates from "./pages/NotificationTemplates";
 import NotificationLog from "./pages/NotificationLog";
 import NotificationPreferences from "./pages/NotificationPreferences";
+import SendNotification from "./pages/SendNotification";
+import BulkEmail from "./pages/BulkEmail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
