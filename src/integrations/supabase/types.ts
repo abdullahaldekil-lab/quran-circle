@@ -336,6 +336,194 @@ export type Database = {
           },
         ]
       }
+      excellence_attendance: {
+        Row: {
+          created_at: string
+          id: string
+          is_present: boolean
+          notes: string | null
+          session_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_present?: boolean
+          notes?: string | null
+          session_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_present?: boolean
+          notes?: string | null
+          session_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "excellence_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      excellence_monthly_report: {
+        Row: {
+          average_score: number | null
+          created_at: string
+          final_rank: number | null
+          halaqa_id: string | null
+          id: string
+          month: number
+          student_id: string
+          total_attendance: number | null
+          total_hizb: number | null
+          total_pages: number | null
+          total_sessions: number | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          average_score?: number | null
+          created_at?: string
+          final_rank?: number | null
+          halaqa_id?: string | null
+          id?: string
+          month: number
+          student_id: string
+          total_attendance?: number | null
+          total_hizb?: number | null
+          total_pages?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          average_score?: number | null
+          created_at?: string
+          final_rank?: number | null
+          halaqa_id?: string | null
+          id?: string
+          month?: number
+          student_id?: string
+          total_attendance?: number | null
+          total_hizb?: number | null
+          total_pages?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_monthly_report_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      excellence_performance: {
+        Row: {
+          created_at: string
+          hizb_count: number | null
+          id: string
+          lahon_count: number | null
+          mistakes_count: number | null
+          pages_displayed: number | null
+          rank_in_group: number | null
+          session_id: string
+          student_id: string
+          total_score: number | null
+          updated_at: string
+          warnings_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          hizb_count?: number | null
+          id?: string
+          lahon_count?: number | null
+          mistakes_count?: number | null
+          pages_displayed?: number | null
+          rank_in_group?: number | null
+          session_id: string
+          student_id: string
+          total_score?: number | null
+          updated_at?: string
+          warnings_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          hizb_count?: number | null
+          id?: string
+          lahon_count?: number | null
+          mistakes_count?: number | null
+          pages_displayed?: number | null
+          rank_in_group?: number | null
+          session_id?: string
+          student_id?: string
+          total_score?: number | null
+          updated_at?: string
+          warnings_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_performance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "excellence_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      excellence_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          halaqa_id: string | null
+          id: string
+          notes: string | null
+          session_date: string
+          total_hizb_in_session: number | null
+          total_pages_displayed: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          halaqa_id?: string | null
+          id?: string
+          notes?: string | null
+          session_date?: string
+          total_hizb_in_session?: number | null
+          total_pages_displayed?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          halaqa_id?: string | null
+          id?: string
+          notes?: string | null
+          session_date?: string
+          total_hizb_in_session?: number | null
+          total_pages_displayed?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_sessions_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_accounts: {
         Row: {
           account_name: string
