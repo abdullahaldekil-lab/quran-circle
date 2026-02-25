@@ -13,10 +13,16 @@ import { toast } from "sonner";
 import { Plus, BookOpen, Users, User, Pencil, Trash2 } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 
+interface Teacher {
+  id: string;
+  full_name: string;
+  assigned_halaqa_id: string | null;
+}
+
 const Halaqat = () => {
   const { isManager } = useRole();
   const [halaqat, setHalaqat] = useState<any[]>([]);
-  const [teachers, setTeachers] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [levelTracks, setLevelTracks] = useState<any[]>([]);
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -31,12 +37,12 @@ const Halaqat = () => {
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
       supabase.from("halaqat").select("*, profiles:teacher_id(full_name)").eq("active", true),
-      supabase.from("profiles").select("id, full_name").in("role", ["teacher", "assistant_teacher"]),
+      supabase.from("profiles").select("id, full_name, assigned_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
       supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
       supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
     ]);
     setHalaqat(halaqatRes.data || []);
-    setTeachers(teachersRes.data || []);
+    setTeachers((teachersRes.data as Teacher[]) || []);
     setLevelTracks(tracksRes.data || []);
 
     const grouped: Record<string, any[]> = {};
@@ -51,17 +57,89 @@ const Halaqat = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  /** Get available teachers for selection. For edit mode, include the current teacher. */
+  const getAvailableTeachers = (currentTeacherId?: string) => {
+    return teachers.filter((t) => {
+      // Always show the current teacher of this halaqa
+      if (currentTeacherId && t.id === currentTeacherId) return true;
+      // Show only unassigned teachers
+      return !t.assigned_halaqa_id;
+    });
+  };
+
+  /** Link teacher to halaqa with conflict validation and synchronized updates */
+  const linkTeacherToHalaqa = async (
+    teacherId: string | null,
+    halaqaId: string,
+    oldTeacherId?: string | null
+  ): Promise<boolean> => {
+    if (teacherId) {
+      // Check if teacher is already assigned to another halaqa
+      const teacher = teachers.find((t) => t.id === teacherId);
+      if (teacher?.assigned_halaqa_id && teacher.assigned_halaqa_id !== halaqaId) {
+        toast.error("هذا المعلم مرتبط بالفعل بحلقة أخرى ولا يمكن ربطه بحلقة إضافية.");
+        return false;
+      }
+
+      // Check if halaqa already has a different teacher
+      const halaqa = halaqat.find((h) => h.id === halaqaId);
+      if (halaqa?.teacher_id && halaqa.teacher_id !== teacherId) {
+        toast.error("هذه الحلقة لديها معلم بالفعل ولا يمكن ربط معلم آخر بها.");
+        return false;
+      }
+    }
+
+    // Remove old teacher's assignment if changing
+    if (oldTeacherId && oldTeacherId !== teacherId) {
+      await supabase
+        .from("profiles")
+        .update({ assigned_halaqa_id: null } as any)
+        .eq("id", oldTeacherId);
+    }
+
+    // Update halaqa's teacher_id
+    const { error: halaqaError } = await supabase
+      .from("halaqat")
+      .update({ teacher_id: teacherId })
+      .eq("id", halaqaId);
+    if (halaqaError) return false;
+
+    // Update new teacher's assigned_halaqa_id
+    if (teacherId) {
+      await supabase
+        .from("profiles")
+        .update({ assigned_halaqa_id: halaqaId } as any)
+        .eq("id", teacherId);
+    }
+
+    return true;
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("halaqat").insert({
+
+    // Insert halaqa first without teacher
+    const { data: newHalaqa, error } = await supabase.from("halaqat").insert({
       name: form.name,
-      teacher_id: form.teacher_id || null,
+      teacher_id: null,
       location: form.location || null,
       schedule: form.schedule || null,
       level_track_id: form.level_track_id || null,
-    });
-    if (error) { toast.error("حدث خطأ"); return; }
-    toast.success("تمت إضافة الحلقة");
+    }).select("id").single();
+
+    if (error || !newHalaqa) { toast.error("حدث خطأ"); return; }
+
+    // Link teacher if selected
+    if (form.teacher_id) {
+      const linked = await linkTeacherToHalaqa(form.teacher_id, newHalaqa.id);
+      if (!linked) {
+        // Rollback: delete the halaqa
+        await supabase.from("halaqat").delete().eq("id", newHalaqa.id);
+        return;
+      }
+    }
+
+    toast.success("تم ربط المعلم بالحلقة بنجاح.");
     setDialogOpen(false);
     setForm({ name: "", teacher_id: "", location: "", schedule: "", level_track_id: "" });
     fetchData();
@@ -89,22 +167,44 @@ const Halaqat = () => {
   const handleEditHalaqa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editId) return;
+
+    const currentHalaqa = halaqat.find((h) => h.id === editId);
+    const oldTeacherId = currentHalaqa?.teacher_id || null;
+    const newTeacherId = editForm.teacher_id || null;
+
+    // If teacher changed, validate and link
+    if (oldTeacherId !== newTeacherId) {
+      const linked = await linkTeacherToHalaqa(newTeacherId, editId, oldTeacherId);
+      if (!linked) return;
+    }
+
+    // Update other fields (teacher_id already updated by linkTeacherToHalaqa)
     const { error } = await supabase.from("halaqat").update({
       name: editForm.name,
-      teacher_id: editForm.teacher_id || null,
       location: editForm.location || null,
       schedule: editForm.schedule || null,
       capacity_max: editForm.capacity_max,
       level_track_id: editForm.level_track_id || null,
     }).eq("id", editId);
+
     if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
-    toast.success("تم تعديل الحلقة");
+    toast.success("تم تعديل الحلقة بنجاح.");
     setEditOpen(false);
     fetchData();
   };
 
   const handleDeleteHalaqa = async () => {
     if (!deleteId) return;
+    const halaqa = halaqat.find((h) => h.id === deleteId);
+    
+    // Remove teacher assignment before deactivating
+    if (halaqa?.teacher_id) {
+      await supabase
+        .from("profiles")
+        .update({ assigned_halaqa_id: null } as any)
+        .eq("id", halaqa.teacher_id);
+    }
+
     const { error } = await supabase.from("halaqat").update({ active: false }).eq("id", deleteId);
     if (error) { toast.error("حدث خطأ أثناء الحذف"); return; }
     toast.success("تم حذف الحلقة");
@@ -112,6 +212,9 @@ const Halaqat = () => {
     setDeleteId(null);
     fetchData();
   };
+
+  const availableTeachersForAdd = getAvailableTeachers();
+  const availableTeachersForEdit = getAvailableTeachers(editForm.teacher_id);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -136,7 +239,7 @@ const Halaqat = () => {
                 <Select value={form.teacher_id} onValueChange={(v) => setForm({ ...form, teacher_id: v })}>
                   <SelectTrigger><SelectValue placeholder="اختر المعلم" /></SelectTrigger>
                   <SelectContent>
-                    {teachers.map((t) => (
+                    {availableTeachersForAdd.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -271,8 +374,11 @@ const Halaqat = () => {
               <Select value={editForm.teacher_id} onValueChange={(v) => setEditForm({ ...editForm, teacher_id: v })}>
                 <SelectTrigger><SelectValue placeholder="اختر المعلم" /></SelectTrigger>
                 <SelectContent>
-                  {teachers.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                  {availableTeachersForEdit.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.full_name}
+                      {t.assigned_halaqa_id && t.id === editForm.teacher_id ? " (المعلم الحالي)" : ""}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

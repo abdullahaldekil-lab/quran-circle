@@ -1744,6 +1744,7 @@ export type Database = {
       profiles: {
         Row: {
           active: boolean
+          assigned_halaqa_id: string | null
           avatar_url: string | null
           created_at: string
           department: string | null
@@ -1759,6 +1760,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          assigned_halaqa_id?: string | null
           avatar_url?: string | null
           created_at?: string
           department?: string | null
@@ -1774,6 +1776,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          assigned_halaqa_id?: string | null
           avatar_url?: string | null
           created_at?: string
           department?: string | null
@@ -1787,7 +1790,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["staff_role"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_assigned_halaqa_id_fkey"
+            columns: ["assigned_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recitation_records: {
         Row: {
