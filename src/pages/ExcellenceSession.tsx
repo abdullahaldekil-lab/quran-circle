@@ -84,15 +84,34 @@ export default function ExcellenceSession() {
     }
     setSession(sess);
 
-    // Fetch students of halaqa
-    const { data: studs } = await (supabase
-      .from("students")
-      .select("id, full_name") as any)
-      .eq("halaqa_id", sess.halaqa_id)
-      .eq("active", true)
-      .order("full_name") as { data: Student[] | null };
+    // Fetch elite students for this halaqa (fallback to all students if no elite list)
+    const { data: eliteData } = await supabase
+      .from("excellence_elite_students")
+      .select("student_id")
+      .eq("halaqa_id", sess.halaqa_id);
 
-    const studentList = studs || [];
+    const eliteIds = (eliteData || []).map((e: any) => e.student_id);
+
+    let studentList: Student[];
+    if (eliteIds.length > 0) {
+      // Fetch only elite students
+      const { data: studs } = await (supabase
+        .from("students")
+        .select("id, full_name") as any)
+        .in("id", eliteIds)
+        .eq("active", true)
+        .order("full_name") as { data: Student[] | null };
+      studentList = studs || [];
+    } else {
+      // Fallback: all students in halaqa
+      const { data: studs } = await (supabase
+        .from("students")
+        .select("id, full_name") as any)
+        .eq("halaqa_id", sess.halaqa_id)
+        .eq("active", true)
+        .order("full_name") as { data: Student[] | null };
+      studentList = studs || [];
+    }
     setStudents(studentList);
 
     // Fetch existing attendance

@@ -371,6 +371,41 @@ export type Database = {
           },
         ]
       }
+      excellence_elite_students: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          halaqa_id: string
+          id: string
+          notes: string | null
+          student_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          halaqa_id: string
+          id?: string
+          notes?: string | null
+          student_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          halaqa_id?: string
+          id?: string
+          notes?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_elite_students_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       excellence_monthly_report: {
         Row: {
           average_score: number | null
