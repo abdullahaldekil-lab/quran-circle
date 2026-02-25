@@ -38,8 +38,22 @@ interface PerformanceRecord {
   rank_in_group: number | null;
 }
 
-function calcScore(p: PerformanceRecord): number {
-  return Math.max(0, 100 - p.mistakes_count * 2 - p.lahon_count * 1 - p.warnings_count * 0.5);
+interface ExcellenceSettings {
+  max_grade: number;
+  deduction_per_mistake: number;
+  deduction_per_lahn: number;
+  deduction_per_warning: number;
+}
+
+const DEFAULT_SETTINGS: ExcellenceSettings = {
+  max_grade: 100,
+  deduction_per_mistake: 2,
+  deduction_per_lahn: 1,
+  deduction_per_warning: 0.5,
+};
+
+function calcScore(p: PerformanceRecord, settings: ExcellenceSettings): number {
+  return Math.max(0, settings.max_grade - p.mistakes_count * settings.deduction_per_mistake - p.lahon_count * settings.deduction_per_lahn - p.warnings_count * settings.deduction_per_warning);
 }
 
 function calcRanks(perfs: PerformanceRecord[]): PerformanceRecord[] {
@@ -63,6 +77,7 @@ export default function ExcellenceSession() {
   const [performance, setPerformance] = useState<Record<string, PerformanceRecord>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [settings, setSettings] = useState<ExcellenceSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     if (sessionId) fetchAll();
@@ -70,6 +85,22 @@ export default function ExcellenceSession() {
 
   const fetchAll = async () => {
     setLoading(true);
+
+    // Fetch settings
+    const { data: settingsData } = await supabase
+      .from("excellence_settings")
+      .select("*")
+      .limit(1)
+      .single();
+    if (settingsData) {
+      setSettings({
+        max_grade: Number(settingsData.max_grade),
+        deduction_per_mistake: Number(settingsData.deduction_per_mistake),
+        deduction_per_lahn: Number(settingsData.deduction_per_lahn),
+        deduction_per_warning: Number(settingsData.deduction_per_warning),
+      });
+    }
+
     // Fetch session
     const { data: sess } = await supabase
       .from("excellence_sessions")
@@ -175,7 +206,7 @@ export default function ExcellenceSession() {
   const updatePerformance = (studentId: string, field: keyof PerformanceRecord, value: number) => {
     setPerformance((prev) => {
       const updated = { ...prev[studentId], [field]: value };
-      updated.total_score = calcScore(updated);
+      updated.total_score = calcScore(updated, settings);
       return { ...prev, [studentId]: updated };
     });
   };
