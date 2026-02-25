@@ -72,6 +72,7 @@ const navGroups: NavGroup[] = [
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
+      { to: "/excellence", icon: Trophy, label: "مسار التميّز" },
     ],
   },
   {

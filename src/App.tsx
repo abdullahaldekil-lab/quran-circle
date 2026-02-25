@@ -55,6 +55,9 @@ import NotificationLog from "./pages/NotificationLog";
 import NotificationPreferences from "./pages/NotificationPreferences";
 import SendNotification from "./pages/SendNotification";
 import BulkEmail from "./pages/BulkEmail";
+import Excellence from "./pages/Excellence";
+import ExcellenceSession from "./pages/ExcellenceSession";
+import ExcellenceReports from "./pages/ExcellenceReports";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -138,6 +141,10 @@ const AppRoutes = () => {
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
       <Route path="/students/:id/narration-progress" element={<ProtectedRoute path="/students"><StudentNarrationProgress /></ProtectedRoute>} />
+
+      <Route path="/excellence" element={<ProtectedRoute path="/excellence"><Excellence /></ProtectedRoute>} />
+      <Route path="/excellence/:sessionId" element={<ProtectedRoute path="/excellence"><ExcellenceSession /></ProtectedRoute>} />
+      <Route path="/excellence/reports" element={<ProtectedRoute path="/excellence"><ExcellenceReports /></ProtectedRoute>} />
 
       <Route path="/staff-attendance" element={<ProtectedRoute path="/staff-attendance"><StaffAttendance /></ProtectedRoute>} />
       <Route path="/staff-attendance-log" element={<ProtectedRoute path="/staff-attendance-log"><StaffAttendanceLog /></ProtectedRoute>} />
