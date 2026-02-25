@@ -73,6 +73,14 @@ const navGroups: NavGroup[] = [
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
+    ],
+  },
+  {
+    id: "excellence",
+    label: "التميز",
+    icon: Trophy,
+    color: "text-yellow-400",
+    items: [
       { to: "/excellence", icon: Trophy, label: "مسار التميّز" },
       { to: "/excellence/tracks", icon: Award, label: "إدارة المسارات" },
       { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
