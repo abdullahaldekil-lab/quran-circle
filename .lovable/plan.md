@@ -1,178 +1,162 @@
 
 
-# خطة موديول "مسار التميّز"
+# خطة إعادة هيكلة موديول "مسار التميّز" — مسارات متعددة وربط بالطالب مباشرة
 
 ## ملخص
 
-إضافة موديول متكامل لإدارة جلسات التميّز الأسبوعية (الثلاثاء بعد العشاء) يشمل: التحضير، تسجيل الأداء، الترتيب التلقائي، والتقارير الشهرية مع الطباعة.
+إعادة بناء موديول التميّز ليدعم مسارات متعددة قابلة للتعديل، مع ربط الطلاب بالمسارات عبر هويتهم (وليس الحلقة)، وإضافة إعدادات لكل مسار، وإشعارات لولي الأمر، وتقارير تفصيلية.
 
 ---
 
 ## التفاصيل التقنية
 
-### 1. قاعدة البيانات (Migration)
+### 1. قاعدة البيانات (3 جداول جديدة)
 
-**4 جداول جديدة:**
+**لا يتم حذف أي جدول قائم.** الجداول الجديدة تعمل بالتوازي مع الجداول الحالية.
 
 ```sql
--- 1) جلسات التميّز
-CREATE TABLE public.excellence_sessions (
+-- 1) مسارات التميّز
+CREATE TABLE public.excellence_tracks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_date DATE NOT NULL DEFAULT CURRENT_DATE,
-  halaqa_id UUID REFERENCES public.halaqat(id),
+  track_name TEXT NOT NULL,
+  description TEXT,
+  criteria JSONB DEFAULT '{}',
+  is_active BOOLEAN NOT NULL DEFAULT true,
   created_by UUID,
-  total_hizb_in_session NUMERIC DEFAULT 0,
-  total_pages_displayed NUMERIC DEFAULT 0,
-  notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 2) تحضير نخبة الطلاب
-CREATE TABLE public.excellence_attendance (
+-- 2) الطلاب المميزون
+CREATE TABLE public.distinguished_students (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id UUID NOT NULL REFERENCES public.excellence_sessions(id) ON DELETE CASCADE,
-  student_id UUID NOT NULL,
-  is_present BOOLEAN NOT NULL DEFAULT true,
+  student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+  track_id UUID NOT NULL REFERENCES public.excellence_tracks(id) ON DELETE CASCADE,
+  is_star BOOLEAN NOT NULL DEFAULT true,
+  added_by UUID,
+  date_added TIMESTAMPTZ NOT NULL DEFAULT now(),
   notes TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  UNIQUE(student_id, track_id)
 );
 
--- 3) أداء الطالب في الجلسة
-CREATE TABLE public.excellence_performance (
+-- 3) إعدادات المسار
+CREATE TABLE public.excellence_track_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id UUID NOT NULL REFERENCES public.excellence_sessions(id) ON DELETE CASCADE,
-  student_id UUID NOT NULL,
-  pages_displayed NUMERIC DEFAULT 0,
-  hizb_count NUMERIC DEFAULT 0,
-  mistakes_count INTEGER DEFAULT 0,
-  warnings_count INTEGER DEFAULT 0,
-  lahon_count INTEGER DEFAULT 0,
-  total_score NUMERIC DEFAULT 0,
-  rank_in_group INTEGER,
+  track_id UUID NOT NULL REFERENCES public.excellence_tracks(id) ON DELETE CASCADE UNIQUE,
+  min_monthly_performance NUMERIC DEFAULT 0,
+  min_attendance_rate NUMERIC DEFAULT 0,
+  min_hizb_count NUMERIC DEFAULT 0,
+  auto_remove_on_failure BOOLEAN DEFAULT false,
+  auto_notify_parent BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
--- 4) التقرير الشهري
-CREATE TABLE public.excellence_monthly_report (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  month INTEGER NOT NULL,
-  year INTEGER NOT NULL,
-  student_id UUID NOT NULL,
-  halaqa_id UUID REFERENCES public.halaqat(id),
-  total_attendance INTEGER DEFAULT 0,
-  total_pages NUMERIC DEFAULT 0,
-  total_sessions INTEGER DEFAULT 0,
-  total_hizb NUMERIC DEFAULT 0,
-  average_score NUMERIC DEFAULT 0,
-  final_rank INTEGER,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(month, year, student_id)
-);
 ```
 
-**RLS Policies (لكل جدول):**
-- `SELECT` → أي staff (`get_staff_role(auth.uid()) IS NOT NULL`)
-- `ALL` → manager
-- `INSERT/UPDATE` → teacher, assistant_teacher (للجلسات والتحضير والأداء)
+**RLS:**
+- SELECT → `get_staff_role(auth.uid()) IS NOT NULL`
+- ALL → manager
+- INSERT/UPDATE على `distinguished_students` → teacher, assistant_teacher, manager
 
-**Realtime:** تفعيل `excellence_sessions` للتحديث الفوري.
+**Triggers:** `updated_at` على الجداول الثلاثة.
 
-### 2. المسارات والصلاحيات
+### 2. تعديل جدول `excellence_elite_students` القائم
 
-**إضافة مسار `/excellence` في:**
+لن يُحذف. سيبقى للتوافق مع جلسات التميّز الأسبوعية الحالية. النظام الجديد يعمل بالتوازي.
 
-| الملف | التعديل |
-|-------|---------|
-| `src/hooks/useRole.tsx` | إضافة `/excellence` لأدوار: manager, supervisor, assistant_supervisor, teacher |
-| `src/App.tsx` | إضافة 3 مسارات: `/excellence`, `/excellence/:sessionId`, `/excellence/reports` |
-| `src/components/AppLayout.tsx` | إضافة رابط "مسار التميّز" في مجموعة "الشؤون الأكاديمية" |
+### 3. تعديل صفحة الطلاب (`Students.tsx`)
 
-### 3. الصفحات الجديدة
+**التعديل على النجمة الحالية:**
+- عند الضغط على النجمة → يظهر Dialog لاختيار المسار من `excellence_tracks`
+- إذا كان الطالب مسجلاً مسبقاً → تظهر رسالة "هذا الطالب مسجل مسبقًا في مسار التميّز"
+- عند إزالة النجمة → يُحذف من `distinguished_students`
+- الشارة تعرض اسم المسار بدلاً من "تميّز" فقط
 
-#### أ) `src/pages/Excellence.tsx` — الصفحة الرئيسية
-- عرض قائمة الجلسات السابقة
-- زر "إنشاء جلسة جديدة" (التاريخ الافتراضي = أقرب ثلاثاء)
-- اختيار الحلقة (المعلم يرى حلقته فقط)
-- إحصائيات سريعة
+### 4. الصفحات الجديدة
 
-#### ب) `src/pages/ExcellenceSession.tsx` — صفحة الجلسة الواحدة
-تتضمن 3 تبويبات (Tabs):
+#### أ) `src/pages/ExcellenceTracks.tsx` — إدارة المسارات
+- عرض قائمة المسارات مع حالة التفعيل
+- Dialog لإضافة/تعديل مسار (الاسم، الوصف، المعايير JSON)
+- زر تفعيل/تعطيل
+- عدد الطلاب في كل مسار
+- الوصول: المدير فقط
 
-**تبويب التحضير:**
-- قائمة طلاب الحلقة مع checkbox (حاضر/غائب)
-- حقل ملاحظات لكل طالب
+#### ب) `src/pages/DistinguishedStudents.tsx` — الطلاب المميزون
+- عرض قائمة الطلاب المميزين مع فلتر حسب المسار
+- بحث بالاسم
+- إضافة طالب (بحث من كل الطلاب، اختيار مسار)
+- نقل طالب لمسار آخر
+- إزالة طالب
+- إظهار تاريخ الانضمام والمسار الحالي
+- الوصول: المدير والمعلم
 
-**تبويب الأداء:**
-- جدول لكل طالب حاضر يحتوي:
-  - عدد الأوجه المعروضة
-  - عدد الأحزاب
-  - الأخطاء / اللحون / التنبيهات
-  - الدرجة (تحسب تلقائيًا)
-  - الترتيب (يحسب تلقائيًا عند الحفظ)
-- معادلة الدرجة الافتراضية: `100 - (mistakes × 2) - (lahon × 1) - (warnings × 0.5)`
-- الترتيب: بالدرجة أولاً → عدد الأحزاب → عدد الأوجه
-- حفظ يحدّث `total_hizb_in_session` و `total_pages_displayed` في الجلسة
+#### ج) `src/pages/ExcellenceTrackSettings.tsx` — إعدادات المسار
+- اختيار مسار → عرض/تعديل الإعدادات
+- الحد الأدنى للأداء الشهري
+- الحد الأدنى لنسبة الحضور
+- الحد الأدنى لعدد الأحزاب
+- تفعيل الإزالة التلقائية عند الإخفاق
+- تفعيل إشعارات ولي الأمر
+- الوصول: المدير فقط
 
-**تبويب ملخص الجلسة:**
-- عدد الحاضرين
-- إجمالي الأوجه والأحزاب
-- ترتيب الطلاب
-- زر طباعة
+#### د) تعديل `src/pages/ExcellenceReports.tsx` — إضافة تبويبين
+- **تقرير المسار:** اختيار مسار → عدد الطلاب، أفضل الطلاب، متوسط الأداء، نسبة الالتزام
+- **تقرير الطالب المميز:** اختيار طالب → تاريخ الانضمام، المؤشرات الشهرية/الفصلية/السنوية (من بيانات `excellence_performance` المرتبطة)
 
-#### ج) `src/pages/ExcellenceReports.tsx` — التقارير
-4 أقسام:
+### 5. المسارات (Routing)
 
-1. **تقرير الجلسة:** اختيار جلسة → عرض التفاصيل
-2. **تقرير الحلقة:** اختيار حلقة → أفضل الطلاب، متوسط الأداء، نسبة الحضور
-3. **تقرير المجمع:** مقارنة بين الحلقات، أفضل 10 طلاب
-4. **التقرير الشهري:** اختيار شهر/سنة → حساب وعرض التقرير الشهري مع إمكانية حفظه في `excellence_monthly_report`
+| المسار | الصفحة |
+|--------|--------|
+| `/excellence/tracks` | ExcellenceTracks |
+| `/excellence/distinguished` | DistinguishedStudents |
+| `/excellence/track-settings` | ExcellenceTrackSettings |
 
-- زر طباعة لكل قسم
+تُضاف في `App.tsx` مع حماية بالصلاحيات.
 
-### 4. مكون الطباعة
+### 6. التنقل (`AppLayout.tsx`)
 
-`src/components/ExcellencePrintTemplate.tsx`
+إضافة روابط فرعية تحت "مسار التميّز":
+- إدارة المسارات
+- الطلاب المميزون
+- إعدادات المسارات
 
-يعرض تقرير مطبوع يحتوي على: اسم الطالب، الحلقة، عدد الأوجه، عدد الأحزاب، الأخطاء، اللحون، التنبيهات، الدرجة، الترتيب. نفس نمط `NarrationPrintTemplate.tsx`.
+### 7. الصلاحيات (`useRole.tsx`)
 
-### 5. منطق الحسابات (في الواجهة)
+المسارات الجديدة تندرج تحت `/excellence` الموجود أصلاً، فلا تعديل مطلوب.
 
-```text
-الدرجة = 100 - (أخطاء × 2) - (لحون × 1) - (تنبيهات × 0.5)
-         الحد الأدنى = 0
+### 8. الربط مع الجلسات الأسبوعية
 
-الترتيب:
-  1. أعلى درجة
-  2. أكثر أحزاب (عند التعادل)
-  3. أكثر أوجه (عند التعادل)
+في `ExcellenceSession.tsx`:
+- عند فتح جلسة، يتم جلب الطلاب من `distinguished_students` (بالإضافة للمصدر الحالي `excellence_elite_students`)
+- إذا وُجد طلاب في `distinguished_students` للمسار النشط → يُستخدمون
+- يتم تحديث مؤشراتهم الشهرية والفصلية من بيانات الأداء
 
-التقرير الشهري:
-  مجموع الحضور = COUNT(is_present = true)
-  مجموع الأوجه = SUM(pages_displayed)
-  مجموع الأحزاب = SUM(hizb_count)
-  متوسط الدرجة = AVG(total_score)
-  الترتيب النهائي = حسب متوسط الدرجة
-```
+### 9. الإشعارات
 
-### 6. الملفات الجديدة والمعدّلة
+عند إضافة طالب لمسار تميّز (وكان `auto_notify_parent = true`):
+- استدعاء `sendNotification` بقالب `excellence_enrollment`
+- المستلم: ولي أمر الطالب (عبر `guardian_students`)
+
+عند إزالة طالب:
+- إشعار تنبيه لولي الأمر
+
+### 10. ملخص الملفات
 
 | الملف | النوع |
 |-------|-------|
-| Migration SQL | جديد |
-| `src/pages/Excellence.tsx` | جديد |
-| `src/pages/ExcellenceSession.tsx` | جديد |
-| `src/pages/ExcellenceReports.tsx` | جديد |
-| `src/components/ExcellencePrintTemplate.tsx` | جديد |
-| `src/App.tsx` | تعديل (إضافة 3 مسارات) |
-| `src/components/AppLayout.tsx` | تعديل (إضافة رابط في القائمة) |
-| `src/hooks/useRole.tsx` | تعديل (إضافة `/excellence` للأدوار) |
+| Migration SQL (3 جداول + RLS) | جديد |
+| `src/pages/ExcellenceTracks.tsx` | جديد |
+| `src/pages/DistinguishedStudents.tsx` | جديد |
+| `src/pages/ExcellenceTrackSettings.tsx` | جديد |
+| `src/pages/Students.tsx` | تعديل (النجمة → اختيار مسار) |
+| `src/pages/Excellence.tsx` | تعديل (إضافة روابط للصفحات الجديدة) |
+| `src/pages/ExcellenceReports.tsx` | تعديل (تبويبان جديدان) |
+| `src/pages/ExcellenceSession.tsx` | تعديل (جلب من distinguished_students) |
+| `src/App.tsx` | تعديل (3 مسارات جديدة) |
+| `src/components/AppLayout.tsx` | تعديل (روابط فرعية) |
 
-### 7. ما لن يتغير
-
-- لا حذف لأي جدول أو عمود موجود
-- لا تعديل على الموديولات القائمة (مدارج، سرد، تسميع...)
-- لا تغيير في RLS الحالية
+### 11. ما لن يتغير
+- لا حذف لأي جدول قائم
+- لا تعديل على الموديولات الأخرى (مدارج، سرد، تسميع...)
+- الجداول القائمة (`excellence_sessions`, `excellence_performance`, `excellence_elite_students`, `excellence_settings`) تبقى كما هي
 
