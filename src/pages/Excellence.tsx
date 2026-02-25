@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { Plus, Calendar, Users, BookOpen, Trophy, Star, Settings } from "lucide-react";
+import { Plus, Calendar, Users, BookOpen, Trophy, Star, Settings, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 
 interface Session {
@@ -222,6 +223,19 @@ export default function Excellence() {
       setSettingsDialogOpen(false);
     }
     setSettingsSaving(false);
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    // Delete related records first, then the session
+    await supabase.from("excellence_performance").delete().eq("session_id", sessionId);
+    await supabase.from("excellence_attendance").delete().eq("session_id", sessionId);
+    const { error } = await supabase.from("excellence_sessions").delete().eq("id", sessionId);
+    if (error) {
+      toast.error("خطأ في حذف الجلسة: " + error.message);
+    } else {
+      toast.success("تم حذف الجلسة بنجاح");
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    }
   };
 
   const totalHizb = sessions.reduce((s, r) => s + Number(r.total_hizb_in_session || 0), 0);
@@ -472,7 +486,7 @@ export default function Excellence() {
               onClick={() => navigate(`/excellence/${s.id}`)}
             >
               <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4" onClick={() => navigate(`/excellence/${s.id}`)}>
                   <div className="bg-primary/10 rounded-lg p-2">
                     <Calendar className="w-5 h-5 text-primary" />
                   </div>
@@ -485,9 +499,42 @@ export default function Excellence() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-6 text-sm text-muted-foreground">
-                  <span>{Number(s.total_hizb_in_session || 0)} حزب</span>
-                  <span>{Number(s.total_pages_displayed || 0)} وجه</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex gap-6 text-sm text-muted-foreground">
+                    <span>{Number(s.total_hizb_in_session || 0)} حزب</span>
+                    <span>{Number(s.total_pages_displayed || 0)} وجه</span>
+                  </div>
+                  {(isManager || !isSupervisor) && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent dir="rtl">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>حذف الجلسة</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            هل أنت متأكد من حذف جلسة {format(new Date(s.session_date), "yyyy/MM/dd")}؟ سيتم حذف جميع بيانات الحضور والأداء المرتبطة بها. لا يمكن التراجع عن هذا الإجراء.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter className="flex-row-reverse gap-2">
+                          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => handleDeleteSession(s.id)}
+                          >
+                            حذف
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </CardContent>
             </Card>
