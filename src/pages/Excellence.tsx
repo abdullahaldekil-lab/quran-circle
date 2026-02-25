@@ -307,6 +307,14 @@ export default function Excellence() {
             <Trophy className="w-4 h-4 ml-2" />
             التقارير
           </Button>
+          <Button variant="outline" onClick={() => navigate("/excellence/tracks")}>
+            <Settings className="w-4 h-4 ml-2" />
+            إدارة المسارات
+          </Button>
+          <Button variant="outline" onClick={() => navigate("/excellence/distinguished")}>
+            <Star className="w-4 h-4 ml-2" />
+            الطلاب المميزون
+          </Button>
           {!isSupervisor && (
             <>
               {/* Elite Students Dialog */}

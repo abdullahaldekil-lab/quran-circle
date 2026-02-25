@@ -34,6 +34,7 @@ import {
   ScrollText,
   Send,
   Mail,
+  Star,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,9 @@ const navGroups: NavGroup[] = [
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
       { to: "/excellence", icon: Trophy, label: "مسار التميّز" },
+      { to: "/excellence/tracks", icon: Award, label: "إدارة المسارات" },
+      { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
+      { to: "/excellence/track-settings", icon: Settings, label: "إعدادات المسارات" },
     ],
   },
   {
