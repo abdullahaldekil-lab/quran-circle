@@ -200,6 +200,51 @@ export type Database = {
         }
         Relationships: []
       }
+      distinguished_students: {
+        Row: {
+          added_by: string | null
+          date_added: string
+          id: string
+          is_star: boolean
+          notes: string | null
+          student_id: string
+          track_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          date_added?: string
+          id?: string
+          is_star?: boolean
+          notes?: string | null
+          student_id: string
+          track_id: string
+        }
+        Update: {
+          added_by?: string | null
+          date_added?: string
+          id?: string
+          is_star?: boolean
+          notes?: string | null
+          student_id?: string
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distinguished_students_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "distinguished_students_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "excellence_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string
@@ -585,6 +630,83 @@ export type Database = {
           deduction_per_warning?: number
           id?: string
           max_grade?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      excellence_track_settings: {
+        Row: {
+          auto_notify_parent: boolean | null
+          auto_remove_on_failure: boolean | null
+          created_at: string
+          id: string
+          min_attendance_rate: number | null
+          min_hizb_count: number | null
+          min_monthly_performance: number | null
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_notify_parent?: boolean | null
+          auto_remove_on_failure?: boolean | null
+          created_at?: string
+          id?: string
+          min_attendance_rate?: number | null
+          min_hizb_count?: number | null
+          min_monthly_performance?: number | null
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_notify_parent?: boolean | null
+          auto_remove_on_failure?: boolean | null
+          created_at?: string
+          id?: string
+          min_attendance_rate?: number | null
+          min_hizb_count?: number | null
+          min_monthly_performance?: number | null
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excellence_track_settings_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: true
+            referencedRelation: "excellence_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      excellence_tracks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          criteria: Json | null
+          description: string | null
+          id: string
+          is_active: boolean
+          track_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          track_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          track_name?: string
           updated_at?: string
         }
         Relationships: []

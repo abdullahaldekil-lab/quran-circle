@@ -25,9 +25,15 @@ const Students = () => {
   const { allowedHalaqatIds, filterHalaqat: filterHalaqatAccess, loading: accessLoading } = useTeacherHalaqat();
   const canBulkImport = isManager || isAdminStaff;
   const canToggleElite = isManager || isTeacher;
-  const [eliteStudentIds, setEliteStudentIds] = useState<Set<string>>(new Set());
+
+  // Distinguished students state (new system)
+  const [distinguishedMap, setDistinguishedMap] = useState<Record<string, { id: string; track_id: string; track_name: string }>>({});
   const [eliteToggling, setEliteToggling] = useState<string | null>(null);
-  const [eliteRecordsMap, setEliteRecordsMap] = useState<Record<string, string>>({});
+  const [tracks, setTracks] = useState<{ id: string; track_name: string }[]>([]);
+  const [starDialogOpen, setStarDialogOpen] = useState(false);
+  const [starStudentId, setStarStudentId] = useState<string | null>(null);
+  const [starTrackId, setStarTrackId] = useState("");
+
   const [students, setStudents] = useState<any[]>([]);
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [levels, setLevels] = useState<any[]>([]);
@@ -84,47 +90,96 @@ const Students = () => {
     setLevels(data || []);
   };
 
-  const fetchEliteStudents = useCallback(async () => {
-    const { data } = await supabase.from("excellence_elite_students").select("id, student_id");
-    const ids = new Set((data || []).map((e: any) => e.student_id));
-    const map: Record<string, string> = {};
-    (data || []).forEach((e: any) => { map[e.student_id] = e.id; });
-    setEliteStudentIds(ids);
-    setEliteRecordsMap(map);
+  const fetchDistinguished = useCallback(async () => {
+    const { data } = await supabase
+      .from("distinguished_students")
+      .select("id, student_id, track_id, excellence_tracks:track_id(track_name)");
+    const map: Record<string, { id: string; track_id: string; track_name: string }> = {};
+    (data || []).forEach((d: any) => {
+      map[d.student_id] = { id: d.id, track_id: d.track_id, track_name: d.excellence_tracks?.track_name || "تميّز" };
+    });
+    setDistinguishedMap(map);
   }, []);
 
-  const toggleElite = async (e: React.MouseEvent, studentId: string, halaqaId: string | null) => {
+  const fetchTracks = async () => {
+    const { data } = await supabase
+      .from("excellence_tracks")
+      .select("id, track_name")
+      .eq("is_active", true)
+      .order("track_name");
+    setTracks(data || []);
+  };
+
+  const handleStarClick = (e: React.MouseEvent, studentId: string) => {
     e.stopPropagation();
-    if (!canToggleElite || !halaqaId) return;
-    setEliteToggling(studentId);
-    const isElite = eliteStudentIds.has(studentId);
-    if (isElite) {
-      const recId = eliteRecordsMap[studentId];
-      if (recId) await supabase.from("excellence_elite_students").delete().eq("id", recId);
-      setEliteStudentIds(prev => { const n = new Set(prev); n.delete(studentId); return n; });
-      setEliteRecordsMap(prev => { const n = { ...prev }; delete n[studentId]; return n; });
-      toast.success("تم إزالة الطالب من مسار التميّز");
+    if (!canToggleElite) return;
+
+    const existing = distinguishedMap[studentId];
+    if (existing) {
+      // Remove from track
+      removeStar(studentId);
     } else {
-      const { data, error } = await supabase.from("excellence_elite_students")
-        .insert({ halaqa_id: halaqaId, student_id: studentId, added_by: user?.id })
-        .select().single();
-      if (error) { toast.error("خطأ: " + error.message); }
-      else {
-        setEliteStudentIds(prev => new Set(prev).add(studentId));
-        setEliteRecordsMap(prev => ({ ...prev, [studentId]: data.id }));
-        toast.success("تم إضافة الطالب لمسار التميّز");
-      }
+      // Open dialog to select track
+      setStarStudentId(studentId);
+      setStarTrackId(tracks[0]?.id || "");
+      setStarDialogOpen(true);
+    }
+  };
+
+  const removeStar = async (studentId: string) => {
+    const rec = distinguishedMap[studentId];
+    if (!rec) return;
+    setEliteToggling(studentId);
+    const { error } = await supabase.from("distinguished_students").delete().eq("id", rec.id);
+    if (error) toast.error("خطأ: " + error.message);
+    else {
+      setDistinguishedMap(prev => { const n = { ...prev }; delete n[studentId]; return n; });
+      toast.success("تم إزالة الطالب من مسار التميّز");
     }
     setEliteToggling(null);
   };
 
+  const addStar = async () => {
+    if (!starStudentId || !starTrackId) return;
+    setEliteToggling(starStudentId);
+
+    // Check duplicate
+    const existing = distinguishedMap[starStudentId];
+    if (existing) {
+      toast.error("هذا الطالب مسجل مسبقًا في مسار التميّز.");
+      setEliteToggling(null);
+      setStarDialogOpen(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("distinguished_students")
+      .insert({ student_id: starStudentId, track_id: starTrackId, added_by: user?.id, is_star: true })
+      .select("id, track_id, excellence_tracks:track_id(track_name)")
+      .single();
+
+    if (error) toast.error("خطأ: " + error.message);
+    else {
+      const trackName = (data as any).excellence_tracks?.track_name || "تميّز";
+      setDistinguishedMap(prev => ({
+        ...prev,
+        [starStudentId]: { id: data.id, track_id: data.track_id, track_name: trackName },
+      }));
+      toast.success("تم إضافة الطالب لمسار التميّز");
+    }
+    setEliteToggling(null);
+    setStarDialogOpen(false);
+  };
+
+  useEffect(() => {
   useEffect(() => {
     fetchHalaqat();
     fetchLevels();
-    fetchEliteStudents();
+    fetchDistinguished();
+    fetchTracks();
   }, []);
 
-  useEffect(() => {
+
     fetchStudents();
   }, [fetchStudents]);
 
@@ -302,7 +357,8 @@ const Students = () => {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {students.map((student) => {
-          const isElite = eliteStudentIds.has(student.id);
+          const distinguished = distinguishedMap[student.id];
+          const isElite = !!distinguished;
           return (
           <Card key={student.id} className="animate-slide-in hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/students/${student.id}`)}>
             <CardContent className="p-4">
@@ -315,12 +371,12 @@ const Students = () => {
                   <p className="text-xs text-muted-foreground">{student.halaqat?.name || "بدون حلقة"}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="secondary" className="text-xs">{student.current_level}</Badge>
-                    {isElite && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">تميّز</Badge>}
+                    {isElite && <Badge variant="outline" className="text-xs border-amber-300">{distinguished.track_name}</Badge>}
                   </div>
                 </div>
-                {canToggleElite && student.halaqa_id && (
+                {canToggleElite && (
                   <button
-                    onClick={(e) => toggleElite(e, student.id, student.halaqa_id)}
+                    onClick={(e) => handleStarClick(e, student.id)}
                     disabled={eliteToggling === student.id}
                     className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors"
                     title={isElite ? "إزالة من مسار التميّز" : "إضافة لمسار التميّز"}
@@ -360,6 +416,31 @@ const Students = () => {
           </Button>
         </div>
       )}
+
+      {/* Star Track Selection Dialog */}
+      <Dialog open={starDialogOpen} onOpenChange={setStarDialogOpen}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>اختر مسار التميّز</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <Select value={starTrackId} onValueChange={setStarTrackId}>
+              <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
+              <SelectContent>
+                {tracks.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.track_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {tracks.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center">لا توجد مسارات. أنشئ مسارًا أولاً من إدارة المسارات.</p>
+            )}
+            <Button className="w-full" onClick={addStar} disabled={!starTrackId}>
+              إضافة لمسار التميّز
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

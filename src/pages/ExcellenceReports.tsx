@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { ArrowRight, Printer, Save } from "lucide-react";
+import { ArrowRight, Printer, Save, Star } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ExcellenceReports() {
@@ -39,6 +40,15 @@ export default function ExcellenceReports() {
   });
   const [monthlyReport, setMonthlyReport] = useState<any[]>([]);
 
+  // Track report
+  const [excellenceTracks, setExcellenceTracks] = useState<any[]>([]);
+  const [selectedTrackId, setSelectedTrackId] = useState("");
+  const [trackReport, setTrackReport] = useState<any>(null);
+
+  // Distinguished student report
+  const [distinguishedStudents, setDistinguishedStudents] = useState<any[]>([]);
+  const [selectedDistStudentId, setSelectedDistStudentId] = useState("");
+  const [distStudentReport, setDistStudentReport] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,12 +56,20 @@ export default function ExcellenceReports() {
   }, []);
 
   const fetchBase = async () => {
-    const [halRes, sessRes] = await Promise.all([
+    const [halRes, sessRes, tracksRes, distRes] = await Promise.all([
       supabase.from("halaqat").select("id, name").eq("active", true),
       supabase.from("excellence_sessions").select("id, session_date, halaqa_id, halaqat(name)").order("session_date", { ascending: false }),
+      supabase.from("excellence_tracks").select("id, track_name").eq("is_active", true).order("track_name"),
+      supabase.from("distinguished_students").select("id, student_id, students:student_id(full_name), excellence_tracks:track_id(track_name)").order("date_added", { ascending: false }),
     ]);
     setHalaqat(filterHalaqat(halRes.data || []));
     setSessions(sessRes.data || []);
+    setExcellenceTracks(tracksRes.data || []);
+    setDistinguishedStudents((distRes.data || []).map((d: any) => ({
+      ...d,
+      student_name: d.students?.full_name || "—",
+      track_name: d.excellence_tracks?.track_name || "—",
+    })));
   };
 
   // Session Report
@@ -225,11 +243,13 @@ export default function ExcellenceReports() {
       </div>
 
       <Tabs defaultValue="session" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="session">تقرير الجلسة</TabsTrigger>
           <TabsTrigger value="halaqa">تقرير الحلقة</TabsTrigger>
           <TabsTrigger value="complex">تقرير المجمع</TabsTrigger>
           <TabsTrigger value="monthly">التقرير الشهري</TabsTrigger>
+          <TabsTrigger value="track">تقرير المسار</TabsTrigger>
+          <TabsTrigger value="distinguished">الطالب المميز</TabsTrigger>
         </TabsList>
 
         {/* Session Report */}
@@ -454,6 +474,177 @@ export default function ExcellenceReports() {
               )}
               {monthlyReport.length === 0 && selectedSessionId && (
                 <p className="text-center text-muted-foreground py-4">لا توجد بيانات لهذا الشهر</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Track Report */}
+        <TabsContent value="track">
+          <Card>
+            <CardHeader><CardTitle>تقرير المسار</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Select value={selectedTrackId} onValueChange={setSelectedTrackId}>
+                  <SelectTrigger className="flex-1"><SelectValue placeholder="اختر المسار" /></SelectTrigger>
+                  <SelectContent>
+                    {excellenceTracks.map((t: any) => (
+                      <SelectItem key={t.id} value={t.id}>{t.track_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={async () => {
+                  if (!selectedTrackId) return;
+                  const { data: distStudents } = await supabase
+                    .from("distinguished_students")
+                    .select("student_id, date_added, students:student_id(full_name)")
+                    .eq("track_id", selectedTrackId);
+
+                  const studentIds = (distStudents || []).map((d: any) => d.student_id);
+                  let perfData: any[] = [];
+                  if (studentIds.length > 0) {
+                    const { data } = await supabase
+                      .from("excellence_performance")
+                      .select("student_id, total_score, hizb_count, pages_displayed")
+                      .in("student_id", studentIds);
+                    perfData = data || [];
+                  }
+
+                  const studentMap: Record<string, { name: string; totalScore: number; count: number; totalHizb: number }> = {};
+                  (distStudents || []).forEach((d: any) => {
+                    studentMap[d.student_id] = { name: d.students?.full_name || "—", totalScore: 0, count: 0, totalHizb: 0 };
+                  });
+                  perfData.forEach((p: any) => {
+                    if (studentMap[p.student_id]) {
+                      studentMap[p.student_id].totalScore += Number(p.total_score);
+                      studentMap[p.student_id].totalHizb += Number(p.hizb_count);
+                      studentMap[p.student_id].count += 1;
+                    }
+                  });
+
+                  const ranked = Object.entries(studentMap)
+                    .map(([id, s]) => ({ id, ...s, avg: s.count > 0 ? s.totalScore / s.count : 0 }))
+                    .sort((a, b) => b.avg - a.avg);
+
+                  setTrackReport({
+                    totalStudents: studentIds.length,
+                    avgPerformance: ranked.length > 0 ? ranked.reduce((s, r) => s + r.avg, 0) / ranked.length : 0,
+                    students: ranked,
+                  });
+                }}>عرض</Button>
+              </div>
+              {trackReport && (
+                <div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold">{trackReport.totalStudents}</p><p className="text-xs text-muted-foreground">عدد الطلاب</p></CardContent></Card>
+                    <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold">{trackReport.avgPerformance.toFixed(1)}</p><p className="text-xs text-muted-foreground">متوسط الأداء</p></CardContent></Card>
+                  </div>
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead className="text-center">#</TableHead>
+                      <TableHead className="text-right">الطالب</TableHead>
+                      <TableHead className="text-center">متوسط الدرجة</TableHead>
+                      <TableHead className="text-center">إجمالي الأحزاب</TableHead>
+                      <TableHead className="text-center">عدد الجلسات</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {trackReport.students.map((s: any, i: number) => (
+                        <TableRow key={s.id}>
+                          <TableCell className="text-center">{i + 1}</TableCell>
+                          <TableCell>{s.name}</TableCell>
+                          <TableCell className="text-center font-bold">{s.avg.toFixed(1)}</TableCell>
+                          <TableCell className="text-center">{s.totalHizb}</TableCell>
+                          <TableCell className="text-center">{s.count}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Distinguished Student Report */}
+        <TabsContent value="distinguished">
+          <Card>
+            <CardHeader><CardTitle>تقرير الطالب المميز</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Select value={selectedDistStudentId} onValueChange={setSelectedDistStudentId}>
+                  <SelectTrigger className="flex-1"><SelectValue placeholder="اختر الطالب" /></SelectTrigger>
+                  <SelectContent>
+                    {distinguishedStudents.map((d: any) => (
+                      <SelectItem key={d.id} value={d.student_id}>
+                        {d.student_name} — {d.track_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={async () => {
+                  if (!selectedDistStudentId) return;
+                  const distInfo = distinguishedStudents.find((d: any) => d.student_id === selectedDistStudentId);
+                  const { data: perfData } = await supabase
+                    .from("excellence_performance")
+                    .select("total_score, hizb_count, pages_displayed, session_id, excellence_sessions:session_id(session_date)")
+                    .eq("student_id", selectedDistStudentId)
+                    .order("created_at", { ascending: false });
+
+                  const sessions = (perfData || []).map((p: any) => ({
+                    date: p.excellence_sessions?.session_date || "—",
+                    score: Number(p.total_score),
+                    hizb: Number(p.hizb_count),
+                    pages: Number(p.pages_displayed),
+                  }));
+
+                  const totalSessions = sessions.length;
+                  const avgScore = totalSessions > 0 ? sessions.reduce((s: number, r: any) => s + r.score, 0) / totalSessions : 0;
+                  const totalHizb = sessions.reduce((s: number, r: any) => s + r.hizb, 0);
+
+                  setDistStudentReport({
+                    studentName: distInfo?.student_name || "—",
+                    trackName: distInfo?.track_name || "—",
+                    dateAdded: distInfo?.date_added || "—",
+                    totalSessions,
+                    avgScore,
+                    totalHizb,
+                    sessions,
+                  });
+                }}>عرض</Button>
+              </div>
+              {distStudentReport && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                    <span className="font-bold">{distStudentReport.studentName}</span>
+                    <Badge variant="outline">{distStudentReport.trackName}</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold">{distStudentReport.totalSessions}</p><p className="text-xs text-muted-foreground">عدد الجلسات</p></CardContent></Card>
+                    <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold">{distStudentReport.avgScore.toFixed(1)}</p><p className="text-xs text-muted-foreground">متوسط الدرجة</p></CardContent></Card>
+                    <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold">{distStudentReport.totalHizb}</p><p className="text-xs text-muted-foreground">إجمالي الأحزاب</p></CardContent></Card>
+                  </div>
+                  {distStudentReport.sessions.length > 0 && (
+                    <Table>
+                      <TableHeader><TableRow>
+                        <TableHead className="text-center">التاريخ</TableHead>
+                        <TableHead className="text-center">الدرجة</TableHead>
+                        <TableHead className="text-center">الأحزاب</TableHead>
+                        <TableHead className="text-center">الأوجه</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {distStudentReport.sessions.map((s: any, i: number) => (
+                          <TableRow key={i}>
+                            <TableCell className="text-center">{s.date}</TableCell>
+                            <TableCell className="text-center font-bold">{s.score.toFixed(1)}</TableCell>
+                            <TableCell className="text-center">{s.hizb}</TableCell>
+                            <TableCell className="text-center">{s.pages}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

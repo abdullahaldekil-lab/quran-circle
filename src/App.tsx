@@ -58,6 +58,9 @@ import BulkEmail from "./pages/BulkEmail";
 import Excellence from "./pages/Excellence";
 import ExcellenceSession from "./pages/ExcellenceSession";
 import ExcellenceReports from "./pages/ExcellenceReports";
+import ExcellenceTracks from "./pages/ExcellenceTracks";
+import DistinguishedStudents from "./pages/DistinguishedStudents";
+import ExcellenceTrackSettings from "./pages/ExcellenceTrackSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -145,6 +148,9 @@ const AppRoutes = () => {
       <Route path="/excellence" element={<ProtectedRoute path="/excellence"><Excellence /></ProtectedRoute>} />
       <Route path="/excellence/:sessionId" element={<ProtectedRoute path="/excellence"><ExcellenceSession /></ProtectedRoute>} />
       <Route path="/excellence/reports" element={<ProtectedRoute path="/excellence"><ExcellenceReports /></ProtectedRoute>} />
+      <Route path="/excellence/tracks" element={<ProtectedRoute path="/excellence"><ExcellenceTracks /></ProtectedRoute>} />
+      <Route path="/excellence/distinguished" element={<ProtectedRoute path="/excellence"><DistinguishedStudents /></ProtectedRoute>} />
+      <Route path="/excellence/track-settings" element={<ProtectedRoute path="/excellence"><ExcellenceTrackSettings /></ProtectedRoute>} />
 
       <Route path="/staff-attendance" element={<ProtectedRoute path="/staff-attendance"><StaffAttendance /></ProtectedRoute>} />
       <Route path="/staff-attendance-log" element={<ProtectedRoute path="/staff-attendance-log"><StaffAttendanceLog /></ProtectedRoute>} />
