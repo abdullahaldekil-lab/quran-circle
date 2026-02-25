@@ -17,6 +17,7 @@ interface Teacher {
   id: string;
   full_name: string;
   assigned_halaqa_id: string | null;
+  assigned_assistant_halaqa_id: string | null;
 }
 
 const Halaqat = () => {
@@ -27,17 +28,17 @@ const Halaqat = () => {
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [studentsDialogId, setStudentsDialogId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", teacher_id: "", location: "", schedule: "", level_track_id: "" });
+  const [form, setForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "" });
   const [editOpen, setEditOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "" });
+  const [editForm, setEditForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "" });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
-      supabase.from("halaqat").select("*, profiles:teacher_id(full_name)").eq("active", true),
-      supabase.from("profiles").select("id, full_name, assigned_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
+      supabase.from("halaqat").select("*, profiles:teacher_id(full_name), assistant:assistant_teacher_id(full_name)").eq("active", true),
+      supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
       supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
       supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
     ]);
@@ -57,31 +58,34 @@ const Halaqat = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  /** Get available teachers for selection. For edit mode, include the current teacher. */
+  /** Get available teachers for main teacher selection */
   const getAvailableTeachers = (currentTeacherId?: string) => {
     return teachers.filter((t) => {
-      // Always show the current teacher of this halaqa
       if (currentTeacherId && t.id === currentTeacherId) return true;
-      // Show only unassigned teachers
       return !t.assigned_halaqa_id;
     });
   };
 
-  /** Link teacher to halaqa with conflict validation and synchronized updates */
+  /** Get available teachers for assistant teacher selection */
+  const getAvailableAssistants = (currentAssistantId?: string) => {
+    return teachers.filter((t) => {
+      if (currentAssistantId && t.id === currentAssistantId) return true;
+      return !t.assigned_assistant_halaqa_id;
+    });
+  };
+
+  /** Link main teacher to halaqa with conflict validation */
   const linkTeacherToHalaqa = async (
     teacherId: string | null,
     halaqaId: string,
     oldTeacherId?: string | null
   ): Promise<boolean> => {
     if (teacherId) {
-      // Check if teacher is already assigned to another halaqa
       const teacher = teachers.find((t) => t.id === teacherId);
       if (teacher?.assigned_halaqa_id && teacher.assigned_halaqa_id !== halaqaId) {
         toast.error("هذا المعلم مرتبط بالفعل بحلقة أخرى ولا يمكن ربطه بحلقة إضافية.");
         return false;
       }
-
-      // Check if halaqa already has a different teacher
       const halaqa = halaqat.find((h) => h.id === halaqaId);
       if (halaqa?.teacher_id && halaqa.teacher_id !== teacherId) {
         toast.error("هذه الحلقة لديها معلم بالفعل ولا يمكن ربط معلم آخر بها.");
@@ -89,39 +93,58 @@ const Halaqat = () => {
       }
     }
 
-    // Remove old teacher's assignment if changing
     if (oldTeacherId && oldTeacherId !== teacherId) {
-      await supabase
-        .from("profiles")
-        .update({ assigned_halaqa_id: null } as any)
-        .eq("id", oldTeacherId);
+      await supabase.from("profiles").update({ assigned_halaqa_id: null } as any).eq("id", oldTeacherId);
     }
 
-    // Update halaqa's teacher_id
-    const { error: halaqaError } = await supabase
-      .from("halaqat")
-      .update({ teacher_id: teacherId })
-      .eq("id", halaqaId);
-    if (halaqaError) return false;
+    const { error } = await supabase.from("halaqat").update({ teacher_id: teacherId }).eq("id", halaqaId);
+    if (error) return false;
 
-    // Update new teacher's assigned_halaqa_id
     if (teacherId) {
-      await supabase
-        .from("profiles")
-        .update({ assigned_halaqa_id: halaqaId } as any)
-        .eq("id", teacherId);
+      await supabase.from("profiles").update({ assigned_halaqa_id: halaqaId } as any).eq("id", teacherId);
+    }
+    return true;
+  };
+
+  /** Link assistant teacher to halaqa with conflict validation */
+  const linkAssistantToHalaqa = async (
+    assistantId: string | null,
+    halaqaId: string,
+    oldAssistantId?: string | null
+  ): Promise<boolean> => {
+    if (assistantId) {
+      const assistant = teachers.find((t) => t.id === assistantId);
+      if (assistant?.assigned_assistant_halaqa_id && assistant.assigned_assistant_halaqa_id !== halaqaId) {
+        toast.error("هذا المعلم المساعد مرتبط بالفعل بحلقة أخرى ولا يمكن ربطه بحلقة إضافية.");
+        return false;
+      }
+      const halaqa = halaqat.find((h) => h.id === halaqaId);
+      if (halaqa?.assistant_teacher_id && halaqa.assistant_teacher_id !== assistantId) {
+        toast.error("هذه الحلقة لديها معلم مساعد بالفعل ولا يمكن ربط معلم مساعد آخر بها.");
+        return false;
+      }
     }
 
+    if (oldAssistantId && oldAssistantId !== assistantId) {
+      await supabase.from("profiles").update({ assigned_assistant_halaqa_id: null } as any).eq("id", oldAssistantId);
+    }
+
+    const { error } = await supabase.from("halaqat").update({ assistant_teacher_id: assistantId }).eq("id", halaqaId);
+    if (error) return false;
+
+    if (assistantId) {
+      await supabase.from("profiles").update({ assigned_assistant_halaqa_id: halaqaId } as any).eq("id", assistantId);
+    }
     return true;
   };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Insert halaqa first without teacher
     const { data: newHalaqa, error } = await supabase.from("halaqat").insert({
       name: form.name,
       teacher_id: null,
+      assistant_teacher_id: null,
       location: form.location || null,
       schedule: form.schedule || null,
       level_track_id: form.level_track_id || null,
@@ -129,19 +152,31 @@ const Halaqat = () => {
 
     if (error || !newHalaqa) { toast.error("حدث خطأ"); return; }
 
-    // Link teacher if selected
+    // Link main teacher
     if (form.teacher_id) {
       const linked = await linkTeacherToHalaqa(form.teacher_id, newHalaqa.id);
       if (!linked) {
-        // Rollback: delete the halaqa
         await supabase.from("halaqat").delete().eq("id", newHalaqa.id);
         return;
       }
     }
 
-    toast.success("تم ربط المعلم بالحلقة بنجاح.");
+    // Link assistant teacher
+    if (form.assistant_teacher_id) {
+      const linked = await linkAssistantToHalaqa(form.assistant_teacher_id, newHalaqa.id);
+      if (!linked) {
+        // Rollback teacher link too
+        if (form.teacher_id) {
+          await supabase.from("profiles").update({ assigned_halaqa_id: null } as any).eq("id", form.teacher_id);
+        }
+        await supabase.from("halaqat").delete().eq("id", newHalaqa.id);
+        return;
+      }
+    }
+
+    toast.success("تم إضافة الحلقة بنجاح.");
     setDialogOpen(false);
-    setForm({ name: "", teacher_id: "", location: "", schedule: "", level_track_id: "" });
+    setForm({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "" });
     fetchData();
   };
 
@@ -156,6 +191,7 @@ const Halaqat = () => {
     setEditForm({
       name: h.name,
       teacher_id: h.teacher_id || "",
+      assistant_teacher_id: h.assistant_teacher_id || "",
       location: h.location || "",
       schedule: h.schedule || "",
       capacity_max: h.capacity_max || 25,
@@ -171,14 +207,21 @@ const Halaqat = () => {
     const currentHalaqa = halaqat.find((h) => h.id === editId);
     const oldTeacherId = currentHalaqa?.teacher_id || null;
     const newTeacherId = editForm.teacher_id || null;
+    const oldAssistantId = currentHalaqa?.assistant_teacher_id || null;
+    const newAssistantId = editForm.assistant_teacher_id || null;
 
-    // If teacher changed, validate and link
+    // Validate main teacher change
     if (oldTeacherId !== newTeacherId) {
       const linked = await linkTeacherToHalaqa(newTeacherId, editId, oldTeacherId);
       if (!linked) return;
     }
 
-    // Update other fields (teacher_id already updated by linkTeacherToHalaqa)
+    // Validate assistant teacher change
+    if (oldAssistantId !== newAssistantId) {
+      const linked = await linkAssistantToHalaqa(newAssistantId, editId, oldAssistantId);
+      if (!linked) return;
+    }
+
     const { error } = await supabase.from("halaqat").update({
       name: editForm.name,
       location: editForm.location || null,
@@ -196,13 +239,13 @@ const Halaqat = () => {
   const handleDeleteHalaqa = async () => {
     if (!deleteId) return;
     const halaqa = halaqat.find((h) => h.id === deleteId);
-    
-    // Remove teacher assignment before deactivating
+
+    // Remove both teacher assignments
     if (halaqa?.teacher_id) {
-      await supabase
-        .from("profiles")
-        .update({ assigned_halaqa_id: null } as any)
-        .eq("id", halaqa.teacher_id);
+      await supabase.from("profiles").update({ assigned_halaqa_id: null } as any).eq("id", halaqa.teacher_id);
+    }
+    if (halaqa?.assistant_teacher_id) {
+      await supabase.from("profiles").update({ assigned_assistant_halaqa_id: null } as any).eq("id", halaqa.assistant_teacher_id);
     }
 
     const { error } = await supabase.from("halaqat").update({ active: false }).eq("id", deleteId);
@@ -214,7 +257,9 @@ const Halaqat = () => {
   };
 
   const availableTeachersForAdd = getAvailableTeachers();
+  const availableAssistantsForAdd = getAvailableAssistants();
   const availableTeachersForEdit = getAvailableTeachers(editForm.teacher_id);
+  const availableAssistantsForEdit = getAvailableAssistants(editForm.assistant_teacher_id);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -240,6 +285,17 @@ const Halaqat = () => {
                   <SelectTrigger><SelectValue placeholder="اختر المعلم" /></SelectTrigger>
                   <SelectContent>
                     {availableTeachersForAdd.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>المعلم المساعد</Label>
+                <Select value={form.assistant_teacher_id} onValueChange={(v) => setForm({ ...form, assistant_teacher_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="اختر المعلم المساعد (اختياري)" /></SelectTrigger>
+                  <SelectContent>
+                    {availableAssistantsForAdd.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -293,6 +349,7 @@ const Halaqat = () => {
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <p className="text-muted-foreground">المعلم: {h.profiles?.full_name || "غير محدد"}</p>
+                <p className="text-muted-foreground">المعلم المساعد: {h.assistant?.full_name || "غير محدد"}</p>
                 {h.level_track_id && (
                   <p className="text-muted-foreground">المسار: {levelTracks.find(t => t.id === h.level_track_id)?.name || "—"}</p>
                 )}
@@ -311,12 +368,7 @@ const Halaqat = () => {
                 {h.schedule && <p className="text-muted-foreground">الجدول: {h.schedule}</p>}
 
                 <div className="flex gap-2 mt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setStudentsDialogId(h.id)}
-                  >
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => setStudentsDialogId(h.id)}>
                     <User className="w-3 h-3 ml-1" />
                     عرض الطلاب ({count})
                   </Button>
@@ -341,9 +393,7 @@ const Halaqat = () => {
       <Dialog open={!!studentsDialogId} onOpenChange={() => setStudentsDialogId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              طلاب الحلقة: {halaqat.find((h) => h.id === studentsDialogId)?.name}
-            </DialogTitle>
+            <DialogTitle>طلاب الحلقة: {halaqat.find((h) => h.id === studentsDialogId)?.name}</DialogTitle>
           </DialogHeader>
           <div className="max-h-80 overflow-y-auto space-y-2">
             {(studentsByHalaqa[studentsDialogId || ""] || []).length === 0 ? (
@@ -378,6 +428,20 @@ const Halaqat = () => {
                     <SelectItem key={t.id} value={t.id}>
                       {t.full_name}
                       {t.assigned_halaqa_id && t.id === editForm.teacher_id ? " (المعلم الحالي)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>المعلم المساعد</Label>
+              <Select value={editForm.assistant_teacher_id} onValueChange={(v) => setEditForm({ ...editForm, assistant_teacher_id: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر المعلم المساعد (اختياري)" /></SelectTrigger>
+                <SelectContent>
+                  {availableAssistantsForEdit.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.full_name}
+                      {t.assigned_assistant_halaqa_id && t.id === editForm.assistant_teacher_id ? " (المساعد الحالي)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
