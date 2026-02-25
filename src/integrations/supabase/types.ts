@@ -1744,6 +1744,7 @@ export type Database = {
       profiles: {
         Row: {
           active: boolean
+          assigned_assistant_halaqa_id: string | null
           assigned_halaqa_id: string | null
           avatar_url: string | null
           created_at: string
@@ -1760,6 +1761,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          assigned_assistant_halaqa_id?: string | null
           assigned_halaqa_id?: string | null
           avatar_url?: string | null
           created_at?: string
@@ -1776,6 +1778,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          assigned_assistant_halaqa_id?: string | null
           assigned_halaqa_id?: string | null
           avatar_url?: string | null
           created_at?: string
@@ -1791,6 +1794,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_assigned_assistant_halaqa_id_fkey"
+            columns: ["assigned_assistant_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_assigned_halaqa_id_fkey"
             columns: ["assigned_halaqa_id"]
