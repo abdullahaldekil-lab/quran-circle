@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Search, User, Users, ChevronLeft, ChevronRight, Upload } from "lucide-react";
+import { Plus, Search, User, Users, ChevronLeft, ChevronRight, Upload, Star } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/useRole";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
@@ -19,9 +20,14 @@ const PAGE_SIZE = 20;
 
 const Students = () => {
   const navigate = useNavigate();
-  const { isManager, isAdminStaff } = useRole();
+  const { user } = useAuth();
+  const { isManager, isAdminStaff, isTeacher } = useRole();
   const { allowedHalaqatIds, filterHalaqat: filterHalaqatAccess, loading: accessLoading } = useTeacherHalaqat();
   const canBulkImport = isManager || isAdminStaff;
+  const canToggleElite = isManager || isTeacher;
+  const [eliteStudentIds, setEliteStudentIds] = useState<Set<string>>(new Set());
+  const [eliteToggling, setEliteToggling] = useState<string | null>(null);
+  const [eliteRecordsMap, setEliteRecordsMap] = useState<Record<string, string>>({});
   const [students, setStudents] = useState<any[]>([]);
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [levels, setLevels] = useState<any[]>([]);
@@ -78,9 +84,44 @@ const Students = () => {
     setLevels(data || []);
   };
 
+  const fetchEliteStudents = useCallback(async () => {
+    const { data } = await supabase.from("excellence_elite_students").select("id, student_id");
+    const ids = new Set((data || []).map((e: any) => e.student_id));
+    const map: Record<string, string> = {};
+    (data || []).forEach((e: any) => { map[e.student_id] = e.id; });
+    setEliteStudentIds(ids);
+    setEliteRecordsMap(map);
+  }, []);
+
+  const toggleElite = async (e: React.MouseEvent, studentId: string, halaqaId: string | null) => {
+    e.stopPropagation();
+    if (!canToggleElite || !halaqaId) return;
+    setEliteToggling(studentId);
+    const isElite = eliteStudentIds.has(studentId);
+    if (isElite) {
+      const recId = eliteRecordsMap[studentId];
+      if (recId) await supabase.from("excellence_elite_students").delete().eq("id", recId);
+      setEliteStudentIds(prev => { const n = new Set(prev); n.delete(studentId); return n; });
+      setEliteRecordsMap(prev => { const n = { ...prev }; delete n[studentId]; return n; });
+      toast.success("تم إزالة الطالب من مسار التميّز");
+    } else {
+      const { data, error } = await supabase.from("excellence_elite_students")
+        .insert({ halaqa_id: halaqaId, student_id: studentId, added_by: user?.id })
+        .select().single();
+      if (error) { toast.error("خطأ: " + error.message); }
+      else {
+        setEliteStudentIds(prev => new Set(prev).add(studentId));
+        setEliteRecordsMap(prev => ({ ...prev, [studentId]: data.id }));
+        toast.success("تم إضافة الطالب لمسار التميّز");
+      }
+    }
+    setEliteToggling(null);
+  };
+
   useEffect(() => {
     fetchHalaqat();
     fetchLevels();
+    fetchEliteStudents();
   }, []);
 
   useEffect(() => {
@@ -260,7 +301,9 @@ const Students = () => {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {students.map((student) => (
+        {students.map((student) => {
+          const isElite = eliteStudentIds.has(student.id);
+          return (
           <Card key={student.id} className="animate-slide-in hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/students/${student.id}`)}>
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
@@ -272,12 +315,26 @@ const Students = () => {
                   <p className="text-xs text-muted-foreground">{student.halaqat?.name || "بدون حلقة"}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="secondary" className="text-xs">{student.current_level}</Badge>
+                    {isElite && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">تميّز</Badge>}
                   </div>
                 </div>
+                {canToggleElite && student.halaqa_id && (
+                  <button
+                    onClick={(e) => toggleElite(e, student.id, student.halaqa_id)}
+                    disabled={eliteToggling === student.id}
+                    className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors"
+                    title={isElite ? "إزالة من مسار التميّز" : "إضافة لمسار التميّز"}
+                  >
+                    <Star
+                      className={`w-5 h-5 transition-colors ${isElite ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40 hover:text-amber-400"}`}
+                    />
+                  </button>
+                )}
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {students.length === 0 && (
