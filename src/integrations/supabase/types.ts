@@ -559,6 +559,36 @@ export type Database = {
           },
         ]
       }
+      excellence_settings: {
+        Row: {
+          created_at: string
+          deduction_per_lahn: number
+          deduction_per_mistake: number
+          deduction_per_warning: number
+          id: string
+          max_grade: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deduction_per_lahn?: number
+          deduction_per_mistake?: number
+          deduction_per_warning?: number
+          id?: string
+          max_grade?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deduction_per_lahn?: number
+          deduction_per_mistake?: number
+          deduction_per_warning?: number
+          id?: string
+          max_grade?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       financial_accounts: {
         Row: {
           account_name: string

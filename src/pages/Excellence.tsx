@@ -13,7 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Calendar, Users, BookOpen, Trophy, Star, X } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Plus, Calendar, Users, BookOpen, Trophy, Star, Settings } from "lucide-react";
 import { format } from "date-fns";
 
 interface Session {
@@ -37,6 +38,14 @@ interface EliteStudent {
   halaqa_id: string;
   student_id: string;
   notes: string | null;
+}
+
+interface ExcellenceSettings {
+  id: string;
+  max_grade: number;
+  deduction_per_mistake: number;
+  deduction_per_lahn: number;
+  deduction_per_warning: number;
 }
 
 function getNextTuesday(): string {
@@ -70,12 +79,33 @@ export default function Excellence() {
   const [eliteRecords, setEliteRecords] = useState<EliteStudent[]>([]);
   const [eliteLoading, setEliteLoading] = useState(false);
 
+  // Settings management
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [excellenceSettings, setExcellenceSettings] = useState<ExcellenceSettings | null>(null);
+  const [settingsForm, setSettingsForm] = useState({ max_grade: 100, deduction_per_mistake: 2, deduction_per_lahn: 1, deduction_per_warning: 0.5 });
+  const [settingsSaving, setSettingsSaving] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, [allowedHalaqatIds]);
 
   const fetchData = async () => {
     setLoading(true);
+
+    // Fetch settings
+    const { data: settData } = await supabase
+      .from("excellence_settings")
+      .select("*")
+      .limit(1)
+      .single();
+    if (settData) {
+      const s = settData as any;
+      setExcellenceSettings({ id: s.id, max_grade: Number(s.max_grade), deduction_per_mistake: Number(s.deduction_per_mistake), deduction_per_lahn: Number(s.deduction_per_lahn), deduction_per_warning: Number(s.deduction_per_warning) });
+      setSettingsForm({ max_grade: Number(s.max_grade), deduction_per_mistake: Number(s.deduction_per_mistake), deduction_per_lahn: Number(s.deduction_per_lahn), deduction_per_warning: Number(s.deduction_per_warning) });
+    }
+
+
+
     const [sessRes, halRes] = await Promise.all([
       supabase
         .from("excellence_sessions")
@@ -172,6 +202,28 @@ export default function Excellence() {
     }
   };
 
+  const saveSettings = async () => {
+    if (!excellenceSettings) return;
+    setSettingsSaving(true);
+    const { error } = await supabase
+      .from("excellence_settings")
+      .update({
+        max_grade: settingsForm.max_grade,
+        deduction_per_mistake: settingsForm.deduction_per_mistake,
+        deduction_per_lahn: settingsForm.deduction_per_lahn,
+        deduction_per_warning: settingsForm.deduction_per_warning,
+      })
+      .eq("id", excellenceSettings.id);
+    if (error) {
+      toast.error("خطأ في حفظ الإعدادات: " + error.message);
+    } else {
+      toast.success("تم حفظ إعدادات التقييم");
+      setExcellenceSettings({ ...excellenceSettings, ...settingsForm });
+      setSettingsDialogOpen(false);
+    }
+    setSettingsSaving(false);
+  };
+
   const totalHizb = sessions.reduce((s, r) => s + Number(r.total_hizb_in_session || 0), 0);
   const totalPages = sessions.reduce((s, r) => s + Number(r.total_pages_displayed || 0), 0);
 
@@ -183,6 +235,74 @@ export default function Excellence() {
           <p className="text-muted-foreground text-sm">إدارة جلسات التميّز الأسبوعية</p>
         </div>
         <div className="flex gap-2">
+          {isManager && (
+            <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Settings className="w-4 h-4 ml-2" />
+                  إعدادات التقييم
+                </Button>
+              </DialogTrigger>
+              <DialogContent dir="rtl" className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>إعدادات معادلة التقييم</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-5 mt-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">الدرجة القصوى</label>
+                    <Input
+                      type="number" min={1} max={200}
+                      value={settingsForm.max_grade}
+                      onChange={(e) => setSettingsForm((p) => ({ ...p, max_grade: Number(e.target.value) }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">الخصم لكل خطأ</label>
+                    <div className="flex items-center gap-3">
+                      <Slider
+                        min={0} max={10} step={0.5}
+                        value={[settingsForm.deduction_per_mistake]}
+                        onValueChange={([v]) => setSettingsForm((p) => ({ ...p, deduction_per_mistake: v }))}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-mono w-10 text-center">{settingsForm.deduction_per_mistake}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">الخصم لكل لحن</label>
+                    <div className="flex items-center gap-3">
+                      <Slider
+                        min={0} max={10} step={0.5}
+                        value={[settingsForm.deduction_per_lahn]}
+                        onValueChange={([v]) => setSettingsForm((p) => ({ ...p, deduction_per_lahn: v }))}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-mono w-10 text-center">{settingsForm.deduction_per_lahn}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">الخصم لكل تنبيه</label>
+                    <div className="flex items-center gap-3">
+                      <Slider
+                        min={0} max={10} step={0.5}
+                        value={[settingsForm.deduction_per_warning]}
+                        onValueChange={([v]) => setSettingsForm((p) => ({ ...p, deduction_per_warning: v }))}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-mono w-10 text-center">{settingsForm.deduction_per_warning}</span>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground mb-1">معادلة الدرجة:</p>
+                    <p>{settingsForm.max_grade} - (أخطاء × {settingsForm.deduction_per_mistake}) - (لحون × {settingsForm.deduction_per_lahn}) - (تنبيهات × {settingsForm.deduction_per_warning})</p>
+                  </div>
+                  <Button className="w-full" onClick={saveSettings} disabled={settingsSaving}>
+                    {settingsSaving ? "جارٍ الحفظ..." : "حفظ الإعدادات"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
           <Button variant="outline" onClick={() => navigate("/excellence/reports")}>
             <Trophy className="w-4 h-4 ml-2" />
             التقارير
