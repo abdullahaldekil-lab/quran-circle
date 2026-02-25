@@ -9,9 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Calendar, Users, BookOpen, Trophy } from "lucide-react";
+import { Plus, Calendar, Users, BookOpen, Trophy, Star, X } from "lucide-react";
 import { format } from "date-fns";
 
 interface Session {
@@ -23,6 +25,18 @@ interface Session {
   total_pages_displayed: number;
   created_at: string;
   halaqat?: { name: string } | null;
+}
+
+interface Student {
+  id: string;
+  full_name: string;
+}
+
+interface EliteStudent {
+  id: string;
+  halaqa_id: string;
+  student_id: string;
+  notes: string | null;
 }
 
 function getNextTuesday(): string {
@@ -47,6 +61,14 @@ export default function Excellence() {
   const [newDate, setNewDate] = useState(getNextTuesday());
   const [newHalaqaId, setNewHalaqaId] = useState("");
   const [newNotes, setNewNotes] = useState("");
+
+  // Elite management
+  const [eliteDialogOpen, setEliteDialogOpen] = useState(false);
+  const [eliteHalaqaId, setEliteHalaqaId] = useState("");
+  const [halaqaStudents, setHalaqaStudents] = useState<Student[]>([]);
+  const [eliteStudentIds, setEliteStudentIds] = useState<Set<string>>(new Set());
+  const [eliteRecords, setEliteRecords] = useState<EliteStudent[]>([]);
+  const [eliteLoading, setEliteLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -103,6 +125,53 @@ export default function Excellence() {
     navigate(`/excellence/${data.id}`);
   };
 
+  // Elite students management
+  const loadEliteStudents = async (halaqaId: string) => {
+    setEliteLoading(true);
+    setEliteHalaqaId(halaqaId);
+
+    const [studsRes, eliteRes] = await Promise.all([
+      (supabase.from("students").select("id, full_name") as any)
+        .eq("halaqa_id", halaqaId)
+        .eq("active", true)
+        .order("full_name") as { data: Student[] | null },
+      supabase.from("excellence_elite_students").select("*").eq("halaqa_id", halaqaId),
+    ]);
+
+    setHalaqaStudents(studsRes.data || []);
+    const records = (eliteRes.data || []) as EliteStudent[];
+    setEliteRecords(records);
+    setEliteStudentIds(new Set(records.map((e) => e.student_id)));
+    setEliteLoading(false);
+  };
+
+  const toggleEliteStudent = async (studentId: string) => {
+    const isElite = eliteStudentIds.has(studentId);
+
+    if (isElite) {
+      // Remove
+      const record = eliteRecords.find((e) => e.student_id === studentId);
+      if (record) {
+        await supabase.from("excellence_elite_students").delete().eq("id", record.id);
+        setEliteStudentIds((prev) => { const n = new Set(prev); n.delete(studentId); return n; });
+        setEliteRecords((prev) => prev.filter((e) => e.student_id !== studentId));
+      }
+    } else {
+      // Add
+      const { data, error } = await supabase
+        .from("excellence_elite_students")
+        .insert({ halaqa_id: eliteHalaqaId, student_id: studentId, added_by: user?.id })
+        .select()
+        .single();
+      if (error) {
+        toast.error("خطأ: " + error.message);
+        return;
+      }
+      setEliteStudentIds((prev) => new Set(prev).add(studentId));
+      setEliteRecords((prev) => [...prev, data as EliteStudent]);
+    }
+  };
+
   const totalHizb = sessions.reduce((s, r) => s + Number(r.total_hizb_in_session || 0), 0);
   const totalPages = sessions.reduce((s, r) => s + Number(r.total_pages_displayed || 0), 0);
 
@@ -119,41 +188,108 @@ export default function Excellence() {
             التقارير
           </Button>
           {!isSupervisor && (
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 ml-2" />
-                  جلسة جديدة
-                </Button>
-              </DialogTrigger>
-              <DialogContent dir="rtl">
-                <DialogHeader>
-                  <DialogTitle>إنشاء جلسة تميّز جديدة</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">تاريخ الجلسة</label>
-                    <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+            <>
+              {/* Elite Students Dialog */}
+              <Dialog open={eliteDialogOpen} onOpenChange={setEliteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Star className="w-4 h-4 ml-2" />
+                    طلاب النخبة
+                  </Button>
+                </DialogTrigger>
+                <DialogContent dir="rtl" className="max-w-lg max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>إدارة طلاب النخبة</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">اختر الحلقة</label>
+                      <Select
+                        value={eliteHalaqaId}
+                        onValueChange={(v) => loadEliteStudents(v)}
+                      >
+                        <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                        <SelectContent>
+                          {halaqat.map((h) => (
+                            <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {eliteLoading ? (
+                      <p className="text-center text-muted-foreground py-4">جارٍ التحميل...</p>
+                    ) : eliteHalaqaId && halaqaStudents.length > 0 ? (
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          حدّد الطلاب المشاركين في مسار التميّز ({eliteStudentIds.size} من {halaqaStudents.length})
+                        </p>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-center w-12">نخبة</TableHead>
+                              <TableHead className="text-right">اسم الطالب</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {halaqaStudents.map((s) => (
+                              <TableRow key={s.id}>
+                                <TableCell className="text-center">
+                                  <Checkbox
+                                    checked={eliteStudentIds.has(s.id)}
+                                    onCheckedChange={() => toggleEliteStudent(s.id)}
+                                  />
+                                </TableCell>
+                                <TableCell className="font-medium">{s.full_name}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </>
+                    ) : eliteHalaqaId ? (
+                      <p className="text-center text-muted-foreground py-4">لا يوجد طلاب في هذه الحلقة</p>
+                    ) : null}
                   </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">الحلقة</label>
-                    <Select value={newHalaqaId} onValueChange={setNewHalaqaId}>
-                      <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
-                      <SelectContent>
-                        {halaqat.map((h) => (
-                          <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                </DialogContent>
+              </Dialog>
+
+              {/* New Session Dialog */}
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 ml-2" />
+                    جلسة جديدة
+                  </Button>
+                </DialogTrigger>
+                <DialogContent dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle>إنشاء جلسة تميّز جديدة</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">تاريخ الجلسة</label>
+                      <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">الحلقة</label>
+                      <Select value={newHalaqaId} onValueChange={setNewHalaqaId}>
+                        <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                        <SelectContent>
+                          {halaqat.map((h) => (
+                            <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">ملاحظات</label>
+                      <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} placeholder="ملاحظات اختيارية..." />
+                    </div>
+                    <Button className="w-full" onClick={handleCreate}>إنشاء الجلسة</Button>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-                    <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} placeholder="ملاحظات اختيارية..." />
-                  </div>
-                  <Button className="w-full" onClick={handleCreate}>إنشاء الجلسة</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
         </div>
       </div>
