@@ -18,7 +18,6 @@ import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 
 const PAGE_SIZE = 20;
 
-// Students page component
 const Students = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
