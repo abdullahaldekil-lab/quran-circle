@@ -172,14 +172,13 @@ const Students = () => {
   };
 
   useEffect(() => {
-  useEffect(() => {
     fetchHalaqat();
     fetchLevels();
     fetchDistinguished();
     fetchTracks();
   }, []);
 
-
+  useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
 
