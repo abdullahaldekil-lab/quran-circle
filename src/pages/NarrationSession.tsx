@@ -449,6 +449,8 @@ export default function NarrationSession() {
               </h1>
               <p className="text-sm text-muted-foreground">
                 {session?.halaqat?.name && `حلقة: ${session.halaqat.name} · `}
+                {session?.external_teacher_name && `معلم خارجي: ${session.external_teacher_name} · `}
+                {session?.hizb_from && session?.hizb_to && `الأحزاب: ${session.hizb_from} → ${session.hizb_to} · `}
                 {session?.session_date && new Date(session.session_date).toLocaleDateString("ar-SA")}
               </p>
             </div>
