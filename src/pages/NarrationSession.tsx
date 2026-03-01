@@ -180,27 +180,16 @@ export default function NarrationSession() {
 
   // بناء الصفوف
   useEffect(() => {
-    if (students.length === 0 && existingAttempts.length === 0) return;
-    const attemptMap = new Map(existingAttempts.map((a: any) => [a.student_id, a]));
+    // Build rows from existing attempts + all students search (no auto-load from halaqa)
+    if (existingAttempts.length === 0) return;
     const maxGrade = settings?.max_grade ?? 100;
 
-    // Students from halaqa
-    const halaqaRows: StudentRow[] = students.map((s) => {
-      const existing = attemptMap.get(s.id);
-      if (existing) {
-        return mapAttemptToRow(s.id, s.full_name, existing);
-      }
-      return makeEmptyRow(s.id, s.full_name, maxGrade);
-    });
+    const attemptRows: StudentRow[] = existingAttempts.map((a: any) =>
+      mapAttemptToRow(a.student_id, a.student_id, a)
+    );
 
-    // Students that have attempts but are not in the halaqa
-    const halaqaStudentIds = new Set(students.map((s) => s.id));
-    const extraRows: StudentRow[] = existingAttempts
-      .filter((a: any) => !halaqaStudentIds.has(a.student_id))
-      .map((a: any) => mapAttemptToRow(a.student_id, a.student_id, a)); // name will be resolved below
-
-    setRows([...halaqaRows, ...extraRows]);
-  }, [students, existingAttempts, settings]);
+    setRows(attemptRows);
+  }, [existingAttempts, settings]);
 
   // Resolve names for extra students
   useEffect(() => {
