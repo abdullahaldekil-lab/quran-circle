@@ -254,6 +254,10 @@ export default function QuranNarration() {
         title: data.title || null,
         notes: data.notes || null,
         created_by: profile?.id,
+        external_teacher_name: data.external_teacher_name || null,
+        external_teacher_phone: data.external_teacher_phone || null,
+        hizb_from: data.hizb_from ? Number(data.hizb_from) : null,
+        hizb_to: data.hizb_to ? Number(data.hizb_to) : null,
       };
       if (data.id) {
         const { error } = await supabase
