@@ -430,6 +430,59 @@ export default function QuranNarration() {
                     rows={3}
                   />
                 </div>
+
+                {/* المعلم الخارجي */}
+                <div className="border-t pt-3 mt-3">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">معلم خارجي (اختياري)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>اسم المعلم</Label>
+                      <Input
+                        placeholder="اسم المعلم الخارجي"
+                        value={form.external_teacher_name}
+                        onChange={(e) => setForm((p) => ({ ...p, external_teacher_name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>رقم الهاتف</Label>
+                      <Input
+                        placeholder="05xxxxxxxx"
+                        value={form.external_teacher_phone}
+                        onChange={(e) => setForm((p) => ({ ...p, external_teacher_phone: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* نطاق الأحزاب */}
+                <div className="border-t pt-3 mt-3">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">نطاق أحزاب السرد (اختياري)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>من حزب</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={60}
+                        placeholder="1"
+                        value={form.hizb_from}
+                        onChange={(e) => setForm((p) => ({ ...p, hizb_from: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>إلى حزب</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={60}
+                        placeholder="60"
+                        value={form.hizb_to}
+                        onChange={(e) => setForm((p) => ({ ...p, hizb_to: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex gap-2 justify-end pt-2">
                   <Button variant="outline" onClick={() => { setShowNewSessionDialog(false); setEditSession(null); resetForm(); }}>إلغاء</Button>
                   <Button onClick={handleSubmit} disabled={sessionMutation.isPending}>
