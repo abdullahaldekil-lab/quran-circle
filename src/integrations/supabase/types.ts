@@ -295,6 +295,7 @@ export type Database = {
           converted_guardian_id: string | null
           converted_student_id: string | null
           created_at: string
+          form_data: Json | null
           guardian_full_name: string
           guardian_phone: string
           id: string
@@ -315,6 +316,7 @@ export type Database = {
           converted_guardian_id?: string | null
           converted_student_id?: string | null
           created_at?: string
+          form_data?: Json | null
           guardian_full_name: string
           guardian_phone: string
           id?: string
@@ -335,6 +337,7 @@ export type Database = {
           converted_guardian_id?: string | null
           converted_student_id?: string | null
           created_at?: string
+          form_data?: Json | null
           guardian_full_name?: string
           guardian_phone?: string
           id?: string
@@ -3347,6 +3350,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_enrollment_status: {
+        Args: { phone_number: string }
+        Returns: {
+          created_at: string
+          rejection_reason: string
+          status: string
+          student_full_name: string
+        }[]
+      }
       get_staff_role: { Args: { _user_id: string }; Returns: string }
       has_permission: {
         Args: { _permission_name: string; _user_id: string }
