@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can view own request by phone" ON public.enrollment_requests;
