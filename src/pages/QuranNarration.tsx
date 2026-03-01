@@ -611,10 +611,24 @@ export default function QuranNarration() {
                           </TableCell>
                           <TableCell>
                             {(session as any).halaqat?.name || (
-                              <span className="text-muted-foreground text-sm">غير محدد</span>
+                              <span className="text-muted-foreground text-sm">—</span>
                             )}
                           </TableCell>
-                          <TableCell>{session.title || <span className="text-muted-foreground text-sm">—</span>}</TableCell>
+                          <TableCell>
+                            <div>
+                              {session.title || <span className="text-muted-foreground text-sm">—</span>}
+                              {(session as any).external_teacher_name && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  معلم خارجي: {(session as any).external_teacher_name}
+                                </p>
+                              )}
+                              {(session as any).hizb_from && (session as any).hizb_to && (
+                                <p className="text-xs text-muted-foreground">
+                                  الأحزاب: {(session as any).hizb_from} → {(session as any).hizb_to}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline">{stats.total}</Badge>
                           </TableCell>
