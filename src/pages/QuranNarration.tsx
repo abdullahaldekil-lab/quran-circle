@@ -344,6 +344,10 @@ export default function QuranNarration() {
       halaqa_id: session.halaqa_id || "",
       title: session.title || "",
       notes: session.notes || "",
+      external_teacher_name: (session as any).external_teacher_name || "",
+      external_teacher_phone: (session as any).external_teacher_phone || "",
+      hizb_from: (session as any).hizb_from ? String((session as any).hizb_from) : "",
+      hizb_to: (session as any).hizb_to ? String((session as any).hizb_to) : "",
     });
     setShowNewSessionDialog(true);
   };
