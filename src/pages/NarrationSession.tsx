@@ -88,6 +88,10 @@ export default function NarrationSession() {
         halaqa_id: string | null;
         title: string | null;
         notes: string | null;
+        external_teacher_name: string | null;
+        external_teacher_phone: string | null;
+        hizb_from: number | null;
+        hizb_to: number | null;
         halaqat?: { id: string; name: string; teacher_id: string | null } | null;
       };
     },
