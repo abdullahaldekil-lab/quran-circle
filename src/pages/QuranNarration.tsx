@@ -88,6 +88,10 @@ export default function QuranNarration() {
     halaqa_id: "",
     title: "",
     notes: "",
+    external_teacher_name: "",
+    external_teacher_phone: "",
+    hizb_from: "",
+    hizb_to: "",
   });
   const [settingsForm, setSettingsForm] = useState<Partial<NarrationSettings>>({});
   const [showGoalDialog, setShowGoalDialog] = useState(false);
