@@ -514,9 +514,9 @@ export default function NarrationSession() {
         <CardContent className="p-0 overflow-x-auto">
           {rows.length === 0 ? (
             <div className="p-10 text-center text-muted-foreground">
-              {!session?.halaqa_id
-                ? "هذه الجلسة غير مرتبطة بحلقة. عدّل الجلسة من الصفحة الرئيسية لإضافة حلقة."
-                : "لا يوجد طلاب في هذه الحلقة"}
+              <UserPlus className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+              <p>لا يوجد طلاب في هذه الجلسة بعد</p>
+              {canWrite && <p className="text-sm mt-1">اضغط "إضافة طالب" لإضافة طلاب من قائمة الطلاب</p>}
             </div>
           ) : (
             <Table>
