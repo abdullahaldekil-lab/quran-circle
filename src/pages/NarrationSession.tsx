@@ -191,7 +191,7 @@ export default function NarrationSession() {
     setRows(attemptRows);
   }, [existingAttempts, settings]);
 
-  // Resolve names for extra students
+  // Resolve names for students whose names are IDs
   useEffect(() => {
     const unknownIds = rows.filter(r => r.student_name === r.student_id).map(r => r.student_id);
     if (unknownIds.length === 0) return;
