@@ -88,6 +88,10 @@ export default function NarrationSession() {
         halaqa_id: string | null;
         title: string | null;
         notes: string | null;
+        external_teacher_name: string | null;
+        external_teacher_phone: string | null;
+        hizb_from: number | null;
+        hizb_to: number | null;
         halaqat?: { id: string; name: string; teacher_id: string | null } | null;
       };
     },
@@ -176,29 +180,18 @@ export default function NarrationSession() {
 
   // بناء الصفوف
   useEffect(() => {
-    if (students.length === 0 && existingAttempts.length === 0) return;
-    const attemptMap = new Map(existingAttempts.map((a: any) => [a.student_id, a]));
+    // Build rows from existing attempts + all students search (no auto-load from halaqa)
+    if (existingAttempts.length === 0) return;
     const maxGrade = settings?.max_grade ?? 100;
 
-    // Students from halaqa
-    const halaqaRows: StudentRow[] = students.map((s) => {
-      const existing = attemptMap.get(s.id);
-      if (existing) {
-        return mapAttemptToRow(s.id, s.full_name, existing);
-      }
-      return makeEmptyRow(s.id, s.full_name, maxGrade);
-    });
+    const attemptRows: StudentRow[] = existingAttempts.map((a: any) =>
+      mapAttemptToRow(a.student_id, a.student_id, a)
+    );
 
-    // Students that have attempts but are not in the halaqa
-    const halaqaStudentIds = new Set(students.map((s) => s.id));
-    const extraRows: StudentRow[] = existingAttempts
-      .filter((a: any) => !halaqaStudentIds.has(a.student_id))
-      .map((a: any) => mapAttemptToRow(a.student_id, a.student_id, a)); // name will be resolved below
+    setRows(attemptRows);
+  }, [existingAttempts, settings]);
 
-    setRows([...halaqaRows, ...extraRows]);
-  }, [students, existingAttempts, settings]);
-
-  // Resolve names for extra students
+  // Resolve names for students whose names are IDs
   useEffect(() => {
     const unknownIds = rows.filter(r => r.student_name === r.student_id).map(r => r.student_id);
     if (unknownIds.length === 0) return;
@@ -456,6 +449,8 @@ export default function NarrationSession() {
               </h1>
               <p className="text-sm text-muted-foreground">
                 {session?.halaqat?.name && `حلقة: ${session.halaqat.name} · `}
+                {session?.external_teacher_name && `معلم خارجي: ${session.external_teacher_name} · `}
+                {session?.hizb_from && session?.hizb_to && `الأحزاب: ${session.hizb_from} → ${session.hizb_to} · `}
                 {session?.session_date && new Date(session.session_date).toLocaleDateString("ar-SA")}
               </p>
             </div>
@@ -519,9 +514,9 @@ export default function NarrationSession() {
         <CardContent className="p-0 overflow-x-auto">
           {rows.length === 0 ? (
             <div className="p-10 text-center text-muted-foreground">
-              {!session?.halaqa_id
-                ? "هذه الجلسة غير مرتبطة بحلقة. عدّل الجلسة من الصفحة الرئيسية لإضافة حلقة."
-                : "لا يوجد طلاب في هذه الحلقة"}
+              <UserPlus className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+              <p>لا يوجد طلاب في هذه الجلسة بعد</p>
+              {canWrite && <p className="text-sm mt-1">اضغط "إضافة طالب" لإضافة طلاب من قائمة الطلاب</p>}
             </div>
           ) : (
             <Table>

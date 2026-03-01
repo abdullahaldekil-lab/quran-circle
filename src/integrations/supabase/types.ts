@@ -1807,7 +1807,11 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          external_teacher_name: string | null
+          external_teacher_phone: string | null
           halaqa_id: string | null
+          hizb_from: number | null
+          hizb_to: number | null
           id: string
           notes: string | null
           session_date: string
@@ -1817,7 +1821,11 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          external_teacher_name?: string | null
+          external_teacher_phone?: string | null
           halaqa_id?: string | null
+          hizb_from?: number | null
+          hizb_to?: number | null
           id?: string
           notes?: string | null
           session_date?: string
@@ -1827,7 +1835,11 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          external_teacher_name?: string | null
+          external_teacher_phone?: string | null
           halaqa_id?: string | null
+          hizb_from?: number | null
+          hizb_to?: number | null
           id?: string
           notes?: string | null
           session_date?: string

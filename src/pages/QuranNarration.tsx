@@ -88,6 +88,10 @@ export default function QuranNarration() {
     halaqa_id: "",
     title: "",
     notes: "",
+    external_teacher_name: "",
+    external_teacher_phone: "",
+    hizb_from: "",
+    hizb_to: "",
   });
   const [settingsForm, setSettingsForm] = useState<Partial<NarrationSettings>>({});
   const [showGoalDialog, setShowGoalDialog] = useState(false);
@@ -250,6 +254,10 @@ export default function QuranNarration() {
         title: data.title || null,
         notes: data.notes || null,
         created_by: profile?.id,
+        external_teacher_name: data.external_teacher_name || null,
+        external_teacher_phone: data.external_teacher_phone || null,
+        hizb_from: data.hizb_from ? Number(data.hizb_from) : null,
+        hizb_to: data.hizb_to ? Number(data.hizb_to) : null,
       };
       if (data.id) {
         const { error } = await supabase
@@ -322,6 +330,10 @@ export default function QuranNarration() {
       halaqa_id: "",
       title: "",
       notes: "",
+      external_teacher_name: "",
+      external_teacher_phone: "",
+      hizb_from: "",
+      hizb_to: "",
     });
   };
 
@@ -332,6 +344,10 @@ export default function QuranNarration() {
       halaqa_id: session.halaqa_id || "",
       title: session.title || "",
       notes: session.notes || "",
+      external_teacher_name: (session as any).external_teacher_name || "",
+      external_teacher_phone: (session as any).external_teacher_phone || "",
+      hizb_from: (session as any).hizb_from ? String((session as any).hizb_from) : "",
+      hizb_to: (session as any).hizb_to ? String((session as any).hizb_to) : "",
     });
     setShowNewSessionDialog(true);
   };
@@ -414,6 +430,59 @@ export default function QuranNarration() {
                     rows={3}
                   />
                 </div>
+
+                {/* المعلم الخارجي */}
+                <div className="border-t pt-3 mt-3">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">معلم خارجي (اختياري)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>اسم المعلم</Label>
+                      <Input
+                        placeholder="اسم المعلم الخارجي"
+                        value={form.external_teacher_name}
+                        onChange={(e) => setForm((p) => ({ ...p, external_teacher_name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>رقم الهاتف</Label>
+                      <Input
+                        placeholder="05xxxxxxxx"
+                        value={form.external_teacher_phone}
+                        onChange={(e) => setForm((p) => ({ ...p, external_teacher_phone: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* نطاق الأحزاب */}
+                <div className="border-t pt-3 mt-3">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">نطاق أحزاب السرد (اختياري)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>من حزب</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={60}
+                        placeholder="1"
+                        value={form.hizb_from}
+                        onChange={(e) => setForm((p) => ({ ...p, hizb_from: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>إلى حزب</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={60}
+                        placeholder="60"
+                        value={form.hizb_to}
+                        onChange={(e) => setForm((p) => ({ ...p, hizb_to: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex gap-2 justify-end pt-2">
                   <Button variant="outline" onClick={() => { setShowNewSessionDialog(false); setEditSession(null); resetForm(); }}>إلغاء</Button>
                   <Button onClick={handleSubmit} disabled={sessionMutation.isPending}>
@@ -542,10 +611,24 @@ export default function QuranNarration() {
                           </TableCell>
                           <TableCell>
                             {(session as any).halaqat?.name || (
-                              <span className="text-muted-foreground text-sm">غير محدد</span>
+                              <span className="text-muted-foreground text-sm">—</span>
                             )}
                           </TableCell>
-                          <TableCell>{session.title || <span className="text-muted-foreground text-sm">—</span>}</TableCell>
+                          <TableCell>
+                            <div>
+                              {session.title || <span className="text-muted-foreground text-sm">—</span>}
+                              {(session as any).external_teacher_name && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  معلم خارجي: {(session as any).external_teacher_name}
+                                </p>
+                              )}
+                              {(session as any).hizb_from && (session as any).hizb_to && (
+                                <p className="text-xs text-muted-foreground">
+                                  الأحزاب: {(session as any).hizb_from} → {(session as any).hizb_to}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline">{stats.total}</Badge>
                           </TableCell>
