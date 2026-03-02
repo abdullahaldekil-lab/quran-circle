@@ -61,6 +61,7 @@ import ExcellenceReports from "./pages/ExcellenceReports";
 import ExcellenceTracks from "./pages/ExcellenceTracks";
 import DistinguishedStudents from "./pages/DistinguishedStudents";
 import ExcellenceTrackSettings from "./pages/ExcellenceTrackSettings";
+import InactiveStudents from "./pages/InactiveStudents";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +116,7 @@ const AppRoutes = () => {
       <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />
       <Route path="/students" element={<ProtectedRoute path="/students"><Students /></ProtectedRoute>} />
       <Route path="/students/:id" element={<ProtectedRoute path="/students"><StudentProfile /></ProtectedRoute>} />
+      <Route path="/inactive-students" element={<ProtectedRoute path="/students"><InactiveStudents /></ProtectedRoute>} />
       <Route path="/halaqat" element={<ProtectedRoute path="/halaqat"><Halaqat /></ProtectedRoute>} />
       <Route path="/recitation" element={<ProtectedRoute path="/recitation"><Recitation /></ProtectedRoute>} />
       <Route path="/attendance" element={<ProtectedRoute path="/attendance"><Attendance /></ProtectedRoute>} />

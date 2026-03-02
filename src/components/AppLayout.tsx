@@ -35,6 +35,7 @@ import {
   Send,
   Mail,
   Star,
+  UserX,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ const navGroups: NavGroup[] = [
     color: "text-emerald-400",
     items: [
       { to: "/students", icon: Users, label: "الطلاب" },
+      { to: "/inactive-students", icon: UserX, label: "طلاب غير نشطين" },
       { to: "/halaqat", icon: BookOpen, label: "الحلقات" },
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
