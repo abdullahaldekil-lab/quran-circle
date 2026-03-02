@@ -523,6 +523,47 @@ const Attendance = () => {
           </CardContent>
         </Card>
       )}
+      {/* Attendance Summary */}
+      {selectedHalaqa && students.length > 0 && Object.keys(originalAttendance).length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">ملخص حضور اليوم</span>
+              <Badge variant="outline" className="text-xs">
+                {students.length} طالب
+              </Badge>
+            </div>
+            {(() => {
+              const presentCount = Object.values(originalAttendance).filter(s => s === "present").length;
+              const lateCount = Object.values(originalAttendance).filter(s => s === "late").length;
+              const absentCount = Object.values(originalAttendance).filter(s => s === "absent").length;
+              const excusedCount = Object.values(originalAttendance).filter(s => s === "excused").length;
+              const totalRecords = Object.keys(originalAttendance).length;
+              const attendanceRate = totalRecords > 0 ? Math.round(((presentCount + lateCount) / totalRecords) * 100) : 0;
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1">
+                    <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden flex">
+                      {presentCount > 0 && <div className="h-full bg-green-500" style={{ width: `${(presentCount / totalRecords) * 100}%` }} />}
+                      {lateCount > 0 && <div className="h-full bg-yellow-500" style={{ width: `${(lateCount / totalRecords) * 100}%` }} />}
+                      {excusedCount > 0 && <div className="h-full bg-blue-500" style={{ width: `${(excusedCount / totalRecords) * 100}%` }} />}
+                      {absentCount > 0 && <div className="h-full bg-red-500" style={{ width: `${(absentCount / totalRecords) * 100}%` }} />}
+                    </div>
+                    <span className="text-sm font-bold min-w-[3rem] text-left">{attendanceRate}%</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> حاضر: {presentCount}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" /> متأخر: {lateCount}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> غائب: {absentCount}</span>
+                    {excusedCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> معذور: {excusedCount}</span>}
+                  </div>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
       {selectedHalaqa && students.length > 0 && (!isSelectedWeekend || isAdmin) && (
         <>
           {/* Status note for teachers */}
