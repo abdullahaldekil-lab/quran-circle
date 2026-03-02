@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { BookOpen, User, Heart, GraduationCap, FileText } from "lucide-react";
+import { User, Heart, GraduationCap, FileText } from "lucide-react";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const anonClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export interface EnrollmentFormData {
-  // Student info
   student_full_name: string;
   student_nationality: string;
   student_birth_date_hijri: string;
@@ -23,29 +22,23 @@ export interface EnrollmentFormData {
   student_id_number: string;
   student_school: string;
   student_grade: string;
-  // Social
+  student_age: string;
   living_with: string;
   parents_status: string;
-  // Guardian
   guardian_full_name: string;
   guardian_relationship: string;
   guardian_id_number: string;
   guardian_phone: string;
   guardian_address: string;
-  // Health
   has_chronic_diseases: string;
   chronic_diseases_details: string;
   has_medications: string;
   medications_details: string;
   has_allergies: string;
   allergies_details: string;
-  // Quran info
   previous_enrollment: string;
   previous_place: string;
   memorization_amount: string;
-  requested_halaqa_id: string;
-  preferred_time: string;
-  // Other
   notes: string;
 }
 
@@ -57,6 +50,7 @@ const initialFormData: EnrollmentFormData = {
   student_id_number: "",
   student_school: "",
   student_grade: "",
+  student_age: "",
   living_with: "والديه",
   parents_status: "مستقرة",
   guardian_full_name: "",
@@ -73,25 +67,24 @@ const initialFormData: EnrollmentFormData = {
   previous_enrollment: "لا",
   previous_place: "",
   memorization_amount: "",
-  requested_halaqa_id: "",
-  preferred_time: "",
   notes: "",
 };
+
+const SCHOOL_GRADES = [
+  "الأول الابتدائي", "الثاني الابتدائي", "الثالث الابتدائي",
+  "الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي",
+  "الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط",
+  "الأول الثانوي", "الثاني الثانوي", "الثالث الثانوي",
+  "جامعي", "أخرى",
+];
 
 interface Props {
   onSubmitted: (data: EnrollmentFormData) => void;
 }
 
 const EnrollmentForm = ({ onSubmitted }: Props) => {
-  const [halaqat, setHalaqat] = useState<{ id: string; name: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<EnrollmentFormData>(initialFormData);
-
-  useEffect(() => {
-    anonClient.from("halaqat").select("id, name").eq("active", true).order("name").then(({ data }) => {
-      setHalaqat(data || []);
-    });
-  }, []);
 
   const set = (key: keyof EnrollmentFormData, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -106,6 +99,22 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
     const phoneClean = form.guardian_phone.replace(/\s/g, "");
     if (phoneClean.length < 9) {
       toast.error("رقم الهاتف غير صحيح");
+      return;
+    }
+
+    // Check for duplicate: same student name + same guardian phone
+    const { data: existingRequests } = await anonClient
+      .from("enrollment_requests")
+      .select("id, status")
+      .eq("guardian_phone", phoneClean)
+      .eq("student_full_name", form.student_full_name.trim());
+
+    const activeDuplicate = existingRequests?.find(
+      (r: any) => r.status === "pending" || r.status === "approved" || r.status === "waitlisted"
+    );
+
+    if (activeDuplicate) {
+      toast.error("يوجد طلب مسجل مسبقاً لهذا الطالب بنفس رقم الجوال. يمكنك الاستعلام عن حالته.");
       return;
     }
 
@@ -124,7 +133,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
 
     setSubmitting(true);
 
-    const { student_full_name, guardian_full_name, guardian_phone, requested_halaqa_id, preferred_time, notes, student_birth_date_gregorian, ...extraFields } = form;
+    const { student_full_name, guardian_full_name, guardian_phone, notes, student_birth_date_gregorian, student_age, student_grade, ...extraFields } = form;
 
     const birthYear = student_birth_date_gregorian ? parseInt(student_birth_date_gregorian.split("-")[0] || student_birth_date_gregorian.split("/")[0]) : null;
 
@@ -133,12 +142,12 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
       guardian_full_name: guardian_full_name.trim(),
       guardian_phone: phoneClean,
       student_birth_year: birthYear && !isNaN(birthYear) ? birthYear : null,
-      requested_halaqa_id: requested_halaqa_id || null,
-      preferred_time: preferred_time.trim() || null,
       notes: notes.trim() || null,
       form_data: {
         ...extraFields,
         student_birth_date_gregorian,
+        student_age,
+        student_grade,
       },
     });
 
@@ -180,7 +189,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>تاريخ الميلاد هجري</Label>
+              <Label>تاريخ الميلاد هجري *</Label>
               <Input value={form.student_birth_date_hijri} onChange={(e) => set("student_birth_date_hijri", e.target.value)} placeholder="مثال: 1437/05/15" dir="ltr" className="text-right" />
             </div>
             <div className="space-y-1">
@@ -190,13 +199,24 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>المدرسة</Label>
-              <Input value={form.student_school} onChange={(e) => set("student_school", e.target.value)} />
+              <Label>العمر</Label>
+              <Input value={form.student_age} onChange={(e) => set("student_age", e.target.value)} placeholder="مثال: 10 سنوات" />
             </div>
             <div className="space-y-1">
-              <Label>الصف الدراسي</Label>
-              <Input value={form.student_grade} onChange={(e) => set("student_grade", e.target.value)} />
+              <Label>المرحلة الدراسية</Label>
+              <Select value={form.student_grade} onValueChange={(v) => set("student_grade", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر المرحلة" /></SelectTrigger>
+                <SelectContent>
+                  {SCHOOL_GRADES.map((g) => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+          <div className="space-y-1">
+            <Label>المدرسة</Label>
+            <Input value={form.student_school} onChange={(e) => set("student_school", e.target.value)} />
           </div>
         </CardContent>
       </Card>
@@ -332,23 +352,6 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
           <div className="space-y-1">
             <Label>مقدار الحفظ الحالي</Label>
             <Input value={form.memorization_amount} onChange={(e) => set("memorization_amount", e.target.value)} placeholder="مثال: 5 أجزاء" />
-          </div>
-          <div className="space-y-1">
-            <Label>الحلقة المطلوبة (اختياري)</Label>
-            <Select value={form.requested_halaqa_id} onValueChange={(v) => set("requested_halaqa_id", v)}>
-              <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
-              <SelectContent>
-                {halaqat.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>
-                    <span className="flex items-center gap-2"><BookOpen className="w-3 h-3" />{h.name}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>الوقت المفضل (اختياري)</Label>
-            <Input value={form.preferred_time} onChange={(e) => set("preferred_time", e.target.value)} placeholder="مثال: بعد العصر" />
           </div>
           <div className="space-y-1">
             <Label>ملاحظات (اختياري)</Label>

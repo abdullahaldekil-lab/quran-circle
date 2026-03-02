@@ -271,7 +271,7 @@ const StaffAttendance = () => {
 
       {/* Summary Cards */}
       {!isDayOff && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
               <Users className="w-8 h-8 text-emerald-500" />
@@ -305,6 +305,17 @@ const StaffAttendance = () => {
               <div>
                 <p className="text-2xl font-bold">{summary.absent}</p>
                 <p className="text-sm text-muted-foreground">غائب</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <Clock className="w-8 h-8 text-primary" />
+              <div>
+                <p className="text-2xl font-bold">
+                  {staffList.length > 0 ? Math.round(((summary.present + summary.late) / staffList.length) * 100) : 0}%
+                </p>
+                <p className="text-sm text-muted-foreground">نسبة الحضور</p>
               </div>
             </CardContent>
           </Card>

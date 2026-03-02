@@ -194,6 +194,23 @@ serve(async (req) => {
           throw new Error("لا يمكن حذف آخر مدير في النظام");
         }
 
+        // Unlink from halaqat (teacher_id and assistant_teacher_id) without deleting historical data
+        await supabaseAdmin
+          .from("halaqat")
+          .update({ teacher_id: null })
+          .eq("teacher_id", user_id);
+
+        await supabaseAdmin
+          .from("halaqat")
+          .update({ assistant_teacher_id: null })
+          .eq("assistant_teacher_id", user_id);
+
+        // Remove user permission overrides
+        await supabaseAdmin
+          .from("user_permissions")
+          .delete()
+          .eq("user_id", user_id);
+
         // Soft delete: deactivate + ban
         await supabaseAdmin
           .from("profiles")
@@ -206,7 +223,7 @@ serve(async (req) => {
           actor_user_id: caller.id,
           action_type: "user_deleted",
           target_user_id: user_id,
-          details: `User soft-deleted: ${targetProfile.data?.full_name}`,
+          details: `User soft-deleted: ${targetProfile.data?.full_name}. Halaqat & permissions unlinked.`,
         });
 
         return new Response(
