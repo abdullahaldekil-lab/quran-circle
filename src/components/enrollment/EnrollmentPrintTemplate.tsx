@@ -124,7 +124,8 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
           <div className="grid">
             <Field label="تسجيل سابق" value={data.previous_enrollment === "نعم" ? `نعم - ${data.previous_place}` : "لا"} />
             <Field label="مقدار الحفظ" value={data.memorization_amount} />
-            <Field label="الوقت المفضل" value={data.preferred_time} />
+            <Field label="العمر" value={data.student_age} />
+            <Field label="المرحلة الدراسية" value={data.student_grade} />
             {data.notes && <div className="full-width"><Field label="ملاحظات" value={data.notes} /></div>}
           </div>
         </div>
