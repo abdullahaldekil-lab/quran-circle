@@ -320,7 +320,7 @@ const StaffAttendance = () => {
             </CardContent>
           </Card>
         </div>
-      )
+      )}
 
       {!isDayOff && (
         <Card>
