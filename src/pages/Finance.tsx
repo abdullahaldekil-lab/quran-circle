@@ -18,6 +18,8 @@ import {
   Loader2, Settings, ArrowUpRight, ArrowDownRight, Search,
   Download,
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const INCOME_CATEGORIES: Record<string, string> = {
   student_fees: "رسوم الطلاب",
@@ -70,10 +72,21 @@ const Finance = () => {
   }, [isFinanceStaff]);
 
   const fetchData = async () => {
-    const [accRes, txRes] = await Promise.all([
-      supabase.from("financial_accounts").select("*").eq("status", "active").limit(1).maybeSingle(),
-      supabase.from("financial_transactions").select("*, profiles!financial_transactions_created_by_fkey(full_name), profiles!financial_transactions_approved_by_fkey(full_name)").order("transaction_date", { ascending: false }),
-    ]);
+    let accRes = await supabase.from("financial_accounts").select("*").eq("status", "active").limit(1).maybeSingle();
+    
+    // Auto-create default account if none exists and user is manager
+    if (!accRes.data && isManager) {
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session?.session?.user?.id;
+      const { data: newAcc } = await supabase.from("financial_accounts").insert({
+        account_name: "الحساب الرسمي",
+        created_by: userId,
+      }).select("*").single();
+      if (newAcc) accRes = { ...accRes, data: newAcc };
+    }
+
+    const txRes = await supabase.from("financial_transactions").select("*, profiles!financial_transactions_created_by_fkey(full_name), profiles!financial_transactions_approved_by_fkey(full_name)").order("transaction_date", { ascending: false });
+    
     setAccount(accRes.data);
     if (accRes.data) {
       setAccountForm({ bank_name: accRes.data.bank_name || "", iban: accRes.data.iban || "" });
@@ -344,6 +357,36 @@ const Finance = () => {
           <TabsTrigger value="monthly">التقرير الشهري</TabsTrigger>
           <TabsTrigger value="categories">حسب التصنيف</TabsTrigger>
         </TabsList>
+
+        {/* Export PDF button */}
+        <div className="flex justify-end mt-2">
+          <Button variant="outline" size="sm" onClick={() => {
+            const doc = new jsPDF({ putOnlyUsedFonts: true });
+            doc.setFont("helvetica");
+            doc.text("Financial Report", 14, 15);
+            
+            // Monthly report table
+            const monthRows = monthlyReport.map(([m, d]) => [m, d.income.toLocaleString(), d.expense.toLocaleString(), (d.income - d.expense).toLocaleString()]);
+            autoTable(doc, {
+              startY: 25,
+              head: [["Month", "Income", "Expense", "Net"]],
+              body: monthRows,
+            });
+
+            // Category report table
+            const catRows = categoryReport.map(([cat, amt]) => [cat, (amt as number).toLocaleString()]);
+            autoTable(doc, {
+              startY: (doc as any).lastAutoTable?.finalY + 10 || 80,
+              head: [["Category", "Amount"]],
+              body: catRows,
+            });
+
+            doc.save("financial-report.pdf");
+            toast({ title: "تم تصدير التقرير" });
+          }}>
+            <Download className="w-4 h-4 ml-1" />تصدير PDF
+          </Button>
+        </div>
 
         {/* Transactions Tab */}
         <TabsContent value="transactions" className="space-y-3 mt-4">

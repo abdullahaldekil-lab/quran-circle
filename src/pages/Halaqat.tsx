@@ -292,9 +292,10 @@ const Halaqat = () => {
               </div>
               <div className="space-y-2">
                 <Label>المعلم المساعد</Label>
-                <Select value={form.assistant_teacher_id} onValueChange={(v) => setForm({ ...form, assistant_teacher_id: v })}>
+                <Select value={form.assistant_teacher_id} onValueChange={(v) => setForm({ ...form, assistant_teacher_id: v === "__none__" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="اختر المعلم المساعد (اختياري)" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="__none__">بدون مساعد</SelectItem>
                     {availableAssistantsForAdd.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
                     ))}
@@ -349,7 +350,7 @@ const Halaqat = () => {
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <p className="text-muted-foreground">المعلم: {h.profiles?.full_name || "غير محدد"}</p>
-                <p className="text-muted-foreground">المعلم المساعد: {h.assistant?.full_name || "غير محدد"}</p>
+                {h.assistant_teacher_id && <p className="text-muted-foreground">المعلم المساعد: {h.assistant?.full_name || "غير محدد"}</p>}
                 {h.level_track_id && (
                   <p className="text-muted-foreground">المسار: {levelTracks.find(t => t.id === h.level_track_id)?.name || "—"}</p>
                 )}
@@ -435,9 +436,10 @@ const Halaqat = () => {
             </div>
             <div className="space-y-2">
               <Label>المعلم المساعد</Label>
-              <Select value={editForm.assistant_teacher_id} onValueChange={(v) => setEditForm({ ...editForm, assistant_teacher_id: v })}>
+              <Select value={editForm.assistant_teacher_id || "__none__"} onValueChange={(v) => setEditForm({ ...editForm, assistant_teacher_id: v === "__none__" ? "" : v })}>
                 <SelectTrigger><SelectValue placeholder="اختر المعلم المساعد (اختياري)" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">بدون مساعد</SelectItem>
                   {availableAssistantsForEdit.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.full_name}
