@@ -2772,6 +2772,7 @@ export type Database = {
           badge_id: string
           id: string
           note: string | null
+          source_detail: string | null
           student_id: string
         }
         Insert: {
@@ -2780,6 +2781,7 @@ export type Database = {
           badge_id: string
           id?: string
           note?: string | null
+          source_detail?: string | null
           student_id: string
         }
         Update: {
@@ -2788,6 +2790,7 @@ export type Database = {
           badge_id?: string
           id?: string
           note?: string | null
+          source_detail?: string | null
           student_id?: string
         }
         Relationships: [
