@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
   Award, Star, Gift, Trophy, Crown, Gem, Flame, BookOpen,
-  Bookmark, CalendarCheck, TrendingDown, Plus, Check, X, Medal
+  Bookmark, CalendarCheck, TrendingDown, Plus, Check, X, Medal, Trash2, Pencil
 } from "lucide-react";
 
 const iconMap: Record<string, any> = {
@@ -269,9 +269,29 @@ const Rewards = () => {
                           <div>
                             <p className="text-sm font-medium">{sb.students?.full_name}</p>
                             <p className="text-xs text-muted-foreground">{sb.badges?.name}</p>
+                            {sb.note && <p className="text-xs text-muted-foreground/70">{sb.note}</p>}
                           </div>
                         </div>
-                        <span className="text-xs text-muted-foreground">{new Date(sb.awarded_at).toLocaleDateString("ar-SA")}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{new Date(sb.awarded_at).toLocaleDateString("ar-SA")}</span>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                            const newNote = prompt("تعديل الملاحظة:", sb.note || "");
+                            if (newNote === null) return;
+                            const { error } = await supabase.from("student_badges").update({ note: newNote }).eq("id", sb.id);
+                            if (error) toast({ title: "خطأ", description: error.message, variant: "destructive" });
+                            else { toast({ title: "تم التعديل" }); fetchAll(); }
+                          }}>
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={async () => {
+                            if (!confirm("هل تريد حذف هذه الشارة؟")) return;
+                            const { error } = await supabase.from("student_badges").delete().eq("id", sb.id);
+                            if (error) toast({ title: "خطأ", description: error.message, variant: "destructive" });
+                            else { toast({ title: "تم الحذف" }); fetchAll(); }
+                          }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}

@@ -11,8 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Bus, Users, UserMinus, Trash2, UserPlus } from "lucide-react";
+import { Plus, Bus, Users, UserMinus, Trash2, UserPlus, Download, Phone } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const Buses = () => {
   const { isManager, isAdminStaff, canWrite } = useRole();
@@ -40,7 +42,7 @@ const Buses = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_bus_assignments")
-        .select("*, students(full_name, halaqa_id)")
+        .select("*, students(full_name, guardian_name, guardian_phone)")
         .eq("active", true);
       if (error) throw error;
       return data;
@@ -203,13 +205,29 @@ const Buses = () => {
                   <span className="text-sm text-muted-foreground">{busAssignments.length}/{bus.capacity}</span>
                 </div>
                 <Progress value={Math.min(status.percent, 100)} className="h-2" />
+                {/* Export PDF */}
+                <Button variant="outline" size="sm" className="w-full" onClick={() => {
+                  const doc = new jsPDF({ putOnlyUsedFonts: true });
+                  doc.text(bus.bus_name, 14, 15);
+                  if (bus.driver_name) doc.text(`Driver: ${bus.driver_name} | ${bus.driver_phone || ""}`, 14, 23);
+                  const rows = busAssignments.map((a: any, i: number) => [
+                    String(i + 1), a.students?.full_name || "", a.students?.guardian_name || "", a.students?.guardian_phone || ""
+                  ]);
+                  autoTable(doc, { startY: 30, head: [["#", "Student", "Guardian", "Phone"]], body: rows });
+                  doc.save(`${bus.bus_name}.pdf`);
+                }}>
+                  <Download className="w-3 h-3 ml-1" />تصدير PDF
+                </Button>
+
                 {busAssignments.length > 0 && (
                   <Table>
-                    <TableHeader><TableRow><TableHead>الطالب</TableHead>{canManage && <TableHead className="w-10"></TableHead>}</TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>الطالب</TableHead><TableHead>ولي الأمر</TableHead><TableHead>الهاتف</TableHead>{canManage && <TableHead className="w-10"></TableHead>}</TableRow></TableHeader>
                     <TableBody>
                       {busAssignments.map((a: any) => (
                         <TableRow key={a.id}>
                           <TableCell className="text-sm">{a.students?.full_name}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{a.students?.guardian_name || "—"}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground" dir="ltr">{a.students?.guardian_phone || "—"}</TableCell>
                           {canManage && (
                             <TableCell>
                               <Button variant="ghost" size="icon" onClick={() => unassignMutation.mutate(a.id)}>
