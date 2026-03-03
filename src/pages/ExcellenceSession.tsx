@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { ArrowRight, Save, Printer, Users, BarChart3, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
+import { formatHijriArabic } from "@/lib/hijri";
 import ExcellencePrintTemplate from "@/components/ExcellencePrintTemplate";
 
 interface Student {
@@ -101,10 +102,10 @@ export default function ExcellenceSession() {
       });
     }
 
-    // Fetch session
+    // Fetch session with track info
     const { data: sess } = await supabase
       .from("excellence_sessions")
-      .select("*, halaqat(name)")
+      .select("*, halaqat(name), excellence_tracks:track_id(track_name)")
       .eq("id", sessionId!)
       .single();
 
@@ -115,34 +116,55 @@ export default function ExcellenceSession() {
     }
     setSession(sess);
 
-    // Fetch elite students for this halaqa (fallback to all students if no elite list)
-    const { data: eliteData } = await supabase
-      .from("excellence_elite_students")
-      .select("student_id")
-      .eq("halaqa_id", sess.halaqa_id);
+    // Fetch students: prefer distinguished_students by track_id, fallback to elite/halaqa
+    let studentList: Student[] = [];
+    const trackId = (sess as any).track_id;
 
-    const eliteIds = (eliteData || []).map((e: any) => e.student_id);
+    if (trackId) {
+      // Fetch distinguished students for this track (central list)
+      const { data: distData } = await supabase
+        .from("distinguished_students")
+        .select("student_id")
+        .eq("track_id", trackId);
 
-    let studentList: Student[];
-    if (eliteIds.length > 0) {
-      // Fetch only elite students
-      const { data: studs } = await (supabase
-        .from("students")
-        .select("id, full_name") as any)
-        .in("id", eliteIds)
-        .eq("active", true)
-        .order("full_name") as { data: Student[] | null };
-      studentList = studs || [];
-    } else {
-      // Fallback: all students in halaqa
-      const { data: studs } = await (supabase
-        .from("students")
-        .select("id, full_name") as any)
-        .eq("halaqa_id", sess.halaqa_id)
-        .eq("active", true)
-        .order("full_name") as { data: Student[] | null };
-      studentList = studs || [];
+      const distIds = (distData || []).map((d: any) => d.student_id);
+      if (distIds.length > 0) {
+        const { data: studs } = await (supabase
+          .from("students")
+          .select("id, full_name") as any)
+          .in("id", distIds)
+          .eq("status", "active")
+          .order("full_name") as { data: Student[] | null };
+        studentList = studs || [];
+      }
     }
+
+    // Fallback: try elite students by halaqa if no track-based students found
+    if (studentList.length === 0 && sess.halaqa_id) {
+      const { data: eliteData } = await supabase
+        .from("excellence_elite_students")
+        .select("student_id")
+        .eq("halaqa_id", sess.halaqa_id);
+      const eliteIds = (eliteData || []).map((e: any) => e.student_id);
+      if (eliteIds.length > 0) {
+        const { data: studs } = await (supabase
+          .from("students")
+          .select("id, full_name") as any)
+          .in("id", eliteIds)
+          .eq("status", "active")
+          .order("full_name") as { data: Student[] | null };
+        studentList = studs || [];
+      } else {
+        const { data: studs } = await (supabase
+          .from("students")
+          .select("id, full_name") as any)
+          .eq("halaqa_id", sess.halaqa_id)
+          .eq("status", "active")
+          .order("full_name") as { data: Student[] | null };
+        studentList = studs || [];
+      }
+    }
+
     setStudents(studentList);
 
     // Fetch existing attendance
@@ -250,11 +272,9 @@ export default function ExcellenceSession() {
 
   const savePerformance = async () => {
     setSaving(true);
-    // Only save for present students
     const presentPerfs = presentStudentIds.map((id) => performance[id]).filter(Boolean);
     const ranked = calcRanks(presentPerfs);
 
-    // Update local state with ranks
     const newPerfMap = { ...performance };
     ranked.forEach((r) => {
       newPerfMap[r.student_id] = r;
@@ -303,7 +323,6 @@ export default function ExcellenceSession() {
       }
     }
 
-    // Update session totals
     await supabase
       .from("excellence_sessions")
       .update({ total_hizb_in_session: totalHizb, total_pages_displayed: totalPages })
@@ -332,6 +351,9 @@ export default function ExcellenceSession() {
     return <p className="text-center text-muted-foreground py-12">جارٍ التحميل...</p>;
   }
 
+  const sessionLabel = (session as any)?.excellence_tracks?.track_name || (session as any)?.halaqat?.name || "";
+  const sessionHijri = (session as any)?.session_hijri_date;
+
   const rankedPerformance = calcRanks(
     presentStudentIds.map((id) => performance[id]).filter(Boolean)
   );
@@ -346,8 +368,13 @@ export default function ExcellenceSession() {
           <div>
             <h1 className="text-xl font-bold text-foreground">
               جلسة التميّز — {session?.session_date ? format(new Date(session.session_date), "yyyy/MM/dd") : ""}
+              {sessionHijri && (
+                <span className="text-muted-foreground text-base mr-2">
+                  ({formatHijriArabic(sessionHijri)})
+                </span>
+              )}
             </h1>
-            <p className="text-sm text-muted-foreground">{session?.halaqat?.name || ""}</p>
+            <p className="text-sm text-muted-foreground">{sessionLabel}</p>
           </div>
         </div>
         <Button variant="outline" onClick={handlePrint}>
@@ -464,49 +491,19 @@ export default function ExcellenceSession() {
                             <TableCell>{i + 1}</TableCell>
                             <TableCell className="font-medium">{s.full_name}</TableCell>
                             <TableCell>
-                              <Input
-                                type="number" min={0}
-                                value={p.pages_displayed || ""}
-                                onChange={(e) => updatePerformance(sid, "pages_displayed", Number(e.target.value))}
-                                className="h-8 w-16 text-center mx-auto"
-                                disabled={isSupervisor}
-                              />
+                              <Input type="number" min={0} value={p.pages_displayed || ""} onChange={(e) => updatePerformance(sid, "pages_displayed", Number(e.target.value))} className="h-8 w-16 text-center mx-auto" disabled={isSupervisor} />
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number" min={0} step={0.5}
-                                value={p.hizb_count || ""}
-                                onChange={(e) => updatePerformance(sid, "hizb_count", Number(e.target.value))}
-                                className="h-8 w-16 text-center mx-auto"
-                                disabled={isSupervisor}
-                              />
+                              <Input type="number" min={0} step={0.5} value={p.hizb_count || ""} onChange={(e) => updatePerformance(sid, "hizb_count", Number(e.target.value))} className="h-8 w-16 text-center mx-auto" disabled={isSupervisor} />
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number" min={0}
-                                value={p.mistakes_count || ""}
-                                onChange={(e) => updatePerformance(sid, "mistakes_count", Number(e.target.value))}
-                                className="h-8 w-16 text-center mx-auto"
-                                disabled={isSupervisor}
-                              />
+                              <Input type="number" min={0} value={p.mistakes_count || ""} onChange={(e) => updatePerformance(sid, "mistakes_count", Number(e.target.value))} className="h-8 w-16 text-center mx-auto" disabled={isSupervisor} />
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number" min={0}
-                                value={p.lahon_count || ""}
-                                onChange={(e) => updatePerformance(sid, "lahon_count", Number(e.target.value))}
-                                className="h-8 w-16 text-center mx-auto"
-                                disabled={isSupervisor}
-                              />
+                              <Input type="number" min={0} value={p.lahon_count || ""} onChange={(e) => updatePerformance(sid, "lahon_count", Number(e.target.value))} className="h-8 w-16 text-center mx-auto" disabled={isSupervisor} />
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number" min={0}
-                                value={p.warnings_count || ""}
-                                onChange={(e) => updatePerformance(sid, "warnings_count", Number(e.target.value))}
-                                className="h-8 w-16 text-center mx-auto"
-                                disabled={isSupervisor}
-                              />
+                              <Input type="number" min={0} value={p.warnings_count || ""} onChange={(e) => updatePerformance(sid, "warnings_count", Number(e.target.value))} className="h-8 w-16 text-center mx-auto" disabled={isSupervisor} />
                             </TableCell>
                             <TableCell className="text-center font-bold text-lg">
                               {p.total_score.toFixed(1)}
@@ -559,7 +556,6 @@ export default function ExcellenceSession() {
               </Card>
             </div>
 
-            {/* Ranked Table */}
             <Card>
               <CardHeader>
                 <CardTitle>ترتيب الطلاب</CardTitle>
