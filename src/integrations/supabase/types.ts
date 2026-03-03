@@ -571,8 +571,10 @@ export type Database = {
           id: string
           notes: string | null
           session_date: string
+          session_hijri_date: string | null
           total_hizb_in_session: number | null
           total_pages_displayed: number | null
+          track_id: string | null
           updated_at: string
         }
         Insert: {
@@ -582,8 +584,10 @@ export type Database = {
           id?: string
           notes?: string | null
           session_date?: string
+          session_hijri_date?: string | null
           total_hizb_in_session?: number | null
           total_pages_displayed?: number | null
+          track_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -593,8 +597,10 @@ export type Database = {
           id?: string
           notes?: string | null
           session_date?: string
+          session_hijri_date?: string | null
           total_hizb_in_session?: number | null
           total_pages_displayed?: number | null
+          track_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -603,6 +609,13 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_sessions_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "excellence_tracks"
             referencedColumns: ["id"]
           },
         ]
