@@ -17,9 +17,10 @@ import { sendNotification } from "@/utils/sendNotification";
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
 // Teacher permission window & status thresholds (minutes relative to Asr adhan)
-const TEACHER_WINDOW_OPEN = -10;   // Asr - 10 min
-const TEACHER_WINDOW_CLOSE = 120;  // Asr + 2 hours
-const ON_TIME_THRESHOLD = 45;      // Asr + 45 min => late after this
+const TEACHER_WINDOW_OPEN = 0;      // تفتح عند أذان العصر بالضبط
+const TEACHER_WINDOW_CLOSE = 105;   // العصر + 105 دقيقة
+const ON_TIME_THRESHOLD = 70;       // العصر + 70 دقيقة = حد التأخر
+const COUNTDOWN_RED_THRESHOLD = 10; // آخر 10 دقائق = أحمر
 
 type TeacherWindowStatus = "before_open" | "open" | "closed";
 
@@ -38,6 +39,7 @@ const Attendance = () => {
   const [hijriDate, setHijriDate] = useState<string | null>(null);
   const [teacherWindow, setTeacherWindow] = useState<TeacherWindowStatus>("before_open");
   const [countdown, setCountdown] = useState("");
+  const [countdownColor, setCountdownColor] = useState("text-primary");
   const [now, setNow] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -90,17 +92,32 @@ const Attendance = () => {
     const closeTime = new Date();
     closeTime.setHours(h, m + TEACHER_WINDOW_CLOSE, 0, 0);
 
+    const lateThreshold = new Date();
+    lateThreshold.setHours(h, m + ON_TIME_THRESHOLD, 0, 0);
+
     const nowMs = now.getTime();
 
     if (nowMs < openTime.getTime()) {
       setTeacherWindow("before_open");
       setCountdown(formatCountdown(openTime.getTime() - nowMs));
+      setCountdownColor("text-primary");
     } else if (nowMs < closeTime.getTime()) {
       setTeacherWindow("open");
-      setCountdown(formatCountdown(closeTime.getTime() - nowMs));
+      const remainingMs = closeTime.getTime() - nowMs;
+      setCountdown(formatCountdown(remainingMs));
+
+      const remainingMin = remainingMs / 60000;
+      if (remainingMin <= COUNTDOWN_RED_THRESHOLD) {
+        setCountdownColor("text-red-600");
+      } else if (nowMs >= lateThreshold.getTime()) {
+        setCountdownColor("text-yellow-600");
+      } else {
+        setCountdownColor("text-primary");
+      }
     } else {
       setTeacherWindow("closed");
       setCountdown("");
+      setCountdownColor("text-primary");
     }
   }, [now, asrTime, isToday, calendar.status]);
 
@@ -196,7 +213,10 @@ const Attendance = () => {
       const [h, m] = asrTime.split(":").map(Number);
       const lateThreshold = new Date();
       lateThreshold.setHours(h, m + ON_TIME_THRESHOLD, 0, 0);
+      const closeTime = new Date();
+      closeTime.setHours(h, m + TEACHER_WINDOW_CLOSE, 0, 0);
       const isLateNow = now.getTime() >= lateThreshold.getTime();
+      const isWindowClosed = now.getTime() >= closeTime.getTime();
 
       Object.entries(finalAttendance).forEach(([sid, status]) => {
         if (status === "present" && isLateNow) {
@@ -204,6 +224,18 @@ const Attendance = () => {
           finalAttendance[sid] = "late";
         }
       });
+
+      // عند إغلاق النافذة: تسجيل الغياب التلقائي
+      if (isWindowClosed) {
+        students.forEach((student: any) => {
+          const sid = student.id;
+          const status = finalAttendance[sid];
+          // إذا لم يُسجَّل (لا حاضر ولا متأخر) وليس معذوراً → غائب
+          if (!status || (status !== "present" && status !== "late" && status !== "excused")) {
+            finalAttendance[sid] = "absent";
+          }
+        });
+      }
     }
 
     const records = Object.entries(finalAttendance).map(([student_id, status]) => ({
@@ -444,24 +476,17 @@ const Attendance = () => {
               </Badge>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">أذان العصر</p>
                 <p className="text-sm font-bold">{asrTime}</p>
               </div>
-              <div className="p-2 rounded-lg bg-muted/30">
-                <p className="text-xs text-muted-foreground">فتح النافذة</p>
-                <p className="text-sm font-bold">{formatTimeFromAsr(TEACHER_WINDOW_OPEN)}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-center">
               <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
-                <p className="text-xs text-muted-foreground">حد التأخر (العصر+45د)</p>
+                <p className="text-xs text-muted-foreground">حد التأخر (العصر+70د)</p>
                 <p className="text-sm font-bold">{formatTimeFromAsr(ON_TIME_THRESHOLD)}</p>
               </div>
               <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
-                <p className="text-xs text-muted-foreground">إغلاق النافذة (العصر+2س)</p>
+                <p className="text-xs text-muted-foreground">إغلاق النافذة (العصر+105د)</p>
                 <p className="text-sm font-bold">{formatTimeFromAsr(TEACHER_WINDOW_CLOSE)}</p>
               </div>
             </div>
@@ -471,13 +496,13 @@ const Attendance = () => {
                 <p className="text-xs text-muted-foreground mb-1">
                   {teacherWindow === "before_open" ? "تفتح النافذة بعد" : "تغلق النافذة بعد"}
                 </p>
-                <p className="text-3xl font-bold font-mono tabular-nums text-primary">{countdown}</p>
+                <p className={`text-3xl font-bold font-mono tabular-nums ${countdownColor}`}>{countdown}</p>
               </div>
             )}
 
             {teacherWindow === "before_open" && (
               <p className="text-xs text-center text-muted-foreground">
-                سيُفتح التحضير قبل أذان العصر بـ 10 دقائق ويغلق بعد ساعتين من الأذان.
+                تفتح النافذة عند أذان العصر وتغلق بعد 105 دقائق. بعد 70 دقيقة يُسجَّل الطالب متأخراً.
               </p>
             )}
           </CardContent>
@@ -496,7 +521,7 @@ const Attendance = () => {
               <span className="text-sm font-bold">{asrTime}</span>
             </div>
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-              <span>حد التأخر: {formatTimeFromAsr(ON_TIME_THRESHOLD)}</span>
+              <span>حد التأخر (العصر+70د): {formatTimeFromAsr(ON_TIME_THRESHOLD)}</span>
               <span>•</span>
               <Badge variant="outline" className="text-xs">وصول إداري – بلا قيود زمنية</Badge>
             </div>
