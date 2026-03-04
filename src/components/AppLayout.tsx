@@ -62,6 +62,16 @@ const standaloneItems: NavItem[] = [
 
 const navGroups: NavGroup[] = [
   {
+    id: "halaqat-group",
+    label: "الحلقات",
+    icon: BookOpen,
+    color: "text-emerald-300",
+    items: [
+      { to: "/halaqat", icon: BookOpen, label: "حلقات التحفيظ" },
+      { to: "/quran-narration", icon: ScrollText, label: "حلقات التلقين" },
+    ],
+  },
+  {
     id: "academic",
     label: "الشؤون الأكاديمية",
     icon: School,
@@ -69,12 +79,10 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/students", icon: Users, label: "الطلاب" },
       { to: "/inactive-students", icon: UserX, label: "طلاب غير نشطين" },
-      { to: "/halaqat", icon: BookOpen, label: "الحلقات" },
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
-      { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
     ],
   },
   {
