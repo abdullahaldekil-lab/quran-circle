@@ -63,6 +63,7 @@ import ExcellenceTracks from "./pages/ExcellenceTracks";
 import DistinguishedStudents from "./pages/DistinguishedStudents";
 import ExcellenceTrackSettings from "./pages/ExcellenceTrackSettings";
 import InactiveStudents from "./pages/InactiveStudents";
+import StudentQuiz from "./pages/StudentQuiz";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -148,6 +149,7 @@ const AppRoutes = () => {
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
       <Route path="/students/:id/narration-progress" element={<ProtectedRoute path="/students"><StudentNarrationProgress /></ProtectedRoute>} />
+      <Route path="/student-quiz" element={<ProtectedRoute path="/recitation"><StudentQuiz /></ProtectedRoute>} />
 
       <Route path="/excellence" element={<ProtectedRoute path="/excellence"><Excellence /></ProtectedRoute>} />
       <Route path="/excellence/:sessionId" element={<ProtectedRoute path="/excellence"><ExcellenceSession /></ProtectedRoute>} />
