@@ -8,6 +8,7 @@ import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle 
 import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
+import QuizAnalytics from "@/components/dashboard/QuizAnalytics";
 
 const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promise<T> => {
   const p = Promise.resolve(promise);
@@ -161,6 +162,7 @@ const Dashboard = () => {
           <StudentAnalytics />
           <AttendanceAnalytics />
           <HalaqatAnalytics />
+          <QuizAnalytics />
 
           {!isMobile && (
             <div className="grid lg:grid-cols-2 gap-6">
