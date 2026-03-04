@@ -21,7 +21,7 @@ export type StaffRole =
 // Route-level access per role
 const rolePermissions: Record<StaffRole, string[]> = {
   manager: [
-    "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
     "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij",
@@ -31,42 +31,42 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/send-notification", "/bulk-email",
   ],
   supervisor: [
-    "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration", "/excellence",
     "/staff-attendance", "/staff-attendance-log",
     "/notification-preferences",
   ],
   assistant_supervisor: [
-    "/dashboard", "/halaqat", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration", "/excellence",
     "/staff-attendance", "/staff-attendance-log",
     "/notification-preferences",
   ],
   secretary: [
-    "/dashboard", "/students", "/halaqat", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
     "/notification-preferences",
   ],
   admin_staff: [
-    "/dashboard", "/students", "/halaqat", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
     "/notification-preferences",
   ],
   teacher: [
-    "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration", "/excellence",
     "/staff-attendance-log",
     "/notification-preferences",
   ],
   assistant_teacher: [
-    "/dashboard", "/students", "/halaqat", "/recitation", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/rankings", "/profile", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance-log",
