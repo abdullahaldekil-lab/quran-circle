@@ -81,6 +81,8 @@ const navGroups: NavGroup[] = [
       { to: "/inactive-students", icon: UserX, label: "طلاب غير نشطين" },
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
       { to: "/student-quiz", icon: GraduationCap, label: "الاختبار الذكي" },
+      { to: "/quiz-results", icon: BarChart3, label: "نتائج الاختبار" },
+      { to: "/quiz-comparison", icon: BarChart3, label: "مقارنة الحلقات" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
