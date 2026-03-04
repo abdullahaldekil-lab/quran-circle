@@ -129,6 +129,15 @@ const Preparation = () => {
     return date.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true });
   };
 
+  /** Convert "HH:MM" 24h string to 12h Arabic format */
+  const formatTime24to12 = (time24: string) => {
+    if (!time24) return "—";
+    const [h, m] = time24.split(":").map(Number);
+    const period = h >= 12 ? "م" : "ص";
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+  };
+
   const formatCountdown = (ms: number) => {
     const totalSecs = Math.floor(ms / 1000);
     const h = Math.floor(totalSecs / 3600);
@@ -191,7 +200,7 @@ const Preparation = () => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">الصلاة الأساسية</span>
-              <span className="text-sm font-medium">{prepInfo.basePrayerLabel} ({prepInfo.basePrayerTime})</span>
+              <span className="text-sm font-medium">{prepInfo.basePrayerLabel} ({formatTime24to12(prepInfo.basePrayerTime)})</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">وقت التحضير</span>
@@ -230,7 +239,7 @@ const Preparation = () => {
                 >
                   <Icon className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">{label}</p>
-                  <p className="text-sm font-bold mt-1">{prayerTimes[key] || "—"}</p>
+                  <p className="text-sm font-bold mt-1">{formatTime24to12(prayerTimes[key]) || "—"}</p>
                 </div>
               ))}
             </div>
