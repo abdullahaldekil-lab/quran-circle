@@ -64,10 +64,9 @@ const StudentAnalytics = () => {
         const activeCount = activeRes.count || 0;
         const inactiveCount = inactiveRes.count || 0;
 
-        // Level distribution
         const levelMap: Record<string, number> = {};
         (levelsRes.data || []).forEach((s: any) => {
-          const name = s.memorization_levels?.name || "غير محدد";
+          const name = s.current_level || "غير محدد";
           levelMap[name] = (levelMap[name] || 0) + 1;
         });
 
