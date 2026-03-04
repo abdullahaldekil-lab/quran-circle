@@ -42,7 +42,9 @@ const Halaqat = () => {
       supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
       supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
     ]);
-    setHalaqat(halaqatRes.data || []);
+    // Filter out talqeen halaqat (those with "تلقين" in the name)
+    const allHalaqat = halaqatRes.data || [];
+    setHalaqat(allHalaqat.filter((h: any) => !h.name.includes("تلقين")));
     setTeachers((teachersRes.data as Teacher[]) || []);
     setLevelTracks(tracksRes.data || []);
 
