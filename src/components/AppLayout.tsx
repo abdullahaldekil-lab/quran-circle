@@ -68,7 +68,7 @@ const navGroups: NavGroup[] = [
     color: "text-emerald-300",
     items: [
       { to: "/halaqat", icon: BookOpen, label: "حلقات التحفيظ" },
-      { to: "/quran-narration", icon: ScrollText, label: "حلقات التلقين" },
+      { to: "/talqeen-halaqat", icon: ScrollText, label: "حلقات التلقين" },
     ],
   },
   {
