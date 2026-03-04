@@ -24,6 +24,13 @@ const COUNTDOWN_RED_THRESHOLD = 10; // آخر 10 دقائق = أحمر
 
 type TeacherWindowStatus = "before_open" | "open" | "closed";
 
+const formatTo12h = (time24: string): string => {
+  const [h, m] = time24.split(":").map(Number);
+  const period = h >= 12 ? "م" : "ص";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+};
+
 const Attendance = () => {
   const { user } = useAuth();
   const { isManager, isAdminStaff, isSupervisor, isTeacher, role } = useRole();
@@ -34,6 +41,7 @@ const Attendance = () => {
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
   const [originalAttendance, setOriginalAttendance] = useState<Record<string, AttendanceStatus>>({});
+  const [markedTimes, setMarkedTimes] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [asrTime, setAsrTime] = useState<string | null>(null);
   const [hijriDate, setHijriDate] = useState<string | null>(null);
@@ -152,7 +160,6 @@ const Attendance = () => {
     if (accessLoading) return;
     const fetchHalaqat = async () => {
       if (isTeacher && user) {
-        // Teacher: directly fetch their assigned halaqa(s)
         const { data } = await supabase
           .from("halaqat")
           .select("*")
@@ -164,7 +171,6 @@ const Attendance = () => {
           setSelectedHalaqa(teacherHalaqat[0].id);
         }
       } else {
-        // Admin/Supervisor: show all accessible halaqat
         const { data } = await supabase.from("halaqat").select("*").eq("active", true);
         const filtered = filterHalaqat(data || []);
         setHalaqat(filtered);
@@ -180,25 +186,39 @@ const Attendance = () => {
     const fetchData = async () => {
       const [studentsRes, attendanceRes] = await Promise.all([
         supabase.from("students").select("*").eq("halaqa_id", selectedHalaqa).eq("status", "active").order("full_name"),
-        supabase.from("attendance").select("student_id, status").eq("halaqa_id", selectedHalaqa).eq("attendance_date", selectedDate),
+        supabase.from("attendance").select("student_id, status, marked_at").eq("halaqa_id", selectedHalaqa).eq("attendance_date", selectedDate),
       ]);
 
       const studentList = studentsRes.data || [];
       setStudents(studentList);
 
-      // Build default attendance based on auto-status (for new records)
-      const autoStatus = isAdmin ? "present" : getAutoStatus();
-      const init: Record<string, AttendanceStatus> = {};
-      studentList.forEach((s: any) => { init[s.id] = autoStatus; });
-
-      // Overlay existing attendance records
+      // Build attendance & markedTimes from existing records
       const existing: Record<string, AttendanceStatus> = {};
+      const existingTimes: Record<string, string> = {};
       if (attendanceRes.data?.length) {
-        attendanceRes.data.forEach((a: any) => { existing[a.student_id] = a.status; });
+        attendanceRes.data.forEach((a: any) => {
+          existing[a.student_id] = a.status;
+          if (a.marked_at) {
+            existingTimes[a.student_id] = a.marked_at;
+          }
+        });
       }
 
-      setAttendance({ ...init, ...existing });
+      if (isAdmin || !isToday || Object.keys(existing).length > 0) {
+        // Admin or past date or existing records: show as before
+        const init: Record<string, AttendanceStatus> = {};
+        if (isAdmin && Object.keys(existing).length === 0) {
+          // Admin new records default to present
+          studentList.forEach((s: any) => { init[s.id] = "present"; });
+        }
+        setAttendance({ ...init, ...existing });
+      } else {
+        // Teacher, today, no existing records: leave empty (unrecorded)
+        setAttendance(existing);
+      }
+
       setOriginalAttendance(existing);
+      setMarkedTimes(existingTimes);
     };
     fetchData();
   }, [selectedHalaqa, selectedDate]);
@@ -207,39 +227,19 @@ const Attendance = () => {
     setSaving(true);
     const markedAt = new Date().toISOString();
 
-    // For teachers: apply auto-status logic on save
+    // Build final attendance: unrecorded students become absent
     const finalAttendance = { ...attendance };
-    if (!isAdmin && asrTime) {
-      const [h, m] = asrTime.split(":").map(Number);
-      const lateThreshold = new Date();
-      lateThreshold.setHours(h, m + ON_TIME_THRESHOLD, 0, 0);
-      const closeTime = new Date();
-      closeTime.setHours(h, m + TEACHER_WINDOW_CLOSE, 0, 0);
-      const isLateNow = now.getTime() >= lateThreshold.getTime();
-      const isWindowClosed = now.getTime() >= closeTime.getTime();
-
-      Object.entries(finalAttendance).forEach(([sid, status]) => {
-        if (status === "present" && isLateNow) {
-          // If teacher marks "present" after late threshold, auto-set to "late"
-          finalAttendance[sid] = "late";
-        }
-      });
-
-      // عند إغلاق النافذة: تسجيل الغياب التلقائي
-      if (isWindowClosed) {
-        students.forEach((student: any) => {
-          const sid = student.id;
-          const status = finalAttendance[sid];
-          // إذا لم يُسجَّل (لا حاضر ولا متأخر) وليس معذوراً → غائب
-          if (!status || (status !== "present" && status !== "late" && status !== "excused")) {
-            finalAttendance[sid] = "absent";
-          }
-        });
+    students.forEach((student: any) => {
+      const sid = student.id;
+      if (!finalAttendance[sid]) {
+        // Not marked = absent
+        finalAttendance[sid] = "absent";
       }
-    }
+    });
 
     const records = Object.entries(finalAttendance).map(([student_id, status]) => ({
-      student_id, halaqa_id: selectedHalaqa, attendance_date: selectedDate, status, marked_at: markedAt,
+      student_id, halaqa_id: selectedHalaqa, attendance_date: selectedDate, status,
+      marked_at: markedTimes[student_id] || markedAt,
     }));
     const { error } = await supabase.from("attendance").upsert(records, { onConflict: "student_id,attendance_date" });
 
@@ -267,8 +267,6 @@ const Attendance = () => {
     const lateStudents = Object.entries(finalAttendance).filter(([, s]) => s === "late");
 
     if (absentStudents.length > 0) {
-      const absentNames = absentStudents.map(([sid]) => students.find((s: any) => s.id === sid)?.full_name || "").filter(Boolean);
-      // Notify guardians via edge function
       for (const [sid] of absentStudents) {
         const student = students.find((s: any) => s.id === sid);
         if (!student) continue;
@@ -322,12 +320,36 @@ const Attendance = () => {
     closed: { label: "مُغلق – انتهى الوقت", color: "bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-300", icon: <Lock className="w-4 h-4" /> },
   };
 
+  const handleTeacherMark = (studentId: string) => {
+    if (!canEdit) return;
+
+    // If already marked, allow toggling back to unrecorded
+    if (attendance[studentId]) {
+      const newAtt = { ...attendance };
+      delete newAtt[studentId];
+      setAttendance(newAtt);
+      const newTimes = { ...markedTimes };
+      delete newTimes[studentId];
+      setMarkedTimes(newTimes);
+      return;
+    }
+
+    // Mark with current time
+    const markTime = new Date();
+    const status = getAutoStatus();
+
+    setAttendance({ ...attendance, [studentId]: status });
+    setMarkedTimes({ ...markedTimes, [studentId]: markTime.toISOString() });
+  };
+
   const cycleStatus = (studentId: string) => {
     if (!canEdit) return;
-    // Admin can cycle all 4 statuses; teachers only present/absent
-    const order: AttendanceStatus[] = isAdmin
-      ? ["present", "absent", "late", "excused"]
-      : ["present", "absent"];
+    // Admin can cycle all 4 statuses; teachers use the new tap system
+    if (!isAdmin) {
+      handleTeacherMark(studentId);
+      return;
+    }
+    const order: AttendanceStatus[] = ["present", "absent", "late", "excused"];
     const current = attendance[studentId] || "present";
     const idx = order.indexOf(current);
     setAttendance({ ...attendance, [studentId]: order[(idx + 1) % order.length] });
@@ -336,6 +358,15 @@ const Attendance = () => {
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
     setShowCalendar(false);
+  };
+
+  const formatMarkedTime = (isoStr: string) => {
+    const d = new Date(isoStr);
+    const h = d.getHours();
+    const m = d.getMinutes();
+    const period = h >= 12 ? "م" : "ص";
+    const h12 = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2, "0")} ${period}`;
   };
 
   if (accessLoading || calendar.loading) {
@@ -479,7 +510,7 @@ const Attendance = () => {
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">أذان العصر</p>
-                <p className="text-sm font-bold">{asrTime}</p>
+                <p className="text-sm font-bold">{formatTo12h(asrTime)}</p>
               </div>
               <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
                 <p className="text-xs text-muted-foreground">حد التأخر (العصر+70د)</p>
@@ -518,7 +549,7 @@ const Attendance = () => {
                 <Sun className="w-5 h-5 text-primary" />
                 <span className="text-sm font-medium">أذان العصر (بريدة)</span>
               </div>
-              <span className="text-sm font-bold">{asrTime}</span>
+              <span className="text-sm font-bold">{formatTo12h(asrTime)}</span>
             </div>
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
               <span>حد التأخر (العصر+70د): {formatTimeFromAsr(ON_TIME_THRESHOLD)}</span>
@@ -595,26 +626,51 @@ const Attendance = () => {
           {!isAdmin && isToday && asrTime && teacherWindow === "open" && (
             <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 text-center">
               {now.getTime() >= (() => { const [h,m] = asrTime.split(":").map(Number); const d = new Date(); d.setHours(h, m + ON_TIME_THRESHOLD, 0, 0); return d.getTime(); })()
-                ? "⚠️ الوقت الحالي بعد حد التأخر — الطلاب المحددون كـ«حاضر» سيُسجلون تلقائياً كـ«متأخر» عند الحفظ"
-                : "✅ الوقت الحالي ضمن فترة الحضور — الطلاب سيُسجلون كـ«حاضر (في الوقت)»"
+                ? "⚠️ الوقت الحالي بعد حد التأخر — الضغط على الطالب سيسجله «متأخر» مع الوقت الفعلي"
+                : "✅ اضغط على بطاقة الطالب عند حضوره لتسجيل وقته الفعلي"
               }
             </div>
           )}
 
           <div className="space-y-2">
             {students.map((student) => {
-              const status = attendance[student.id] || "present";
+              const status = attendance[student.id];
+              const isRecorded = !!status;
+              const markedTime = markedTimes[student.id];
+
+              // For teachers on today with no existing record: show gray unrecorded card
+              if (!isAdmin && isToday && !isRecorded && Object.keys(originalAttendance).length === 0) {
+                return (
+                  <button
+                    key={student.id}
+                    onClick={() => cycleStatus(student.id)}
+                    disabled={!canEdit}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all bg-muted/40 text-muted-foreground border-muted ${!canEdit ? "opacity-70 cursor-default" : "hover:bg-muted/60"}`}
+                  >
+                    <span className="font-medium text-sm">{student.full_name}</span>
+                    <div className="flex items-center gap-2 text-xs font-medium">
+                      <Clock className="w-4 h-4" />
+                      لم يُسجَّل
+                    </div>
+                  </button>
+                );
+              }
+
+              const displayStatus = status || "present";
               return (
                 <button
                   key={student.id}
                   onClick={() => cycleStatus(student.id)}
                   disabled={!canEdit}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${statusColors[status]} ${!canEdit ? "opacity-70 cursor-default" : ""}`}
+                  className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${statusColors[displayStatus]} ${!canEdit ? "opacity-70 cursor-default" : ""}`}
                 >
                   <span className="font-medium text-sm">{student.full_name}</span>
                   <div className="flex items-center gap-2 text-xs font-medium">
-                    {statusIcons[status]}
-                    {statusLabels[status]}
+                    {markedTime && !isAdmin && (
+                      <span className="text-[11px] opacity-75">{formatMarkedTime(markedTime)}</span>
+                    )}
+                    {statusIcons[displayStatus]}
+                    {statusLabels[displayStatus]}
                   </div>
                 </button>
               );
