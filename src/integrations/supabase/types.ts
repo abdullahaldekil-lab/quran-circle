@@ -2213,6 +2213,53 @@ export type Database = {
           },
         ]
       }
+      quiz_questions: {
+        Row: {
+          created_at: string
+          expected_answer: string | null
+          id: string
+          is_correct: boolean | null
+          question_number: number
+          question_text: string
+          question_type: string
+          quiz_id: string
+          student_answer: string | null
+          teacher_note: string | null
+        }
+        Insert: {
+          created_at?: string
+          expected_answer?: string | null
+          id?: string
+          is_correct?: boolean | null
+          question_number: number
+          question_text: string
+          question_type: string
+          quiz_id: string
+          student_answer?: string | null
+          teacher_note?: string | null
+        }
+        Update: {
+          created_at?: string
+          expected_answer?: string | null
+          id?: string
+          is_correct?: boolean | null
+          question_number?: number
+          question_text?: string
+          question_type?: string
+          quiz_id?: string
+          student_answer?: string | null
+          teacher_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "student_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recitation_records: {
         Row: {
           audio_url: string | null
@@ -2967,6 +3014,82 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_quizzes: {
+        Row: {
+          correct_answers: number | null
+          created_at: string
+          difficulty: string
+          grade_label: string | null
+          halaqa_id: string | null
+          id: string
+          memorized_content: string | null
+          notes: string | null
+          quiz_date: string
+          score: number | null
+          status: string
+          student_id: string
+          teacher_id: string | null
+          total_questions: number
+          updated_at: string
+        }
+        Insert: {
+          correct_answers?: number | null
+          created_at?: string
+          difficulty?: string
+          grade_label?: string | null
+          halaqa_id?: string | null
+          id?: string
+          memorized_content?: string | null
+          notes?: string | null
+          quiz_date?: string
+          score?: number | null
+          status?: string
+          student_id: string
+          teacher_id?: string | null
+          total_questions?: number
+          updated_at?: string
+        }
+        Update: {
+          correct_answers?: number | null
+          created_at?: string
+          difficulty?: string
+          grade_label?: string | null
+          halaqa_id?: string | null
+          id?: string
+          memorized_content?: string | null
+          notes?: string | null
+          quiz_date?: string
+          score?: number | null
+          status?: string
+          student_id?: string
+          teacher_id?: string | null
+          total_questions?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_quizzes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_quizzes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
