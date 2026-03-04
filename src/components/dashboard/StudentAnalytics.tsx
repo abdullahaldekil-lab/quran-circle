@@ -58,7 +58,7 @@ const StudentAnalytics = () => {
           applyFilter(supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "inactive")),
           applyFilter(supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active").gte("created_at", firstOfMonth)),
           applyFilter(supabase.from("students").select("id", { count: "exact", head: true }).gte("created_at", firstOfLastMonth).lte("created_at", endOfLastMonth)),
-          applyFilter(supabase.from("students").select("memorization_level_id, memorization_levels(name)").eq("status", "active")),
+          applyFilter(supabase.from("students").select("current_level").eq("status", "active")),
         ]);
 
         const activeCount = activeRes.count || 0;
