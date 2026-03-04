@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2 } from "lucide-react";
+import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2, Printer } from "lucide-react";
 import QuizQuestionCard from "@/components/quiz/QuizQuestionCard";
 import { sendNotification } from "@/utils/sendNotification";
+import QuizCertificate from "@/components/quiz/QuizCertificate";
 
 interface QuizQuestion {
   question_number: number;
@@ -48,6 +49,7 @@ const StudentQuiz = () => {
   const { isManager, isAdminStaff, isTeacher } = useRole();
   const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
   const queryClient = useQueryClient();
+  const certificateRef = useRef<HTMLDivElement>(null);
 
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -57,6 +59,20 @@ const StudentQuiz = () => {
   const [saving, setSaving] = useState(false);
   const [quizNotes, setQuizNotes] = useState("");
   const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
+
+  // Fetch teacher profile name
+  const { data: teacherProfile } = useQuery({
+    queryKey: ["teacher-profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const isAdmin = isManager || isAdminStaff;
 
@@ -288,6 +304,21 @@ const StudentQuiz = () => {
     setQuizNotes("");
   };
 
+  const handlePrint = () => {
+    const printContent = certificateRef.current;
+    if (!printContent) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html dir="rtl"><head><title>شهادة اختبار</title>
+      <style>body{margin:0;padding:20px;background:#fff;}@media print{body{padding:0;}}</style>
+      </head><body>${printContent.innerHTML}</body></html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+  };
+
   if (accessLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -484,14 +515,37 @@ const StudentQuiz = () => {
             {savedQuizId && (
               <div className="text-center space-y-3">
                 <p className="text-sm text-green-600 font-medium">✅ تم حفظ النتيجة وإشعار ولي الأمر</p>
-                <Button variant="outline" onClick={() => { resetQuiz(); setSelectedStudent(""); }}>
-                  اختبار طالب آخر
-                </Button>
+                <div className="flex justify-center gap-3">
+                  <Button onClick={handlePrint}>
+                    <Printer className="w-4 h-4 ml-2" /> طباعة الشهادة
+                  </Button>
+                  <Button variant="outline" onClick={() => { resetQuiz(); setSelectedStudent(""); }}>
+                    اختبار طالب آخر
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
       )}
+
+      {/* Hidden certificate for printing */}
+      <div ref={certificateRef} style={{ display: "none" }}>
+        {savedQuizId && selectedStudentData && (
+          <QuizCertificate
+            studentName={selectedStudentData.full_name}
+            halaqaName={halaqat.find((h: any) => h.id === selectedHalaqa)?.name || ""}
+            memorizedContent={memorizedContent}
+            difficulty={difficulty}
+            score={score}
+            gradeLabel={gradeLabel}
+            questions={questions}
+            teacherName={teacherProfile?.full_name || ""}
+            quizDate={new Date().toISOString()}
+            notes={quizNotes}
+          />
+        )}
+      </div>
     </div>
   );
 };
