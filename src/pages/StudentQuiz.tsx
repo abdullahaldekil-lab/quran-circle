@@ -49,6 +49,7 @@ const StudentQuiz = () => {
   const { isManager, isAdminStaff, isTeacher } = useRole();
   const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
   const queryClient = useQueryClient();
+  const certificateRef = useRef<HTMLDivElement>(null);
 
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -58,6 +59,20 @@ const StudentQuiz = () => {
   const [saving, setSaving] = useState(false);
   const [quizNotes, setQuizNotes] = useState("");
   const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
+
+  // Fetch teacher profile name
+  const { data: teacherProfile } = useQuery({
+    queryKey: ["teacher-profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const isAdmin = isManager || isAdminStaff;
 
