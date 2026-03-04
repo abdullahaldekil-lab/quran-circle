@@ -68,7 +68,7 @@ const navGroups: NavGroup[] = [
     color: "text-emerald-300",
     items: [
       { to: "/halaqat", icon: BookOpen, label: "حلقات التحفيظ" },
-      { to: "/quran-narration", icon: ScrollText, label: "حلقات التلقين" },
+      { to: "/talqeen-halaqat", icon: ScrollText, label: "حلقات التلقين" },
     ],
   },
   {
@@ -80,6 +80,7 @@ const navGroups: NavGroup[] = [
       { to: "/students", icon: Users, label: "الطلاب" },
       { to: "/inactive-students", icon: UserX, label: "طلاب غير نشطين" },
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
+      { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
