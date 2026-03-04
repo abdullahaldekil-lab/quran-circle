@@ -158,6 +158,7 @@ const Dashboard = () => {
 
           {/* Student Analytics Section */}
           <StudentAnalytics />
+          <AttendanceAnalytics />
 
           {!isMobile && (
             <div className="grid lg:grid-cols-2 gap-6">
