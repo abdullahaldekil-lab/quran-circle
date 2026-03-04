@@ -304,6 +304,21 @@ const StudentQuiz = () => {
     setQuizNotes("");
   };
 
+  const handlePrint = () => {
+    const printContent = certificateRef.current;
+    if (!printContent) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html dir="rtl"><head><title>شهادة اختبار</title>
+      <style>body{margin:0;padding:20px;background:#fff;}@media print{body{padding:0;}}</style>
+      </head><body>${printContent.innerHTML}</body></html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+  };
+
   if (accessLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -500,14 +515,37 @@ const StudentQuiz = () => {
             {savedQuizId && (
               <div className="text-center space-y-3">
                 <p className="text-sm text-green-600 font-medium">✅ تم حفظ النتيجة وإشعار ولي الأمر</p>
-                <Button variant="outline" onClick={() => { resetQuiz(); setSelectedStudent(""); }}>
-                  اختبار طالب آخر
-                </Button>
+                <div className="flex justify-center gap-3">
+                  <Button onClick={handlePrint}>
+                    <Printer className="w-4 h-4 ml-2" /> طباعة الشهادة
+                  </Button>
+                  <Button variant="outline" onClick={() => { resetQuiz(); setSelectedStudent(""); }}>
+                    اختبار طالب آخر
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
       )}
+
+      {/* Hidden certificate for printing */}
+      <div ref={certificateRef} style={{ display: "none" }}>
+        {savedQuizId && selectedStudentData && (
+          <QuizCertificate
+            studentName={selectedStudentData.full_name}
+            halaqaName={halaqat.find((h: any) => h.id === selectedHalaqa)?.name || ""}
+            memorizedContent={memorizedContent}
+            difficulty={difficulty}
+            score={score}
+            gradeLabel={gradeLabel}
+            questions={questions}
+            teacherName={teacherProfile?.full_name || ""}
+            quizDate={new Date().toISOString()}
+            notes={quizNotes}
+          />
+        )}
+      </div>
     </div>
   );
 };
