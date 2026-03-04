@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2 } from "lucide-react";
+import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2, Printer } from "lucide-react";
 import QuizQuestionCard from "@/components/quiz/QuizQuestionCard";
 import { sendNotification } from "@/utils/sendNotification";
+import QuizCertificate from "@/components/quiz/QuizCertificate";
 
 interface QuizQuestion {
   question_number: number;
