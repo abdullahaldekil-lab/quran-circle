@@ -15,6 +15,7 @@ import { useRole } from "@/hooks/useRole";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import CsvBulkImport from "@/components/CsvBulkImport";
 import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
+import StudentNameLink from "@/components/StudentNameLink";
 
 const PAGE_SIZE = 20;
 

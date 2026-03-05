@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, BookOpen, Users, CheckCircle, Eye } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
+import StudentNameLink from "@/components/StudentNameLink";
 
 const Madarij = () => {
   const { isManager } = useRole();

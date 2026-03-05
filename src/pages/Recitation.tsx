@@ -14,6 +14,7 @@ import { Save, ChevronLeft, ChevronRight, ClipboardList, Mic, History, ChevronDo
 import AudioRecorder from "@/components/AudioRecorder";
 import { sendNotification } from "@/utils/sendNotification";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import StudentNameLink from "@/components/StudentNameLink";
 
 const Recitation = () => {
   const { user } = useAuth();
