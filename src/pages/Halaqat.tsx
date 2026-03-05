@@ -268,6 +268,33 @@ const Halaqat = () => {
   const availableTeachersForEdit = getAvailableTeachers(editForm.teacher_id);
   const availableAssistantsForEdit = getAvailableAssistants(editForm.assistant_teacher_id);
 
+  const assignReserveTeacher = async (reserveId: string) => {
+    if (!assignReserveTarget) return;
+    const { halaqaId, type } = assignReserveTarget;
+    
+    if (type === "teacher") {
+      const ok = await linkTeacherToHalaqa(reserveId, halaqaId);
+      if (!ok) return;
+    } else {
+      const ok = await linkAssistantToHalaqa(reserveId, halaqaId);
+      if (!ok) return;
+    }
+    
+    // Remove reserve status
+    await (supabase as any).from("profiles").update({ is_reserve: false }).eq("id", reserveId);
+    
+    toast.success("تم تعيين المعلم الاحتياطي بنجاح");
+    setAssignReserveOpen(false);
+    setAssignReserveTarget(null);
+    fetchData();
+  };
+
+  // Find halaqat without teachers
+  const halaqatWithoutTeacher = halaqat.filter((h: any) => !h.teacher_id);
+  const halaqatWithoutAssistant = halaqat.filter((h: any) => !h.assistant_teacher_id);
+  const hasVacantHalaqat = halaqatWithoutTeacher.length > 0 || halaqatWithoutAssistant.length > 0;
+  const hasReserveTeachers = reserveTeachers.length > 0;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
