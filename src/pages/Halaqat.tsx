@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User, Pencil, Trash2 } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2, UserCheck } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRole } from "@/hooks/useRole";
 
 interface Teacher {
