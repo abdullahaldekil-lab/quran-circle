@@ -233,7 +233,7 @@ serve(async (req) => {
       }
 
       case "create_staff": {
-        const { email, full_name, phone, role } = payload;
+        const { email, full_name, phone, role, halaqa_id, is_reserve } = payload;
         if (!email || !full_name || !role) throw new Error("Missing required fields");
 
         const tempPassword = crypto.randomUUID().slice(0, 12) + "Aa1!";
@@ -245,16 +245,36 @@ serve(async (req) => {
         });
         if (createError) throw createError;
 
+        const profileUpdate: Record<string, any> = { role, phone, full_name, position_title: null, is_reserve: !!is_reserve };
+        if (halaqa_id && (role === "teacher" || role === "assistant_teacher")) {
+          if (role === "teacher") {
+            profileUpdate.assigned_halaqa_id = halaqa_id;
+          } else {
+            profileUpdate.assigned_assistant_halaqa_id = halaqa_id;
+          }
+        }
+
         await supabaseAdmin
           .from("profiles")
-          .update({ role, phone, full_name, position_title: null })
+          .update(profileUpdate)
           .eq("id", newUser.user.id);
+
+        // Link teacher to halaqa
+        if (halaqa_id && (role === "teacher" || role === "assistant_teacher")) {
+          const halaqaUpdate: Record<string, any> = {};
+          if (role === "teacher") {
+            halaqaUpdate.teacher_id = newUser.user.id;
+          } else {
+            halaqaUpdate.assistant_teacher_id = newUser.user.id;
+          }
+          await supabaseAdmin.from("halaqat").update(halaqaUpdate).eq("id", halaqa_id);
+        }
 
         await supabaseAdmin.from("admin_audit_log").insert({
           actor_user_id: caller.id,
           action_type: "user_created",
           target_user_id: newUser.user.id,
-          details: `Staff account created: ${full_name} (${role})`,
+          details: `Staff account created: ${full_name} (${role})${is_reserve ? ' - احتياطي' : ''}${halaqa_id ? ' - linked to halaqa' : ''}`,
         });
 
         return new Response(
