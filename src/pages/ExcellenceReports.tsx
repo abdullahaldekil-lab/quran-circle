@@ -354,7 +354,7 @@ export default function ExcellenceReports() {
                       {monthlyReport.map((s: any) => (
                         <TableRow key={s.id}>
                           <TableCell className="text-center font-bold text-primary">{s.rank}</TableCell>
-                          <TableCell>{s.name}</TableCell>
+                          <TableCell><StudentNameLink studentId={s.id} studentName={s.name} /></TableCell>
                           <TableCell className="text-center">{s.attended}</TableCell>
                           <TableCell className="text-center">{s.sessions}</TableCell>
                           <TableCell className="text-center">{s.totalPages}</TableCell>
