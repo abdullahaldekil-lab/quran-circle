@@ -2154,6 +2154,7 @@ export type Database = {
           department: string | null
           full_name: string
           id: string
+          is_reserve: boolean
           is_staff: boolean
           job_title: string | null
           last_login_at: string | null
@@ -2171,6 +2172,7 @@ export type Database = {
           department?: string | null
           full_name: string
           id: string
+          is_reserve?: boolean
           is_staff?: boolean
           job_title?: string | null
           last_login_at?: string | null
@@ -2188,6 +2190,7 @@ export type Database = {
           department?: string | null
           full_name?: string
           id?: string
+          is_reserve?: boolean
           is_staff?: boolean
           job_title?: string | null
           last_login_at?: string | null

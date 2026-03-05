@@ -572,6 +572,46 @@ const UserManagement = () => {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Reserve Teachers Section */}
+          {(() => {
+            const reserveTeachers = staffList.filter((s: any) => s.is_reserve && s.active && (s.role === "teacher" || s.role === "assistant_teacher"));
+            if (reserveTeachers.length === 0) return null;
+            return (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    المعلمون الاحتياطيون ({reserveTeachers.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>الاسم</TableHead>
+                        <TableHead>الهاتف</TableHead>
+                        <TableHead>الدور</TableHead>
+                        <TableHead>تاريخ الإضافة</TableHead>
+                        <TableHead>الحالة</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reserveTeachers.map((s: any) => (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-medium">{s.full_name}</TableCell>
+                          <TableCell dir="ltr">{s.phone || "-"}</TableCell>
+                          <TableCell><Badge variant="secondary">{roleLabels[s.role] || s.role}</Badge></TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{new Date(s.created_at).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell><Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">احتياطي</Badge></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </TabsContent>
 
         {/* Guardians Tab */}
@@ -916,9 +956,93 @@ const UserManagement = () => {
 
 const CreateStaffForm = ({ onSubmit, loading }: { onSubmit: (data: any) => void; loading: boolean }) => {
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", role: "teacher" });
+  const [step, setStep] = useState<1 | 2>(1);
+  const [selectedHalaqaId, setSelectedHalaqaId] = useState("");
+  const [availableHalaqat, setAvailableHalaqat] = useState<any[]>([]);
+  const [loadingHalaqat, setLoadingHalaqat] = useState(false);
+
+  const isTeacherRole = form.role === "teacher" || form.role === "assistant_teacher";
+
+  const fetchAvailableHalaqat = async (role: string) => {
+    setLoadingHalaqat(true);
+    const { data } = await supabase
+      .from("halaqat")
+      .select("id, name, teacher_id, assistant_teacher_id")
+      .eq("active", true);
+    const halaqat = data || [];
+    const available = role === "teacher"
+      ? halaqat.filter((h: any) => !h.teacher_id)
+      : halaqat.filter((h: any) => !h.assistant_teacher_id);
+    setAvailableHalaqat(available);
+    setLoadingHalaqat(false);
+  };
+
+  const handleStep1Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isTeacherRole) {
+      fetchAvailableHalaqat(form.role);
+      setStep(2);
+    } else {
+      onSubmit(form);
+    }
+  };
+
+  const handleStep2Submit = () => {
+    if (selectedHalaqaId) {
+      onSubmit({ ...form, halaqa_id: selectedHalaqaId, is_reserve: false });
+    } else {
+      onSubmit({ ...form, is_reserve: true });
+    }
+  };
+
+  if (step === 2 && isTeacherRole) {
+    const noHalaqat = !loadingHalaqat && availableHalaqat.length === 0;
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Button variant="ghost" size="sm" onClick={() => setStep(1)}>← رجوع</Button>
+          <h3 className="font-semibold">تعيين الحلقة</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {form.role === "teacher" ? "اختر حلقة لتعيين المعلم عليها" : "اختر حلقة لتعيين المعلم المساعد عليها"}
+        </p>
+
+        {loadingHalaqat ? (
+          <div className="flex justify-center py-6">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : noHalaqat ? (
+          <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              ⚠️ لا توجد حلقات شاغرة حالياً
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              سيُضاف المعلم كمعلم احتياطي ويمكن تعيينه لاحقاً عند توفر حلقة شاغرة.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label>الحلقات المتاحة</Label>
+            <Select value={selectedHalaqaId} onValueChange={setSelectedHalaqaId}>
+              <SelectTrigger><SelectValue placeholder="اختر حلقة..." /></SelectTrigger>
+              <SelectContent>
+                {availableHalaqat.map((h: any) => (
+                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <Button onClick={handleStep2Submit} className="w-full" disabled={loading}>
+          {loading ? "جارٍ الإنشاء..." : noHalaqat ? "إضافة كمعلم احتياطي" : selectedHalaqaId ? "إنشاء وتعيين الحلقة" : "إضافة كمعلم احتياطي"}
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
+    <form onSubmit={handleStep1Submit} className="space-y-4">
       <div className="space-y-2">
         <Label>الاسم الكامل *</Label>
         <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
@@ -943,7 +1067,7 @@ const CreateStaffForm = ({ onSubmit, loading }: { onSubmit: (data: any) => void;
         </Select>
       </div>
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "جارٍ الإنشاء..." : "إنشاء الحساب"}
+        {isTeacherRole ? "التالي — تعيين الحلقة" : loading ? "جارٍ الإنشاء..." : "إنشاء الحساب"}
       </Button>
     </form>
   );

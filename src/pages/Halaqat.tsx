@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User, Pencil, Trash2 } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2, UserCheck } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRole } from "@/hooks/useRole";
 
 interface Teacher {
@@ -24,6 +25,7 @@ const Halaqat = () => {
   const { isManager } = useRole();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [reserveTeachers, setReserveTeachers] = useState<any[]>([]);
   const [levelTracks, setLevelTracks] = useState<any[]>([]);
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,18 +36,21 @@ const Halaqat = () => {
   const [editForm, setEditForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "" });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [assignReserveOpen, setAssignReserveOpen] = useState(false);
+  const [assignReserveTarget, setAssignReserveTarget] = useState<{ halaqaId: string; halaqaName: string; type: "teacher" | "assistant" } | null>(null);
 
   const fetchData = async () => {
-    const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
-      supabase.from("halaqat").select("*, profiles:teacher_id(full_name), assistant:assistant_teacher_id(full_name)").eq("active", true),
-      supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
-      supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
-      supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
-    ]);
+    const halaqatRes = await supabase.from("halaqat").select("*, profiles:teacher_id(full_name), assistant:assistant_teacher_id(full_name)").eq("active", true);
+    const teachersRes: any = await supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]);
+    const studentsRes = await supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active");
+    const tracksRes = await supabase.from("level_tracks").select("*").eq("active", true).order("sort_order");
+    const reserveRes: any = await (supabase as any).from("profiles").select("id, full_name, role").eq("is_reserve", true).eq("active", true);
+    
     // Filter out talqeen halaqat (those with "تلقين" in the name)
     const allHalaqat = halaqatRes.data || [];
     setHalaqat(allHalaqat.filter((h: any) => !h.name.includes("تلقين")));
     setTeachers((teachersRes.data as Teacher[]) || []);
+    setReserveTeachers(reserveRes.data || []);
     setLevelTracks(tracksRes.data || []);
 
     const grouped: Record<string, any[]> = {};
@@ -263,6 +268,33 @@ const Halaqat = () => {
   const availableTeachersForEdit = getAvailableTeachers(editForm.teacher_id);
   const availableAssistantsForEdit = getAvailableAssistants(editForm.assistant_teacher_id);
 
+  const assignReserveTeacher = async (reserveId: string) => {
+    if (!assignReserveTarget) return;
+    const { halaqaId, type } = assignReserveTarget;
+    
+    if (type === "teacher") {
+      const ok = await linkTeacherToHalaqa(reserveId, halaqaId);
+      if (!ok) return;
+    } else {
+      const ok = await linkAssistantToHalaqa(reserveId, halaqaId);
+      if (!ok) return;
+    }
+    
+    // Remove reserve status
+    await (supabase as any).from("profiles").update({ is_reserve: false }).eq("id", reserveId);
+    
+    toast.success("تم تعيين المعلم الاحتياطي بنجاح");
+    setAssignReserveOpen(false);
+    setAssignReserveTarget(null);
+    fetchData();
+  };
+
+  // Find halaqat without teachers
+  const halaqatWithoutTeacher = halaqat.filter((h: any) => !h.teacher_id);
+  const halaqatWithoutAssistant = halaqat.filter((h: any) => !h.assistant_teacher_id);
+  const hasVacantHalaqat = halaqatWithoutTeacher.length > 0 || halaqatWithoutAssistant.length > 0;
+  const hasReserveTeachers = reserveTeachers.length > 0;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -328,6 +360,31 @@ const Halaqat = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Reserve Teacher Alert */}
+      {isManager && hasReserveTeachers && hasVacantHalaqat && (
+        <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+          <UserCheck className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800 dark:text-amber-200">يوجد معلم احتياطي متاح</AlertTitle>
+          <AlertDescription className="text-amber-700 dark:text-amber-300">
+            <span>لديك {reserveTeachers.length} معلم احتياطي و {halaqatWithoutTeacher.length} حلقة بدون معلم — </span>
+            {halaqatWithoutTeacher.map((h: any) => (
+              <Button
+                key={h.id}
+                variant="link"
+                size="sm"
+                className="text-amber-800 dark:text-amber-200 p-0 h-auto font-bold underline mx-1"
+                onClick={() => {
+                  setAssignReserveTarget({ halaqaId: h.id, halaqaName: h.name, type: "teacher" });
+                  setAssignReserveOpen(true);
+                }}
+              >
+                تعيين لـ {h.name}
+              </Button>
+            ))}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {halaqat.map((h) => {
@@ -492,6 +549,35 @@ const Halaqat = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Assign Reserve Teacher Dialog */}
+      <Dialog open={assignReserveOpen} onOpenChange={setAssignReserveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعيين معلم احتياطي لحلقة {assignReserveTarget?.halaqaName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">اختر المعلم الاحتياطي لتعيينه على هذه الحلقة:</p>
+            {reserveTeachers.filter((t: any) => 
+              assignReserveTarget?.type === "teacher" ? t.role === "teacher" : t.role === "assistant_teacher"
+            ).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">لا يوجد معلمون احتياطيون من هذا النوع</p>
+            ) : (
+              reserveTeachers
+                .filter((t: any) => assignReserveTarget?.type === "teacher" ? t.role === "teacher" : t.role === "assistant_teacher")
+                .map((t: any) => (
+                  <div key={t.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <span className="font-medium">{t.full_name}</span>
+                    <Button size="sm" onClick={() => assignReserveTeacher(t.id)}>
+                      <UserCheck className="w-4 h-4 ml-1" />
+                      تعيين
+                    </Button>
+                  </div>
+                ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
