@@ -558,7 +558,7 @@ export default function NarrationSession() {
                         />
                       </TableCell>
                     )}
-                    <TableCell className="font-medium text-sm">{row.student_name}</TableCell>
+                    <TableCell className="font-medium text-sm"><StudentNameLink studentId={row.student_id} studentName={row.student_name} /></TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline" className="text-xs">
                         {row.narration_type === "regular" ? "منتظم" : "متعدد"}

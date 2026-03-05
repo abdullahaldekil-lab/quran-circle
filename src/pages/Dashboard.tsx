@@ -213,7 +213,7 @@ const RecentRecitations = () => {
       {records.map((r) => (
         <div key={r.id} className="flex items-center justify-between py-2 border-b last:border-0">
           <div>
-            <p className="font-medium text-sm">{r.students?.full_name}</p>
+            <p className="font-medium text-sm"><StudentNameLink studentId={r.student_id} studentName={r.students?.full_name || "—"} /></p>
             <p className="text-xs text-muted-foreground">{r.halaqat?.name}</p>
           </div>
           <div className={`text-sm font-bold ${Number(r.total_score) >= 80 ? "text-success" : Number(r.total_score) >= 60 ? "text-warning" : "text-destructive"}`}>

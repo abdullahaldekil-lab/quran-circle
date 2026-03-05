@@ -191,7 +191,7 @@ const Madarij = () => {
               <TableBody>
                 {enrollments.map((e) => (
                   <TableRow key={e.id}>
-                    <TableCell className="font-medium">{(e.students as any)?.full_name}</TableCell>
+                    <TableCell className="font-medium"><StudentNameLink studentId={e.student_id} studentName={(e.students as any)?.full_name || "—"} /></TableCell>
                     <TableCell>{(e.madarij_tracks as any)?.name}</TableCell>
                     <TableCell>{e.part_number}</TableCell>
                     <TableCell>{e.hizb_number}</TableCell>

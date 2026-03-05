@@ -368,7 +368,7 @@ export default function NarrationReports() {
                       {ranked.map((a: any, i: number) => (
                         <TableRow key={a.id}>
                           <TableCell className="text-center font-bold text-muted-foreground">{i + 1}</TableCell>
-                          <TableCell className="font-medium">{a.students?.full_name}</TableCell>
+                          <TableCell className="font-medium"><StudentNameLink studentId={a.student_id} studentName={a.students?.full_name || "—"} /></TableCell>
                           <TableCell>{a.students?.halaqat?.name || "—"}</TableCell>
                           <TableCell className="text-center">{Number(a.total_hizb_count)}</TableCell>
                           <TableCell className="text-center font-bold">{Number(a.grade)}</TableCell>
