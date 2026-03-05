@@ -25,6 +25,7 @@ const Halaqat = () => {
   const { isManager } = useRole();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [reserveTeachers, setReserveTeachers] = useState<any[]>([]);
   const [levelTracks, setLevelTracks] = useState<any[]>([]);
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -35,6 +36,8 @@ const Halaqat = () => {
   const [editForm, setEditForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "" });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [assignReserveOpen, setAssignReserveOpen] = useState(false);
+  const [assignReserveTarget, setAssignReserveTarget] = useState<{ halaqaId: string; halaqaName: string; type: "teacher" | "assistant" } | null>(null);
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
