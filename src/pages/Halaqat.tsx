@@ -361,6 +361,31 @@ const Halaqat = () => {
         </Dialog>
       </div>
 
+      {/* Reserve Teacher Alert */}
+      {isManager && hasReserveTeachers && hasVacantHalaqat && (
+        <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+          <UserCheck className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800 dark:text-amber-200">يوجد معلم احتياطي متاح</AlertTitle>
+          <AlertDescription className="text-amber-700 dark:text-amber-300">
+            <span>لديك {reserveTeachers.length} معلم احتياطي و {halaqatWithoutTeacher.length} حلقة بدون معلم — </span>
+            {halaqatWithoutTeacher.map((h: any) => (
+              <Button
+                key={h.id}
+                variant="link"
+                size="sm"
+                className="text-amber-800 dark:text-amber-200 p-0 h-auto font-bold underline mx-1"
+                onClick={() => {
+                  setAssignReserveTarget({ halaqaId: h.id, halaqaName: h.name, type: "teacher" });
+                  setAssignReserveOpen(true);
+                }}
+              >
+                تعيين لـ {h.name}
+              </Button>
+            ))}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {halaqat.map((h) => {
           const students = studentsByHalaqa[h.id] || [];
