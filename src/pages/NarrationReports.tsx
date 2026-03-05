@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/useRole";
