@@ -45,7 +45,7 @@ const Halaqat = () => {
       supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
       supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
       supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
-      supabase.from("profiles").select("id, full_name, role").in("role", ["teacher", "assistant_teacher"]).eq("is_reserve" as any, true).eq("active", true),
+      supabase.from("profiles").select("id, full_name, role").in("role", ["teacher", "assistant_teacher"]).eq("is_reserve" as any, true).eq("active", true) as any,
     ]);
     // Filter out talqeen halaqat (those with "تلقين" in the name)
     const allHalaqat = halaqatRes.data || [];
