@@ -437,7 +437,7 @@ const QuizResults = () => {
                         </div>
                         <div>
                           <p className="font-bold text-lg">
-                            {students.find((s: any) => s.id === selectedStudent)?.full_name}
+                            {(() => { const s = students.find((s: any) => s.id === selectedStudent); return s ? <StudentNameLink studentId={s.id} studentName={s.full_name} /> : "—"; })()}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {halaqat.find((h: any) => h.id === selectedHalaqa)?.name}

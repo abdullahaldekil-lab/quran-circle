@@ -382,7 +382,7 @@ const StudentQuiz = () => {
                 <User className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="font-bold">{selectedStudentData.full_name}</p>
+                <p className="font-bold"><StudentNameLink studentId={selectedStudentData.id} studentName={selectedStudentData.full_name} /></p>
                 <p className="text-xs text-muted-foreground">
                   {halaqat.find((h: any) => h.id === selectedHalaqa)?.name}
                 </p>
