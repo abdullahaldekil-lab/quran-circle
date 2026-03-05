@@ -1,4 +1,5 @@
 import { useState } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,7 +107,7 @@ const InactiveStudents = () => {
               <TableBody>
                 {filtered.map((s: any) => (
                   <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.full_name}</TableCell>
+                    <TableCell className="font-medium"><StudentNameLink studentId={s.id} studentName={s.full_name} /></TableCell>
                     <TableCell>
                       <Badge variant="secondary">{STATUS_LABELS[s.status] || s.status}</Badge>
                     </TableCell>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -239,7 +240,7 @@ const MadarijEnrollment = () => {
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div><span className="text-muted-foreground">الطالب:</span> <strong>{(enrollment.students as any)?.full_name}</strong></div>
+            <div><span className="text-muted-foreground">الطالب:</span> <strong><StudentNameLink studentId={enrollment.student_id} studentName={(enrollment.students as any)?.full_name || "—"} /></strong></div>
             <div><span className="text-muted-foreground">المسار:</span> <strong>{(enrollment.madarij_tracks as any)?.name}</strong></div>
             <div><span className="text-muted-foreground">الجزء:</span> <strong>{enrollment.part_number}</strong></div>
             <div><span className="text-muted-foreground">الحزب:</span> <strong>{enrollment.hizb_number}</strong></div>

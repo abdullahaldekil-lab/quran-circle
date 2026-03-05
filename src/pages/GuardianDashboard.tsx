@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import GuardianLayout from "@/components/GuardianLayout";
@@ -90,7 +91,7 @@ const GuardianDashboard = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-foreground truncate">{child.full_name}</h3>
+                          <h3 className="font-semibold text-foreground truncate"><StudentNameLink studentId={child.id} studentName={child.full_name} /></h3>
                           <ChevronLeft className="w-5 h-5 text-muted-foreground shrink-0" />
                         </div>
                         <div className="flex items-center gap-2 mt-1">

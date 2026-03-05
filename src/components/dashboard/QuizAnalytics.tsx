@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
@@ -257,7 +258,7 @@ const QuizAnalytics = () => {
               return (
                 <div key={q.id} className="flex items-center justify-between py-2 border-b last:border-0">
                   <div>
-                    <p className="font-medium text-sm">{(q.students as any)?.full_name}</p>
+                    <p className="font-medium text-sm"><StudentNameLink studentId={q.student_id} studentName={(q.students as any)?.full_name || "—"} /></p>
                     <p className="text-xs text-muted-foreground">
                       {(q.halaqat as any)?.name} — {q.quiz_date}
                     </p>

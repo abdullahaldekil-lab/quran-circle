@@ -14,6 +14,7 @@ import { Save, ChevronLeft, ChevronRight, ClipboardList, Mic, History, ChevronDo
 import AudioRecorder from "@/components/AudioRecorder";
 import { sendNotification } from "@/utils/sendNotification";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import StudentNameLink from "@/components/StudentNameLink";
 
 const Recitation = () => {
   const { user } = useAuth();
@@ -229,7 +230,7 @@ const Recitation = () => {
                   <ChevronRight className="w-5 h-5" />
                 </Button>
                 <div className="text-center">
-                  <h2 className="text-lg font-bold">{currentStudent.full_name}</h2>
+                  <h2 className="text-lg font-bold"><StudentNameLink studentId={currentStudent.id} studentName={currentStudent.full_name} /></h2>
                   <p className="text-sm text-muted-foreground">{currentIndex + 1} من {students.length}</p>
                 </div>
                 <Button variant="ghost" size="icon" disabled={currentIndex <= 0} onClick={() => { setCurrentIndex(currentIndex - 1); resetForm(); }}>

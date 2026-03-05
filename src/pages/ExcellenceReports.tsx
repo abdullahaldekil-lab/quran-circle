@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/useRole";
@@ -255,7 +256,7 @@ export default function ExcellenceReports() {
                       {sessionReport.performance.map((p: any) => (
                         <TableRow key={p.id}>
                           <TableCell className="text-center font-bold">{p.rank_in_group || "—"}</TableCell>
-                          <TableCell>{(p as any).students?.full_name || "—"}</TableCell>
+                          <TableCell><StudentNameLink studentId={p.student_id} studentName={(p as any).students?.full_name || "—"} /></TableCell>
                           <TableCell className="text-center">{Number(p.hizb_count)}</TableCell>
                           <TableCell className="text-center">{Number(p.pages_displayed)}</TableCell>
                           <TableCell className="text-center">{p.mistakes_count}</TableCell>
@@ -353,7 +354,7 @@ export default function ExcellenceReports() {
                       {monthlyReport.map((s: any) => (
                         <TableRow key={s.id}>
                           <TableCell className="text-center font-bold text-primary">{s.rank}</TableCell>
-                          <TableCell>{s.name}</TableCell>
+                          <TableCell><StudentNameLink studentId={s.id} studentName={s.name} /></TableCell>
                           <TableCell className="text-center">{s.attended}</TableCell>
                           <TableCell className="text-center">{s.sessions}</TableCell>
                           <TableCell className="text-center">{s.totalPages}</TableCell>

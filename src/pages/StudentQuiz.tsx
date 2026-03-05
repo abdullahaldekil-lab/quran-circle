@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -381,7 +382,7 @@ const StudentQuiz = () => {
                 <User className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="font-bold">{selectedStudentData.full_name}</p>
+                <p className="font-bold"><StudentNameLink studentId={selectedStudentData.id} studentName={selectedStudentData.full_name} /></p>
                 <p className="text-xs text-muted-foreground">
                   {halaqat.find((h: any) => h.id === selectedHalaqa)?.name}
                 </p>

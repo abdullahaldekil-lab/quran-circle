@@ -15,6 +15,7 @@ import { useRole } from "@/hooks/useRole";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import CsvBulkImport from "@/components/CsvBulkImport";
 import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
+import StudentNameLink from "@/components/StudentNameLink";
 
 const PAGE_SIZE = 20;
 
@@ -366,7 +367,7 @@ const Students = () => {
                   <User className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm truncate">{student.full_name}</h3>
+                  <h3 className="font-semibold text-sm truncate"><StudentNameLink studentId={student.id} studentName={student.full_name} /></h3>
                   <p className="text-xs text-muted-foreground">{student.halaqat?.name || "بدون حلقة"}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="secondary" className="text-xs">{student.current_level}</Badge>

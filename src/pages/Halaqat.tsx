@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Plus, BookOpen, Users, User, Pencil, Trash2, UserCheck } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRole } from "@/hooks/useRole";
+import StudentNameLink from "@/components/StudentNameLink";
 
 interface Teacher {
   id: string;
@@ -462,7 +463,7 @@ const Halaqat = () => {
               (studentsByHalaqa[studentsDialogId || ""] || []).map((s: any) => (
                 <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg border">
                   <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{s.full_name}</span>
+                  <span className="text-sm"><StudentNameLink studentId={s.id} studentName={s.full_name} /></span>
                 </div>
               ))
             )}

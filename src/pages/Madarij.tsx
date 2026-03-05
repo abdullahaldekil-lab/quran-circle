@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Pencil, Trash2, BookOpen, Users, CheckCircle, Eye } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
+import StudentNameLink from "@/components/StudentNameLink";
 
 const Madarij = () => {
   const { isManager } = useRole();
@@ -191,7 +192,7 @@ const Madarij = () => {
               <TableBody>
                 {enrollments.map((e) => (
                   <TableRow key={e.id}>
-                    <TableCell className="font-medium">{(e.students as any)?.full_name}</TableCell>
+                    <TableCell className="font-medium"><StudentNameLink studentId={e.student_id} studentName={(e.students as any)?.full_name || "—"} /></TableCell>
                     <TableCell>{(e.madarij_tracks as any)?.name}</TableCell>
                     <TableCell>{e.part_number}</TableCell>
                     <TableCell>{e.hizb_number}</TableCell>

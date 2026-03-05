@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -297,7 +298,7 @@ export default function DistinguishedStudents() {
               <TableBody>
                 {distinguished.map((d) => (
                   <TableRow key={d.id}>
-                    <TableCell className="font-semibold">{d.student_name}</TableCell>
+                    <TableCell className="font-semibold"><StudentNameLink studentId={d.student_id} studentName={d.student_name} /></TableCell>
                     <TableCell>
                       <Badge variant="outline">{d.track_name}</Badge>
                     </TableCell>
