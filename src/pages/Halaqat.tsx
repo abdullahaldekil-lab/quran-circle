@@ -40,16 +40,18 @@ const Halaqat = () => {
   const [assignReserveTarget, setAssignReserveTarget] = useState<{ halaqaId: string; halaqaName: string; type: "teacher" | "assistant" } | null>(null);
 
   const fetchData = async () => {
-    const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
+    const [halaqatRes, teachersRes, studentsRes, tracksRes, reserveRes] = await Promise.all([
       supabase.from("halaqat").select("*, profiles:teacher_id(full_name), assistant:assistant_teacher_id(full_name)").eq("active", true),
       supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
       supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
       supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
+      supabase.from("profiles").select("id, full_name, role").in("role", ["teacher", "assistant_teacher"]).eq("is_reserve" as any, true).eq("active", true),
     ]);
     // Filter out talqeen halaqat (those with "تلقين" in the name)
     const allHalaqat = halaqatRes.data || [];
     setHalaqat(allHalaqat.filter((h: any) => !h.name.includes("تلقين")));
     setTeachers((teachersRes.data as Teacher[]) || []);
+    setReserveTeachers(reserveRes.data || []);
     setLevelTracks(tracksRes.data || []);
 
     const grouped: Record<string, any[]> = {};
