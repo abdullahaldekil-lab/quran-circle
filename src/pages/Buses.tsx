@@ -226,7 +226,7 @@ const Buses = () => {
                     <TableBody>
                       {busAssignments.map((a: any) => (
                         <TableRow key={a.id}>
-                          <TableCell className="text-sm">{a.students?.full_name}</TableCell>
+                          <TableCell className="text-sm"><StudentNameLink studentId={a.student_id} studentName={a.students?.full_name || "—"} /></TableCell>
                           <TableCell className="text-sm text-muted-foreground">{a.students?.guardian_name || "—"}</TableCell>
                           <TableCell className="text-sm text-muted-foreground" dir="ltr">{a.students?.guardian_phone || "—"}</TableCell>
                           {canManage && (

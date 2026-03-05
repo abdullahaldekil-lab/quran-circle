@@ -268,7 +268,7 @@ const Rewards = () => {
                         <div className="flex items-center gap-3">
                           <Icon className="w-5 h-5 text-primary" />
                           <div>
-                            <p className="text-sm font-medium">{sb.students?.full_name}</p>
+                            <p className="text-sm font-medium"><StudentNameLink studentId={sb.student_id} studentName={sb.students?.full_name || "—"} /></p>
                             <p className="text-xs text-muted-foreground">{sb.badges?.name}</p>
                             {sb.note && <p className="text-xs text-muted-foreground/70">{sb.note}</p>}
                           </div>
@@ -384,7 +384,7 @@ const Rewards = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-sm">{n.students?.full_name}</p>
+                      <p className="font-medium text-sm"><StudentNameLink studentId={n.student_id} studentName={n.students?.full_name || "—"} /></p>
                       <p className="text-xs text-muted-foreground">{n.rewards?.name} — رشحه {n.profiles?.full_name}</p>
                       {n.note && <p className="text-xs text-muted-foreground mt-1">{n.note}</p>}
                     </div>

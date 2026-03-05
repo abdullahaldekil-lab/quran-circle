@@ -298,7 +298,7 @@ export default function DistinguishedStudents() {
               <TableBody>
                 {distinguished.map((d) => (
                   <TableRow key={d.id}>
-                    <TableCell className="font-semibold">{d.student_name}</TableCell>
+                    <TableCell className="font-semibold"><StudentNameLink studentId={d.student_id} studentName={d.student_name} /></TableCell>
                     <TableCell>
                       <Badge variant="outline">{d.track_name}</Badge>
                     </TableCell>

@@ -256,7 +256,7 @@ export default function ExcellenceReports() {
                       {sessionReport.performance.map((p: any) => (
                         <TableRow key={p.id}>
                           <TableCell className="text-center font-bold">{p.rank_in_group || "—"}</TableCell>
-                          <TableCell>{(p as any).students?.full_name || "—"}</TableCell>
+                          <TableCell><StudentNameLink studentId={p.student_id} studentName={(p as any).students?.full_name || "—"} /></TableCell>
                           <TableCell className="text-center">{Number(p.hizb_count)}</TableCell>
                           <TableCell className="text-center">{Number(p.pages_displayed)}</TableCell>
                           <TableCell className="text-center">{p.mistakes_count}</TableCell>

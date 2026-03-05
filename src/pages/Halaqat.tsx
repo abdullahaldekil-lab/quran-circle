@@ -462,7 +462,7 @@ const Halaqat = () => {
               (studentsByHalaqa[studentsDialogId || ""] || []).map((s: any) => (
                 <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg border">
                   <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{s.full_name}</span>
+                  <span className="text-sm"><StudentNameLink studentId={s.id} studentName={s.full_name} /></span>
                 </div>
               ))
             )}

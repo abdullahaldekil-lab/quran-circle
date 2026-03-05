@@ -182,7 +182,7 @@ const Rankings = () => {
           >
             <div className="shrink-0">{getMedalIcon(index)}</div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm truncate">{student.full_name}</p>
+              <p className="font-semibold text-sm truncate"><StudentNameLink studentId={student.id} studentName={student.full_name} /></p>
               <p className="text-xs text-muted-foreground">{student.halaqa_name}</p>
             </div>
             <div className="text-left shrink-0">{renderValue(student)}</div>
@@ -294,7 +294,7 @@ const Rankings = () => {
                         return (
                           <div key={student.id} className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="font-medium">{student.full_name}</span>
+                              <span className="font-medium"><StudentNameLink studentId={student.id} studentName={student.full_name} /></span>
                               <span className="text-muted-foreground">{student.total_memorized_pages}/{TOTAL_PAGES} صفحة</span>
                             </div>
                             <Progress value={progress} className="h-2" />

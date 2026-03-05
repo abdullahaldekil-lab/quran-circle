@@ -426,7 +426,7 @@ export default function ExcellenceSession() {
                   {students.map((s, i) => (
                     <TableRow key={s.id}>
                       <TableCell>{i + 1}</TableCell>
-                      <TableCell className="font-medium">{s.full_name}</TableCell>
+                      <TableCell className="font-medium"><StudentNameLink studentId={s.id} studentName={s.full_name} /></TableCell>
                       <TableCell className="text-center">
                         <Checkbox
                           checked={attendance[s.id]?.is_present ?? true}
@@ -490,7 +490,7 @@ export default function ExcellenceSession() {
                         return (
                           <TableRow key={sid}>
                             <TableCell>{i + 1}</TableCell>
-                            <TableCell className="font-medium">{s.full_name}</TableCell>
+                            <TableCell className="font-medium"><StudentNameLink studentId={sid} studentName={s.full_name} /></TableCell>
                             <TableCell>
                               <Input type="number" min={0} value={p.pages_displayed || ""} onChange={(e) => updatePerformance(sid, "pages_displayed", Number(e.target.value))} className="h-8 w-16 text-center mx-auto" disabled={isSupervisor} />
                             </TableCell>
@@ -578,7 +578,7 @@ export default function ExcellenceSession() {
                       return (
                         <TableRow key={p.student_id}>
                           <TableCell className="text-center font-bold text-primary">{p.rank_in_group}</TableCell>
-                          <TableCell className="font-medium">{s?.full_name || "—"}</TableCell>
+                          <TableCell className="font-medium"><StudentNameLink studentId={p.student_id} studentName={s?.full_name || "—"} /></TableCell>
                           <TableCell className="text-center font-bold">{p.total_score.toFixed(1)}</TableCell>
                           <TableCell className="text-center">{p.hizb_count}</TableCell>
                           <TableCell className="text-center">{p.pages_displayed}</TableCell>
