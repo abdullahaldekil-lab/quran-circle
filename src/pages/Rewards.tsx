@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import StudentNameLink from "@/components/StudentNameLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
