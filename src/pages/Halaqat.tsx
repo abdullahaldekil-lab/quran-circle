@@ -549,6 +549,35 @@ const Halaqat = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Assign Reserve Teacher Dialog */}
+      <Dialog open={assignReserveOpen} onOpenChange={setAssignReserveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعيين معلم احتياطي لحلقة {assignReserveTarget?.halaqaName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">اختر المعلم الاحتياطي لتعيينه على هذه الحلقة:</p>
+            {reserveTeachers.filter((t: any) => 
+              assignReserveTarget?.type === "teacher" ? t.role === "teacher" : t.role === "assistant_teacher"
+            ).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">لا يوجد معلمون احتياطيون من هذا النوع</p>
+            ) : (
+              reserveTeachers
+                .filter((t: any) => assignReserveTarget?.type === "teacher" ? t.role === "teacher" : t.role === "assistant_teacher")
+                .map((t: any) => (
+                  <div key={t.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <span className="font-medium">{t.full_name}</span>
+                    <Button size="sm" onClick={() => assignReserveTeacher(t.id)}>
+                      <UserCheck className="w-4 h-4 ml-1" />
+                      تعيين
+                    </Button>
+                  </div>
+                ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
