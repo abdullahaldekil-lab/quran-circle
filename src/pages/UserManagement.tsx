@@ -572,6 +572,46 @@ const UserManagement = () => {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Reserve Teachers Section */}
+          {(() => {
+            const reserveTeachers = staffList.filter((s: any) => s.is_reserve && s.active && (s.role === "teacher" || s.role === "assistant_teacher"));
+            if (reserveTeachers.length === 0) return null;
+            return (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    المعلمون الاحتياطيون ({reserveTeachers.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>الاسم</TableHead>
+                        <TableHead>الهاتف</TableHead>
+                        <TableHead>الدور</TableHead>
+                        <TableHead>تاريخ الإضافة</TableHead>
+                        <TableHead>الحالة</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reserveTeachers.map((s: any) => (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-medium">{s.full_name}</TableCell>
+                          <TableCell dir="ltr">{s.phone || "-"}</TableCell>
+                          <TableCell><Badge variant="secondary">{roleLabels[s.role] || s.role}</Badge></TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{new Date(s.created_at).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell><Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">احتياطي</Badge></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </TabsContent>
 
         {/* Guardians Tab */}
