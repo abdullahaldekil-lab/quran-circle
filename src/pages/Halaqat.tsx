@@ -40,13 +40,12 @@ const Halaqat = () => {
   const [assignReserveTarget, setAssignReserveTarget] = useState<{ halaqaId: string; halaqaName: string; type: "teacher" | "assistant" } | null>(null);
 
   const fetchData = async () => {
-    const [halaqatRes, teachersRes, studentsRes, tracksRes, reserveRes] = await Promise.all([
-      supabase.from("halaqat").select("*, profiles:teacher_id(full_name), assistant:assistant_teacher_id(full_name)").eq("active", true),
-      supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
-      supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
-      supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
-      supabase.from("profiles").select("id, full_name, role").in("role", ["teacher", "assistant_teacher"]).eq("is_reserve" as any, true).eq("active", true) as any,
-    ]);
+    const halaqatRes = await supabase.from("halaqat").select("*, profiles:teacher_id(full_name), assistant:assistant_teacher_id(full_name)").eq("active", true);
+    const teachersRes = await supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]);
+    const studentsRes = await supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active");
+    const tracksRes = await supabase.from("level_tracks").select("*").eq("active", true).order("sort_order");
+    const reserveRes = await (supabase.from("profiles").select("id, full_name, role").in("role", ["teacher", "assistant_teacher"]).eq("is_reserve" as any, true).eq("active", true) as any);
+    
     // Filter out talqeen halaqat (those with "تلقين" in the name)
     const allHalaqat = halaqatRes.data || [];
     setHalaqat(allHalaqat.filter((h: any) => !h.name.includes("تلقين")));
