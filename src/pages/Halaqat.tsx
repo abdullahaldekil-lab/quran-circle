@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Plus, BookOpen, Users, User, Pencil, Trash2, UserCheck } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRole } from "@/hooks/useRole";
+import StudentNameLink from "@/components/StudentNameLink";
 
 interface Teacher {
   id: string;
