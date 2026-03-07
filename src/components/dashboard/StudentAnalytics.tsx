@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserPlus, TrendingUp, TrendingDown } from "lucide-react";
+import { Users, UserPlus, TrendingUp, TrendingDown, ArrowUpLeft } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -18,6 +19,7 @@ const COLORS = {
 };
 
 const StudentAnalytics = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { allowedHalaqatIds, loading: accessLoading } = useTeacherHalaqat();
   const [data, setData] = useState({
@@ -52,7 +54,6 @@ const StudentAnalytics = () => {
           return;
         }
 
-        // Parallel queries
         const [activeRes, inactiveRes, newRes, lastMonthRes, levelsRes] = await Promise.all([
           applyFilter(supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active")),
           applyFilter(supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "inactive")),
@@ -104,59 +105,57 @@ const StudentAnalytics = () => {
     { name: "غير نشط", value: data.inactive },
   ];
 
+  const handleDonutClick = (_: any, index: number) => {
+    navigate(index === 0 ? "/students?status=active" : "/students?status=inactive");
+  };
+
+  const handleBarClick = (entry: any) => {
+    if (entry?.name) {
+      navigate(`/students?level=${encodeURIComponent(entry.name)}`);
+    }
+  };
+
+  const statCards = [
+    { label: "إجمالي الطلاب", value: data.total, icon: Users, colorClass: "text-primary", href: "/students" },
+    { label: "الطلاب الجدد", value: data.newThisMonth, icon: UserPlus, colorClass: "text-secondary", href: "/students?new_this_month=true", sub: "هذا الشهر" },
+    { label: "نشطون", value: data.active, valueClass: "text-success", href: "/students?status=active" },
+    { label: "غير نشطين", value: data.inactive, valueClass: "text-destructive", href: "/students?status=inactive" },
+  ];
+
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-bold text-foreground">📊 تحليلات الطلاب</h2>
 
       {/* Top summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">إجمالي الطلاب</CardTitle>
-            <Users className="w-5 h-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.total}</div>
-            <div className={`flex items-center gap-1 text-xs mt-1 ${growthPercent >= 0 ? "text-success" : "text-destructive"}`}>
-              {growthPercent >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              <span>{growthPercent >= 0 ? "+" : ""}{growthPercent}% عن الشهر الماضي</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">الطلاب الجدد</CardTitle>
-            <UserPlus className="w-5 h-5 text-secondary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.newThisMonth}</div>
-            <p className="text-xs text-muted-foreground mt-1">هذا الشهر</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">نشطون</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">{data.active}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">غير نشطين</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{data.inactive}</div>
-          </CardContent>
-        </Card>
+        {statCards.map((card) => (
+          <Card
+            key={card.label}
+            className="cursor-pointer group relative transition-shadow hover:shadow-lg"
+            onClick={() => navigate(card.href)}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{card.label}</CardTitle>
+              {card.icon && <card.icon className={`w-5 h-5 ${card.colorClass}`} />}
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${card.valueClass || ""}`}>{card.value}</div>
+              {card.label === "إجمالي الطلاب" && (
+                <div className={`flex items-center gap-1 text-xs mt-1 ${growthPercent >= 0 ? "text-success" : "text-destructive"}`}>
+                  {growthPercent >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  <span>{growthPercent >= 0 ? "+" : ""}{growthPercent}% عن الشهر الماضي</span>
+                </div>
+              )}
+              {card.sub && <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>}
+            </CardContent>
+            <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Card>
+        ))}
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Donut Chart - Active vs Inactive */}
+        {/* Donut Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">النشطون مقابل غير النشطين</CardTitle>
@@ -175,6 +174,8 @@ const StudentAnalytics = () => {
                     outerRadius={85}
                     dataKey="value"
                     stroke="none"
+                    className="cursor-pointer"
+                    onClick={handleDonutClick}
                   >
                     <Cell fill={COLORS.active} />
                     <Cell fill={COLORS.inactive} />
@@ -187,11 +188,17 @@ const StudentAnalytics = () => {
               </ResponsiveContainer>
             )}
             <div className="flex justify-center gap-6 mt-2 text-xs">
-              <div className="flex items-center gap-1.5">
+              <div
+                className="flex items-center gap-1.5 cursor-pointer hover:underline"
+                onClick={() => navigate("/students?status=active")}
+              >
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.active }} />
                 <span>نشط ({data.active})</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div
+                className="flex items-center gap-1.5 cursor-pointer hover:underline"
+                onClick={() => navigate("/students?status=inactive")}
+              >
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.inactive }} />
                 <span>غير نشط ({data.inactive})</span>
               </div>
@@ -199,7 +206,7 @@ const StudentAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* Bar Chart - Level Distribution */}
+        {/* Bar Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">توزيع الطلاب حسب المستوى</CardTitle>
@@ -217,7 +224,14 @@ const StudentAnalytics = () => {
                     formatter={(value: number) => [`${value} طالب`]}
                     contentStyle={{ borderRadius: "8px", fontSize: "13px", direction: "rtl" }}
                   />
-                  <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} />
+                  <Bar
+                    dataKey="count"
+                    fill={COLORS.primary}
+                    radius={[0, 4, 4, 0]}
+                    barSize={20}
+                    className="cursor-pointer"
+                    onClick={handleBarClick}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}

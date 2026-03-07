@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,17 @@ const PAGE_SIZE = 20;
 
 const Students = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isManager, isAdminStaff, isTeacher } = useRole();
   const { allowedHalaqatIds, filterHalaqat: filterHalaqatAccess, loading: accessLoading } = useTeacherHalaqat();
   const canBulkImport = isManager || isAdminStaff;
   const canToggleElite = isManager || isTeacher;
+
+  // URL-based filters
+  const urlStatus = searchParams.get("status"); // "active" | "inactive" | null (all)
+  const urlLevel = searchParams.get("level");
+  const urlNewThisMonth = searchParams.get("new_this_month") === "true";
 
   // Distinguished students state (new system)
   const [distinguishedMap, setDistinguishedMap] = useState<Record<string, { id: string; track_id: string; track_name: string }>>({});
@@ -59,9 +65,27 @@ const Students = () => {
     let query = supabase
       .from("students")
       .select("*, halaqat(name)", { count: "exact" })
-      .eq("status", "active")
       .order("full_name")
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+    // Apply status filter from URL or default to "active"
+    if (urlStatus === "inactive") {
+      query = query.eq("status", "inactive");
+    } else if (urlStatus === "active" || !urlStatus) {
+      query = query.eq("status", "active");
+    }
+
+    // Apply level filter from URL
+    if (urlLevel) {
+      query = query.eq("current_level", urlLevel);
+    }
+
+    // Apply new-this-month filter from URL
+    if (urlNewThisMonth) {
+      const now = new Date();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      query = query.gte("created_at", firstOfMonth);
+    }
 
     if (filterHalaqa !== "all") {
       query = query.eq("halaqa_id", filterHalaqa);
@@ -79,7 +103,7 @@ const Students = () => {
     const { data, count } = await query;
     setStudents(data || []);
     setTotalCount(count || 0);
-  }, [page, filterHalaqa, search, allowedHalaqatIds, accessLoading]);
+  }, [page, filterHalaqa, search, allowedHalaqatIds, accessLoading, urlStatus, urlLevel, urlNewThisMonth]);
 
   const fetchHalaqat = async () => {
     const { data } = await supabase.from("halaqat").select("*").eq("active", true);
