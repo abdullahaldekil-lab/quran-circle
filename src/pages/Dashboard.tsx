@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import StudentNameLink from "@/components/StudentNameLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft } from "lucide-react";
 import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
@@ -20,6 +21,7 @@ const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promi
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { profile, user, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
   const { allowedHalaqatIds, loading: accessLoading } = useTeacherHalaqat();
@@ -91,10 +93,10 @@ const Dashboard = () => {
   }, [authLoading, user, accessLoading, allowedHalaqatIds]);
 
   const cards = [
-    { title: "عدد الطلاب", value: stats.students, icon: Users, color: "text-primary" },
-    { title: "الحلقات", value: stats.halaqat, icon: BookOpen, color: "text-secondary" },
-    { title: "تسميعات اليوم", value: stats.todayRecitations, icon: ClipboardList, color: "text-info" },
-    { title: "متوسط الدرجات", value: stats.avgScore, icon: TrendingUp, color: "text-success" },
+    { title: "عدد الطلاب", value: stats.students, icon: Users, color: "text-primary", href: "/students" },
+    { title: "الحلقات", value: stats.halaqat, icon: BookOpen, color: "text-secondary", href: "/halaqat" },
+    { title: "تسميعات اليوم", value: stats.todayRecitations, icon: ClipboardList, color: "text-info", href: "/recitation" },
+    { title: "متوسط الدرجات", value: stats.avgScore, icon: TrendingUp, color: "text-success", href: "/quiz-results" },
   ];
 
   if (authLoading) {
@@ -147,7 +149,11 @@ const Dashboard = () => {
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {cards.map((card) => (
-              <Card key={card.title} className="animate-slide-in">
+              <Card
+                key={card.title}
+                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
+                onClick={() => navigate(card.href)}
+              >
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
                   <card.icon className={`w-5 h-5 ${card.color}`} />
@@ -155,6 +161,7 @@ const Dashboard = () => {
                 <CardContent>
                   <div className="text-2xl lg:text-3xl font-bold">{card.value}</div>
                 </CardContent>
+                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Card>
             ))}
           </div>
