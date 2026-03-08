@@ -11,10 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2, Printer } from "lucide-react";
+import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2, Printer, CalendarDays } from "lucide-react";
 import QuizQuestionCard from "@/components/quiz/QuizQuestionCard";
 import { sendNotification } from "@/utils/sendNotification";
 import QuizCertificate from "@/components/quiz/QuizCertificate";
+import { formatDualDate } from "@/lib/hijri";
 
 interface QuizQuestion {
   question_number: number;

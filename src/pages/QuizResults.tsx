@@ -10,11 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, User, Users, TrendingUp } from "lucide-react";
+import { BarChart3, User, Users, TrendingUp, CalendarDays } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
+import { formatDualDate } from "@/lib/hijri";
 
 const GRADE_LABELS: Record<string, { label: string; color: string }> = {
   excellent: { label: "ممتاز", color: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300" },
