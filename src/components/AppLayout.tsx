@@ -301,6 +301,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             const isOpen = openGroups[group.id] || false;
             const hasActiveChild = group.items.some((item) =>
               location.pathname.startsWith(item.to)
+            ) || group.subGroups?.some((sub) =>
+              sub.items.some((item) => location.pathname.startsWith(item.to))
             );
 
             return (
@@ -324,6 +326,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
                 {isOpen && (
                   <div className="mt-0.5 mr-4 border-r border-sidebar-border/40 pr-2 space-y-0.5">
+                    {/* Regular items */}
                     {group.items.map((item) => (
                       <NavLink
                         key={item.to}
@@ -341,6 +344,57 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         {item.label}
                       </NavLink>
                     ))}
+
+                    {/* Sub-groups (nested accordions) */}
+                    {group.subGroups?.map((subGroup) => {
+                      const isSubOpen = openGroups[subGroup.id] || false;
+                      const hasActiveSubChild = subGroup.items.some((item) =>
+                        location.pathname.startsWith(item.to)
+                      );
+
+                      return (
+                        <div key={subGroup.id}>
+                          <button
+                            onClick={() => toggleGroup(subGroup.id)}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                              hasActiveSubChild
+                                ? "bg-sidebar-accent/50 text-sidebar-foreground font-medium"
+                                : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                            }`}
+                          >
+                            <subGroup.icon className="w-4 h-4" />
+                            <span className="flex-1 text-right">{subGroup.label}</span>
+                            <ChevronDown
+                              className={`w-3 h-3 text-sidebar-foreground/50 transition-transform duration-200 ${
+                                isSubOpen ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
+
+                          {isSubOpen && (
+                            <div className="mt-0.5 mr-3 border-r border-sidebar-border/30 pr-2 space-y-0.5">
+                              {subGroup.items.map((item) => (
+                                <NavLink
+                                  key={item.to}
+                                  to={item.to}
+                                  onClick={() => setSidebarOpen(false)}
+                                  className={({ isActive }) =>
+                                    `flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                                      isActive
+                                        ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                                    }`
+                                  }
+                                >
+                                  <item.icon className="w-3.5 h-3.5" />
+                                  {item.label}
+                                </NavLink>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
