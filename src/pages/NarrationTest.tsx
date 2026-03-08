@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import StudentNameLink from "@/components/StudentNameLink";
-import { gregorianToHijri, formatHijriArabic } from "@/lib/hijri";
+import { formatFullDateHeader, formatDualDate } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Printer, FileSpreadsheet, FileText } from "lucide-react";
+import { Printer, FileSpreadsheet, FileText, CalendarDays } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx-js-style";
@@ -36,8 +36,8 @@ const NarrationTest = () => {
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
-  const hijriStr = gregorianToHijri(today);
-  const hijriArabic = hijriStr ? formatHijriArabic(hijriStr) : "";
+  const fullDateHeader = formatFullDateHeader(today);
+  const { hijri: hijriArabic, gregorian: gregorianArabic } = formatDualDate(today);
 
   // Fetch halaqat
   const { data: halaqat = [] } = useQuery({
