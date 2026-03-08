@@ -350,6 +350,10 @@ const StudentProfile = () => {
         <TabsContent value="narration">
           <NarrationSummaryTab studentId={id!} />
         </TabsContent>
+
+        <TabsContent value="status_log">
+          <StudentStatusLog studentId={id!} />
+        </TabsContent>
       </Tabs>
     </div>
 
