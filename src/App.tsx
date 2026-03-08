@@ -66,6 +66,7 @@ import InactiveStudents from "./pages/InactiveStudents";
 import StudentQuiz from "./pages/StudentQuiz";
 import QuizResults from "./pages/QuizResults";
 import QuizComparison from "./pages/QuizComparison";
+import NarrationTest from "./pages/NarrationTest";
 
 const queryClient = new QueryClient({
   defaultOptions: {
