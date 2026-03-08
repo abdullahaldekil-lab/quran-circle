@@ -296,12 +296,33 @@ const Halaqat = () => {
   const hasVacantHalaqat = halaqatWithoutTeacher.length > 0 || halaqatWithoutAssistant.length > 0;
   const hasReserveTeachers = reserveTeachers.length > 0;
 
+  const totalStudents = halaqat.reduce((sum, h) => sum + (studentsByHalaqa[h.id]?.length || 0), 0);
+  const totalCapacity = halaqat.reduce((sum, h) => sum + (h.capacity_max || 25), 0);
+  const totalPct = totalCapacity > 0 ? Math.min((totalStudents / totalCapacity) * 100, 100) : 0;
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">الحلقات</h1>
-          <p className="text-muted-foreground text-sm">{halaqat.length} حلقات</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">الحلقات</h1>
+            <p className="text-muted-foreground text-sm">{halaqat.length} حلقات</p>
+          </div>
+          <div className="mr-4 flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-4 py-2.5 transition-all hover:bg-primary/15 hover:shadow-md cursor-default group">
+            <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">إجمالي الطلاب</p>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-bold text-primary">{totalStudents}</span>
+                <span className="text-xs text-muted-foreground">/ {totalCapacity}</span>
+              </div>
+            </div>
+            <div className="w-16 mr-2">
+              <Progress value={totalPct} className="h-1.5" />
+            </div>
+          </div>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
