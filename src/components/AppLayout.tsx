@@ -214,9 +214,19 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const getInitialOpenGroups = () => {
     const open: Record<string, boolean> = {};
     navGroups.forEach((group) => {
-      if (group.items.some((item) => location.pathname.startsWith(item.to))) {
+      const hasActiveItem = group.items.some((item) => location.pathname.startsWith(item.to));
+      const hasActiveSubGroup = group.subGroups?.some((sub) =>
+        sub.items.some((item) => location.pathname.startsWith(item.to))
+      );
+      if (hasActiveItem || hasActiveSubGroup) {
         open[group.id] = true;
       }
+      // Also open subgroups that have active items
+      group.subGroups?.forEach((sub) => {
+        if (sub.items.some((item) => location.pathname.startsWith(item.to))) {
+          open[sub.id] = true;
+        }
+      });
     });
     return open;
   };
@@ -233,8 +243,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => hasAccess(item.to)),
+      subGroups: group.subGroups?.map((sub) => ({
+        ...sub,
+        items: sub.items.filter((item) => hasAccess(item.to)),
+      })).filter((sub) => sub.items.length > 0),
     }))
-    .filter((group) => group.items.length > 0);
+    .filter((group) => group.items.length > 0 || (group.subGroups && group.subGroups.length > 0));
 
   return (
     <div className="min-h-screen flex">
