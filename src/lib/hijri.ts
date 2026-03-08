@@ -1,39 +1,138 @@
-import { gregorianToHijri as gregToHijri } from "islamic-date";
+import moment from "moment-hijri";
 
-/**
- * Convert a Gregorian date to Hijri string (YYYY/MM/DD)
- */
-export function gregorianToHijri(date: Date): string {
-  const result = gregToHijri(date.getFullYear(), date.getMonth() + 1, date.getDate());
-  if (!result) return "";
-  const y = result.year;
-  const m = String(result.month).padStart(2, "0");
-  const d = String(result.day).padStart(2, "0");
-  return `${y}/${m}/${d}`;
-}
+// Configure moment-hijri for Arabic
+moment.locale("ar-SA");
 
-/**
- * Convert a Hijri string (YYYY/MM/DD) to Gregorian Date
- * Note: islamic-date doesn't export hijriToGregorian, so we skip reverse conversion
- */
-export function hijriToGregorian(_hijriStr: string): Date | null {
-  // Library doesn't export reverse conversion - return null
-  return null;
-}
-
-/**
- * Format Hijri date for display in Arabic
- */
 const HIJRI_MONTHS = [
   "محرّم", "صفر", "ربيع الأول", "ربيع الثاني",
   "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
   "رمضان", "شوّال", "ذو القعدة", "ذو الحجة",
 ];
 
-export function formatHijriArabic(hijriStr: string): string {
-  const parts = hijriStr.split("/").map(Number);
-  if (parts.length !== 3) return hijriStr;
-  const [year, month, day] = parts;
-  const monthName = HIJRI_MONTHS[month - 1] || "";
-  return `${day} ${monthName} ${year} هـ`;
+const GREGORIAN_MONTHS = [
+  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+];
+
+const WEEKDAYS = [
+  "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت",
+];
+
+/**
+ * Convert a Gregorian Date to Hijri object
+ */
+export function toHijri(date: Date | string): { year: number; month: number; day: number } {
+  const m = moment(date);
+  return {
+    year: m.iYear(),
+    month: m.iMonth() + 1, // 1-indexed
+    day: m.iDate(),
+  };
 }
+
+/**
+ * Convert a Hijri date to Gregorian Date
+ */
+export function toMiladi(hijriYear: number, hijriMonth: number, hijriDay: number): Date {
+  const m = moment(`${hijriYear}/${hijriMonth}/${hijriDay}`, "iYYYY/iM/iD");
+  return m.toDate();
+}
+
+/**
+ * Format Hijri date for display: "15 رمضان 1447 هـ"
+ */
+export function formatHijriArabic(date: Date | string): string {
+  const hijri = toHijri(date);
+  const monthName = HIJRI_MONTHS[hijri.month - 1] || "";
+  return `${hijri.day} ${monthName} ${hijri.year} هـ`;
+}
+
+/**
+ * Format Gregorian date in Arabic: "4 مارس 2026"
+ */
+export function formatGregorianArabic(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const monthName = GREGORIAN_MONTHS[d.getMonth()];
+  return `${d.getDate()} ${monthName} ${d.getFullYear()}`;
+}
+
+/**
+ * Get weekday name in Arabic
+ */
+export function getWeekdayArabic(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return WEEKDAYS[d.getDay()];
+}
+
+/**
+ * Format full date header: "الأربعاء، 15 رمضان 1447 (4 مارس 2026)"
+ */
+export function formatFullDateHeader(date: Date | string): string {
+  const weekday = getWeekdayArabic(date);
+  const hijri = formatHijriArabic(date);
+  const gregorian = formatGregorianArabic(date);
+  return `${weekday}، ${hijri} (${gregorian})`;
+}
+
+/**
+ * Format dual date display: returns both Hijri (primary) and Gregorian (secondary)
+ */
+export function formatDualDate(date: Date | string): { hijri: string; gregorian: string } {
+  return {
+    hijri: formatHijriArabic(date),
+    gregorian: formatGregorianArabic(date),
+  };
+}
+
+/**
+ * Get current Hijri date string
+ */
+export function getCurrentHijriDate(): string {
+  return formatHijriArabic(new Date());
+}
+
+/**
+ * Get current full date header
+ */
+export function getCurrentFullDateHeader(): string {
+  return formatFullDateHeader(new Date());
+}
+
+/**
+ * Legacy function for backward compatibility
+ */
+export function gregorianToHijri(date: Date): string {
+  const hijri = toHijri(date);
+  const m = String(hijri.month).padStart(2, "0");
+  const d = String(hijri.day).padStart(2, "0");
+  return `${hijri.year}/${m}/${d}`;
+}
+
+/**
+ * Convert Hijri string (YYYY/MM/DD) to Gregorian Date
+ */
+export function hijriToGregorian(hijriStr: string): Date | null {
+  try {
+    const parts = hijriStr.split("/").map(Number);
+    if (parts.length !== 3) return null;
+    const [year, month, day] = parts;
+    return toMiladi(year, month, day);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Parse Hijri date from string format
+ */
+export function parseHijriString(hijriStr: string): { year: number; month: number; day: number } | null {
+  try {
+    const parts = hijriStr.split("/").map(Number);
+    if (parts.length !== 3) return null;
+    return { year: parts[0], month: parts[1], day: parts[2] };
+  } catch {
+    return null;
+  }
+}
+
+export { HIJRI_MONTHS, GREGORIAN_MONTHS, WEEKDAYS };

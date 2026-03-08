@@ -11,6 +11,7 @@ import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
 import QuizAnalytics from "@/components/dashboard/QuizAnalytics";
+import PageDateHeader from "@/components/PageDateHeader";
 
 const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promise<T> => {
   const p = Promise.resolve(promise);
@@ -109,11 +110,14 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-          مرحباً {profile?.full_name || ""}
-        </h1>
-        <p className="text-muted-foreground mt-1">مجمع حويلان لتحفيظ القرآن الكريم</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+            مرحباً {profile?.full_name || ""}
+          </h1>
+          <p className="text-muted-foreground mt-1">مجمع حويلان لتحفيظ القرآن الكريم</p>
+        </div>
+        <PageDateHeader />
       </div>
 
       {/* Alerts */}

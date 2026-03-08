@@ -11,10 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2, Printer } from "lucide-react";
+import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2, Printer, CalendarDays } from "lucide-react";
 import QuizQuestionCard from "@/components/quiz/QuizQuestionCard";
 import { sendNotification } from "@/utils/sendNotification";
 import QuizCertificate from "@/components/quiz/QuizCertificate";
+import { formatDualDate } from "@/lib/hijri";
 
 interface QuizQuestion {
   question_number: number;
@@ -328,14 +329,23 @@ const StudentQuiz = () => {
     );
   }
 
+  const { hijri: hijriToday, gregorian: gregorianToday } = formatDualDate(new Date());
+
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Brain className="w-6 h-6 text-primary" />
-          الاختبار الذكي
-        </h1>
-        <p className="text-muted-foreground text-sm">توليد أسئلة مخصصة من المقرر المحفوظ لكل طالب</p>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Brain className="w-6 h-6 text-primary" />
+            الاختبار الذكي
+          </h1>
+          <p className="text-muted-foreground text-sm">توليد أسئلة مخصصة من المقرر المحفوظ لكل طالب</p>
+        </div>
+        <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-1.5">
+          <CalendarDays className="w-4 h-4 text-muted-foreground" />
+          <span className="font-medium">{hijriToday}</span>
+          <span className="text-muted-foreground text-xs">، {gregorianToday}</span>
+        </div>
       </div>
 
       {/* Step 1: Select Halaqa & Student */}

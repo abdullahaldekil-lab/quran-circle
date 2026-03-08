@@ -14,6 +14,7 @@ import { useRole } from "@/hooks/useRole";
 import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import { sendNotification } from "@/utils/sendNotification";
+import { formatDualDate, formatFullDateHeader } from "@/lib/hijri";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
@@ -417,19 +418,18 @@ const Attendance = () => {
     );
   }
 
-  const selectedDateFormatted = new Date(selectedDate).toLocaleDateString("ar-SA", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
-  });
+  const { hijri: hijriFormatted, gregorian: gregorianFormatted } = formatDualDate(selectedDate);
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">الحضور والغياب</h1>
-          <p className="text-muted-foreground text-sm">
-            {selectedDateFormatted}
-            {isToday && hijriDate && ` — ${hijriDate}`}
-          </p>
+          <div className="flex items-center gap-2 text-sm mt-1">
+            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <span className="font-medium">{hijriFormatted}</span>
+            <span className="text-muted-foreground text-xs">، {gregorianFormatted}</span>
+          </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)}>
           <CalendarDays className="w-4 h-4 ml-1" />

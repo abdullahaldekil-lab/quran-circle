@@ -1,11 +1,11 @@
 import { useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { gregorianToHijri, formatHijriArabic } from "@/lib/hijri";
+import { formatDualDate } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Printer, FileSpreadsheet, FileText, Users, BookOpen, CheckCircle, BarChart3 } from "lucide-react";
+import { Printer, FileSpreadsheet, FileText, Users, BookOpen, CheckCircle, BarChart3, CalendarDays } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx-js-style";
@@ -14,8 +14,7 @@ const NarrationStats = () => {
   const printRef = useRef<HTMLDivElement>(null);
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
-  const hijriStr = gregorianToHijri(today);
-  const hijriArabic = hijriStr ? formatHijriArabic(hijriStr) : "";
+  const { hijri: hijriArabic, gregorian: gregorianArabic } = formatDualDate(today);
 
   // Fetch halaqat
   const { data: halaqat = [] } = useQuery({
@@ -219,7 +218,11 @@ const NarrationStats = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">إحصائيات يوم السرد القرآني</h1>
-          <p className="text-muted-foreground">{todayStr} — {hijriArabic}</p>
+          <div className="flex items-center gap-2 text-sm mt-1">
+            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <span className="font-medium">{hijriArabic}</span>
+            <span className="text-muted-foreground text-xs">، {gregorianArabic}</span>
+          </div>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
