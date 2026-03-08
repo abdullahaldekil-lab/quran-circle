@@ -11,6 +11,7 @@ import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
 import QuizAnalytics from "@/components/dashboard/QuizAnalytics";
+import PageDateHeader from "@/components/PageDateHeader";
 
 const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promise<T> => {
   const p = Promise.resolve(promise);
