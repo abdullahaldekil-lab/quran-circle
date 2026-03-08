@@ -87,7 +87,7 @@ const Finance = () => {
       }
     }
 
-    const txRes = await supabase.from("financial_transactions").select("*, profiles!financial_transactions_created_by_fkey(full_name), profiles!financial_transactions_approved_by_fkey(full_name)").order("transaction_date", { ascending: false });
+    const txRes = await supabase.from("financial_transactions").select("*, creator:profiles!financial_transactions_created_by_fkey(full_name), approver:profiles!financial_transactions_approved_by_fkey(full_name)").order("transaction_date", { ascending: false });
     
     setAccount(accRes.data);
     if (accRes.data) {
