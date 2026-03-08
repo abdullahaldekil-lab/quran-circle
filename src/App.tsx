@@ -67,6 +67,8 @@ import StudentQuiz from "./pages/StudentQuiz";
 import QuizResults from "./pages/QuizResults";
 import QuizComparison from "./pages/QuizComparison";
 import NarrationTest from "./pages/NarrationTest";
+import ReviewTest from "./pages/ReviewTest";
+import NarrationStats from "./pages/NarrationStats";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -153,6 +155,8 @@ const AppRoutes = () => {
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
       <Route path="/students/:id/narration-progress" element={<ProtectedRoute path="/students"><StudentNarrationProgress /></ProtectedRoute>} />
       <Route path="/narration-test" element={<ProtectedRoute path="/quran-narration"><NarrationTest /></ProtectedRoute>} />
+      <Route path="/review-test" element={<ProtectedRoute path="/quran-narration"><ReviewTest /></ProtectedRoute>} />
+      <Route path="/narration-stats" element={<ProtectedRoute path="/quran-narration"><NarrationStats /></ProtectedRoute>} />
       <Route path="/student-quiz" element={<ProtectedRoute path="/recitation"><StudentQuiz /></ProtectedRoute>} />
       <Route path="/quiz-results" element={<ProtectedRoute path="/quiz-results"><QuizResults /></ProtectedRoute>} />
       <Route path="/quiz-comparison" element={<ProtectedRoute path="/quiz-comparison"><QuizComparison /></ProtectedRoute>} />
