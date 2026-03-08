@@ -18,6 +18,8 @@ import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import StudentLevelProgress from "@/components/StudentLevelProgress";
 import MadarijStudentSection from "@/components/MadarijStudentSection";
+import StudentStatusManager from "@/components/student/StudentStatusManager";
+import StudentStatusLog from "@/components/student/StudentStatusLog";
 
 const PAGE_SIZE = 20;
 
