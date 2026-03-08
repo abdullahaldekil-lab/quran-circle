@@ -67,6 +67,8 @@ import StudentQuiz from "./pages/StudentQuiz";
 import QuizResults from "./pages/QuizResults";
 import QuizComparison from "./pages/QuizComparison";
 import NarrationTest from "./pages/NarrationTest";
+import ReviewTest from "./pages/ReviewTest";
+import NarrationStats from "./pages/NarrationStats";
 
 const queryClient = new QueryClient({
   defaultOptions: {
