@@ -21,11 +21,12 @@ export type StaffRole =
 // Route-level access per role
 const rolePermissions: Record<StaffRole, string[]> = {
   manager: [
-    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
+    "/dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
     "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/notification-templates", "/notification-log", "/notification-preferences",
     "/send-notification", "/bulk-email",
@@ -34,6 +35,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log",
     "/notification-preferences",
   ],
@@ -41,6 +43,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log",
     "/notification-preferences",
   ],
@@ -62,6 +65,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance-log",
     "/notification-preferences",
   ],
