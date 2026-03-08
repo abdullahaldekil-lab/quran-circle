@@ -218,7 +218,11 @@ const NarrationStats = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">إحصائيات يوم السرد القرآني</h1>
-          <p className="text-muted-foreground">{todayStr} — {hijriArabic}</p>
+          <div className="flex items-center gap-2 text-sm mt-1">
+            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <span className="font-medium">{hijriArabic}</span>
+            <span className="text-muted-foreground text-xs">، {gregorianArabic}</span>
+          </div>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
