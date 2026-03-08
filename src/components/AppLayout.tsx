@@ -80,13 +80,7 @@ const navGroups: NavGroup[] = [
       { to: "/students", icon: Users, label: "الطلاب" },
       { to: "/inactive-students", icon: UserX, label: "طلاب غير نشطين" },
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
-      { to: "/student-quiz", icon: GraduationCap, label: "الاختبار الذكي" },
-      { to: "/quiz-results", icon: BarChart3, label: "نتائج الاختبار" },
-      { to: "/quiz-comparison", icon: BarChart3, label: "مقارنة الحلقات" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
-      { to: "/narration-test", icon: ClipboardList, label: "ورقة اختبار السرد" },
-      { to: "/review-test", icon: ClipboardList, label: "ورقة اختبار المراجعة" },
-      { to: "/narration-stats", icon: BarChart3, label: "إحصائيات يوم السرد" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
@@ -94,6 +88,28 @@ const navGroups: NavGroup[] = [
       { to: "/excellence/tracks", icon: Award, label: "إدارة المسارات" },
       { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
       { to: "/excellence/track-settings", icon: Settings, label: "إعدادات المسارات" },
+    ],
+    subGroups: [
+      {
+        id: "tests-subgroup",
+        label: "الاختبارات",
+        icon: ClipboardList,
+        items: [
+          { to: "/student-quiz", icon: GraduationCap, label: "الاختبار الذكي" },
+          { to: "/narration-test", icon: ScrollText, label: "اختبار السرد" },
+          { to: "/review-test", icon: ClipboardList, label: "اختبار المراجعة" },
+        ],
+      },
+      {
+        id: "results-subgroup",
+        label: "النتائج والتقارير",
+        icon: BarChart3,
+        items: [
+          { to: "/quiz-results", icon: BarChart3, label: "نتائج الاختبار" },
+          { to: "/quiz-comparison", icon: Trophy, label: "مقارنة الحلقات" },
+          { to: "/narration-stats", icon: CalendarDays, label: "إحصائيات يوم السرد" },
+        ],
+      },
     ],
   },
   {
