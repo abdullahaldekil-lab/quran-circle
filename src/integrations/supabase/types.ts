@@ -3100,6 +3100,56 @@ export type Database = {
           },
         ]
       }
+      student_status_log: {
+        Row: {
+          changed_by: string | null
+          changed_by_name: string | null
+          created_at: string
+          id: string
+          is_system: boolean
+          new_status: string
+          old_status: string | null
+          reason_category: string
+          reason_detail: string | null
+          student_id: string
+          transfer_destination: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          new_status: string
+          old_status?: string | null
+          reason_category?: string
+          reason_detail?: string | null
+          student_id: string
+          transfer_destination?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          new_status?: string
+          old_status?: string | null
+          reason_category?: string
+          reason_detail?: string | null
+          student_id?: string
+          transfer_destination?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_status_log_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           birth_date_gregorian: string | null
@@ -3111,11 +3161,15 @@ export type Database = {
           guardian_phone: string | null
           halaqa_id: string | null
           id: string
+          inactivation_date: string | null
+          inactivation_reason: string | null
           join_date: string
           notes: string | null
           status: Database["public"]["Enums"]["student_status"]
           total_memorized_pages: number | null
+          transfer_destination: string | null
           updated_at: string
+          warning_level: number | null
         }
         Insert: {
           birth_date_gregorian?: string | null
@@ -3127,11 +3181,15 @@ export type Database = {
           guardian_phone?: string | null
           halaqa_id?: string | null
           id?: string
+          inactivation_date?: string | null
+          inactivation_reason?: string | null
           join_date?: string
           notes?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           total_memorized_pages?: number | null
+          transfer_destination?: string | null
           updated_at?: string
+          warning_level?: number | null
         }
         Update: {
           birth_date_gregorian?: string | null
@@ -3143,11 +3201,15 @@ export type Database = {
           guardian_phone?: string | null
           halaqa_id?: string | null
           id?: string
+          inactivation_date?: string | null
+          inactivation_reason?: string | null
           join_date?: string
           notes?: string | null
           status?: Database["public"]["Enums"]["student_status"]
           total_memorized_pages?: number | null
+          transfer_destination?: string | null
           updated_at?: string
+          warning_level?: number | null
         }
         Relationships: [
           {

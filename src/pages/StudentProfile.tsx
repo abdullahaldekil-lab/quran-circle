@@ -11,13 +11,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3 } from "lucide-react";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History } from "lucide-react";
 import { formatHijriArabic, gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import StudentLevelProgress from "@/components/StudentLevelProgress";
 import MadarijStudentSection from "@/components/MadarijStudentSection";
+import StudentStatusManager from "@/components/student/StudentStatusManager";
+import StudentStatusLog from "@/components/student/StudentStatusLog";
 
 const PAGE_SIZE = 20;
 
@@ -209,6 +211,17 @@ const StudentProfile = () => {
               </div>
             )}
           </div>
+          {/* Student Status Manager */}
+          <div className="mt-4 pt-4 border-t">
+            <StudentStatusManager
+              student={student}
+              isManager={isManager}
+              onStatusChanged={async () => {
+                const { data } = await supabase.from("students").select("*, halaqat(name)").eq("id", id!).maybeSingle();
+                setStudent(data);
+              }}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -264,18 +277,22 @@ const StudentProfile = () => {
 
       {/* Tabs: Records vs Audio (lazy-loaded) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="records">
             <TrendingUp className="w-4 h-4 ml-1" />
-            سجل التسميعات
+            التسميعات
           </TabsTrigger>
           <TabsTrigger value="audio">
             <Mic className="w-4 h-4 ml-1" />
-            التسجيلات الصوتية
+            الصوتيات
           </TabsTrigger>
           <TabsTrigger value="narration">
             <BarChart3 className="w-4 h-4 ml-1" />
-            تقدم السرد
+            السرد
+          </TabsTrigger>
+          <TabsTrigger value="status_log">
+            <History className="w-4 h-4 ml-1" />
+            الحالات
           </TabsTrigger>
         </TabsList>
 
@@ -332,6 +349,10 @@ const StudentProfile = () => {
 
         <TabsContent value="narration">
           <NarrationSummaryTab studentId={id!} />
+        </TabsContent>
+
+        <TabsContent value="status_log">
+          <StudentStatusLog studentId={id!} />
         </TabsContent>
       </Tabs>
     </div>
