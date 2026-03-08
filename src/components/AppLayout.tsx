@@ -48,12 +48,20 @@ interface NavItem {
   label: string;
 }
 
+interface SubGroup {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  items: NavItem[];
+}
+
 interface NavGroup {
   id: string;
   label: string;
   icon: LucideIcon;
   color: string;
   items: NavItem[];
+  subGroups?: SubGroup[];
 }
 
 const standaloneItems: NavItem[] = [
