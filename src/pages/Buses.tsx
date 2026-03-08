@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StudentNameLink from "@/components/StudentNameLink";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,19 +12,22 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Bus, Users, UserMinus, Trash2, UserPlus, Download, Phone } from "lucide-react";
+import { Plus, Bus, UserMinus, Trash2, UserPlus, Download, Phone } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const Buses = () => {
-  const { isManager, isAdminStaff, canWrite } = useRole();
+  const { isManager, isAdminStaff } = useRole();
   const canManage = isManager || isAdminStaff;
   const queryClient = useQueryClient();
   const [busDialogOpen, setBusDialogOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedBusId, setSelectedBusId] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [guardianName, setGuardianName] = useState("");
+  const [guardianPhone, setGuardianPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [busForm, setBusForm] = useState({ bus_name: "", driver_name: "", driver_phone: "", capacity: 30 });
 
   // Fetch buses
@@ -54,7 +57,11 @@ const Buses = () => {
   const { data: allStudents = [] } = useQuery({
     queryKey: ["students_for_bus"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("students").select("id, full_name").eq("status", "active").order("full_name");
+      const { data, error } = await supabase
+        .from("students")
+        .select("id, full_name, guardian_name, guardian_phone")
+        .eq("status", "active")
+        .order("full_name");
       if (error) throw error;
       return data;
     },
@@ -64,6 +71,21 @@ const Buses = () => {
   const assignedStudentIds = new Set(assignments.map((a: any) => a.student_id));
   const unassignedStudents = allStudents.filter((s: any) => !assignedStudentIds.has(s.id));
 
+  // Auto-fill guardian info when student is selected
+  useEffect(() => {
+    if (selectedStudentId) {
+      const student = allStudents.find((s: any) => s.id === selectedStudentId);
+      if (student) {
+        setGuardianName(student.guardian_name || "");
+        setGuardianPhone(student.guardian_phone || "");
+      }
+    } else {
+      setGuardianName("");
+      setGuardianPhone("");
+    }
+    setPhoneError("");
+  }, [selectedStudentId, allStudents]);
+
   const getAssignmentsForBus = (busId: string) => assignments.filter((a: any) => a.bus_id === busId);
 
   const getCapacityStatus = (busId: string, capacity: number) => {
@@ -71,6 +93,10 @@ const Buses = () => {
     if (count > capacity) return { label: "تجاوز السعة", color: "destructive" as const, percent: (count / capacity) * 100 };
     if (count === capacity) return { label: "مكتمل", color: "default" as const, percent: 100 };
     return { label: "ناقص", color: "secondary" as const, percent: (count / capacity) * 100 };
+  };
+
+  const getDisplayPhone = (assignment: any) => {
+    return assignment.guardian_phone_override || assignment.students?.guardian_phone || "—";
   };
 
   // Mutations
@@ -102,24 +128,38 @@ const Buses = () => {
   const assignMutation = useMutation({
     mutationFn: async () => {
       if (!selectedBusId || !selectedStudentId) return;
+      if (!guardianPhone.trim()) {
+        throw new Error("يجب إدخال رقم ولي الأمر لإتمام تسجيل الطالب في الباص.");
+      }
       const bus = buses.find((b: any) => b.id === selectedBusId);
       const currentCount = getAssignmentsForBus(selectedBusId).length;
       if (bus && currentCount >= bus.capacity) {
         throw new Error("السعة ممتلئة، لا يمكن إضافة طالب");
       }
+      const student = allStudents.find((s: any) => s.id === selectedStudentId);
+      const needsOverride = guardianPhone.trim() !== (student?.guardian_phone || "").trim();
       const { error } = await supabase.from("student_bus_assignments").insert({
         student_id: selectedStudentId,
         bus_id: selectedBusId,
-      });
+        ...(needsOverride ? { guardian_phone_override: guardianPhone.trim() } : {}),
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bus_assignments"] });
       toast({ title: "تم تعيين الطالب" });
       setSelectedStudentId("");
+      setGuardianName("");
+      setGuardianPhone("");
       setAssignDialogOpen(false);
     },
-    onError: (e: any) => toast({ title: "خطأ", description: e.message, variant: "destructive" }),
+    onError: (e: any) => {
+      if (e.message.includes("ولي الأمر")) {
+        setPhoneError(e.message);
+      } else {
+        toast({ title: "خطأ", description: e.message, variant: "destructive" });
+      }
+    },
   });
 
   const unassignMutation = useMutation({
@@ -137,6 +177,13 @@ const Buses = () => {
   const totalAssigned = assignments.length;
   const totalStudents = allStudents.length;
   const unassignedCount = totalStudents - totalAssigned;
+
+  const resetAssignDialog = () => {
+    setSelectedStudentId("");
+    setGuardianName("");
+    setGuardianPhone("");
+    setPhoneError("");
+  };
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -189,7 +236,7 @@ const Buses = () => {
                 <div className="flex gap-1">
                   {canManage && (
                     <>
-                      <Button variant="ghost" size="icon" onClick={() => { setSelectedBusId(bus.id); setAssignDialogOpen(true); }}>
+                      <Button variant="ghost" size="icon" onClick={() => { setSelectedBusId(bus.id); resetAssignDialog(); setAssignDialogOpen(true); }}>
                         <UserPlus className="w-4 h-4" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteBusMutation.mutate(bus.id)}>
@@ -212,7 +259,10 @@ const Buses = () => {
                   doc.text(bus.bus_name, 14, 15);
                   if (bus.driver_name) doc.text(`Driver: ${bus.driver_name} | ${bus.driver_phone || ""}`, 14, 23);
                   const rows = busAssignments.map((a: any, i: number) => [
-                    String(i + 1), a.students?.full_name || "", a.students?.guardian_name || "", a.students?.guardian_phone || ""
+                    String(i + 1),
+                    a.students?.full_name || "",
+                    a.students?.guardian_name || "",
+                    getDisplayPhone(a),
                   ]);
                   autoTable(doc, { startY: 30, head: [["#", "Student", "Guardian", "Phone"]], body: rows });
                   doc.save(`${bus.bus_name}.pdf`);
@@ -222,13 +272,25 @@ const Buses = () => {
 
                 {busAssignments.length > 0 && (
                   <Table>
-                    <TableHeader><TableRow><TableHead>الطالب</TableHead><TableHead>ولي الأمر</TableHead><TableHead>الهاتف</TableHead>{canManage && <TableHead className="w-10"></TableHead>}</TableRow></TableHeader>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>الطالب</TableHead>
+                        <TableHead>ولي الأمر</TableHead>
+                        <TableHead>الهاتف</TableHead>
+                        {canManage && <TableHead className="w-10"></TableHead>}
+                      </TableRow>
+                    </TableHeader>
                     <TableBody>
                       {busAssignments.map((a: any) => (
                         <TableRow key={a.id}>
                           <TableCell className="text-sm"><StudentNameLink studentId={a.student_id} studentName={a.students?.full_name || "—"} /></TableCell>
                           <TableCell className="text-sm text-muted-foreground">{a.students?.guardian_name || "—"}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground" dir="ltr">{a.students?.guardian_phone || "—"}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground" dir="ltr">
+                            <span className="flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              {getDisplayPhone(a)}
+                            </span>
+                          </TableCell>
                           {canManage && (
                             <TableCell>
                               <Button variant="ghost" size="icon" onClick={() => unassignMutation.mutate(a.id)}>
@@ -248,7 +310,7 @@ const Buses = () => {
       </div>
 
       {/* Assign Student Dialog */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+      <Dialog open={assignDialogOpen} onOpenChange={(open) => { setAssignDialogOpen(open); if (!open) resetAssignDialog(); }}>
         <DialogContent dir="rtl">
           <DialogHeader><DialogTitle>تعيين طالب للباص</DialogTitle></DialogHeader>
           <div className="space-y-4">
@@ -266,13 +328,39 @@ const Buses = () => {
                 <SelectContent>{unassignedStudents.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+
+            {selectedStudentId && (
+              <>
+                <div>
+                  <Label>اسم ولي الأمر</Label>
+                  <Input value={guardianName} readOnly className="bg-muted/50" />
+                </div>
+                <div>
+                  <Label>رقم ولي الأمر <span className="text-destructive">*</span></Label>
+                  <Input
+                    value={guardianPhone}
+                    onChange={(e) => { setGuardianPhone(e.target.value); setPhoneError(""); }}
+                    placeholder="أدخل رقم ولي الأمر"
+                    dir="ltr"
+                    className={phoneError ? "border-destructive" : ""}
+                  />
+                  {phoneError && <p className="text-sm text-destructive mt-1">{phoneError}</p>}
+                  {!guardianPhone && <p className="text-sm text-muted-foreground mt-1">يجب إدخال رقم ولي الأمر لإتمام تسجيل الطالب في الباص.</p>}
+                </div>
+              </>
+            )}
+
             {selectedBusId && (() => {
               const bus = buses.find((b: any) => b.id === selectedBusId);
               const count = getAssignmentsForBus(selectedBusId).length;
               if (bus && count >= bus.capacity) return <p className="text-sm text-destructive font-medium">⚠️ السعة ممتلئة</p>;
               return null;
             })()}
-            <Button className="w-full" onClick={() => assignMutation.mutate()} disabled={!selectedBusId || !selectedStudentId || assignMutation.isPending}>
+            <Button
+              className="w-full"
+              onClick={() => assignMutation.mutate()}
+              disabled={!selectedBusId || !selectedStudentId || !guardianPhone.trim() || assignMutation.isPending}
+            >
               {assignMutation.isPending ? "جارٍ التعيين..." : "تعيين"}
             </Button>
           </div>

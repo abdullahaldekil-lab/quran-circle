@@ -1,0 +1,1 @@
+ALTER TABLE public.student_bus_assignments ADD COLUMN guardian_phone_override text DEFAULT NULL;
