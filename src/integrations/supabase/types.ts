@@ -2885,6 +2885,7 @@ export type Database = {
           active: boolean
           bus_id: string
           created_at: string
+          guardian_phone_override: string | null
           id: string
           student_id: string
         }
@@ -2892,6 +2893,7 @@ export type Database = {
           active?: boolean
           bus_id: string
           created_at?: string
+          guardian_phone_override?: string | null
           id?: string
           student_id: string
         }
@@ -2899,6 +2901,7 @@ export type Database = {
           active?: boolean
           bus_id?: string
           created_at?: string
+          guardian_phone_override?: string | null
           id?: string
           student_id?: string
         }
