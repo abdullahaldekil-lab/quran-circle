@@ -110,11 +110,14 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-          مرحباً {profile?.full_name || ""}
-        </h1>
-        <p className="text-muted-foreground mt-1">مجمع حويلان لتحفيظ القرآن الكريم</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+            مرحباً {profile?.full_name || ""}
+          </h1>
+          <p className="text-muted-foreground mt-1">مجمع حويلان لتحفيظ القرآن الكريم</p>
+        </div>
+        <PageDateHeader />
       </div>
 
       {/* Alerts */}
