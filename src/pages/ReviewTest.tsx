@@ -158,7 +158,11 @@ const ReviewTest = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">ورقة اختبار المراجعة</h1>
-          <p className="text-muted-foreground">{todayStr} — {hijriArabic}</p>
+          <div className="flex items-center gap-2 text-sm mt-1">
+            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <span className="font-medium">{hijriArabic}</span>
+            <span className="text-muted-foreground text-xs">، {gregorianArabic}</span>
+          </div>
         </div>
         {hasData && (
           <div className="flex gap-2 flex-wrap">
