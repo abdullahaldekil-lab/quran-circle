@@ -211,6 +211,17 @@ const StudentProfile = () => {
               </div>
             )}
           </div>
+          {/* Student Status Manager */}
+          <div className="mt-4 pt-4 border-t">
+            <StudentStatusManager
+              student={student}
+              isManager={isManager}
+              onStatusChanged={async () => {
+                const { data } = await supabase.from("students").select("*, halaqat(name)").eq("id", id!).maybeSingle();
+                setStudent(data);
+              }}
+            />
+          </div>
         </CardContent>
       </Card>
 
