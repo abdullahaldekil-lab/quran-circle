@@ -171,6 +171,9 @@ const Dashboard = () => {
             ))}
           </div>
 
+          {/* Daily Attendance Summary */}
+          <DailyAttendanceSummary />
+
           {/* Student Analytics Section */}
           <StudentAnalytics />
           <AttendanceAnalytics />
