@@ -277,18 +277,22 @@ const StudentProfile = () => {
 
       {/* Tabs: Records vs Audio (lazy-loaded) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="records">
             <TrendingUp className="w-4 h-4 ml-1" />
-            سجل التسميعات
+            التسميعات
           </TabsTrigger>
           <TabsTrigger value="audio">
             <Mic className="w-4 h-4 ml-1" />
-            التسجيلات الصوتية
+            الصوتيات
           </TabsTrigger>
           <TabsTrigger value="narration">
             <BarChart3 className="w-4 h-4 ml-1" />
-            تقدم السرد
+            السرد
+          </TabsTrigger>
+          <TabsTrigger value="status_log">
+            <History className="w-4 h-4 ml-1" />
+            الحالات
           </TabsTrigger>
         </TabsList>
 
