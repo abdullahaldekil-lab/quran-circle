@@ -48,12 +48,20 @@ interface NavItem {
   label: string;
 }
 
+interface SubGroup {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  items: NavItem[];
+}
+
 interface NavGroup {
   id: string;
   label: string;
   icon: LucideIcon;
   color: string;
   items: NavItem[];
+  subGroups?: SubGroup[];
 }
 
 const standaloneItems: NavItem[] = [
@@ -80,13 +88,7 @@ const navGroups: NavGroup[] = [
       { to: "/students", icon: Users, label: "الطلاب" },
       { to: "/inactive-students", icon: UserX, label: "طلاب غير نشطين" },
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
-      { to: "/student-quiz", icon: GraduationCap, label: "الاختبار الذكي" },
-      { to: "/quiz-results", icon: BarChart3, label: "نتائج الاختبار" },
-      { to: "/quiz-comparison", icon: BarChart3, label: "مقارنة الحلقات" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
-      { to: "/narration-test", icon: ClipboardList, label: "ورقة اختبار السرد" },
-      { to: "/review-test", icon: ClipboardList, label: "ورقة اختبار المراجعة" },
-      { to: "/narration-stats", icon: BarChart3, label: "إحصائيات يوم السرد" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
@@ -94,6 +96,28 @@ const navGroups: NavGroup[] = [
       { to: "/excellence/tracks", icon: Award, label: "إدارة المسارات" },
       { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
       { to: "/excellence/track-settings", icon: Settings, label: "إعدادات المسارات" },
+    ],
+    subGroups: [
+      {
+        id: "tests-subgroup",
+        label: "الاختبارات",
+        icon: ClipboardList,
+        items: [
+          { to: "/student-quiz", icon: GraduationCap, label: "الاختبار الذكي" },
+          { to: "/narration-test", icon: ScrollText, label: "اختبار السرد" },
+          { to: "/review-test", icon: ClipboardList, label: "اختبار المراجعة" },
+        ],
+      },
+      {
+        id: "results-subgroup",
+        label: "النتائج والتقارير",
+        icon: BarChart3,
+        items: [
+          { to: "/quiz-results", icon: BarChart3, label: "نتائج الاختبار" },
+          { to: "/quiz-comparison", icon: Trophy, label: "مقارنة الحلقات" },
+          { to: "/narration-stats", icon: CalendarDays, label: "إحصائيات يوم السرد" },
+        ],
+      },
     ],
   },
   {
@@ -190,9 +214,19 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const getInitialOpenGroups = () => {
     const open: Record<string, boolean> = {};
     navGroups.forEach((group) => {
-      if (group.items.some((item) => location.pathname.startsWith(item.to))) {
+      const hasActiveItem = group.items.some((item) => location.pathname.startsWith(item.to));
+      const hasActiveSubGroup = group.subGroups?.some((sub) =>
+        sub.items.some((item) => location.pathname.startsWith(item.to))
+      );
+      if (hasActiveItem || hasActiveSubGroup) {
         open[group.id] = true;
       }
+      // Also open subgroups that have active items
+      group.subGroups?.forEach((sub) => {
+        if (sub.items.some((item) => location.pathname.startsWith(item.to))) {
+          open[sub.id] = true;
+        }
+      });
     });
     return open;
   };
@@ -209,8 +243,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => hasAccess(item.to)),
+      subGroups: group.subGroups?.map((sub) => ({
+        ...sub,
+        items: sub.items.filter((item) => hasAccess(item.to)),
+      })).filter((sub) => sub.items.length > 0),
     }))
-    .filter((group) => group.items.length > 0);
+    .filter((group) => group.items.length > 0 || (group.subGroups && group.subGroups.length > 0));
 
   return (
     <div className="min-h-screen flex">
@@ -263,6 +301,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             const isOpen = openGroups[group.id] || false;
             const hasActiveChild = group.items.some((item) =>
               location.pathname.startsWith(item.to)
+            ) || group.subGroups?.some((sub) =>
+              sub.items.some((item) => location.pathname.startsWith(item.to))
             );
 
             return (
@@ -286,6 +326,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
                 {isOpen && (
                   <div className="mt-0.5 mr-4 border-r border-sidebar-border/40 pr-2 space-y-0.5">
+                    {/* Regular items */}
                     {group.items.map((item) => (
                       <NavLink
                         key={item.to}
@@ -303,6 +344,57 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         {item.label}
                       </NavLink>
                     ))}
+
+                    {/* Sub-groups (nested accordions) */}
+                    {group.subGroups?.map((subGroup) => {
+                      const isSubOpen = openGroups[subGroup.id] || false;
+                      const hasActiveSubChild = subGroup.items.some((item) =>
+                        location.pathname.startsWith(item.to)
+                      );
+
+                      return (
+                        <div key={subGroup.id}>
+                          <button
+                            onClick={() => toggleGroup(subGroup.id)}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                              hasActiveSubChild
+                                ? "bg-sidebar-accent/50 text-sidebar-foreground font-medium"
+                                : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                            }`}
+                          >
+                            <subGroup.icon className="w-4 h-4" />
+                            <span className="flex-1 text-right">{subGroup.label}</span>
+                            <ChevronDown
+                              className={`w-3 h-3 text-sidebar-foreground/50 transition-transform duration-200 ${
+                                isSubOpen ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
+
+                          {isSubOpen && (
+                            <div className="mt-0.5 mr-3 border-r border-sidebar-border/30 pr-2 space-y-0.5">
+                              {subGroup.items.map((item) => (
+                                <NavLink
+                                  key={item.to}
+                                  to={item.to}
+                                  onClick={() => setSidebarOpen(false)}
+                                  className={({ isActive }) =>
+                                    `flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                                      isActive
+                                        ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                                    }`
+                                  }
+                                >
+                                  <item.icon className="w-3.5 h-3.5" />
+                                  {item.label}
+                                </NavLink>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
