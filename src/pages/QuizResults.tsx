@@ -236,14 +236,23 @@ const QuizResults = () => {
     );
   }
 
+  const { hijri: hijriToday, gregorian: gregorianToday } = formatDualDate(new Date());
+
   return (
     <div className="space-y-6 animate-fade-in" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-primary" />
-          نتائج الاختبار الذكي
-        </h1>
-        <p className="text-muted-foreground text-sm">عرض وتحليل نتائج اختبارات الطلاب</p>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-primary" />
+            نتائج الاختبار الذكي
+          </h1>
+          <p className="text-muted-foreground text-sm">عرض وتحليل نتائج اختبارات الطلاب</p>
+        </div>
+        <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-1.5">
+          <CalendarDays className="w-4 h-4 text-muted-foreground" />
+          <span className="font-medium">{hijriToday}</span>
+          <span className="text-muted-foreground text-xs">، {gregorianToday}</span>
+        </div>
       </div>
 
       {/* Filters */}
