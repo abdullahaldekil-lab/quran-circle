@@ -152,6 +152,7 @@ const AppRoutes = () => {
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
       <Route path="/students/:id/narration-progress" element={<ProtectedRoute path="/students"><StudentNarrationProgress /></ProtectedRoute>} />
+      <Route path="/narration-test" element={<ProtectedRoute path="/quran-narration"><NarrationTest /></ProtectedRoute>} />
       <Route path="/student-quiz" element={<ProtectedRoute path="/recitation"><StudentQuiz /></ProtectedRoute>} />
       <Route path="/quiz-results" element={<ProtectedRoute path="/quiz-results"><QuizResults /></ProtectedRoute>} />
       <Route path="/quiz-comparison" element={<ProtectedRoute path="/quiz-comparison"><QuizComparison /></ProtectedRoute>} />
