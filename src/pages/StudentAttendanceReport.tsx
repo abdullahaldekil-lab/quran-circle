@@ -261,7 +261,7 @@ const StudentAttendanceReport = () => {
                 <TableBody>
                   {studentSummary.map(s => (
                     <TableRow key={s.id} className={cn(s.pct < 70 && "bg-amber-50 dark:bg-amber-950/20", s.pct >= 90 && "bg-emerald-50 dark:bg-emerald-950/20")}>
-                      <TableCell className="font-medium"><StudentNameLink id={s.id} name={s.full_name} /></TableCell>
+                      <TableCell className="font-medium"><StudentNameLink studentId={s.id} studentName={s.full_name} /></TableCell>
                       <TableCell className="text-center font-bold text-emerald-600">{s.present}</TableCell>
                       <TableCell className="text-center font-bold text-amber-600">{s.late}</TableCell>
                       <TableCell className="text-center font-bold text-destructive">{s.absent}</TableCell>
