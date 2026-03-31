@@ -128,6 +128,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/attendance", icon: CheckSquare, label: "الحضور" },
       { to: "/attendance-audit", icon: ClipboardList, label: "سجل التدقيق" },
+      { to: "/student-attendance-report", icon: BarChart3, label: "تقرير حضور الطلاب" },
       { to: "/academic-calendar", icon: CalendarDays, label: "التقويم الأكاديمي" },
     ],
   },
