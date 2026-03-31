@@ -221,7 +221,7 @@ const StudentAttendanceReport = () => {
                   {studentSummary.map(s => (
                     <TableRow key={s.id}>
                       <TableCell className="font-medium sticky right-0 bg-background z-10">
-                        <StudentNameLink id={s.id} name={s.full_name} />
+<StudentNameLink studentId={s.id} studentName={s.full_name} />
                       </TableCell>
                       {monthDays.map(day => {
                         const dateStr = format(day, "yyyy-MM-dd");
