@@ -314,9 +314,14 @@ const StaffAttendanceLog = () => {
 
         {/* Weekly Tab */}
         <TabsContent value="weekly" className="space-y-4">
-          <div className="flex gap-2 print:hidden">
-            <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
-            <Button variant="outline" size="sm" onClick={exportWeeklyExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
+          <div className="flex items-center gap-2 print:hidden flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => setSelectedWeek(subWeeks(selectedWeek, 1))}>→ الأسبوع السابق</Button>
+            <span className="text-sm font-medium px-2">{format(weekDays[0], "d/M")} – {format(weekDays[4], "d/M/yyyy")}</span>
+            <Button variant="outline" size="sm" onClick={() => setSelectedWeek(addWeeks(selectedWeek, 1))}>الأسبوع التالي ←</Button>
+            <div className="mr-auto flex gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
+              <Button variant="outline" size="sm" onClick={exportWeeklyExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
+            </div>
           </div>
           <Card>
             <CardContent className="p-0 overflow-auto">
@@ -347,6 +352,22 @@ const StaffAttendanceLog = () => {
                       })}
                     </TableRow>
                   ))}
+                  {/* Totals row */}
+                  <TableRow className="bg-muted/60 font-bold border-t-2">
+                    <TableCell className="sticky right-0 bg-muted/60 z-10 font-bold">الإجمالي (حاضر)</TableCell>
+                    {weekDays.map(day => {
+                      const dateStr = format(day, "yyyy-MM-dd");
+                      const count = filteredStaff.filter(s => {
+                        const rec = recordsByStaffDate[s.id]?.[dateStr];
+                        return rec && ["present", "late", "early_leave"].includes(rec.status);
+                      }).length;
+                      return (
+                        <TableCell key={dateStr} className="text-center font-bold text-primary">
+                          {count} / {filteredStaff.length}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
                 </TableBody>
               </Table>
             </CardContent>
