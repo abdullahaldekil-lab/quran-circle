@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+// date-fns & recharts used by AttendanceTab
+import { format as fmtDate, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from "date-fns";
+import { ar } from "date-fns/locale";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
