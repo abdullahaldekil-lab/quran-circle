@@ -103,6 +103,33 @@ const Dashboard = () => {
           const pct = (totalStaff || 0) > 0 ? Math.round((presentAndLate / (totalStaff || 1)) * 100) : 0;
           if (!cancelled) setStaffPct(Math.min(pct, 100));
         }
+
+        // Fetch annual plan stats
+        if (isManager || isSupervisor) {
+          const { data: allPlans } = await supabase
+            .from("student_annual_plans").select("id").eq("status", "active");
+          if (allPlans && allPlans.length > 0) {
+            const { data: allProgress } = await supabase
+              .from("student_plan_progress").select("plan_id, target_pages, actual_pages")
+              .in("plan_id", allPlans.map(p => p.id));
+            // Group by plan_id and calculate commitment
+            const planMap = new Map<string, { target: number; actual: number }>();
+            for (const row of allProgress || []) {
+              const cur = planMap.get(row.plan_id) || { target: 0, actual: 0 };
+              cur.target += row.target_pages || 0;
+              cur.actual += row.actual_pages || 0;
+              planMap.set(row.plan_id, cur);
+            }
+            let onTrack = 0;
+            planMap.forEach(v => { if (v.target > 0 && (v.actual / v.target) >= 0.7) onTrack++; });
+            if (!cancelled) setPlanStats({ onTrack, total: planMap.size });
+
+            const behindPct = planMap.size > 0 ? ((planMap.size - onTrack) / planMap.size) * 100 : 0;
+            if (behindPct > 20) {
+              newAlerts.push({ type: "warning", message: `${Math.round(behindPct)}% من الطلاب متأخرون عن خططهم السنوية` });
+            }
+          }
+        }
       } catch (e) {
         console.error("Dashboard fetch error:", e);
       } finally {
