@@ -71,6 +71,7 @@ import ReviewTest from "./pages/ReviewTest";
 import NarrationStats from "./pages/NarrationStats";
 import StudentAttendanceReport from "@/pages/StudentAttendanceReport";
 import StudentAnnualPlan from "@/pages/StudentAnnualPlan";
+import InternalRequests from "@/pages/InternalRequests";
 
 const queryClient = new QueryClient({
   defaultOptions: {
