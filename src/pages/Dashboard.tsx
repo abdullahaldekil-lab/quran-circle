@@ -170,7 +170,7 @@ const Dashboard = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={`grid grid-cols-2 ${canSeeStaff && staffPct !== null ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
             {cards.map((card) => (
               <Card
                 key={card.title}
@@ -187,6 +187,23 @@ const Dashboard = () => {
                 <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Card>
             ))}
+            {canSeeStaff && staffPct !== null && (
+              <Card
+                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
+                onClick={() => navigate("/staff-attendance")}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">حضور الموظفين</CardTitle>
+                  <Briefcase className={`w-5 h-5 ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className={`text-2xl lg:text-3xl font-bold ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`}>
+                    {staffPct}%
+                  </div>
+                </CardContent>
+                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Card>
+            )}
           </div>
 
           {/* Daily Attendance Summary */}
