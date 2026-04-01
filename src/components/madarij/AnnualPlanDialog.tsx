@@ -469,6 +469,24 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
         </div>
       </DialogContent>
     </Dialog>
+
+      <AlertDialog open={confirmReplace} onOpenChange={setConfirmReplace}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>يوجد خطة نشطة بالفعل</AlertDialogTitle>
+            <AlertDialogDescription>
+              يوجد خطة نشطة لهذا الطالب بالفعل — هل تريد إلغاؤها وإنشاء خطة جديدة؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmReplace(false); doSave(); }}>
+              نعم، استبدل
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
