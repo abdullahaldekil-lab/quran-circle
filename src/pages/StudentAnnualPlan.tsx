@@ -343,7 +343,7 @@ const StudentAnnualPlan = () => {
                 <TableHead>المنجز</TableHead>
                 <TableHead>الالتزام%</TableHead>
                 <TableHead>الحالة</TableHead>
-                <TableHead className="print:hidden">تحديث</TableHead>
+                {(isManager || isSupervisor || isTeacher) && <TableHead className="print:hidden">تحديث</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
