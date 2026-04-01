@@ -261,6 +261,7 @@ const Madarij = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AnnualPlanDialog open={annualPlanOpen} onOpenChange={setAnnualPlanOpen} onSaved={fetchData} />
     </div>
   );
 };
