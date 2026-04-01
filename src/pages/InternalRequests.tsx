@@ -102,7 +102,34 @@ const InternalRequests = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [user]);
+  const fetchReplies = async (requestId: string) => {
+    const { data } = await supabase
+      .from("internal_request_replies")
+      .select("*, from_user:profiles!internal_request_replies_from_user_id_fkey(full_name)")
+      .eq("request_id", requestId)
+      .order("created_at");
+    setReplies(data || []);
+  };
+
+  useEffect(() => {
+    fetchData();
+
+    const channel = supabase
+      .channel('internal-requests-realtime')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'internal_requests'
+      }, () => fetchData())
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'internal_request_replies'
+      }, (payload: any) => {
+        if (selectedRequest?.id === payload.new.request_id) {
+          fetchReplies(selectedRequest.id);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, selectedRequest?.id]);
 
   const openDetail = async (req: any) => {
     setSelectedRequest(req);

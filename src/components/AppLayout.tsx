@@ -436,6 +436,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 {profile?.position_title || profile?.role || ""}
               </p>
             </div>
+            <NotificationBell />
           </div>
           <Button
             variant="ghost"
