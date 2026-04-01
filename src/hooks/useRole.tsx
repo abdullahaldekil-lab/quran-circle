@@ -31,6 +31,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-attendance-report",
     "/notification-templates", "/notification-log", "/notification-preferences",
     "/send-notification", "/bulk-email",
+    "/permissions-management",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
@@ -124,13 +125,8 @@ export const useRole = () => {
 
   const allowedRoutes = rolePermissions[role] || rolePermissions.teacher;
 
-  // Add permissions-management route for manager
-  const finalAllowedRoutes = role === "manager" 
-    ? [...allowedRoutes, "/permissions-management"] 
-    : allowedRoutes;
-
   const hasAccess = (path: string) => {
-    return finalAllowedRoutes.some(
+    return allowedRoutes.some(
       (route) => path === route || path.startsWith(route + "/")
     );
   };
