@@ -235,6 +235,9 @@ const StudentProfile = () => {
       {/* Madarij Section */}
       <MadarijStudentSection studentId={id!} isManager={isManager} />
 
+      {/* Annual Plan Summary */}
+      <AnnualPlanSummaryCard studentId={id!} />
+
       {/* Progress */}
       <Card>
         <CardHeader className="pb-2">
