@@ -309,6 +309,14 @@ const UserManagement = () => {
     setPasswordDialogOpen(true);
   };
 
+  const adminUpdateEmailMutation = useMutation({
+    mutationFn: (data: any) => callEdgeFunction("admin_update_email", data),
+    onSuccess: () => {
+      toast.success("تم تحديث البريد الإلكتروني بنجاح");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const openEditDialog = (staff: any) => {
     setEditTarget(staff);
     setEditForm({
@@ -316,6 +324,7 @@ const UserManagement = () => {
       phone: staff.phone || "",
       position_title: staff.position_title || "",
       role: staff.role || "teacher",
+      email: "",
     });
     setEditDialogOpen(true);
   };
