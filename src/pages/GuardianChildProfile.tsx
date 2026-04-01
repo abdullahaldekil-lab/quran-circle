@@ -21,6 +21,8 @@ const GuardianChildProfile = () => {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [badges, setBadges] = useState<any[]>([]);
   const [trips, setTrips] = useState<any[]>([]);
+  const [annualPlan, setAnnualPlan] = useState<any>(null);
+  const [planProgress, setPlanProgress] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
