@@ -487,7 +487,8 @@ const InternalRequests = () => {
                     <SelectItem value="إجازة">إجازة</SelectItem>
                     <SelectItem value="مستلزمات">مستلزمات</SelectItem>
                     <SelectItem value="صيانة">صيانة</SelectItem>
-                    <SelectItem value="استفسار">استفسار</SelectItem>
+                    <SelectItem value="استفسار">استفسار إداري</SelectItem>
+                    <SelectItem value="أمر عمل">أمر عمل</SelectItem>
                     <SelectItem value="أخرى">أخرى</SelectItem>
                   </SelectContent>
                 </Select>
