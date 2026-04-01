@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+// date-fns & recharts used by AttendanceTab
+import { format as fmtDate, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from "date-fns";
+import { ar } from "date-fns/locale";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History } from "lucide-react";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare } from "lucide-react";
 import { formatHijriArabic, gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
@@ -277,7 +281,7 @@ const StudentProfile = () => {
 
       {/* Tabs: Records vs Audio (lazy-loaded) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="records">
             <TrendingUp className="w-4 h-4 ml-1" />
             التسميعات
@@ -289,6 +293,10 @@ const StudentProfile = () => {
           <TabsTrigger value="narration">
             <BarChart3 className="w-4 h-4 ml-1" />
             السرد
+          </TabsTrigger>
+          <TabsTrigger value="attendance_tab">
+            <CheckSquare className="w-4 h-4 ml-1" />
+            الحضور
           </TabsTrigger>
           <TabsTrigger value="status_log">
             <History className="w-4 h-4 ml-1" />
@@ -349,6 +357,10 @@ const StudentProfile = () => {
 
         <TabsContent value="narration">
           <NarrationSummaryTab studentId={id!} />
+        </TabsContent>
+
+        <TabsContent value="attendance_tab">
+          <AttendanceTab studentId={id!} />
         </TabsContent>
 
         <TabsContent value="status_log">
@@ -582,6 +594,165 @@ const AudioTab = ({ studentId }: { studentId: string }) => {
         )}
       </CardContent>
     </Card>
+  );
+};
+
+// Attendance tab with monthly grid and trend chart
+const AttendanceTab = ({ studentId }: { studentId: string }) => {
+  const [month, setMonth] = useState(new Date().getMonth());
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [loaded, setLoaded] = useState(false);
+  const [attRecords, setAttRecords] = useState<any[]>([]);
+  const [trendData, setTrendData] = useState<{ month: string; pct: number }[]>([]);
+
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      const dateObj = new Date(year, month, 1);
+      const ms = fmtDate(startOfMonth(dateObj), "yyyy-MM-dd");
+      const me = fmtDate(endOfMonth(dateObj), "yyyy-MM-dd");
+
+      const { data } = await supabase
+        .from("attendance")
+        .select("attendance_date, status")
+        .eq("student_id", studentId)
+        .gte("attendance_date", ms)
+        .lte("attendance_date", me);
+      setAttRecords(data || []);
+
+      const sixAgo = fmtDate(startOfMonth(subMonths(dateObj, 5)), "yyyy-MM-dd");
+      const { data: tData } = await supabase
+        .from("attendance")
+        .select("attendance_date, status")
+        .eq("student_id", studentId)
+        .gte("attendance_date", sixAgo)
+        .lte("attendance_date", me);
+
+      const trend: { month: string; pct: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = subMonths(dateObj, i);
+        const s = fmtDate(startOfMonth(d), "yyyy-MM-dd");
+        const e = fmtDate(endOfMonth(d), "yyyy-MM-dd");
+        const recs = (tData || []).filter((a: any) => a.attendance_date >= s && a.attendance_date <= e);
+        const workDays = eachDayOfInterval({ start: startOfMonth(d), end: endOfMonth(d) }).filter((dd: Date) => {
+          const day = getDay(dd);
+          return day !== 5 && day !== 6;
+        }).length;
+        const present = recs.filter((a: any) => a.status === "present" || a.status === "late").length;
+        trend.push({ month: fmtDate(d, "MMM", { locale: ar }), pct: workDays > 0 ? Math.round((present / workDays) * 100) : 0 });
+      }
+      setTrendData(trend);
+      setLoaded(true);
+    };
+    fetchAttendance();
+  }, [studentId, month, year]);
+
+  if (!loaded) {
+    return <Card><CardContent className="py-12 flex justify-center"><div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" /></CardContent></Card>;
+  }
+
+  return <AttendanceTabContent attRecords={attRecords} trendData={trendData} month={month} year={year} setMonth={(m) => { setMonth(m); setLoaded(false); }} setYear={(y) => { setYear(y); setLoaded(false); }} />;
+};
+
+
+
+
+const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, setYear }: {
+  attRecords: any[]; trendData: { month: string; pct: number }[];
+  month: number; year: number; setMonth: (m: number) => void; setYear: (y: number) => void;
+}) => {
+  const dateObj = new Date(year, month, 1);
+  const monthDays = eachDayOfInterval({ start: startOfMonth(dateObj), end: endOfMonth(dateObj) }).filter((d: Date) => {
+    const day = getDay(d);
+    return day !== 5 && day !== 6;
+  });
+
+  const attMap: Record<string, string> = {};
+  attRecords.forEach((r: any) => { attMap[r.attendance_date] = r.status; });
+
+  const present = attRecords.filter((r: any) => r.status === "present").length;
+  const absent = attRecords.filter((r: any) => r.status === "absent").length;
+  const late = attRecords.filter((r: any) => r.status === "late").length;
+  const excused = attRecords.filter((r: any) => r.status === "excused").length;
+  const pct = monthDays.length > 0 ? Math.round(((present + late) / monthDays.length) * 100) : 0;
+
+  const STATUS_MAP: Record<string, { label: string; color: string; badge: "default" | "secondary" | "destructive" | "outline" }> = {
+    present: { label: "حاضر ✓", color: "bg-emerald-100 dark:bg-emerald-900/30", badge: "default" },
+    absent: { label: "غائب ✗", color: "bg-red-100 dark:bg-red-900/30", badge: "destructive" },
+    late: { label: "متأخر ⏰", color: "bg-amber-100 dark:bg-amber-900/30", badge: "secondary" },
+    excused: { label: "مستأذن", color: "bg-muted", badge: "outline" },
+  };
+
+  const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date(2024, i).toLocaleDateString("ar-SA", { month: "long" }) }));
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-3">
+        <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+          <SelectContent>{months.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+          <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+          <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-5 gap-2">
+        <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-emerald-600">{present}</p><p className="text-[10px] text-muted-foreground">حضور</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-destructive">{absent}</p><p className="text-[10px] text-muted-foreground">غياب</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-amber-600">{late}</p><p className="text-[10px] text-muted-foreground">تأخر</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-muted-foreground">{excused}</p><p className="text-[10px] text-muted-foreground">مستأذن</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold">{pct}%</p><p className="text-[10px] text-muted-foreground">النسبة</p></CardContent></Card>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-right p-2">التاريخ</th>
+                <th className="text-right p-2">اليوم</th>
+                <th className="text-center p-2">الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthDays.map((day: Date) => {
+                const dateStr = fmtDate(day, "yyyy-MM-dd");
+                const status = attMap[dateStr];
+                const info = STATUS_MAP[status];
+                return (
+                  <tr key={dateStr} className={`border-b ${info?.color || ""}`}>
+                    <td className="p-2">{fmtDate(day, "d/M")}</td>
+                    <td className="p-2">{fmtDate(day, "EEEE", { locale: ar })}</td>
+                    <td className="p-2 text-center">
+                      {info ? <Badge variant={info.badge}>{info.label}</Badge> : <span className="text-muted-foreground">—</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      {trendData.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">تطور الحضور (آخر 6 أشهر)</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" fontSize={11} />
+                <YAxis domain={[0, 100]} fontSize={11} />
+                <Tooltip formatter={(v: number) => `${v}%`} />
+                <Line type="monotone" dataKey="pct" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} name="نسبة الحضور" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
