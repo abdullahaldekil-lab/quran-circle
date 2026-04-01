@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, LogIn, LogOut, Users, Clock, AlertTriangle, UserX, CalendarOff, Pencil } from "lucide-react";
+import { CalendarIcon, LogIn, LogOut, Users, Clock, AlertTriangle, UserX, CalendarOff, Pencil, Printer, FileDown } from "lucide-react";
 
 interface StaffProfile {
   id: string;
