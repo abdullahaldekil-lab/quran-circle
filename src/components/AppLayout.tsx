@@ -209,10 +209,23 @@ const navGroups: NavGroup[] = [
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { profile, signOut } = useAuth();
-  const { hasAccess } = useRole();
+  const { hasAccess, role } = useRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const location = useLocation();
 
+  useEffect(() => {
+    if (!profile?.id) return;
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from("internal_requests")
+        .select("id", { count: "exact", head: true })
+        .or(`to_user_id.eq.${profile.id},to_role.eq.${role}`)
+        .in("status", ["new", "in_progress"]);
+      setPendingRequestsCount(count || 0);
+    };
+    fetchPending();
+  }, [profile?.id, role, location.pathname]);
   // Determine which groups are open based on active route
   const getInitialOpenGroups = () => {
     const open: Record<string, boolean> = {};
