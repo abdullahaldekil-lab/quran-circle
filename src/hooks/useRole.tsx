@@ -75,11 +75,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/rankings", "/profile", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance-log",
-    "/notification-preferences",
-  ],
-};
-
-// Resource-level write permissions per role
+    "/notification-preferences", "/internal-requests",
 type Resource =
   | "students" | "halaqat" | "recitation" | "attendance"
   | "instructions" | "levels" | "rankings" | "rewards"
