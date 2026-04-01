@@ -2900,6 +2900,72 @@ export type Database = {
           },
         ]
       }
+      student_annual_plans: {
+        Row: {
+          academic_year: string
+          created_at: string
+          created_by: string | null
+          daily_target_pages: number
+          end_date: string | null
+          halaqa_id: string
+          id: string
+          plan_type: string
+          start_date: string
+          status: string
+          student_id: string
+          total_target_pages: number
+          updated_at: string
+          working_days_per_week: number
+        }
+        Insert: {
+          academic_year?: string
+          created_at?: string
+          created_by?: string | null
+          daily_target_pages?: number
+          end_date?: string | null
+          halaqa_id: string
+          id?: string
+          plan_type?: string
+          start_date?: string
+          status?: string
+          student_id: string
+          total_target_pages?: number
+          updated_at?: string
+          working_days_per_week?: number
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          created_by?: string | null
+          daily_target_pages?: number
+          end_date?: string | null
+          halaqa_id?: string
+          id?: string
+          plan_type?: string
+          start_date?: string
+          status?: string
+          student_id?: string
+          total_target_pages?: number
+          updated_at?: string
+          working_days_per_week?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_annual_plans_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_annual_plans_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_badges: {
         Row: {
           awarded_at: string
@@ -3053,6 +3119,69 @@ export type Database = {
             foreignKeyName: "student_levels_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_plan_progress: {
+        Row: {
+          actual_pages: number
+          attendance_days: number
+          commitment_percentage: number
+          created_at: string
+          id: string
+          month_number: number
+          notes: string | null
+          plan_id: string
+          status: string
+          student_id: string
+          target_pages: number
+          updated_at: string
+          week_number: number
+        }
+        Insert: {
+          actual_pages?: number
+          attendance_days?: number
+          commitment_percentage?: number
+          created_at?: string
+          id?: string
+          month_number?: number
+          notes?: string | null
+          plan_id: string
+          status?: string
+          student_id: string
+          target_pages?: number
+          updated_at?: string
+          week_number?: number
+        }
+        Update: {
+          actual_pages?: number
+          attendance_days?: number
+          commitment_percentage?: number
+          created_at?: string
+          id?: string
+          month_number?: number
+          notes?: string | null
+          plan_id?: string
+          status?: string
+          student_id?: string
+          target_pages?: number
+          updated_at?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_plan_progress_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "student_annual_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_plan_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
