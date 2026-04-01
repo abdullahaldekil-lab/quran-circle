@@ -1,40 +1,49 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Printer, Download, Users, Clock, UserX } from "lucide-react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Printer, Download, Users, Clock, UserX, FileText } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import StudentNameLink from "@/components/StudentNameLink";
+import PageDateHeader from "@/components/PageDateHeader";
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  present: { label: "حاضر", color: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" },
-  absent: { label: "غائب", color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300" },
-  late: { label: "متأخر", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" },
-  excused: { label: "مستأذن", color: "bg-muted text-muted-foreground" },
+const STATUS_LABELS: Record<string, { label: string; color: string; symbol: string }> = {
+  present: { label: "حاضر", color: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300", symbol: "✓" },
+  absent: { label: "غائب", color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300", symbol: "✗" },
+  late: { label: "متأخر", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300", symbol: "⏰" },
+  excused: { label: "مستأذن", color: "bg-muted text-muted-foreground", symbol: "≡" },
 };
 
+const MONTHS = Array.from({ length: 12 }, (_, i) => ({
+  value: i,
+  label: new Date(2024, i).toLocaleDateString("ar-SA", { month: "long" }),
+}));
+
+const currentYear = new Date().getFullYear();
+const YEARS = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+
 const StudentAttendanceReport = () => {
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [filterHalaqaId, setFilterHalaqaId] = useState<string>("all");
   const [filterStudentId, setFilterStudentId] = useState<string>("all");
 
-  const monthStart = format(startOfMonth(selectedMonth), "yyyy-MM-dd");
-  const monthEnd = format(endOfMonth(selectedMonth), "yyyy-MM-dd");
+  const dateObj = new Date(selectedYear, selectedMonth, 1);
+  const monthStart = format(startOfMonth(dateObj), "yyyy-MM-dd");
+  const monthEnd = format(endOfMonth(dateObj), "yyyy-MM-dd");
 
   const { data: halaqat = [] } = useQuery({
     queryKey: ["halaqat-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("halaqat").select("id, name, teacher_id").eq("active", true).order("name");
+      const { data, error } = await supabase.from("halaqat").select("id, name").eq("active", true).order("name");
       if (error) throw error;
       return data;
     },
@@ -62,19 +71,30 @@ const StudentAttendanceReport = () => {
     },
   });
 
+  // Last 6 months attendance for trend chart
+  const sixMonthsAgo = format(startOfMonth(subMonths(dateObj, 5)), "yyyy-MM-dd");
+  const { data: trendAttendance = [] } = useQuery({
+    queryKey: ["student-attendance-trend", filterStudentId, sixMonthsAgo, monthEnd],
+    enabled: filterStudentId !== "all",
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("attendance_date, status")
+        .eq("student_id", filterStudentId)
+        .gte("attendance_date", sixMonthsAgo)
+        .lte("attendance_date", monthEnd);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const monthDays = useMemo(() => {
-    return eachDayOfInterval({ start: startOfMonth(selectedMonth), end: endOfMonth(selectedMonth) }).filter(d => {
+    return eachDayOfInterval({ start: startOfMonth(dateObj), end: endOfMonth(dateObj) }).filter(d => {
       const day = getDay(d);
-      return day !== 5 && day !== 6;
+      return day !== 5 && day !== 6; // exclude Fri/Sat
     });
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedYear]);
 
-  const filteredStudents = useMemo(() => {
-    if (filterStudentId !== "all") return students.filter(s => s.id === filterStudentId);
-    return students;
-  }, [students, filterStudentId]);
-
-  // Attendance map: studentId -> date -> status
   const attMap = useMemo(() => {
     const map: Record<string, Record<string, string>> = {};
     attendance.forEach(a => {
@@ -84,32 +104,19 @@ const StudentAttendanceReport = () => {
     return map;
   }, [attendance]);
 
-  // Summary per student
   const studentSummary = useMemo(() => {
-    return filteredStudents.map(s => {
+    return students.map(s => {
       const recs = attendance.filter(a => a.student_id === s.id);
       const present = recs.filter(a => a.status === "present").length;
       const late = recs.filter(a => a.status === "late").length;
       const absent = recs.filter(a => a.status === "absent").length;
-      const pct = monthDays.length > 0 ? Math.round(((present + late) / monthDays.length) * 100) : 0;
-      return { ...s, present, late, absent, pct };
+      const excused = recs.filter(a => a.status === "excused").length;
+      const total = monthDays.length;
+      const pct = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
+      return { ...s, present, late, absent, excused, pct };
     });
-  }, [filteredStudents, attendance, monthDays]);
+  }, [students, attendance, monthDays]);
 
-  // Line chart: selected student daily attendance
-  const lineData = useMemo(() => {
-    if (filterStudentId === "all") return [];
-    return monthDays.map(day => {
-      const dateStr = format(day, "yyyy-MM-dd");
-      const status = attMap[filterStudentId]?.[dateStr];
-      return {
-        day: format(day, "d"),
-        حاضر: status === "present" || status === "late" ? 1 : 0,
-      };
-    });
-  }, [filterStudentId, monthDays, attMap]);
-
-  // Bar chart: compare students in halaqa
   const barData = useMemo(() => {
     return studentSummary.map(s => ({
       name: s.full_name.split(" ").slice(0, 2).join(" "),
@@ -117,19 +124,68 @@ const StudentAttendanceReport = () => {
     }));
   }, [studentSummary]);
 
-  const statusBg = (status?: string) => STATUS_LABELS[status || ""]?.color || "bg-muted/30";
+  // Monthly trend for selected student (last 6 months)
+  const trendData = useMemo(() => {
+    if (filterStudentId === "all") return [];
+    const months: { month: string; pct: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = subMonths(dateObj, i);
+      const ms = format(startOfMonth(d), "yyyy-MM-dd");
+      const me = format(endOfMonth(d), "yyyy-MM-dd");
+      const recs = trendAttendance.filter(a => a.attendance_date >= ms && a.attendance_date <= me);
+      const workDays = eachDayOfInterval({ start: startOfMonth(d), end: endOfMonth(d) }).filter(dd => {
+        const day = getDay(dd);
+        return day !== 5 && day !== 6;
+      }).length;
+      const present = recs.filter(a => a.status === "present" || a.status === "late").length;
+      const pct = workDays > 0 ? Math.round((present / workDays) * 100) : 0;
+      months.push({ month: format(d, "MMM yyyy", { locale: ar }), pct });
+    }
+    return months;
+  }, [filterStudentId, trendAttendance, selectedMonth, selectedYear]);
+
+  const selectedStudent = filterStudentId !== "all" ? studentSummary.find(s => s.id === filterStudentId) : null;
 
   const handlePrint = () => window.print();
 
-  const handleExportExcel = () => {
-    import("xlsx-js-style").then((XLSX) => {
-      const rows = studentSummary.map(s => ({
-        "الطالب": s.full_name, "أيام الحضور": s.present, "أيام التأخر": s.late, "أيام الغياب": s.absent, "نسبة الحضور %": s.pct,
-      }));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "حضور الطلاب");
-      XLSX.writeFile(wb, `حضور_الطلاب_${monthStart}.xlsx`);
+  const handleExportPDF = () => {
+    if (!selectedStudent) return;
+    import("jspdf").then(({ default: jsPDF }) => {
+      import("jspdf-autotable").then(() => {
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        doc.addFont("Helvetica", "Helvetica", "normal");
+        doc.setFont("Helvetica");
+
+        doc.setFontSize(16);
+        doc.text("Student Attendance Report", 105, 20, { align: "center" });
+        doc.setFontSize(11);
+        doc.text(`Student: ${selectedStudent.full_name}`, 105, 30, { align: "center" });
+        doc.text(`Month: ${format(dateObj, "MMMM yyyy")}`, 105, 37, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.text(`Present: ${selectedStudent.present} | Late: ${selectedStudent.late} | Absent: ${selectedStudent.absent} | Excused: ${selectedStudent.excused} | Rate: ${selectedStudent.pct}%`, 105, 47, { align: "center" });
+
+        const tableData = monthDays.map(day => {
+          const dateStr = format(day, "yyyy-MM-dd");
+          const status = attMap[selectedStudent.id]?.[dateStr];
+          return [
+            format(day, "yyyy-MM-dd"),
+            format(day, "EEEE", { locale: ar }),
+            STATUS_LABELS[status || ""]?.label || "-",
+          ];
+        });
+
+        (doc as any).autoTable({
+          startY: 55,
+          head: [["Date", "Day", "Status"]],
+          body: tableData,
+          theme: "grid",
+          styles: { fontSize: 9, halign: "center" },
+          headStyles: { fillColor: [34, 139, 34] },
+        });
+
+        doc.save(`attendance_${selectedStudent.full_name}_${monthStart}.pdf`);
+      });
     });
   };
 
@@ -137,26 +193,13 @@ const StudentAttendanceReport = () => {
     <div className="space-y-6" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">تقرير حضور الطلاب</h1>
-        <p className="text-muted-foreground">تقارير وتحليلات حضور الطلاب الشهرية</p>
+        <PageDateHeader />
       </div>
 
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">الشهر</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-right">
-                    <CalendarIcon className="ml-2 h-4 w-4" />{format(selectedMonth, "MMMM yyyy", { locale: ar })}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={selectedMonth} onSelect={(d) => d && setSelectedMonth(d)} className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium mb-1 block">الحلقة</label>
               <Select value={filterHalaqaId} onValueChange={(v) => { setFilterHalaqaId(v); setFilterStudentId("all"); }}>
@@ -177,186 +220,198 @@ const StudentAttendanceReport = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">الشهر</label>
+              <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">السنة</label>
+              <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 print:hidden">
-        <Card><CardContent className="p-4 flex items-center gap-3"><Users className="w-7 h-7 text-primary" /><div><p className="text-xl font-bold">{filteredStudents.length}</p><p className="text-xs text-muted-foreground">عدد الطلاب</p></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3"><Users className="w-7 h-7 text-primary" /><div><p className="text-xl font-bold">{students.length}</p><p className="text-xs text-muted-foreground">عدد الطلاب</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><Users className="w-7 h-7 text-emerald-500" /><div><p className="text-xl font-bold">{studentSummary.reduce((s, x) => s + x.present, 0)}</p><p className="text-xs text-muted-foreground">إجمالي الحضور</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-7 h-7 text-amber-500" /><div><p className="text-xl font-bold">{studentSummary.reduce((s, x) => s + x.late, 0)}</p><p className="text-xs text-muted-foreground">إجمالي التأخر</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><UserX className="w-7 h-7 text-destructive" /><div><p className="text-xl font-bold">{studentSummary.reduce((s, x) => s + x.absent, 0)}</p><p className="text-xs text-muted-foreground">إجمالي الغياب</p></div></CardContent></Card>
       </div>
 
-      <Tabs defaultValue="monthly" dir="rtl">
+      <Tabs defaultValue="halaqa-summary" dir="rtl">
         <TabsList className="print:hidden">
-          <TabsTrigger value="monthly">الجدول الشهري</TabsTrigger>
-          <TabsTrigger value="summary">ملخص الحضور</TabsTrigger>
+          <TabsTrigger value="halaqa-summary">ملخص الحلقة</TabsTrigger>
           <TabsTrigger value="individual" disabled={filterStudentId === "all"}>بيان فردي</TabsTrigger>
-          <TabsTrigger value="charts">الرسوم البيانية</TabsTrigger>
         </TabsList>
 
-        {/* Monthly Grid */}
-        <TabsContent value="monthly" className="space-y-4">
-          <div className="flex gap-2 print:hidden">
-            <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
-            <Button variant="outline" size="sm" onClick={handleExportExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
-          </div>
+        {/* Tab 1: Halaqa Summary */}
+        <TabsContent value="halaqa-summary" className="space-y-6">
           <Card>
-            <CardContent className="p-0 overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right sticky right-0 bg-background z-10 min-w-[120px]">الطالب</TableHead>
-                    {monthDays.map(day => (
-                      <TableHead key={day.toISOString()} className="text-center min-w-[40px] px-1">
-                        <div className="text-xs">{format(day, "d")}</div>
-                      </TableHead>
-                    ))}
-                    <TableHead className="text-center">%</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {studentSummary.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-medium sticky right-0 bg-background z-10">
-<StudentNameLink studentId={s.id} studentName={s.full_name} />
-                      </TableCell>
-                      {monthDays.map(day => {
-                        const dateStr = format(day, "yyyy-MM-dd");
-                        const status = attMap[s.id]?.[dateStr];
-                        const label = status === "present" ? "✓" : status === "absent" ? "✗" : status === "late" ? "⏰" : "—";
-                        return (
-                          <TableCell key={dateStr} className={cn("text-center text-xs px-1", statusBg(status))}>
-                            {label}
-                          </TableCell>
-                        );
-                      })}
-                      <TableCell className="text-center">
-                        <Badge variant={s.pct >= 90 ? "default" : s.pct >= 70 ? "secondary" : "destructive"}>{s.pct}%</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Summary Tab */}
-        <TabsContent value="summary" className="space-y-4">
-          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>ملخص حضور طلاب الحلقة</span>
+                <div className="flex gap-2 print:hidden">
+                  <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    import("xlsx-js-style").then((XLSX) => {
+                      const rows = studentSummary.map(s => ({
+                        "الطالب": s.full_name, "حضور": s.present, "تأخر": s.late, "غياب": s.absent, "مستأذن": s.excused, "نسبة %": s.pct,
+                      }));
+                      const ws = XLSX.utils.json_to_sheet(rows);
+                      const wb = XLSX.utils.book_new();
+                      XLSX.utils.book_append_sheet(wb, ws, "ملخص الحلقة");
+                      XLSX.writeFile(wb, `ملخص_حلقة_${monthStart}.xlsx`);
+                    });
+                  }}><Download className="w-4 h-4 ml-1" />Excel</Button>
+                </div>
+              </CardTitle>
+            </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-right">الطالب</TableHead>
                     <TableHead className="text-center">أيام الحضور</TableHead>
-                    <TableHead className="text-center">أيام التأخر</TableHead>
                     <TableHead className="text-center">أيام الغياب</TableHead>
+                    <TableHead className="text-center">أيام التأخر</TableHead>
+                    <TableHead className="text-center">مستأذن</TableHead>
                     <TableHead className="text-center">نسبة الحضور</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {studentSummary.map(s => (
-                    <TableRow key={s.id} className={cn(s.pct < 70 && "bg-amber-50 dark:bg-amber-950/20", s.pct >= 90 && "bg-emerald-50 dark:bg-emerald-950/20")}>
+                    <TableRow key={s.id} className={cn(
+                      s.pct < 70 && "bg-amber-50 dark:bg-amber-950/20",
+                      s.pct >= 90 && "bg-emerald-50 dark:bg-emerald-950/20"
+                    )}>
                       <TableCell className="font-medium"><StudentNameLink studentId={s.id} studentName={s.full_name} /></TableCell>
                       <TableCell className="text-center font-bold text-emerald-600">{s.present}</TableCell>
-                      <TableCell className="text-center font-bold text-amber-600">{s.late}</TableCell>
                       <TableCell className="text-center font-bold text-destructive">{s.absent}</TableCell>
-                      <TableCell className="text-center"><Badge variant={s.pct >= 90 ? "default" : s.pct >= 70 ? "secondary" : "destructive"}>{s.pct}%</Badge></TableCell>
+                      <TableCell className="text-center font-bold text-amber-600">{s.late}</TableCell>
+                      <TableCell className="text-center text-muted-foreground">{s.excused}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={s.pct >= 90 ? "default" : s.pct >= 70 ? "secondary" : "destructive"}>{s.pct}%</Badge>
+                      </TableCell>
                     </TableRow>
                   ))}
+                  {studentSummary.length === 0 && (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">اختر حلقة لعرض البيانات</TableCell></TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* Individual Tab */}
-        <TabsContent value="individual" className="space-y-4">
-          {filterStudentId !== "all" && (() => {
-            const s = studentSummary.find(x => x.id === filterStudentId);
-            if (!s) return null;
-            return (
-              <>
-                <div className="flex gap-2 print:hidden">
-                  <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة البيان</Button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-emerald-600">{s.present}</p><p className="text-xs text-muted-foreground">أيام حضور</p></CardContent></Card>
-                  <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-amber-600">{s.late}</p><p className="text-xs text-muted-foreground">أيام تأخر</p></CardContent></Card>
-                  <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-destructive">{s.absent}</p><p className="text-xs text-muted-foreground">أيام غياب</p></CardContent></Card>
-                  <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold">{s.pct}%</p><p className="text-xs text-muted-foreground">نسبة الحضور</p></CardContent></Card>
-                </div>
-                <Card>
-                  <CardHeader><CardTitle>بيان الحضور الشهري - {s.full_name}</CardTitle></CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-right">التاريخ</TableHead>
-                          <TableHead className="text-right">اليوم</TableHead>
-                          <TableHead className="text-center">الحالة</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {monthDays.map(day => {
-                          const dateStr = format(day, "yyyy-MM-dd");
-                          const status = attMap[s.id]?.[dateStr];
-                          return (
-                            <TableRow key={dateStr} className={statusBg(status)}>
-                              <TableCell>{format(day, "d/M")}</TableCell>
-                              <TableCell>{format(day, "EEEE", { locale: ar })}</TableCell>
-                              <TableCell className="text-center">
-                                {status ? <Badge variant={status === "present" ? "default" : status === "late" ? "secondary" : "destructive"}>{STATUS_LABELS[status]?.label || status}</Badge> : <span className="text-muted-foreground">—</span>}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </>
-            );
-          })()}
-        </TabsContent>
-
-        {/* Charts Tab */}
-        <TabsContent value="charts" className="space-y-6">
-          {filterStudentId !== "all" && lineData.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle>تطور حضور الطالب خلال الشهر</CardTitle></CardHeader>
+          {/* Bar Chart */}
+          {barData.length > 0 && (
+            <Card className="print:hidden">
+              <CardHeader><CardTitle>مقارنة نسب حضور الطلاب</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={lineData}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={barData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis domain={[0, 1]} ticks={[0, 1]} tickFormatter={(v) => v === 1 ? "حاضر" : "غائب"} />
-                    <Tooltip />
-                    <Line type="stepAfter" dataKey="حاضر" stroke="hsl(142, 76%, 36%)" strokeWidth={2} />
-                  </LineChart>
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={11} />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip formatter={(v: number) => `${v}%`} />
+                    <Bar dataKey="نسبة_الحضور" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="نسبة الحضور %" />
+                  </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
+        </TabsContent>
 
-          <Card>
-            <CardHeader><CardTitle>مقارنة نسب حضور الطلاب</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={11} />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Bar dataKey="نسبة_الحضور" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} name="نسبة الحضور %" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {/* Tab 2: Individual Report */}
+        <TabsContent value="individual" className="space-y-6">
+          {selectedStudent && (
+            <>
+              {/* Action buttons */}
+              <div className="flex gap-2 print:hidden">
+                <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة البيان</Button>
+                <Button variant="outline" size="sm" onClick={handleExportPDF}><FileText className="w-4 h-4 ml-1" />تصدير PDF</Button>
+              </div>
+
+              {/* Summary cards */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-emerald-600">{selectedStudent.present}</p><p className="text-xs text-muted-foreground">حضور</p></CardContent></Card>
+                <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-destructive">{selectedStudent.absent}</p><p className="text-xs text-muted-foreground">غياب</p></CardContent></Card>
+                <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-amber-600">{selectedStudent.late}</p><p className="text-xs text-muted-foreground">تأخر</p></CardContent></Card>
+                <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-muted-foreground">{selectedStudent.excused}</p><p className="text-xs text-muted-foreground">مستأذن</p></CardContent></Card>
+                <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold">{selectedStudent.pct}%</p><p className="text-xs text-muted-foreground">نسبة الحضور</p></CardContent></Card>
+              </div>
+
+              {/* Daily grid for the month */}
+              <Card>
+                <CardHeader><CardTitle>بيان الحضور الشهري — {selectedStudent.full_name}</CardTitle></CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">التاريخ</TableHead>
+                        <TableHead className="text-right">اليوم</TableHead>
+                        <TableHead className="text-center">الحالة</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {monthDays.map(day => {
+                        const dateStr = format(day, "yyyy-MM-dd");
+                        const status = attMap[selectedStudent.id]?.[dateStr];
+                        const info = STATUS_LABELS[status || ""];
+                        return (
+                          <TableRow key={dateStr} className={info?.color || ""}>
+                            <TableCell>{format(day, "d/M/yyyy")}</TableCell>
+                            <TableCell>{format(day, "EEEE", { locale: ar })}</TableCell>
+                            <TableCell className="text-center">
+                              {info ? (
+                                <Badge variant={status === "present" ? "default" : status === "late" ? "secondary" : status === "absent" ? "destructive" : "outline"}>
+                                  {info.symbol} {info.label}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              {/* Line Chart: Trend over last 6 months */}
+              {trendData.length > 0 && (
+                <Card className="print:hidden">
+                  <CardHeader><CardTitle>تطور نسبة الحضور خلال الأشهر الماضية</CardTitle></CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <LineChart data={trendData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" fontSize={11} />
+                        <YAxis domain={[0, 100]} />
+                        <Tooltip formatter={(v: number) => `${v}%`} />
+                        <Line type="monotone" dataKey="pct" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} name="نسبة الحضور %" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+          {!selectedStudent && (
+            <Card><CardContent className="py-12 text-center text-muted-foreground">اختر طالباً من الفلتر أعلاه لعرض البيان الفردي</CardContent></Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>
