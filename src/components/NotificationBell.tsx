@@ -54,6 +54,11 @@ const NotificationBell = () => {
                   }`}
                   onClick={() => {
                     if (!n.read_at) markAsRead(n.id);
+                    // Navigate to internal requests if it's a request notification
+                    if (n.title?.includes("طلب جديد") || n.title?.includes("طلب داخلي")) {
+                      setOpen(false);
+                      navigate("/internal-requests");
+                    }
                   }}
                 >
                   <div className="flex items-start gap-2">
