@@ -28,7 +28,10 @@ const Dashboard = () => {
   const { profile, user, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
   const { allowedHalaqatIds, loading: accessLoading } = useTeacherHalaqat();
+  const { isManager, isSupervisor, isAdminStaff } = useRole();
+  const canSeeStaff = isManager || isSupervisor || isAdminStaff;
   const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
+  const [staffPct, setStaffPct] = useState<number | null>(null);
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
 
