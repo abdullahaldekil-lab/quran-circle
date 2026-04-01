@@ -365,6 +365,7 @@ const UserManagement = () => {
     password_set_by_admin: "تعيين كلمة مرور من المدير",
     password_changed_self: "تغيير كلمة المرور الذاتي",
     user_edited: "تعديل بيانات مستخدم",
+    email_updated: "تحديث البريد الإلكتروني",
     user_deleted: "حذف مستخدم",
     guardian_linked: "ربط ولي أمر بطالب",
     guardian_unlinked: "إلغاء ربط ولي أمر",
