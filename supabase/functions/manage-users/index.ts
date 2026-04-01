@@ -53,6 +53,7 @@ serve(async (req) => {
       "update_status", "update_role", "reset_password",
       "link_guardian_student", "unlink_guardian_student",
       "admin_set_password", "admin_edit_user", "admin_delete_user",
+      "admin_update_email",
     ];
 
     // Actions any authenticated user can do
