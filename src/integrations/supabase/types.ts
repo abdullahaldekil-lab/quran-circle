@@ -1117,6 +1117,83 @@ export type Database = {
           },
         ]
       }
+      internal_request_replies: {
+        Row: {
+          body: string
+          created_at: string
+          from_user_id: string
+          id: string
+          request_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          from_user_id: string
+          id?: string
+          request_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_request_replies_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "internal_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_requests: {
+        Row: {
+          body: string | null
+          created_at: string
+          due_date: string | null
+          from_user_id: string
+          id: string
+          priority: Database["public"]["Enums"]["request_priority"]
+          request_type: Database["public"]["Enums"]["request_type"]
+          status: Database["public"]["Enums"]["request_status"]
+          title: string
+          to_role: string | null
+          to_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          due_date?: string | null
+          from_user_id: string
+          id?: string
+          priority?: Database["public"]["Enums"]["request_priority"]
+          request_type?: Database["public"]["Enums"]["request_type"]
+          status?: Database["public"]["Enums"]["request_status"]
+          title: string
+          to_role?: string | null
+          to_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          due_date?: string | null
+          from_user_id?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["request_priority"]
+          request_type?: Database["public"]["Enums"]["request_type"]
+          status?: Database["public"]["Enums"]["request_status"]
+          title?: string
+          to_role?: string | null
+          to_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       level_branches: {
         Row: {
           branch_number: number
@@ -3787,6 +3864,9 @@ export type Database = {
         | "approved"
         | "rejected"
         | "waiting_list"
+      request_priority: "عاجل" | "عادي" | "منخفض"
+      request_status: "new" | "in_progress" | "done" | "rejected"
+      request_type: "إجازة" | "مستلزمات" | "صيانة" | "استفسار" | "أخرى"
       staff_role:
         | "manager"
         | "secretary"
@@ -3939,6 +4019,9 @@ export const Constants = {
         "rejected",
         "waiting_list",
       ],
+      request_priority: ["عاجل", "عادي", "منخفض"],
+      request_status: ["new", "in_progress", "done", "rejected"],
+      request_type: ["إجازة", "مستلزمات", "صيانة", "استفسار", "أخرى"],
       staff_role: [
         "manager",
         "secretary",
