@@ -470,6 +470,7 @@ const StaffAttendanceLog = () => {
           <div className="flex gap-2 print:hidden">
             <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
             <Button variant="outline" size="sm" onClick={exportMonthlyExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
+            <Button variant="outline" size="sm" onClick={exportMonthlyPdf}><FileDown className="w-4 h-4 ml-1" />PDF</Button>
           </div>
           <Card>
             <CardContent className="p-0 overflow-auto">
