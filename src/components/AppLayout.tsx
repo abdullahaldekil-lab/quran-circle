@@ -357,7 +357,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         }
                       >
                         <item.icon className="w-4 h-4" />
-                        {item.label}
+                        <span className="flex-1">{item.label}</span>
+                        {item.to === "/internal-requests" && pendingRequestsCount > 0 && (
+                          <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
+                          </span>
+                        )}
                       </NavLink>
                     ))}
 
