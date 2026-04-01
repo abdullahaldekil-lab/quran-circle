@@ -34,6 +34,7 @@ const Dashboard = () => {
   const [staffPct, setStaffPct] = useState<number | null>(null);
   const [planStats, setPlanStats] = useState<{ onTrack: number; total: number } | null>(null);
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<number>(0);
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
