@@ -366,11 +366,13 @@ const StudentAnnualPlan = () => {
                       {p.status === "on_track" && <span className="text-success text-xs">✅ على المسار</span>}
                       {p.status === "behind" && <span className="text-destructive text-xs">⚠️ متأخر</span>}
                     </TableCell>
-                    <TableCell className="print:hidden">
-                      <Button variant="ghost" size="sm" onClick={() => openUpdate(p)}>
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+                    {(isManager || isSupervisor || isTeacher) && (
+                      <TableCell className="print:hidden">
+                        <Button variant="ghost" size="sm" onClick={() => openUpdate(p)}>
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
