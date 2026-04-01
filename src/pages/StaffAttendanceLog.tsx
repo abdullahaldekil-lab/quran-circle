@@ -27,6 +27,7 @@ const CHART_COLORS = ["hsl(142, 76%, 36%)", "#f59e0b", "hsl(0, 84%, 60%)", "#6b7
 
 const StaffAttendanceLog = () => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
   const [filterStaffId, setFilterStaffId] = useState<string>("all");
   const [filterDept, setFilterDept] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
