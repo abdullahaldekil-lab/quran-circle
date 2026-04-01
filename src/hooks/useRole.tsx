@@ -24,7 +24,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
-    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij",
+    "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij", "/madarij-report",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
@@ -35,7 +35,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
@@ -44,7 +44,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
-    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
+    "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",

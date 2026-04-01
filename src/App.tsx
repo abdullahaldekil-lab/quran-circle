@@ -72,6 +72,7 @@ import NarrationStats from "./pages/NarrationStats";
 import StudentAttendanceReport from "@/pages/StudentAttendanceReport";
 import StudentAnnualPlan from "@/pages/StudentAnnualPlan";
 import InternalRequests from "@/pages/InternalRequests";
+import MadarijReport from "@/pages/MadarijReport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -151,6 +152,7 @@ const AppRoutes = () => {
       <Route path="/attendance-audit" element={<ProtectedRoute path="/attendance-audit"><AttendanceAuditLog /></ProtectedRoute>} />
       <Route path="/madarij" element={<ProtectedRoute path="/madarij"><Madarij /></ProtectedRoute>} />
       <Route path="/madarij/:enrollmentId" element={<ProtectedRoute path="/madarij"><MadarijEnrollment /></ProtectedRoute>} />
+      <Route path="/madarij-report" element={<ProtectedRoute path="/madarij-report"><MadarijReport /></ProtectedRoute>} />
       <Route path="/student-annual-plan/:studentId" element={<ProtectedRoute path="/madarij"><StudentAnnualPlan /></ProtectedRoute>} />
       <Route path="/permissions-management" element={<ProtectedRoute path="/permissions-management"><PermissionsManagement /></ProtectedRoute>} />
       <Route path="/talqeen-halaqat" element={<ProtectedRoute path="/halaqat"><TalqeenHalaqat /></ProtectedRoute>} />

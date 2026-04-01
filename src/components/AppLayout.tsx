@@ -93,6 +93,7 @@ const navGroups: NavGroup[] = [
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
+      { to: "/madarij-report", icon: BarChart3, label: "تقارير مدارج" },
       { to: "/excellence", icon: Trophy, label: "مسار التميّز" },
       { to: "/excellence/tracks", icon: Award, label: "إدارة المسارات" },
       { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
