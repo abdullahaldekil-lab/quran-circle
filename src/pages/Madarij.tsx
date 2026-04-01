@@ -18,7 +18,7 @@ import StudentNameLink from "@/components/StudentNameLink";
 import AnnualPlanDialog from "@/components/madarij/AnnualPlanDialog";
 
 const Madarij = () => {
-  const { isManager } = useRole();
+  const { isManager, isSupervisor, isTeacher } = useRole();
   const navigate = useNavigate();
   const [tracks, setTracks] = useState<any[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
@@ -97,7 +97,7 @@ const Madarij = () => {
           <p className="text-sm text-muted-foreground">طريقك نحو إتقان القرآن الكريم</p>
         </div>
         <div className="flex gap-2">
-          {isManager && (
+          {(isManager || isSupervisor || isTeacher) && (
             <Button variant="outline" onClick={() => setAnnualPlanOpen(true)}>
               <CalendarDays className="w-4 h-4 ml-1" />
               إنشاء خطة سنوية
