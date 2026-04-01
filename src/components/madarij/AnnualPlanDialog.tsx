@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toHijri } from "@/lib/hijri";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -194,9 +195,34 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     }
   };
 
+  const [confirmReplace, setConfirmReplace] = useState(false);
+
   const handleSave = async () => {
+    // Check for existing active plan
+    const { data: existingPlans } = await supabase
+      .from("student_annual_plans")
+      .select("id")
+      .eq("student_id", selectedStudent)
+      .eq("status", "active");
+
+    if (existingPlans && existingPlans.length > 0) {
+      setConfirmReplace(true);
+      return;
+    }
+
+    await doSave();
+  };
+
+  const doSave = async () => {
     setSaving(true);
     try {
+      // Suspend any existing active plans
+      await supabase
+        .from("student_annual_plans")
+        .update({ status: "suspended" })
+        .eq("student_id", selectedStudent)
+        .eq("status", "active");
+
       const { data: plan, error: planError } = await supabase
         .from("student_annual_plans")
         .insert({
@@ -252,6 +278,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const totalDistributed = monthlyDistribution.reduce((sum, m) => sum + m.targetPages, 0);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -443,6 +470,24 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
         </div>
       </DialogContent>
     </Dialog>
+
+      <AlertDialog open={confirmReplace} onOpenChange={setConfirmReplace}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>يوجد خطة نشطة بالفعل</AlertDialogTitle>
+            <AlertDialogDescription>
+              يوجد خطة نشطة لهذا الطالب بالفعل — هل تريد إلغاؤها وإنشاء خطة جديدة؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmReplace(false); doSave(); }}>
+              نعم، استبدل
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
