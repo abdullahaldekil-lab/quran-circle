@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, Inbox, Send, BarChart3, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-type RequestType = "إجازة" | "مستلزمات" | "صيانة" | "استفسار" | "أخرى";
+type RequestType = "إجازة" | "مستلزمات" | "صيانة" | "استفسار" | "أمر عمل" | "أخرى";
 type RequestPriority = "عاجل" | "عادي" | "منخفض";
 type RequestStatus = "new" | "in_progress" | "done" | "rejected";
 
@@ -160,11 +160,40 @@ const InternalRequests = () => {
       from_user_id: user.id,
       due_date: form.due_date || null,
     };
-    if (form.to_user_id) payload.to_user_id = form.to_user_id;
-    if (form.to_role) payload.to_role = form.to_role;
+    if (form.to_user_id && form.to_user_id !== "none") payload.to_user_id = form.to_user_id;
+    if (form.to_role && form.to_role !== "none") payload.to_role = form.to_role;
 
     const { error } = await supabase.from("internal_requests").insert(payload);
     if (error) { toast.error("خطأ في إرسال الطلب"); setSaving(false); return; }
+
+    // Send in-app notification to recipient(s)
+    const senderName = staff.find(s => s.id === user.id)?.full_name || "موظف";
+    const notifTitle = `طلب جديد: ${form.request_type}`;
+    const notifBody = `${senderName} أرسل طلباً: ${form.title}`;
+
+    if (payload.to_user_id) {
+      await supabase.from("notifications").insert({
+        user_id: payload.to_user_id,
+        title: notifTitle,
+        body: notifBody,
+        channel: "inApp",
+        status: "sent",
+      });
+    } else if (payload.to_role) {
+      const recipients = staff.filter(s => s.role === payload.to_role && s.id !== user.id);
+      if (recipients.length > 0) {
+        await supabase.from("notifications").insert(
+          recipients.map(r => ({
+            user_id: r.id,
+            title: notifTitle,
+            body: notifBody,
+            channel: "inApp",
+            status: "sent",
+          }))
+        );
+      }
+    }
+
     toast.success("تم إرسال الطلب بنجاح");
     setNewDialogOpen(false);
     setForm({ title: "", body: "", request_type: "أخرى", priority: "عادي", to_user_id: "", to_role: "", due_date: "" });
@@ -324,7 +353,8 @@ const InternalRequests = () => {
                       <SelectItem value="إجازة">إجازة</SelectItem>
                       <SelectItem value="مستلزمات">مستلزمات</SelectItem>
                       <SelectItem value="صيانة">صيانة</SelectItem>
-                      <SelectItem value="استفسار">استفسار</SelectItem>
+                      <SelectItem value="استفسار">استفسار إداري</SelectItem>
+                      <SelectItem value="أمر عمل">أمر عمل</SelectItem>
                       <SelectItem value="أخرى">أخرى</SelectItem>
                     </SelectContent>
                   </Select>
@@ -457,7 +487,8 @@ const InternalRequests = () => {
                     <SelectItem value="إجازة">إجازة</SelectItem>
                     <SelectItem value="مستلزمات">مستلزمات</SelectItem>
                     <SelectItem value="صيانة">صيانة</SelectItem>
-                    <SelectItem value="استفسار">استفسار</SelectItem>
+                    <SelectItem value="استفسار">استفسار إداري</SelectItem>
+                    <SelectItem value="أمر عمل">أمر عمل</SelectItem>
                     <SelectItem value="أخرى">أخرى</SelectItem>
                   </SelectContent>
                 </Select>
