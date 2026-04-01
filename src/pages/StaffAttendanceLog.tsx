@@ -374,7 +374,6 @@ const StaffAttendanceLog = () => {
           </Card>
         </TabsContent>
 
-        {/* Monthly Tab */}
         <TabsContent value="monthly" className="space-y-4">
           <div className="flex gap-2 print:hidden">
             <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
@@ -391,6 +390,7 @@ const StaffAttendanceLog = () => {
                     <TableHead className="text-center">أيام الغياب</TableHead>
                     <TableHead className="text-center">أيام التأخر</TableHead>
                     <TableHead className="text-center">دقائق التأخر</TableHead>
+                    <TableHead className="text-center">ساعات العمل</TableHead>
                     <TableHead className="text-center">نسبة الحضور</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -401,6 +401,7 @@ const StaffAttendanceLog = () => {
                     const daysA = Math.max(0, monthDays.length - daysP - staffRecs.filter(r => r.status === "leave").length);
                     const daysL = staffRecs.filter(r => r.status === "late").length;
                     const totalLate = staffRecs.reduce((sum, r) => sum + (r.late_minutes || 0), 0);
+                    const totalWork = staffRecs.reduce((sum, r) => sum + (r.total_work_minutes || 0), 0);
                     const pct = monthDays.length > 0 ? Math.round((daysP / monthDays.length) * 100) : 0;
                     return (
                       <TableRow key={s.id} className={cn(pct < 70 && "bg-amber-50 dark:bg-amber-950/20", pct >= 90 && "bg-emerald-50 dark:bg-emerald-950/20")}>
@@ -410,12 +411,45 @@ const StaffAttendanceLog = () => {
                         <TableCell className="text-center font-bold text-destructive">{daysA}</TableCell>
                         <TableCell className="text-center font-bold text-amber-600">{daysL}</TableCell>
                         <TableCell className="text-center">{totalLate > 0 ? `${totalLate} د` : "—"}</TableCell>
+                        <TableCell className="text-center">{totalWork > 0 ? formatMinutes(totalWork) : "—"}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant={pct >= 90 ? "default" : pct >= 70 ? "secondary" : "destructive"}>{pct}%</Badge>
                         </TableCell>
                       </TableRow>
                     );
                   })}
+                  {/* Totals row */}
+                  {filteredStaff.length > 0 && (() => {
+                    const allP = filteredStaff.reduce((sum, s) => {
+                      const recs = records.filter(r => r.staff_id === s.id);
+                      return sum + recs.filter(r => ["present", "late", "early_leave"].includes(r.status)).length;
+                    }, 0);
+                    const allA = filteredStaff.reduce((sum, s) => {
+                      const recs = records.filter(r => r.staff_id === s.id);
+                      const p = recs.filter(r => ["present", "late", "early_leave"].includes(r.status)).length;
+                      const l = recs.filter(r => r.status === "leave").length;
+                      return sum + Math.max(0, monthDays.length - p - l);
+                    }, 0);
+                    const allL = filteredStaff.reduce((sum, s) => sum + records.filter(r => r.staff_id === s.id && r.status === "late").length, 0);
+                    const allLateMins = records.filter(r => filteredStaff.some(s => s.id === r.staff_id)).reduce((s, r) => s + (r.late_minutes || 0), 0);
+                    const allWorkMins = records.filter(r => filteredStaff.some(s => s.id === r.staff_id)).reduce((s, r) => s + (r.total_work_minutes || 0), 0);
+                    const totalExpected = filteredStaff.length * monthDays.length;
+                    const avgPct = totalExpected > 0 ? Math.round((allP / totalExpected) * 100) : 0;
+                    return (
+                      <TableRow className="bg-foreground/10 dark:bg-foreground/20 font-bold border-t-2 border-foreground/20">
+                        <TableCell className="font-bold">إجمالي المجمع</TableCell>
+                        <TableCell>—</TableCell>
+                        <TableCell className="text-center font-bold text-emerald-600">{allP}</TableCell>
+                        <TableCell className="text-center font-bold text-destructive">{allA}</TableCell>
+                        <TableCell className="text-center font-bold text-amber-600">{allL}</TableCell>
+                        <TableCell className="text-center font-bold">{allLateMins > 0 ? `${allLateMins} د` : "—"}</TableCell>
+                        <TableCell className="text-center font-bold">{allWorkMins > 0 ? formatMinutes(allWorkMins) : "—"}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={avgPct >= 90 ? "default" : avgPct >= 70 ? "secondary" : "destructive"}>{avgPct}%</Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })()}
                 </TableBody>
               </Table>
             </CardContent>
