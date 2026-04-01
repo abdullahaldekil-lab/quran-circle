@@ -15,6 +15,7 @@ import { ar } from "date-fns/locale";
 const NotificationBell = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
