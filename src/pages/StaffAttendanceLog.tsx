@@ -412,6 +412,7 @@ const StaffAttendanceLog = () => {
             <div className="mr-auto flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
               <Button variant="outline" size="sm" onClick={exportWeeklyExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
+              <Button variant="outline" size="sm" onClick={exportWeeklyPdf}><FileDown className="w-4 h-4 ml-1" />PDF</Button>
             </div>
           </div>
           <Card>
