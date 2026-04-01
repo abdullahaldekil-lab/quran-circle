@@ -608,57 +608,6 @@ const StaffAttendanceLog = () => {
           </Card>
         </TabsContent>
 
-        {/* Charts Tab */}
-        <TabsContent value="charts" className="space-y-6">
-          {/* Line Chart - Daily Attendance Rate */}
-          <Card>
-            <CardHeader><CardTitle>نسبة الحضور اليومية خلال الشهر</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={lineChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="نسبة_الحضور" stroke="hsl(142, 76%, 36%)" strokeWidth={2} name="نسبة الحضور %" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Bar Chart - Days per staff */}
-          <Card>
-            <CardHeader><CardTitle>أيام حضور كل موظف في الشهر</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={11} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="أيام_الحضور" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} name="أيام الحضور" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Pie Chart - Status Distribution */}
-          <Card>
-            <CardHeader><CardTitle>توزيع حالات الحضور</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie data={pieChartData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                    {pieChartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
