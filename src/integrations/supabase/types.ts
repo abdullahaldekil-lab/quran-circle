@@ -1375,10 +1375,13 @@ export type Database = {
           branch_id: string | null
           created_at: string
           end_date: string | null
+          failed_attempts: number
           hizb_number: number
           id: string
+          level_downgraded: boolean
           level_track_id: string | null
           part_number: number
+          previous_track_id: string | null
           start_date: string
           status: string
           student_id: string
@@ -1389,10 +1392,13 @@ export type Database = {
           branch_id?: string | null
           created_at?: string
           end_date?: string | null
+          failed_attempts?: number
           hizb_number?: number
           id?: string
+          level_downgraded?: boolean
           level_track_id?: string | null
           part_number?: number
+          previous_track_id?: string | null
           start_date?: string
           status?: string
           student_id: string
@@ -1403,10 +1409,13 @@ export type Database = {
           branch_id?: string | null
           created_at?: string
           end_date?: string | null
+          failed_attempts?: number
           hizb_number?: number
           id?: string
+          level_downgraded?: boolean
           level_track_id?: string | null
           part_number?: number
+          previous_track_id?: string | null
           start_date?: string
           status?: string
           student_id?: string
@@ -1429,6 +1438,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "madarij_enrollments_previous_track_id_fkey"
+            columns: ["previous_track_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_tracks"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "madarij_enrollments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -1446,10 +1462,13 @@ export type Database = {
       }
       madarij_hizb_exams: {
         Row: {
+          attempt_number: number
           created_at: string
           enrollment_id: string
+          exam_type: string
           examiner_name: string | null
           extra_points: number | null
+          failed_reason: string | null
           final_grade: number | null
           id: string
           memorization_grade: number | null
@@ -1476,10 +1495,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attempt_number?: number
           created_at?: string
           enrollment_id: string
+          exam_type?: string
           examiner_name?: string | null
           extra_points?: number | null
+          failed_reason?: string | null
           final_grade?: number | null
           id?: string
           memorization_grade?: number | null
@@ -1506,10 +1528,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attempt_number?: number
           created_at?: string
           enrollment_id?: string
+          exam_type?: string
           examiner_name?: string | null
           extra_points?: number | null
+          failed_reason?: string | null
           final_grade?: number | null
           id?: string
           memorization_grade?: number | null
@@ -1545,6 +1570,68 @@ export type Database = {
           },
           {
             foreignKeyName: "madarij_hizb_exams_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      madarij_level_changes: {
+        Row: {
+          changed_by: string | null
+          created_at: string | null
+          enrollment_id: string | null
+          id: string
+          new_track_id: string | null
+          old_track_id: string | null
+          reason: string | null
+          student_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string | null
+          enrollment_id?: string | null
+          id?: string
+          new_track_id?: string | null
+          old_track_id?: string | null
+          reason?: string | null
+          student_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string | null
+          enrollment_id?: string | null
+          id?: string
+          new_track_id?: string | null
+          old_track_id?: string | null
+          reason?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "madarij_level_changes_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_level_changes_new_track_id_fkey"
+            columns: ["new_track_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_level_changes_old_track_id_fkey"
+            columns: ["old_track_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_level_changes_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
