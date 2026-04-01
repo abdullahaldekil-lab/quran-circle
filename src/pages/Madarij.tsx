@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, BookOpen, Users, CheckCircle, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, BookOpen, Users, CheckCircle, Eye, CalendarDays } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import StudentNameLink from "@/components/StudentNameLink";
+import AnnualPlanDialog from "@/components/madarij/AnnualPlanDialog";
 
 const Madarij = () => {
   const { isManager } = useRole();
@@ -26,6 +27,7 @@ const Madarij = () => {
   const [editingTrack, setEditingTrack] = useState<any>(null);
   const [deleteTrackId, setDeleteTrackId] = useState<string | null>(null);
   const [trackForm, setTrackForm] = useState({ name: "", description: "", days_required: 20 });
+  const [annualPlanOpen, setAnnualPlanOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -94,12 +96,20 @@ const Madarij = () => {
           <h1 className="text-2xl font-bold">برنامج مدارج</h1>
           <p className="text-sm text-muted-foreground">طريقك نحو إتقان القرآن الكريم</p>
         </div>
-        {isManager && (
-          <Button onClick={openNewTrack}>
-            <Plus className="w-4 h-4 ml-1" />
-            إضافة مسار
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {isManager && (
+            <Button variant="outline" onClick={() => setAnnualPlanOpen(true)}>
+              <CalendarDays className="w-4 h-4 ml-1" />
+              إنشاء خطة سنوية
+            </Button>
+          )}
+          {isManager && (
+            <Button onClick={openNewTrack}>
+              <Plus className="w-4 h-4 ml-1" />
+              إضافة مسار
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -251,6 +261,7 @@ const Madarij = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AnnualPlanDialog open={annualPlanOpen} onOpenChange={setAnnualPlanOpen} onSaved={fetchData} />
     </div>
   );
 };
