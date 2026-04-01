@@ -195,9 +195,34 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     }
   };
 
+  const [confirmReplace, setConfirmReplace] = useState(false);
+
   const handleSave = async () => {
+    // Check for existing active plan
+    const { data: existingPlans } = await supabase
+      .from("student_annual_plans")
+      .select("id")
+      .eq("student_id", selectedStudent)
+      .eq("status", "active");
+
+    if (existingPlans && existingPlans.length > 0) {
+      setConfirmReplace(true);
+      return;
+    }
+
+    await doSave();
+  };
+
+  const doSave = async () => {
     setSaving(true);
     try {
+      // Suspend any existing active plans
+      await supabase
+        .from("student_annual_plans")
+        .update({ status: "suspended" })
+        .eq("student_id", selectedStudent)
+        .eq("status", "active");
+
       const { data: plan, error: planError } = await supabase
         .from("student_annual_plans")
         .insert({
