@@ -251,6 +251,46 @@ const StaffAttendance = () => {
     setEditDialogOpen(true);
   };
 
+  const handlePrint = () => window.print();
+
+  const handleExportPdf = () => {
+    import("jspdf").then(({ default: jsPDF }) => {
+      import("jspdf-autotable").then(() => {
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        doc.addFont("https://fonts.gstatic.com/ea/notonaskarabic/v1/NotoNaskhArabic-Regular.ttf", "Noto", "normal");
+        // Title
+        doc.setFontSize(16);
+        doc.text(`تقرير حضور العاملين - ${dateStr}`, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+        doc.setFontSize(10);
+        doc.text(`نسبة الحضور: ${staffList.length > 0 ? Math.round(((summary.present + summary.late) / staffList.length) * 100) : 0}%`, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+
+        const tableData = staffList.map((staff) => {
+          const record = recordMap[staff.id];
+          const statusInfo = record ? STATUS_MAP[record.status] || STATUS_MAP.absent : STATUS_MAP.absent;
+          return [
+            record?.notes || "",
+            statusInfo.label,
+            record?.check_out_time ? format(new Date(record.check_out_time), "HH:mm") : "—",
+            record?.check_in_time ? format(new Date(record.check_in_time), "HH:mm") : "—",
+            staff.department || "—",
+            staff.full_name,
+          ];
+        });
+
+        (doc as any).autoTable({
+          head: [["ملاحظات", "الحالة", "الخروج", "الدخول", "القسم", "الاسم"]],
+          body: tableData,
+          startY: 35,
+          styles: { font: "helvetica", fontSize: 9, halign: "center" },
+          headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: "center" },
+          theme: "grid",
+        });
+
+        doc.save(`حضور_العاملين_${dateStr}.pdf`);
+      });
+    });
+  };
+
   const summary = useMemo(() => {
     const present = records.filter((r) => r.status === "present").length;
     const late = records.filter((r) => r.status === "late").length;
