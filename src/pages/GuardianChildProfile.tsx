@@ -367,6 +367,57 @@ const GuardianChildProfile = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Madarij Tab */}
+          <TabsContent value="madarij">
+            <Card>
+              <CardContent className="p-4">
+                {!annualPlan ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">لا توجد خطة سنوية نشطة</p>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {annualPlan.plan_type === "silver" ? "🥈 المسار الفضي" : annualPlan.plan_type === "gold" ? "🥇 المسار الذهبي" : "⚙️ مخصص"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{annualPlan.academic_year}</p>
+                      </div>
+                      <Badge variant="secondary">{annualPlan.status === "active" ? "نشط" : "مكتمل"}</Badge>
+                    </div>
+                    {(() => {
+                      const totalActual = planProgress.reduce((s, p) => s + (p.actual_pages || 0), 0);
+                      const totalTarget = annualPlan.total_target_pages || 0;
+                      const pct = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
+                      return (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span>الإنجاز: {totalActual} / {totalTarget} وجه</span>
+                            <span className="font-bold">{pct}%</span>
+                          </div>
+                          <Progress value={pct} className="h-3" />
+                          <div className="grid grid-cols-3 gap-2 text-center mt-3">
+                            <div className="bg-muted rounded-lg p-2">
+                              <p className="text-lg font-bold text-primary">{totalTarget}</p>
+                              <p className="text-[10px] text-muted-foreground">المستهدف</p>
+                            </div>
+                            <div className="bg-muted rounded-lg p-2">
+                              <p className="text-lg font-bold text-success">{totalActual}</p>
+                              <p className="text-[10px] text-muted-foreground">المنجز</p>
+                            </div>
+                            <div className="bg-muted rounded-lg p-2">
+                              <p className="text-lg font-bold text-warning">{totalTarget - totalActual}</p>
+                              <p className="text-[10px] text-muted-foreground">المتبقي</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </GuardianLayout>
