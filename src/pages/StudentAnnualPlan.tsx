@@ -27,7 +27,7 @@ const PLAN_LABELS: Record<string, string> = {
 const StudentAnnualPlan = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
-  const { isManager } = useRole();
+  const { isManager, isSupervisor, isTeacher } = useRole();
   const { user } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
 
