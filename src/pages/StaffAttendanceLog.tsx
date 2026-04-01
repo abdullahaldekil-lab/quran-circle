@@ -357,7 +357,7 @@ const StaffAttendanceLog = () => {
           <TabsTrigger value="monthly">شهري</TabsTrigger>
           <TabsTrigger value="individual" disabled={filterStaffId === "all"}>بيان تفصيلي</TabsTrigger>
           <TabsTrigger value="records">السجلات</TabsTrigger>
-          <TabsTrigger value="charts">الرسوم البيانية</TabsTrigger>
+          
         </TabsList>
 
         {/* Weekly Tab */}
