@@ -135,12 +135,7 @@ const InternalRequests = () => {
     setSelectedRequest(req);
     setDetailDialogOpen(true);
     setReplyText("");
-    const { data } = await supabase
-      .from("internal_request_replies")
-      .select("*, from_user:profiles!internal_request_replies_from_user_id_fkey(full_name)")
-      .eq("request_id", req.id)
-      .order("created_at");
-    setReplies(data || []);
+    fetchReplies(req.id);
   };
 
   const handleStatusChange = async (status: RequestStatus) => {
