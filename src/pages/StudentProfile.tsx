@@ -607,11 +607,9 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
 
   useEffect(() => {
     const fetchAttendance = async () => {
-      const { format: fmt, startOfMonth: som, endOfMonth: eom, eachDayOfInterval, getDay, subMonths } = await import("date-fns");
-      const { ar } = await import("date-fns/locale");
       const dateObj = new Date(year, month, 1);
-      const ms = fmt(som(dateObj), "yyyy-MM-dd");
-      const me = fmt(eom(dateObj), "yyyy-MM-dd");
+      const ms = fmtDate(startOfMonth(dateObj), "yyyy-MM-dd");
+      const me = fmtDate(endOfMonth(dateObj), "yyyy-MM-dd");
 
       const { data } = await supabase
         .from("attendance")
@@ -621,7 +619,7 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
         .lte("attendance_date", me);
       setAttRecords(data || []);
 
-      const sixAgo = fmt(som(subMonths(dateObj, 5)), "yyyy-MM-dd");
+      const sixAgo = fmtDate(startOfMonth(subMonths(dateObj, 5)), "yyyy-MM-dd");
       const { data: tData } = await supabase
         .from("attendance")
         .select("attendance_date, status")
@@ -632,15 +630,15 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
       const trend: { month: string; pct: number }[] = [];
       for (let i = 5; i >= 0; i--) {
         const d = subMonths(dateObj, i);
-        const s = fmt(som(d), "yyyy-MM-dd");
-        const e = fmt(eom(d), "yyyy-MM-dd");
+        const s = fmtDate(startOfMonth(d), "yyyy-MM-dd");
+        const e = fmtDate(endOfMonth(d), "yyyy-MM-dd");
         const recs = (tData || []).filter((a: any) => a.attendance_date >= s && a.attendance_date <= e);
-        const workDays = eachDayOfInterval({ start: som(d), end: eom(d) }).filter((dd: Date) => {
+        const workDays = eachDayOfInterval({ start: startOfMonth(d), end: endOfMonth(d) }).filter((dd: Date) => {
           const day = getDay(dd);
           return day !== 5 && day !== 6;
         }).length;
         const present = recs.filter((a: any) => a.status === "present" || a.status === "late").length;
-        trend.push({ month: fmt(d, "MMM", { locale: ar }), pct: workDays > 0 ? Math.round((present / workDays) * 100) : 0 });
+        trend.push({ month: fmtDate(d, "MMM", { locale: ar }), pct: workDays > 0 ? Math.round((present / workDays) * 100) : 0 });
       }
       setTrendData(trend);
       setLoaded(true);
