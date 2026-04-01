@@ -232,6 +232,22 @@ const Dashboard = () => {
                 <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Card>
             )}
+            {planStats && planStats.total > 0 && (isManager || isSupervisor) && (
+              <Card
+                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
+                onClick={() => navigate("/madarij")}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">الخطط السنوية</CardTitle>
+                  <CalendarDays className={`w-5 h-5 ${planStats.onTrack === planStats.total ? 'text-success' : 'text-warning'}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl lg:text-3xl font-bold">{planStats.onTrack}/{planStats.total}</div>
+                  <p className="text-xs text-muted-foreground">طالب منتظم</p>
+                </CardContent>
+                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Card>
+            )}
           </div>
 
           {/* Daily Attendance Summary */}
