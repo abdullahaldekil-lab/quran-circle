@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
+import { useRole } from "@/hooks/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft } from "lucide-react";
+import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase } from "lucide-react";
 import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
@@ -27,7 +28,10 @@ const Dashboard = () => {
   const { profile, user, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
   const { allowedHalaqatIds, loading: accessLoading } = useTeacherHalaqat();
+  const { isManager, isSupervisor, isAdminStaff } = useRole();
+  const canSeeStaff = isManager || isSupervisor || isAdminStaff;
   const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
+  const [staffPct, setStaffPct] = useState<number | null>(null);
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -84,6 +88,20 @@ const Dashboard = () => {
           newAlerts.push({ type: "success", message: `أداء ممتاز اليوم! متوسط الدرجات ${Math.round(avg)}` });
         }
         setAlerts(newAlerts);
+
+        // Fetch staff attendance percentage
+        if (canSeeStaff) {
+          const { count: totalStaff } = await supabase
+            .from("profiles").select("id", { count: "exact", head: true })
+            .eq("active", true).eq("is_staff", true);
+          const { data: staffAtt } = await supabase
+            .from("staff_attendance").select("status")
+            .eq("attendance_date", today);
+          const records = staffAtt || [];
+          const presentAndLate = records.filter((r: any) => r.status === "present" || r.status === "late").length;
+          const pct = (totalStaff || 0) > 0 ? Math.round((presentAndLate / (totalStaff || 1)) * 100) : 0;
+          if (!cancelled) setStaffPct(Math.min(pct, 100));
+        }
       } catch (e) {
         console.error("Dashboard fetch error:", e);
       } finally {
@@ -152,7 +170,7 @@ const Dashboard = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={`grid grid-cols-2 ${canSeeStaff && staffPct !== null ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
             {cards.map((card) => (
               <Card
                 key={card.title}
@@ -169,6 +187,23 @@ const Dashboard = () => {
                 <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Card>
             ))}
+            {canSeeStaff && staffPct !== null && (
+              <Card
+                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
+                onClick={() => navigate("/staff-attendance")}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">حضور الموظفين</CardTitle>
+                  <Briefcase className={`w-5 h-5 ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className={`text-2xl lg:text-3xl font-bold ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`}>
+                    {staffPct}%
+                  </div>
+                </CardContent>
+                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Card>
+            )}
           </div>
 
           {/* Daily Attendance Summary */}
