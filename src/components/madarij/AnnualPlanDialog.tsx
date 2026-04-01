@@ -278,6 +278,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const totalDistributed = monthlyDistribution.reduce((sum, m) => sum + m.targetPages, 0);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
