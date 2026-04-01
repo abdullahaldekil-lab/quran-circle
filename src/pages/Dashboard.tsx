@@ -32,6 +32,7 @@ const Dashboard = () => {
   const canSeeStaff = isManager || isSupervisor || isAdminStaff;
   const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
   const [staffPct, setStaffPct] = useState<number | null>(null);
+  const [planStats, setPlanStats] = useState<{ onTrack: number; total: number } | null>(null);
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
 
