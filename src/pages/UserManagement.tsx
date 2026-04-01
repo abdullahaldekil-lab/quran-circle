@@ -346,8 +346,12 @@ const UserManagement = () => {
     adminSetPasswordMutation.mutate({ user_id: passwordTarget.id, new_password: newPassword });
   };
 
-  const handleEditUser = () => {
-    adminEditUserMutation.mutate({ user_id: editTarget.id, ...editForm });
+  const handleEditUser = async () => {
+    const { email, ...profileData } = editForm;
+    adminEditUserMutation.mutate({ user_id: editTarget.id, ...profileData });
+    if (email && email.trim()) {
+      adminUpdateEmailMutation.mutate({ user_id: editTarget.id, new_email: email.trim() });
+    }
   };
 
   const actionLabels: Record<string, string> = {
