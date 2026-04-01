@@ -229,11 +229,12 @@ const GuardianChildProfile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="recitations" className="w-full">
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-5">
             <TabsTrigger value="recitations" className="text-xs">التسميع</TabsTrigger>
             <TabsTrigger value="attendance" className="text-xs">الحضور</TabsTrigger>
             <TabsTrigger value="badges" className="text-xs">الشارات</TabsTrigger>
             <TabsTrigger value="trips" className="text-xs">الرحلات</TabsTrigger>
+            <TabsTrigger value="madarij" className="text-xs">مدارج</TabsTrigger>
           </TabsList>
 
           {/* Recitations Tab */}
