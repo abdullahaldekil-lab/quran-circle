@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard,
   Users,
@@ -208,10 +209,23 @@ const navGroups: NavGroup[] = [
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { profile, signOut } = useAuth();
-  const { hasAccess } = useRole();
+  const { hasAccess, role } = useRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const location = useLocation();
 
+  useEffect(() => {
+    if (!profile?.id) return;
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from("internal_requests")
+        .select("id", { count: "exact", head: true })
+        .or(`to_user_id.eq.${profile.id},to_role.eq.${role}`)
+        .in("status", ["new", "in_progress"]);
+      setPendingRequestsCount(count || 0);
+    };
+    fetchPending();
+  }, [profile?.id, role, location.pathname]);
   // Determine which groups are open based on active route
   const getInitialOpenGroups = () => {
     const open: Record<string, boolean> = {};
@@ -343,7 +357,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         }
                       >
                         <item.icon className="w-4 h-4" />
-                        {item.label}
+                        <span className="flex-1">{item.label}</span>
+                        {item.to === "/internal-requests" && pendingRequestsCount > 0 && (
+                          <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
+                          </span>
+                        )}
                       </NavLink>
                     ))}
 

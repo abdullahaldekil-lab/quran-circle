@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -14,6 +15,7 @@ import { ar } from "date-fns/locale";
 const NotificationBell = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -52,6 +54,11 @@ const NotificationBell = () => {
                   }`}
                   onClick={() => {
                     if (!n.read_at) markAsRead(n.id);
+                    // Navigate to internal requests if it's a request notification
+                    if (n.title?.includes("طلب جديد") || n.title?.includes("طلب داخلي")) {
+                      setOpen(false);
+                      navigate("/internal-requests");
+                    }
                   }}
                 >
                   <div className="flex items-start gap-2">

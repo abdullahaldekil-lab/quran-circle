@@ -7,7 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase, CalendarDays } from "lucide-react";
+import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase, CalendarDays, ScrollText } from "lucide-react";
 import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
@@ -34,6 +34,7 @@ const Dashboard = () => {
   const [staffPct, setStaffPct] = useState<number | null>(null);
   const [planStats, setPlanStats] = useState<{ onTrack: number; total: number } | null>(null);
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<number>(0);
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
@@ -130,6 +131,15 @@ const Dashboard = () => {
             }
           }
         }
+
+        // Fetch pending internal requests for current user
+        const role = profile?.role || "teacher";
+        const { count: reqCount } = await supabase
+          .from("internal_requests")
+          .select("id", { count: "exact", head: true })
+          .or(`to_user_id.eq.${user.id},to_role.eq.${role}`)
+          .in("status", ["new", "in_progress"]);
+        if (!cancelled) setPendingRequests(reqCount || 0);
       } catch (e) {
         console.error("Dashboard fetch error:", e);
       } finally {
@@ -244,6 +254,22 @@ const Dashboard = () => {
                 <CardContent>
                   <div className="text-2xl lg:text-3xl font-bold">{planStats.onTrack}/{planStats.total}</div>
                   <p className="text-xs text-muted-foreground">طالب منتظم</p>
+                </CardContent>
+                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Card>
+            )}
+            {pendingRequests > 0 && (
+              <Card
+                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
+                onClick={() => navigate("/internal-requests")}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">الطلبات المعلقة</CardTitle>
+                  <ScrollText className="w-5 h-5 text-warning" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl lg:text-3xl font-bold text-warning">{pendingRequests}</div>
+                  <p className="text-xs text-muted-foreground">طلب بانتظار الإجراء</p>
                 </CardContent>
                 <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Card>
