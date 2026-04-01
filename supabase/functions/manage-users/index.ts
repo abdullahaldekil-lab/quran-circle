@@ -53,6 +53,7 @@ serve(async (req) => {
       "update_status", "update_role", "reset_password",
       "link_guardian_student", "unlink_guardian_student",
       "admin_set_password", "admin_edit_user", "admin_delete_user",
+      "admin_update_email",
     ];
 
     // Actions any authenticated user can do
@@ -474,6 +475,29 @@ serve(async (req) => {
           action_type: "guardian_unlinked",
           target_user_id: guardian_id,
           details: `Unlinked guardian from student ${student_id}`,
+        });
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "admin_update_email": {
+        const { user_id, new_email } = payload;
+        if (!user_id || !new_email) throw new Error("يجب تحديد المستخدم والبريد الجديد");
+
+        const { error: emailError } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
+          email: new_email,
+          email_confirm: true,
+        });
+        if (emailError) throw new Error("فشل تحديث البريد: " + emailError.message);
+
+        await supabaseAdmin.from("admin_audit_log").insert({
+          actor_user_id: caller.id,
+          action_type: "email_updated",
+          target_user_id: user_id,
+          details: `Email updated to ${new_email}`,
         });
 
         return new Response(
