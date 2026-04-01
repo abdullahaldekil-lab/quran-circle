@@ -37,8 +37,9 @@ const StaffAttendanceLog = () => {
   const monthEnd = format(endOfMonth(selectedMonth), "yyyy-MM-dd");
 
   // Current week
-  const weekStart = format(startOfWeek(selectedMonth, { weekStartsOn: 0 }), "yyyy-MM-dd");
-  const weekEnd = format(endOfWeek(selectedMonth, { weekStartsOn: 0 }), "yyyy-MM-dd");
+  const weekStartDate = startOfWeek(selectedWeek, { weekStartsOn: 0 });
+  const weekStart = format(weekStartDate, "yyyy-MM-dd");
+  const weekEnd = format(endOfWeek(selectedWeek, { weekStartsOn: 0 }), "yyyy-MM-dd");
 
   const { data: staffList = [] } = useQuery({
     queryKey: ["staff-profiles-log"],
