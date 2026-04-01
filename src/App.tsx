@@ -70,6 +70,7 @@ import NarrationTest from "./pages/NarrationTest";
 import ReviewTest from "./pages/ReviewTest";
 import NarrationStats from "./pages/NarrationStats";
 import StudentAttendanceReport from "@/pages/StudentAttendanceReport";
+import StudentAnnualPlan from "@/pages/StudentAnnualPlan";
 
 const queryClient = new QueryClient({
   defaultOptions: {
