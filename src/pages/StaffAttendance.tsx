@@ -306,8 +306,7 @@ const StaffAttendance = () => {
           <h1 className="text-2xl font-bold text-foreground">حضور العاملين</h1>
           <p className="text-muted-foreground">تسجيل الحضور والانصراف اليومي</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("w-[200px] justify-start text-right", !selectedDate && "text-muted-foreground")}>
@@ -326,6 +325,8 @@ const StaffAttendance = () => {
               </SelectContent>
             </Select>
           )}
+          <Button variant="outline" size="sm" onClick={handlePrint} className="print:hidden"><Printer className="w-4 h-4 ml-1" />طباعة</Button>
+          <Button variant="outline" size="sm" onClick={handleExportPdf} className="print:hidden"><FileDown className="w-4 h-4 ml-1" />PDF</Button>
         </div>
       </div>
 
