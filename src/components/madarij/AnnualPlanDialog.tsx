@@ -202,7 +202,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
         .insert({
           student_id: selectedStudent,
           halaqa_id: selectedHalaqa,
-          academic_year: `${new Date(startDate).getFullYear()}-${new Date(startDate).getFullYear() + 1}`,
+          academic_year: (() => { const h = toHijri(startDate); return `${h.year}-${h.year + 1}`; })(),
           plan_type: planType,
           start_date: startDate,
           end_date: endDate,
