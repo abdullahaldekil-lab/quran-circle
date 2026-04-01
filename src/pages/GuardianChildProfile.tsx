@@ -70,6 +70,24 @@ const GuardianChildProfile = () => {
           .limit(10);
         setTrips(tripsData || []);
       }
+
+      // Get annual plan
+      const { data: plans } = await supabase
+        .from("student_annual_plans")
+        .select("*")
+        .eq("student_id", id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (plans?.[0]) {
+        setAnnualPlan(plans[0]);
+        const { data: prog } = await supabase
+          .from("student_plan_progress")
+          .select("actual_pages, target_pages")
+          .eq("plan_id", plans[0].id);
+        setPlanProgress(prog || []);
+      }
+
       setLoading(false);
     };
     fetchData();
