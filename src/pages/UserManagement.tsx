@@ -106,7 +106,7 @@ const UserManagement = () => {
   // Edit user dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ full_name: "", phone: "", position_title: "", role: "" });
+  const [editForm, setEditForm] = useState({ full_name: "", phone: "", position_title: "", role: "", email: "" });
 
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -309,6 +309,14 @@ const UserManagement = () => {
     setPasswordDialogOpen(true);
   };
 
+  const adminUpdateEmailMutation = useMutation({
+    mutationFn: (data: any) => callEdgeFunction("admin_update_email", data),
+    onSuccess: () => {
+      toast.success("تم تحديث البريد الإلكتروني بنجاح");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const openEditDialog = (staff: any) => {
     setEditTarget(staff);
     setEditForm({
@@ -316,6 +324,7 @@ const UserManagement = () => {
       phone: staff.phone || "",
       position_title: staff.position_title || "",
       role: staff.role || "teacher",
+      email: "",
     });
     setEditDialogOpen(true);
   };
@@ -337,8 +346,12 @@ const UserManagement = () => {
     adminSetPasswordMutation.mutate({ user_id: passwordTarget.id, new_password: newPassword });
   };
 
-  const handleEditUser = () => {
-    adminEditUserMutation.mutate({ user_id: editTarget.id, ...editForm });
+  const handleEditUser = async () => {
+    const { email, ...profileData } = editForm;
+    adminEditUserMutation.mutate({ user_id: editTarget.id, ...profileData });
+    if (email && email.trim()) {
+      adminUpdateEmailMutation.mutate({ user_id: editTarget.id, new_email: email.trim() });
+    }
   };
 
   const actionLabels: Record<string, string> = {
@@ -352,6 +365,7 @@ const UserManagement = () => {
     password_set_by_admin: "تعيين كلمة مرور من المدير",
     password_changed_self: "تغيير كلمة المرور الذاتي",
     user_edited: "تعديل بيانات مستخدم",
+    email_updated: "تحديث البريد الإلكتروني",
     user_deleted: "حذف مستخدم",
     guardian_linked: "ربط ولي أمر بطالب",
     guardian_unlinked: "إلغاء ربط ولي أمر",
@@ -916,6 +930,16 @@ const UserManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>البريد الإلكتروني الجديد</Label>
+              <Input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                dir="ltr"
+                placeholder="اتركه فارغاً إذا لا تريد تغييره"
+              />
             </div>
           </div>
           <DialogFooter>
