@@ -106,7 +106,7 @@ const UserManagement = () => {
   // Edit user dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ full_name: "", phone: "", position_title: "", role: "" });
+  const [editForm, setEditForm] = useState({ full_name: "", phone: "", position_title: "", role: "", email: "" });
 
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
