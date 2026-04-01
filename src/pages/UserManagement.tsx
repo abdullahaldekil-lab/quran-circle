@@ -931,6 +931,16 @@ const UserManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>البريد الإلكتروني الجديد</Label>
+              <Input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                dir="ltr"
+                placeholder="اتركه فارغاً إذا لا تريد تغييره"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>إلغاء</Button>
