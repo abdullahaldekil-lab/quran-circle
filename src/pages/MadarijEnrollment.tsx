@@ -261,9 +261,11 @@ const MadarijEnrollment = () => {
               await supabase.from("notifications").insert(notifs);
             }
 
+            toast.error("تم نزول الطالب للمستوى الأدنى تلقائياً بعد رسوبين");
             setLevelDowngradeAlert(true);
+          } else {
+            toast.warning("الطالب في أدنى مستوى متاح — يرجى مراجعة المشرف");
           }
-          toast.error("تم نزول الطالب للمستوى الأدنى تلقائياً بعد رسوبين");
         } else {
           toast.warning("لم يجتز الطالب الاختبار — المحاولة " + newFailed + " من 2");
         }
