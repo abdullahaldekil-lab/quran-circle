@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, Inbox, Send, BarChart3, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-type RequestType = "إجازة" | "مستلزمات" | "صيانة" | "استفسار" | "أخرى";
+type RequestType = "إجازة" | "مستلزمات" | "صيانة" | "استفسار" | "أمر عمل" | "أخرى";
 type RequestPriority = "عاجل" | "عادي" | "منخفض";
 type RequestStatus = "new" | "in_progress" | "done" | "rejected";
 

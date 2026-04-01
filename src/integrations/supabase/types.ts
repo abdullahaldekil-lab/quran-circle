@@ -3866,7 +3866,13 @@ export type Database = {
         | "waiting_list"
       request_priority: "عاجل" | "عادي" | "منخفض"
       request_status: "new" | "in_progress" | "done" | "rejected"
-      request_type: "إجازة" | "مستلزمات" | "صيانة" | "استفسار" | "أخرى"
+      request_type:
+        | "إجازة"
+        | "مستلزمات"
+        | "صيانة"
+        | "استفسار"
+        | "أخرى"
+        | "أمر عمل"
       staff_role:
         | "manager"
         | "secretary"
@@ -4021,7 +4027,14 @@ export const Constants = {
       ],
       request_priority: ["عاجل", "عادي", "منخفض"],
       request_status: ["new", "in_progress", "done", "rejected"],
-      request_type: ["إجازة", "مستلزمات", "صيانة", "استفسار", "أخرى"],
+      request_type: [
+        "إجازة",
+        "مستلزمات",
+        "صيانة",
+        "استفسار",
+        "أخرى",
+        "أمر عمل",
+      ],
       staff_role: [
         "manager",
         "secretary",
