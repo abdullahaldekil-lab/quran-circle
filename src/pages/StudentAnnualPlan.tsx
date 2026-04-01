@@ -27,7 +27,7 @@ const PLAN_LABELS: Record<string, string> = {
 const StudentAnnualPlan = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
-  const { isManager } = useRole();
+  const { isManager, isSupervisor, isTeacher } = useRole();
   const { user } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -343,7 +343,7 @@ const StudentAnnualPlan = () => {
                 <TableHead>المنجز</TableHead>
                 <TableHead>الالتزام%</TableHead>
                 <TableHead>الحالة</TableHead>
-                <TableHead className="print:hidden">تحديث</TableHead>
+                {(isManager || isSupervisor || isTeacher) && <TableHead className="print:hidden">تحديث</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -366,11 +366,13 @@ const StudentAnnualPlan = () => {
                       {p.status === "on_track" && <span className="text-success text-xs">✅ على المسار</span>}
                       {p.status === "behind" && <span className="text-destructive text-xs">⚠️ متأخر</span>}
                     </TableCell>
-                    <TableCell className="print:hidden">
-                      <Button variant="ghost" size="sm" onClick={() => openUpdate(p)}>
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+                    {(isManager || isSupervisor || isTeacher) && (
+                      <TableCell className="print:hidden">
+                        <Button variant="ghost" size="sm" onClick={() => openUpdate(p)}>
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
