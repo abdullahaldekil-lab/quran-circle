@@ -98,9 +98,9 @@ const StaffAttendanceLog = () => {
 
   // Week days (Sun-Thu)
   const weekDays = useMemo(() => {
-    const start = startOfWeek(selectedMonth, { weekStartsOn: 0 });
+    const start = startOfWeek(selectedWeek, { weekStartsOn: 0 });
     return Array.from({ length: 5 }, (_, i) => addDays(start, i)); // Sun-Thu
-  }, [selectedMonth]);
+  }, [selectedWeek]);
 
   // Records map by staffId -> date -> record
   const recordsByStaffDate = useMemo(() => {
