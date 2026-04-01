@@ -58,12 +58,16 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report",
     "/notification-preferences", "/internal-requests",
+  ],
+  admin_staff: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
     "/student-attendance-report",
     "/notification-preferences", "/internal-requests",
+  ],
+  teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
@@ -71,6 +75,8 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/staff-attendance-log",
     "/student-attendance-report", "/student-annual-plan",
     "/notification-preferences", "/internal-requests",
+  ],
+  assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/rankings", "/profile", "/preparation", "/academic-calendar",
     "/quran-narration",
