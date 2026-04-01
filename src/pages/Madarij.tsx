@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, BookOpen, Users, CheckCircle, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, BookOpen, Users, CheckCircle, Eye, CalendarDays } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import StudentNameLink from "@/components/StudentNameLink";
+import AnnualPlanDialog from "@/components/madarij/AnnualPlanDialog";
 
 const Madarij = () => {
   const { isManager } = useRole();
