@@ -18,7 +18,7 @@ import StudentNameLink from "@/components/StudentNameLink";
 import AnnualPlanDialog from "@/components/madarij/AnnualPlanDialog";
 
 const Madarij = () => {
-  const { isManager } = useRole();
+  const { isManager, isSupervisor, isTeacher } = useRole();
   const navigate = useNavigate();
   const [tracks, setTracks] = useState<any[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
