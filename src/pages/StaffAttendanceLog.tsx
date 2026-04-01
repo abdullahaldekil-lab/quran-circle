@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, getDay } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, subWeeks, getDay } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,6 +27,7 @@ const CHART_COLORS = ["hsl(142, 76%, 36%)", "#f59e0b", "hsl(0, 84%, 60%)", "#6b7
 
 const StaffAttendanceLog = () => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
   const [filterStaffId, setFilterStaffId] = useState<string>("all");
   const [filterDept, setFilterDept] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -36,8 +37,9 @@ const StaffAttendanceLog = () => {
   const monthEnd = format(endOfMonth(selectedMonth), "yyyy-MM-dd");
 
   // Current week
-  const weekStart = format(startOfWeek(selectedMonth, { weekStartsOn: 0 }), "yyyy-MM-dd");
-  const weekEnd = format(endOfWeek(selectedMonth, { weekStartsOn: 0 }), "yyyy-MM-dd");
+  const weekStartDate = startOfWeek(selectedWeek, { weekStartsOn: 0 });
+  const weekStart = format(weekStartDate, "yyyy-MM-dd");
+  const weekEnd = format(endOfWeek(selectedWeek, { weekStartsOn: 0 }), "yyyy-MM-dd");
 
   const { data: staffList = [] } = useQuery({
     queryKey: ["staff-profiles-log"],
@@ -96,9 +98,9 @@ const StaffAttendanceLog = () => {
 
   // Week days (Sun-Thu)
   const weekDays = useMemo(() => {
-    const start = startOfWeek(selectedMonth, { weekStartsOn: 0 });
+    const start = startOfWeek(selectedWeek, { weekStartsOn: 0 });
     return Array.from({ length: 5 }, (_, i) => addDays(start, i)); // Sun-Thu
-  }, [selectedMonth]);
+  }, [selectedWeek]);
 
   // Records map by staffId -> date -> record
   const recordsByStaffDate = useMemo(() => {
@@ -312,9 +314,14 @@ const StaffAttendanceLog = () => {
 
         {/* Weekly Tab */}
         <TabsContent value="weekly" className="space-y-4">
-          <div className="flex gap-2 print:hidden">
-            <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
-            <Button variant="outline" size="sm" onClick={exportWeeklyExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
+          <div className="flex items-center gap-2 print:hidden flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => setSelectedWeek(subWeeks(selectedWeek, 1))}>→ الأسبوع السابق</Button>
+            <span className="text-sm font-medium px-2">{format(weekDays[0], "d/M")} – {format(weekDays[4], "d/M/yyyy")}</span>
+            <Button variant="outline" size="sm" onClick={() => setSelectedWeek(addWeeks(selectedWeek, 1))}>الأسبوع التالي ←</Button>
+            <div className="mr-auto flex gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
+              <Button variant="outline" size="sm" onClick={exportWeeklyExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
+            </div>
           </div>
           <Card>
             <CardContent className="p-0 overflow-auto">
@@ -345,13 +352,28 @@ const StaffAttendanceLog = () => {
                       })}
                     </TableRow>
                   ))}
+                  {/* Totals row */}
+                  <TableRow className="bg-muted/60 font-bold border-t-2">
+                    <TableCell className="sticky right-0 bg-muted/60 z-10 font-bold">الإجمالي (حاضر)</TableCell>
+                    {weekDays.map(day => {
+                      const dateStr = format(day, "yyyy-MM-dd");
+                      const count = filteredStaff.filter(s => {
+                        const rec = recordsByStaffDate[s.id]?.[dateStr];
+                        return rec && ["present", "late", "early_leave"].includes(rec.status);
+                      }).length;
+                      return (
+                        <TableCell key={dateStr} className="text-center font-bold text-primary">
+                          {count} / {filteredStaff.length}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Monthly Tab */}
         <TabsContent value="monthly" className="space-y-4">
           <div className="flex gap-2 print:hidden">
             <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
@@ -368,6 +390,7 @@ const StaffAttendanceLog = () => {
                     <TableHead className="text-center">أيام الغياب</TableHead>
                     <TableHead className="text-center">أيام التأخر</TableHead>
                     <TableHead className="text-center">دقائق التأخر</TableHead>
+                    <TableHead className="text-center">ساعات العمل</TableHead>
                     <TableHead className="text-center">نسبة الحضور</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -378,6 +401,7 @@ const StaffAttendanceLog = () => {
                     const daysA = Math.max(0, monthDays.length - daysP - staffRecs.filter(r => r.status === "leave").length);
                     const daysL = staffRecs.filter(r => r.status === "late").length;
                     const totalLate = staffRecs.reduce((sum, r) => sum + (r.late_minutes || 0), 0);
+                    const totalWork = staffRecs.reduce((sum, r) => sum + (r.total_work_minutes || 0), 0);
                     const pct = monthDays.length > 0 ? Math.round((daysP / monthDays.length) * 100) : 0;
                     return (
                       <TableRow key={s.id} className={cn(pct < 70 && "bg-amber-50 dark:bg-amber-950/20", pct >= 90 && "bg-emerald-50 dark:bg-emerald-950/20")}>
@@ -387,12 +411,45 @@ const StaffAttendanceLog = () => {
                         <TableCell className="text-center font-bold text-destructive">{daysA}</TableCell>
                         <TableCell className="text-center font-bold text-amber-600">{daysL}</TableCell>
                         <TableCell className="text-center">{totalLate > 0 ? `${totalLate} د` : "—"}</TableCell>
+                        <TableCell className="text-center">{totalWork > 0 ? formatMinutes(totalWork) : "—"}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant={pct >= 90 ? "default" : pct >= 70 ? "secondary" : "destructive"}>{pct}%</Badge>
                         </TableCell>
                       </TableRow>
                     );
                   })}
+                  {/* Totals row */}
+                  {filteredStaff.length > 0 && (() => {
+                    const allP = filteredStaff.reduce((sum, s) => {
+                      const recs = records.filter(r => r.staff_id === s.id);
+                      return sum + recs.filter(r => ["present", "late", "early_leave"].includes(r.status)).length;
+                    }, 0);
+                    const allA = filteredStaff.reduce((sum, s) => {
+                      const recs = records.filter(r => r.staff_id === s.id);
+                      const p = recs.filter(r => ["present", "late", "early_leave"].includes(r.status)).length;
+                      const l = recs.filter(r => r.status === "leave").length;
+                      return sum + Math.max(0, monthDays.length - p - l);
+                    }, 0);
+                    const allL = filteredStaff.reduce((sum, s) => sum + records.filter(r => r.staff_id === s.id && r.status === "late").length, 0);
+                    const allLateMins = records.filter(r => filteredStaff.some(s => s.id === r.staff_id)).reduce((s, r) => s + (r.late_minutes || 0), 0);
+                    const allWorkMins = records.filter(r => filteredStaff.some(s => s.id === r.staff_id)).reduce((s, r) => s + (r.total_work_minutes || 0), 0);
+                    const totalExpected = filteredStaff.length * monthDays.length;
+                    const avgPct = totalExpected > 0 ? Math.round((allP / totalExpected) * 100) : 0;
+                    return (
+                      <TableRow className="bg-foreground/10 dark:bg-foreground/20 font-bold border-t-2 border-foreground/20">
+                        <TableCell className="font-bold">إجمالي المجمع</TableCell>
+                        <TableCell>—</TableCell>
+                        <TableCell className="text-center font-bold text-emerald-600">{allP}</TableCell>
+                        <TableCell className="text-center font-bold text-destructive">{allA}</TableCell>
+                        <TableCell className="text-center font-bold text-amber-600">{allL}</TableCell>
+                        <TableCell className="text-center font-bold">{allLateMins > 0 ? `${allLateMins} د` : "—"}</TableCell>
+                        <TableCell className="text-center font-bold">{allWorkMins > 0 ? formatMinutes(allWorkMins) : "—"}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={avgPct >= 90 ? "default" : avgPct >= 70 ? "secondary" : "destructive"}>{avgPct}%</Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })()}
                 </TableBody>
               </Table>
             </CardContent>
