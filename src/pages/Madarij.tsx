@@ -96,12 +96,20 @@ const Madarij = () => {
           <h1 className="text-2xl font-bold">برنامج مدارج</h1>
           <p className="text-sm text-muted-foreground">طريقك نحو إتقان القرآن الكريم</p>
         </div>
-        {isManager && (
-          <Button onClick={openNewTrack}>
-            <Plus className="w-4 h-4 ml-1" />
-            إضافة مسار
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {isManager && (
+            <Button variant="outline" onClick={() => setAnnualPlanOpen(true)}>
+              <CalendarDays className="w-4 h-4 ml-1" />
+              إنشاء خطة سنوية
+            </Button>
+          )}
+          {isManager && (
+            <Button onClick={openNewTrack}>
+              <Plus className="w-4 h-4 ml-1" />
+              إضافة مسار
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
