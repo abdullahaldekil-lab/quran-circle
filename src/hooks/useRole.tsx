@@ -31,7 +31,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-attendance-report", "/student-annual-plan",
     "/notification-templates", "/notification-log", "/notification-preferences",
     "/send-notification", "/bulk-email",
-    "/permissions-management",
+    "/permissions-management", "/internal-requests",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
@@ -40,7 +40,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report", "/student-annual-plan",
-    "/notification-preferences",
+    "/notification-preferences", "/internal-requests",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
@@ -49,7 +49,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report", "/student-annual-plan",
-    "/notification-preferences",
+    "/notification-preferences", "/internal-requests",
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
@@ -57,7 +57,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report",
-    "/notification-preferences",
+    "/notification-preferences", "/internal-requests",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
@@ -65,7 +65,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
     "/student-attendance-report",
-    "/notification-preferences",
+    "/notification-preferences", "/internal-requests",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
@@ -74,14 +74,14 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance-log",
     "/student-attendance-report", "/student-annual-plan",
-    "/notification-preferences",
+    "/notification-preferences", "/internal-requests",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/rankings", "/profile", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance-log",
-    "/notification-preferences",
+    "/notification-preferences", "/internal-requests",
   ],
 };
 
