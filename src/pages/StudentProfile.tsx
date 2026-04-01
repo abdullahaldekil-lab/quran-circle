@@ -655,10 +655,8 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
   return <AttendanceTabContent attRecords={attRecords} trendData={trendData} month={month} year={year} setMonth={(m) => { setMonth(m); setLoaded(false); }} setYear={(y) => { setYear(y); setLoaded(false); }} />;
 };
 
-// Separated to avoid hooks-in-async issues
-import { format as fmtDate, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
-import { ar } from "date-fns/locale";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+
 
 const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, setYear }: {
   attRecords: any[]; trendData: { month: string; pct: number }[];
