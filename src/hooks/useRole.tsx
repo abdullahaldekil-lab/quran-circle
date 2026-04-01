@@ -40,9 +40,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report", "/student-annual-plan",
-    "/notification-preferences",
-  ],
-  assistant_supervisor: [
+    "/notification-preferences", "/internal-requests",
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij",
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
