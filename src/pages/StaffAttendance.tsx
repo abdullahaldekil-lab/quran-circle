@@ -307,6 +307,7 @@ const StaffAttendance = () => {
           <p className="text-muted-foreground">تسجيل الحضور والانصراف اليومي</p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("w-[200px] justify-start text-right", !selectedDate && "text-muted-foreground")}>
