@@ -198,7 +198,7 @@ const Dashboard = () => {
         </div>
       ) : (
         <>
-          <div className={`grid grid-cols-2 ${canSeeStaff && staffPct !== null ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
+          <div className={`grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4`}>
             {cards.map((card) => (
               <Card
                 key={card.title}
