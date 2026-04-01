@@ -258,6 +258,22 @@ const Dashboard = () => {
                 <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Card>
             )}
+            {pendingRequests > 0 && (
+              <Card
+                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
+                onClick={() => navigate("/internal-requests")}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">الطلبات المعلقة</CardTitle>
+                  <ScrollText className="w-5 h-5 text-warning" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl lg:text-3xl font-bold text-warning">{pendingRequests}</div>
+                  <p className="text-xs text-muted-foreground">طلب بانتظار الإجراء</p>
+                </CardContent>
+                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Card>
+            )}
           </div>
 
           {/* Daily Attendance Summary */}
