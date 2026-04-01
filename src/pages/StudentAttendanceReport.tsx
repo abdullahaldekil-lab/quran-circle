@@ -191,7 +191,10 @@ const StudentAttendanceReport = () => {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <PageDateHeader title="تقرير حضور الطلاب" />
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">تقرير حضور الطلاب</h1>
+        <PageDateHeader />
+      </div>
 
       {/* Filters */}
       <Card>
