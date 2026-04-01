@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Plus, Pencil, Trash2, Printer } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowRight, Plus, Pencil, Trash2, Printer, AlertTriangle, FlaskConical } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import MadarijPrintTemplate from "@/components/MadarijPrintTemplate";
@@ -25,9 +26,10 @@ const MadarijEnrollment = () => {
   const [enrollment, setEnrollment] = useState<any>(null);
   const [dailyProgress, setDailyProgress] = useState<any[]>([]);
   const [mistakes, setMistakes] = useState<any[]>([]);
-  const [exam, setExam] = useState<any>(null);
+  const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPrint, setShowPrint] = useState(false);
+  const [levelDowngradeAlert, setLevelDowngradeAlert] = useState(false);
 
   // Daily progress form
   const [dpDialogOpen, setDpDialogOpen] = useState(false);
@@ -47,6 +49,7 @@ const MadarijEnrollment = () => {
 
   // Exam form
   const [examDialogOpen, setExamDialogOpen] = useState(false);
+  const [examDialogType, setExamDialogType] = useState<'official' | 'trial'>('official');
   const [examForm, setExamForm] = useState({
     segment1_errors: 0, segment1_warnings: 0, segment1_grade: 0,
     segment2_errors: 0, segment2_warnings: 0, segment2_grade: 0,
@@ -55,21 +58,26 @@ const MadarijEnrollment = () => {
     segment5_errors: 0, segment5_warnings: 0, segment5_grade: 0,
     review_total: 0, memorization_grade: 0, extra_points: 0, final_grade: 0,
     examiner_name: "", supervisor_approval: "", pass_date: "", passed: false,
+    failed_reason: "",
   });
+
+  // Computed values
+  const failedAttempts = exams.filter(e => !e.passed && e.exam_type === 'official').length;
+  const latestExam = exams.length > 0 ? exams[0] : null;
 
   const fetchAll = async () => {
     if (!enrollmentId) return;
     setLoading(true);
-    const [enrollRes, dpRes, mistakesRes, examRes] = await Promise.all([
+    const [enrollRes, dpRes, mistakesRes, examsRes] = await Promise.all([
       supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks(name, days_required), level_tracks(name)").eq("id", enrollmentId).maybeSingle(),
       supabase.from("madarij_daily_progress").select("*").eq("enrollment_id", enrollmentId).order("progress_date"),
       supabase.from("madarij_mistakes").select("*").eq("enrollment_id", enrollmentId).order("created_at"),
-      supabase.from("madarij_hizb_exams").select("*").eq("enrollment_id", enrollmentId).maybeSingle(),
+      supabase.from("madarij_hizb_exams").select("*").eq("enrollment_id", enrollmentId).order("attempt_number", { ascending: false }),
     ]);
     setEnrollment(enrollRes.data);
     setDailyProgress(dpRes.data || []);
     setMistakes(mistakesRes.data || []);
-    setExam(examRes.data);
+    setExams(examsRes.data || []);
     setLoading(false);
   };
 
@@ -152,29 +160,18 @@ const MadarijEnrollment = () => {
   };
 
   // Exam CRUD
-  const openExamForm = () => {
-    if (exam) {
-      setExamForm({
-        segment1_errors: exam.segment1_errors, segment1_warnings: exam.segment1_warnings, segment1_grade: exam.segment1_grade,
-        segment2_errors: exam.segment2_errors, segment2_warnings: exam.segment2_warnings, segment2_grade: exam.segment2_grade,
-        segment3_errors: exam.segment3_errors, segment3_warnings: exam.segment3_warnings, segment3_grade: exam.segment3_grade,
-        segment4_errors: exam.segment4_errors, segment4_warnings: exam.segment4_warnings, segment4_grade: exam.segment4_grade,
-        segment5_errors: exam.segment5_errors, segment5_warnings: exam.segment5_warnings, segment5_grade: exam.segment5_grade,
-        review_total: exam.review_total, memorization_grade: exam.memorization_grade, extra_points: exam.extra_points,
-        final_grade: exam.final_grade, examiner_name: exam.examiner_name || "", supervisor_approval: exam.supervisor_approval || "",
-        pass_date: exam.pass_date || "", passed: exam.passed,
-      });
-    } else {
-      setExamForm({
-        segment1_errors: 0, segment1_warnings: 0, segment1_grade: 0,
-        segment2_errors: 0, segment2_warnings: 0, segment2_grade: 0,
-        segment3_errors: 0, segment3_warnings: 0, segment3_grade: 0,
-        segment4_errors: 0, segment4_warnings: 0, segment4_grade: 0,
-        segment5_errors: 0, segment5_warnings: 0, segment5_grade: 0,
-        review_total: 0, memorization_grade: 0, extra_points: 0, final_grade: 0,
-        examiner_name: "", supervisor_approval: "", pass_date: "", passed: false,
-      });
-    }
+  const openExamForm = (type: 'official' | 'trial') => {
+    setExamDialogType(type);
+    setExamForm({
+      segment1_errors: 0, segment1_warnings: 0, segment1_grade: 0,
+      segment2_errors: 0, segment2_warnings: 0, segment2_grade: 0,
+      segment3_errors: 0, segment3_warnings: 0, segment3_grade: 0,
+      segment4_errors: 0, segment4_warnings: 0, segment4_grade: 0,
+      segment5_errors: 0, segment5_warnings: 0, segment5_grade: 0,
+      review_total: 0, memorization_grade: 0, extra_points: 0, final_grade: 0,
+      examiner_name: "", supervisor_approval: "", pass_date: "", passed: false,
+      failed_reason: "",
+    });
     setExamDialogOpen(true);
   };
 
@@ -182,23 +179,99 @@ const MadarijEnrollment = () => {
     e.preventDefault();
     const reviewTotal = examForm.segment1_grade + examForm.segment2_grade + examForm.segment3_grade + examForm.segment4_grade + examForm.segment5_grade;
     const finalGrade = reviewTotal + Number(examForm.memorization_grade) + Number(examForm.extra_points);
-    const payload = { ...examForm, review_total: reviewTotal, final_grade: finalGrade, passed: finalGrade >= 40, enrollment_id: enrollmentId, student_id: enrollment.student_id };
+    const passed = finalGrade >= 40;
 
-    if (exam) {
-      const { error } = await supabase.from("madarij_hizb_exams").update(payload).eq("id", exam.id);
-      if (error) { toast.error("خطأ"); return; }
+    // Calculate attempt number for the current type
+    const sameTypeExams = exams.filter(ex => ex.exam_type === examDialogType);
+    const nextAttempt = sameTypeExams.length > 0 ? Math.max(...sameTypeExams.map((ex: any) => ex.attempt_number)) + 1 : 1;
+
+    const payload = {
+      ...examForm,
+      review_total: reviewTotal,
+      final_grade: finalGrade,
+      passed,
+      enrollment_id: enrollmentId,
+      student_id: enrollment.student_id,
+      exam_type: examDialogType,
+      attempt_number: nextAttempt,
+      failed_reason: !passed ? examForm.failed_reason : null,
+    };
+
+    const { error } = await supabase.from("madarij_hizb_exams").insert(payload as any);
+    if (error) { toast.error("خطأ في حفظ الاختبار"); return; }
+
+    // Official exam logic
+    if (examDialogType === 'official') {
+      if (passed) {
+        await supabase.from("madarij_enrollments").update({ status: "completed" } as any).eq("id", enrollmentId);
+        toast.success("تم اجتياز الاختبار وإكمال التسجيل!");
+      } else {
+        // Handle failure
+        const newFailed = failedAttempts + 1;
+        await supabase.from("madarij_enrollments").update({ failed_attempts: newFailed } as any).eq("id", enrollmentId);
+
+        if (newFailed >= 2) {
+          // Level downgrade logic
+          const currentTrack = enrollment.madarij_tracks as any;
+          const { data: lowerTrack } = await supabase
+            .from("madarij_tracks")
+            .select("*")
+            .lt("days_required", currentTrack.days_required)
+            .eq("active", true)
+            .order("days_required", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (lowerTrack) {
+            // Update enrollment
+            await supabase.from("madarij_enrollments").update({
+              track_id: lowerTrack.id,
+              level_downgraded: true,
+              previous_track_id: enrollment.track_id,
+              failed_attempts: 0,
+            } as any).eq("id", enrollmentId);
+
+            // Log level change
+            const { data: { user } } = await supabase.auth.getUser();
+            await supabase.from("madarij_level_changes" as any).insert({
+              student_id: enrollment.student_id,
+              enrollment_id: enrollmentId,
+              old_track_id: enrollment.track_id,
+              new_track_id: lowerTrack.id,
+              reason: `رسوب في الاختبار الرسمي ${newFailed} مرات`,
+              changed_by: user?.id,
+            });
+
+            // Send notification to guardian
+            const { data: guardianLinks } = await supabase
+              .from("guardian_students")
+              .select("guardian_id")
+              .eq("student_id", enrollment.student_id)
+              .eq("active", true);
+
+            if (guardianLinks && guardianLinks.length > 0) {
+              const studentName = (enrollment.students as any)?.full_name || "الطالب";
+              const notifs = guardianLinks.map((gl: any) => ({
+                user_id: gl.guardian_id,
+                title: "تغيير مستوى في برنامج مدارج",
+                body: `تم نقل ${studentName} من مسار ${currentTrack.name} إلى مسار ${lowerTrack.name} بسبب عدم اجتياز الاختبار`,
+                channel: "inApp",
+                status: "sent",
+              }));
+              await supabase.from("notifications").insert(notifs);
+            }
+
+            setLevelDowngradeAlert(true);
+          }
+          toast.error("تم نزول الطالب للمستوى الأدنى تلقائياً بعد رسوبين");
+        } else {
+          toast.warning("لم يجتز الطالب الاختبار — المحاولة " + newFailed + " من 2");
+        }
+      }
     } else {
-      const { error } = await supabase.from("madarij_hizb_exams").insert(payload);
-      if (error) { toast.error("خطأ"); return; }
+      toast.success("تم حفظ الاختبار التجريبي");
     }
 
-    // Auto-complete enrollment if passed
-    if (finalGrade >= 40) {
-      await supabase.from("madarij_enrollments").update({ status: "completed" }).eq("id", enrollmentId);
-      toast.success("تم اجتياز الاختبار وإكمال التسجيل!");
-    } else {
-      toast.success("تم حفظ الاختبار");
-    }
     setExamDialogOpen(false);
     fetchAll();
   };
@@ -217,7 +290,7 @@ const MadarijEnrollment = () => {
         enrollment={enrollment}
         dailyProgress={dailyProgress}
         mistakes={mistakes}
-        exam={exam}
+        exam={latestExam}
         onClose={() => setShowPrint(false)}
       />
     );
@@ -236,6 +309,16 @@ const MadarijEnrollment = () => {
         </Button>
       </div>
 
+      {/* Level Downgrade Alert */}
+      {enrollment.level_downgraded && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            تم خفض مستوى الطالب بعد رسوبين متتاليين في الاختبار الرسمي
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Enrollment Info */}
       <Card>
         <CardContent className="p-4">
@@ -247,10 +330,15 @@ const MadarijEnrollment = () => {
             <div><span className="text-muted-foreground">تاريخ البداية:</span> <strong>{enrollment.start_date}</strong></div>
             <div><span className="text-muted-foreground">تاريخ النهاية:</span> <strong>{enrollment.end_date || "—"}</strong></div>
             <div><span className="text-muted-foreground">الأيام:</span> <strong>{(enrollment.madarij_tracks as any)?.days_required} يوم</strong></div>
-            <div>
+            <div className="flex items-center gap-2">
               <Badge variant={enrollment.status === "active" ? "default" : "secondary"}>
                 {enrollment.status === "active" ? "نشط" : "مكتمل"}
               </Badge>
+              {failedAttempts > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  رسوب: {failedAttempts}
+                </Badge>
+              )}
             </div>
           </div>
         </CardContent>
@@ -376,17 +464,25 @@ const MadarijEnrollment = () => {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base">اختبار نهاية الحزب</CardTitle>
               {canEdit && (
-                <Button size="sm" onClick={openExamForm}>
-                  <Pencil className="w-4 h-4 ml-1" />
-                  {exam ? "تعديل الاختبار" : "إضافة اختبار"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => openExamForm('official')}>
+                    <Plus className="w-4 h-4 ml-1" />
+                    إضافة اختبار
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => openExamForm('trial')}>
+                    <FlaskConical className="w-4 h-4 ml-1" />
+                    اختبار تجريبي
+                  </Button>
+                </div>
               )}
             </CardHeader>
-            <CardContent>
-              {!exam ? (
-                <p className="text-sm text-muted-foreground text-center py-4">لم يتم إجراء الاختبار بعد</p>
-              ) : (
+            <CardContent className="space-y-6">
+              {/* Latest exam details */}
+              {latestExam && (
                 <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-muted-foreground">
+                    آخر اختبار — {latestExam.exam_type === 'trial' ? 'تجريبي' : 'رسمي'}
+                  </h4>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -400,9 +496,9 @@ const MadarijEnrollment = () => {
                       {[1,2,3,4,5].map((i) => (
                         <TableRow key={i}>
                           <TableCell>المقطع {i}</TableCell>
-                          <TableCell>{(exam as any)[`segment${i}_errors`]}</TableCell>
-                          <TableCell>{(exam as any)[`segment${i}_warnings`]}</TableCell>
-                          <TableCell>{(exam as any)[`segment${i}_grade`]}</TableCell>
+                          <TableCell>{(latestExam as any)[`segment${i}_errors`]}</TableCell>
+                          <TableCell>{(latestExam as any)[`segment${i}_warnings`]}</TableCell>
+                          <TableCell>{(latestExam as any)[`segment${i}_grade`]}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -410,29 +506,78 @@ const MadarijEnrollment = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div className="bg-muted p-3 rounded-lg text-center">
                       <p className="text-xs text-muted-foreground">مجموع المراجعة</p>
-                      <p className="text-lg font-bold">{exam.review_total}</p>
+                      <p className="text-lg font-bold">{latestExam.review_total}</p>
                     </div>
                     <div className="bg-muted p-3 rounded-lg text-center">
                       <p className="text-xs text-muted-foreground">اختبار الحفظ</p>
-                      <p className="text-lg font-bold">{exam.memorization_grade}</p>
+                      <p className="text-lg font-bold">{latestExam.memorization_grade}</p>
                     </div>
                     <div className="bg-muted p-3 rounded-lg text-center">
                       <p className="text-xs text-muted-foreground">الدرجات الإضافية</p>
-                      <p className="text-lg font-bold">{exam.extra_points}</p>
+                      <p className="text-lg font-bold">{latestExam.extra_points}</p>
                     </div>
                     <div className="bg-primary/10 p-3 rounded-lg text-center">
                       <p className="text-xs text-muted-foreground">المجموع النهائي</p>
-                      <p className="text-lg font-bold text-primary">{exam.final_grade}</p>
+                      <p className="text-lg font-bold text-primary">{latestExam.final_grade}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-sm">
-                    <span>المختبر: <strong>{exam.examiner_name || "—"}</strong></span>
-                    <span>الاعتماد: <strong>{exam.supervisor_approval || "—"}</strong></span>
-                    <Badge variant={exam.passed ? "default" : "destructive"}>
-                      {exam.passed ? "اجتاز" : "لم يجتز"}
+                    <span>المختبر: <strong>{latestExam.examiner_name || "—"}</strong></span>
+                    <span>الاعتماد: <strong>{latestExam.supervisor_approval || "—"}</strong></span>
+                    <Badge variant={latestExam.passed ? "default" : "destructive"}>
+                      {latestExam.passed ? "اجتاز" : "لم يجتز"}
                     </Badge>
+                    {latestExam.exam_type === 'trial' && (
+                      <Badge variant="outline" className="text-muted-foreground">تجريبي</Badge>
+                    )}
                   </div>
                 </div>
+              )}
+
+              {/* Exam History Table */}
+              {exams.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">سجل جميع المحاولات</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>رقم المحاولة</TableHead>
+                        <TableHead>النوع</TableHead>
+                        <TableHead>التاريخ</TableHead>
+                        <TableHead>الدرجة</TableHead>
+                        <TableHead>النتيجة</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {exams.map((ex, idx) => (
+                        <TableRow
+                          key={ex.id}
+                          className={idx === 0 ? "border-r-4 border-r-primary" : ""}
+                        >
+                          <TableCell>{ex.attempt_number}</TableCell>
+                          <TableCell>
+                            {ex.exam_type === 'trial' ? (
+                              <Badge variant="outline" className="text-muted-foreground">تجريبي</Badge>
+                            ) : (
+                              <Badge variant="secondary">رسمي</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{ex.created_at?.split("T")[0]}</TableCell>
+                          <TableCell>{ex.final_grade}</TableCell>
+                          <TableCell>
+                            <Badge variant={ex.passed ? "default" : "destructive"}>
+                              {ex.passed ? "ناجح" : "راسب"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {exams.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">لم يتم إجراء أي اختبار بعد</p>
               )}
             </CardContent>
           </Card>
@@ -479,7 +624,11 @@ const MadarijEnrollment = () => {
       {/* Exam Dialog */}
       <Dialog open={examDialogOpen} onOpenChange={setExamDialogOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto max-w-lg">
-          <DialogHeader><DialogTitle>{exam ? "تعديل الاختبار" : "إضافة اختبار"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>
+              {examDialogType === 'trial' ? "اختبار تجريبي" : "اختبار رسمي"} — إضافة محاولة جديدة
+            </DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSaveExam} className="space-y-4">
             {[1,2,3,4,5].map((i) => (
               <div key={i} className="space-y-1">
@@ -497,11 +646,30 @@ const MadarijEnrollment = () => {
               <div className="space-y-1"><Label>اسم المختبر</Label><Input value={examForm.examiner_name} onChange={e => setExamForm({...examForm, examiner_name: e.target.value})} /></div>
               <div className="space-y-1"><Label>اعتماد الإشراف</Label><Input value={examForm.supervisor_approval} onChange={e => setExamForm({...examForm, supervisor_approval: e.target.value})} /></div>
               <div className="space-y-1"><Label>تاريخ الاجتياز</Label><Input type="date" value={examForm.pass_date} onChange={e => setExamForm({...examForm, pass_date: e.target.value})} /></div>
+              <div className="space-y-1"><Label>سبب الرسوب (اختياري)</Label><Input value={examForm.failed_reason} onChange={e => setExamForm({...examForm, failed_reason: e.target.value})} placeholder="في حال عدم الاجتياز" /></div>
             </div>
             <Button type="submit" className="w-full">حفظ الاختبار</Button>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Level Downgrade Alert Dialog */}
+      <AlertDialog open={levelDowngradeAlert} onOpenChange={setLevelDowngradeAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              تنبيه — نزول المستوى
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              تم نقل الطالب تلقائياً إلى المستوى الأدنى بعد رسوبين متتاليين في الاختبار الرسمي. تم إشعار ولي الأمر.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>حسناً</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Dialogs */}
       <AlertDialog open={!!deleteDpId} onOpenChange={() => setDeleteDpId(null)}>
