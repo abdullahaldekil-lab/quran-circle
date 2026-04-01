@@ -598,31 +598,26 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
   const [loaded, setLoaded] = useState(false);
-  const [records, setRecords] = useState<any[]>([]);
+  const [attRecords, setAttRecords] = useState<any[]>([]);
   const [trendData, setTrendData] = useState<{ month: string; pct: number }[]>([]);
-
-  const { format: fmtDate, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } = (() => {
-    const dateFns = require("date-fns");
-    return dateFns;
-  })();
 
   useEffect(() => {
     const fetchAttendance = async () => {
+      const { format: fmt, startOfMonth: som, endOfMonth: eom, eachDayOfInterval, getDay, subMonths } = await import("date-fns");
+      const { ar } = await import("date-fns/locale");
       const dateObj = new Date(year, month, 1);
-      const ms = fmtDate(startOfMonth(dateObj), "yyyy-MM-dd");
-      const me = fmtDate(endOfMonth(dateObj), "yyyy-MM-dd");
+      const ms = fmt(som(dateObj), "yyyy-MM-dd");
+      const me = fmt(eom(dateObj), "yyyy-MM-dd");
 
-      // Current month
       const { data } = await supabase
         .from("attendance")
         .select("attendance_date, status")
         .eq("student_id", studentId)
         .gte("attendance_date", ms)
         .lte("attendance_date", me);
-      setRecords(data || []);
+      setAttRecords(data || []);
 
-      // Trend: last 6 months
-      const sixAgo = fmtDate(startOfMonth(subMonths(dateObj, 5)), "yyyy-MM-dd");
+      const sixAgo = fmt(som(subMonths(dateObj, 5)), "yyyy-MM-dd");
       const { data: tData } = await supabase
         .from("attendance")
         .select("attendance_date, status")
@@ -633,15 +628,15 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
       const trend: { month: string; pct: number }[] = [];
       for (let i = 5; i >= 0; i--) {
         const d = subMonths(dateObj, i);
-        const s = fmtDate(startOfMonth(d), "yyyy-MM-dd");
-        const e = fmtDate(endOfMonth(d), "yyyy-MM-dd");
+        const s = fmt(som(d), "yyyy-MM-dd");
+        const e = fmt(eom(d), "yyyy-MM-dd");
         const recs = (tData || []).filter((a: any) => a.attendance_date >= s && a.attendance_date <= e);
-        const workDays = eachDayOfInterval({ start: startOfMonth(d), end: endOfMonth(d) }).filter((dd: Date) => {
+        const workDays = eachDayOfInterval({ start: som(d), end: eom(d) }).filter((dd: Date) => {
           const day = getDay(dd);
           return day !== 5 && day !== 6;
         }).length;
         const present = recs.filter((a: any) => a.status === "present" || a.status === "late").length;
-        trend.push({ month: fmtDate(d, "MMM", { locale: require("date-fns/locale").ar }), pct: workDays > 0 ? Math.round((present / workDays) * 100) : 0 });
+        trend.push({ month: fmt(d, "MMM", { locale: ar }), pct: workDays > 0 ? Math.round((present / workDays) * 100) : 0 });
       }
       setTrendData(trend);
       setLoaded(true);
@@ -653,6 +648,18 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
     return <Card><CardContent className="py-12 flex justify-center"><div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" /></CardContent></Card>;
   }
 
+  return <AttendanceTabContent attRecords={attRecords} trendData={trendData} month={month} year={year} setMonth={(m) => { setMonth(m); setLoaded(false); }} setYear={(y) => { setYear(y); setLoaded(false); }} />;
+};
+
+// Separated to avoid hooks-in-async issues
+import { format as fmtDate, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
+import { ar } from "date-fns/locale";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, setYear }: {
+  attRecords: any[]; trendData: { month: string; pct: number }[];
+  month: number; year: number; setMonth: (m: number) => void; setYear: (y: number) => void;
+}) => {
   const dateObj = new Date(year, month, 1);
   const monthDays = eachDayOfInterval({ start: startOfMonth(dateObj), end: endOfMonth(dateObj) }).filter((d: Date) => {
     const day = getDay(d);
@@ -660,12 +667,12 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
   });
 
   const attMap: Record<string, string> = {};
-  records.forEach((r: any) => { attMap[r.attendance_date] = r.status; });
+  attRecords.forEach((r: any) => { attMap[r.attendance_date] = r.status; });
 
-  const present = records.filter((r: any) => r.status === "present").length;
-  const absent = records.filter((r: any) => r.status === "absent").length;
-  const late = records.filter((r: any) => r.status === "late").length;
-  const excused = records.filter((r: any) => r.status === "excused").length;
+  const present = attRecords.filter((r: any) => r.status === "present").length;
+  const absent = attRecords.filter((r: any) => r.status === "absent").length;
+  const late = attRecords.filter((r: any) => r.status === "late").length;
+  const excused = attRecords.filter((r: any) => r.status === "excused").length;
   const pct = monthDays.length > 0 ? Math.round(((present + late) / monthDays.length) * 100) : 0;
 
   const STATUS_MAP: Record<string, { label: string; color: string; badge: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -680,19 +687,17 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
       <div className="flex gap-3">
-        <Select value={String(month)} onValueChange={(v) => { setMonth(Number(v)); setLoaded(false); }}>
+        <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
           <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
           <SelectContent>{months.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}</SelectContent>
         </Select>
-        <Select value={String(year)} onValueChange={(v) => { setYear(Number(v)); setLoaded(false); }}>
+        <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
           <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
           <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-5 gap-2">
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-emerald-600">{present}</p><p className="text-[10px] text-muted-foreground">حضور</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-destructive">{absent}</p><p className="text-[10px] text-muted-foreground">غياب</p></CardContent></Card>
@@ -701,7 +706,6 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold">{pct}%</p><p className="text-[10px] text-muted-foreground">النسبة</p></CardContent></Card>
       </div>
 
-      {/* Daily table */}
       <Card>
         <CardContent className="p-0">
           <table className="w-full text-sm">
@@ -718,9 +722,9 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
                 const status = attMap[dateStr];
                 const info = STATUS_MAP[status];
                 return (
-                  <tr key={dateStr} className={cn("border-b", info?.color)}>
+                  <tr key={dateStr} className={`border-b ${info?.color || ""}`}>
                     <td className="p-2">{fmtDate(day, "d/M")}</td>
-                    <td className="p-2">{fmtDate(day, "EEEE", { locale: require("date-fns/locale").ar })}</td>
+                    <td className="p-2">{fmtDate(day, "EEEE", { locale: ar })}</td>
                     <td className="p-2 text-center">
                       {info ? <Badge variant={info.badge}>{info.label}</Badge> : <span className="text-muted-foreground">—</span>}
                     </td>
@@ -732,25 +736,19 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
         </CardContent>
       </Card>
 
-      {/* Trend Line Chart */}
       {trendData.length > 0 && (
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">تطور الحضور (آخر 6 أشهر)</CardTitle></CardHeader>
           <CardContent>
-            {(() => {
-              const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = require("recharts");
-              return (
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" fontSize={11} />
-                    <YAxis domain={[0, 100]} fontSize={11} />
-                    <Tooltip formatter={(v: number) => `${v}%`} />
-                    <Line type="monotone" dataKey="pct" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} name="نسبة الحضور" />
-                  </LineChart>
-                </ResponsiveContainer>
-              );
-            })()}
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" fontSize={11} />
+                <YAxis domain={[0, 100]} fontSize={11} />
+                <Tooltip formatter={(v: number) => `${v}%`} />
+                <Line type="monotone" dataKey="pct" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} name="نسبة الحضور" />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
