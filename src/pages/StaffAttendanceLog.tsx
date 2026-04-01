@@ -303,13 +303,61 @@ const StaffAttendanceLog = () => {
         <Card><CardContent className="p-4 flex items-center gap-3"><FileText className="w-7 h-7 text-primary" /><div><p className="text-xl font-bold">{formatMinutes(dailySummary.totalWork)}</p><p className="text-xs text-muted-foreground">إجمالي العمل</p></div></CardContent></Card>
       </div>
 
+      {/* Analytics Charts Section */}
+      <Card className="print:hidden">
+        <CardHeader><CardTitle className="flex items-center gap-2">📊 التحليلات البيانية</CardTitle></CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Line Chart */}
+            <div>
+              <h3 className="text-sm font-semibold mb-2 text-muted-foreground">نسبة الحضور اليومية خلال الشهر</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={lineChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" fontSize={11} />
+                  <YAxis domain={[0, 100]} fontSize={11} />
+                  <Tooltip formatter={(v: number) => [`${v}%`, "نسبة الحضور"]} />
+                  <Line type="monotone" dataKey="نسبة_الحضور" stroke="hsl(142, 76%, 36%)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6 }} name="نسبة الحضور %" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Pie Chart */}
+            <div>
+              <h3 className="text-sm font-semibold mb-2 text-muted-foreground">توزيع حالات الحضور</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie data={pieChartData} cx="50%" cy="50%" outerRadius={85} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                    {pieChartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          {/* Bar Chart - full width */}
+          <div>
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground">مقارنة أيام حضور الموظفين</h3>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={barChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip formatter={(v: number) => [`${v} يوم`, "أيام الحضور"]} />
+                <Bar dataKey="أيام_الحضور" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} name="أيام الحضور" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="weekly" dir="rtl">
         <TabsList className="print:hidden">
           <TabsTrigger value="weekly">أسبوعي</TabsTrigger>
           <TabsTrigger value="monthly">شهري</TabsTrigger>
           <TabsTrigger value="individual" disabled={filterStaffId === "all"}>بيان تفصيلي</TabsTrigger>
           <TabsTrigger value="records">السجلات</TabsTrigger>
-          <TabsTrigger value="charts">الرسوم البيانية</TabsTrigger>
+          
         </TabsList>
 
         {/* Weekly Tab */}
@@ -560,57 +608,6 @@ const StaffAttendanceLog = () => {
           </Card>
         </TabsContent>
 
-        {/* Charts Tab */}
-        <TabsContent value="charts" className="space-y-6">
-          {/* Line Chart - Daily Attendance Rate */}
-          <Card>
-            <CardHeader><CardTitle>نسبة الحضور اليومية خلال الشهر</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={lineChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="نسبة_الحضور" stroke="hsl(142, 76%, 36%)" strokeWidth={2} name="نسبة الحضور %" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Bar Chart - Days per staff */}
-          <Card>
-            <CardHeader><CardTitle>أيام حضور كل موظف في الشهر</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={11} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="أيام_الحضور" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} name="أيام الحضور" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Pie Chart - Status Distribution */}
-          <Card>
-            <CardHeader><CardTitle>توزيع حالات الحضور</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie data={pieChartData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                    {pieChartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
