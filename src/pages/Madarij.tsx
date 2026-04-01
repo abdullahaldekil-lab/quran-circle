@@ -27,6 +27,7 @@ const Madarij = () => {
   const [editingTrack, setEditingTrack] = useState<any>(null);
   const [deleteTrackId, setDeleteTrackId] = useState<string | null>(null);
   const [trackForm, setTrackForm] = useState({ name: "", description: "", days_required: 20 });
+  const [annualPlanOpen, setAnnualPlanOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
