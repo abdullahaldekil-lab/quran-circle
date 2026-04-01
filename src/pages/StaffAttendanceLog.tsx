@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Users, Clock, AlertTriangle, UserX, FileText, Printer, Download } from "lucide-react";
+import { CalendarIcon, Users, Clock, AlertTriangle, UserX, FileText, Printer, Download, FileDown } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; color: string }> = {
@@ -232,6 +232,49 @@ const StaffAttendanceLog = () => {
     handleExportExcel(rows, `حضور_شهري_${monthStart}`);
   };
 
+  const exportWeeklyPdf = () => {
+    import("jspdf").then(({ default: jsPDF }) => {
+      import("jspdf-autotable").then(() => {
+        const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+        doc.setFontSize(14);
+        doc.text(`تقرير الحضور الأسبوعي — ${format(weekDays[0], "d/M")} إلى ${format(weekDays[4], "d/M/yyyy")}`, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+        const head = ["الموظف", ...weekDays.map(d => format(d, "EEEE", { locale: ar }))];
+        const body = filteredStaff.map(s => [
+          s.full_name,
+          ...weekDays.map(d => {
+            const rec = recordsByStaffDate[s.id]?.[format(d, "yyyy-MM-dd")];
+            return rec ? (STATUS_MAP[rec.status]?.label || "—") : "—";
+          }),
+        ]);
+        (doc as any).autoTable({ head: [head], body, startY: 22, styles: { fontSize: 9, halign: "center" }, headStyles: { fillColor: [41, 128, 185] }, theme: "grid" });
+        doc.save(`حضور_أسبوعي_${weekStart}.pdf`);
+      });
+    });
+  };
+
+  const exportMonthlyPdf = () => {
+    import("jspdf").then(({ default: jsPDF }) => {
+      import("jspdf-autotable").then(() => {
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        doc.setFontSize(14);
+        doc.text(`تقرير الحضور الشهري — ${format(selectedMonth, "MMMM yyyy", { locale: ar })}`, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+        const head = ["الموظف", "القسم", "حضور", "غياب", "تأخر", "دقائق التأخر", "ساعات العمل", "النسبة%"];
+        const body = filteredStaff.map(s => {
+          const recs = records.filter(r => r.staff_id === s.id);
+          const daysP = recs.filter(r => ["present", "late", "early_leave"].includes(r.status)).length;
+          const daysA = Math.max(0, monthDays.length - daysP - recs.filter(r => r.status === "leave").length);
+          const daysL = recs.filter(r => r.status === "late").length;
+          const totalLate = recs.reduce((sum, r) => sum + (r.late_minutes || 0), 0);
+          const totalWork = recs.reduce((sum, r) => sum + (r.total_work_minutes || 0), 0);
+          const pct = monthDays.length > 0 ? Math.round((daysP / monthDays.length) * 100) : 0;
+          return [s.full_name, s.department || "—", daysP, daysA, daysL, totalLate, formatMinutes(totalWork), `${pct}%`];
+        });
+        (doc as any).autoTable({ head: [head], body, startY: 22, styles: { fontSize: 9, halign: "center" }, headStyles: { fillColor: [41, 128, 185] }, theme: "grid" });
+        doc.save(`حضور_شهري_${monthStart}.pdf`);
+      });
+    });
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       <div>
@@ -369,6 +412,7 @@ const StaffAttendanceLog = () => {
             <div className="mr-auto flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
               <Button variant="outline" size="sm" onClick={exportWeeklyExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
+              <Button variant="outline" size="sm" onClick={exportWeeklyPdf}><FileDown className="w-4 h-4 ml-1" />PDF</Button>
             </div>
           </div>
           <Card>
@@ -426,6 +470,7 @@ const StaffAttendanceLog = () => {
           <div className="flex gap-2 print:hidden">
             <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
             <Button variant="outline" size="sm" onClick={exportMonthlyExcel}><Download className="w-4 h-4 ml-1" />Excel</Button>
+            <Button variant="outline" size="sm" onClick={exportMonthlyPdf}><FileDown className="w-4 h-4 ml-1" />PDF</Button>
           </div>
           <Card>
             <CardContent className="p-0 overflow-auto">
