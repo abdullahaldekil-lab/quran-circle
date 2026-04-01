@@ -7,7 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase } from "lucide-react";
+import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase, CalendarDays } from "lucide-react";
 import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
@@ -32,6 +32,7 @@ const Dashboard = () => {
   const canSeeStaff = isManager || isSupervisor || isAdminStaff;
   const [stats, setStats] = useState({ students: 0, halaqat: 0, todayRecitations: 0, avgScore: 0 });
   const [staffPct, setStaffPct] = useState<number | null>(null);
+  const [planStats, setPlanStats] = useState<{ onTrack: number; total: number } | null>(null);
   const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -102,6 +103,33 @@ const Dashboard = () => {
           const pct = (totalStaff || 0) > 0 ? Math.round((presentAndLate / (totalStaff || 1)) * 100) : 0;
           if (!cancelled) setStaffPct(Math.min(pct, 100));
         }
+
+        // Fetch annual plan stats
+        if (isManager || isSupervisor) {
+          const { data: allPlans } = await supabase
+            .from("student_annual_plans").select("id").eq("status", "active");
+          if (allPlans && allPlans.length > 0) {
+            const { data: allProgress } = await supabase
+              .from("student_plan_progress").select("plan_id, target_pages, actual_pages")
+              .in("plan_id", allPlans.map(p => p.id));
+            // Group by plan_id and calculate commitment
+            const planMap = new Map<string, { target: number; actual: number }>();
+            for (const row of allProgress || []) {
+              const cur = planMap.get(row.plan_id) || { target: 0, actual: 0 };
+              cur.target += row.target_pages || 0;
+              cur.actual += row.actual_pages || 0;
+              planMap.set(row.plan_id, cur);
+            }
+            let onTrack = 0;
+            planMap.forEach(v => { if (v.target > 0 && (v.actual / v.target) >= 0.7) onTrack++; });
+            if (!cancelled) setPlanStats({ onTrack, total: planMap.size });
+
+            const behindPct = planMap.size > 0 ? ((planMap.size - onTrack) / planMap.size) * 100 : 0;
+            if (behindPct > 20) {
+              newAlerts.push({ type: "warning", message: `${Math.round(behindPct)}% من الطلاب متأخرون عن خططهم السنوية` });
+            }
+          }
+        }
       } catch (e) {
         console.error("Dashboard fetch error:", e);
       } finally {
@@ -170,7 +198,7 @@ const Dashboard = () => {
         </div>
       ) : (
         <>
-          <div className={`grid grid-cols-2 ${canSeeStaff && staffPct !== null ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
+          <div className={`grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4`}>
             {cards.map((card) => (
               <Card
                 key={card.title}
@@ -200,6 +228,22 @@ const Dashboard = () => {
                   <div className={`text-2xl lg:text-3xl font-bold ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`}>
                     {staffPct}%
                   </div>
+                </CardContent>
+                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Card>
+            )}
+            {planStats && planStats.total > 0 && (isManager || isSupervisor) && (
+              <Card
+                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
+                onClick={() => navigate("/madarij")}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">الخطط السنوية</CardTitle>
+                  <CalendarDays className={`w-5 h-5 ${planStats.onTrack === planStats.total ? 'text-success' : 'text-warning'}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl lg:text-3xl font-bold">{planStats.onTrack}/{planStats.total}</div>
+                  <p className="text-xs text-muted-foreground">طالب منتظم</p>
                 </CardContent>
                 <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Card>

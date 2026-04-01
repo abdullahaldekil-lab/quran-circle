@@ -28,7 +28,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
-    "/student-attendance-report",
+    "/student-attendance-report", "/student-annual-plan",
     "/notification-templates", "/notification-log", "/notification-preferences",
     "/send-notification", "/bulk-email",
     "/permissions-management",
@@ -39,7 +39,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
-    "/student-attendance-report",
+    "/student-attendance-report", "/student-annual-plan",
     "/notification-preferences",
   ],
   assistant_supervisor: [
@@ -48,7 +48,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
-    "/student-attendance-report",
+    "/student-attendance-report", "/student-annual-plan",
     "/notification-preferences",
   ],
   secretary: [
@@ -73,7 +73,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance-log",
-    "/student-attendance-report",
+    "/student-attendance-report", "/student-annual-plan",
     "/notification-preferences",
   ],
   assistant_teacher: [
