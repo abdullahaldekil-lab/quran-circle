@@ -88,6 +88,20 @@ const Dashboard = () => {
           newAlerts.push({ type: "success", message: `أداء ممتاز اليوم! متوسط الدرجات ${Math.round(avg)}` });
         }
         setAlerts(newAlerts);
+
+        // Fetch staff attendance percentage
+        if (canSeeStaff) {
+          const { count: totalStaff } = await supabase
+            .from("profiles").select("id", { count: "exact", head: true })
+            .eq("active", true).eq("is_staff", true);
+          const { data: staffAtt } = await supabase
+            .from("staff_attendance").select("status")
+            .eq("attendance_date", today);
+          const records = staffAtt || [];
+          const presentAndLate = records.filter((r: any) => r.status === "present" || r.status === "late").length;
+          const pct = (totalStaff || 0) > 0 ? Math.round((presentAndLate / (totalStaff || 1)) * 100) : 0;
+          if (!cancelled) setStaffPct(Math.min(pct, 100));
+        }
       } catch (e) {
         console.error("Dashboard fetch error:", e);
       } finally {
