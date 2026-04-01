@@ -1923,6 +1923,78 @@ export type Database = {
         }
         Relationships: []
       }
+      narration_test_results: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          created_by: string | null
+          halaqa_id: string
+          hizb_number: number | null
+          id: string
+          mistakes: number
+          narration_score: number
+          notes: string | null
+          passed: boolean
+          sections: Json | null
+          student_id: string
+          test_date: string
+          test_type: string
+          total_score: number
+          warnings: number
+        }
+        Insert: {
+          attempt_number?: number
+          created_at?: string
+          created_by?: string | null
+          halaqa_id: string
+          hizb_number?: number | null
+          id?: string
+          mistakes?: number
+          narration_score?: number
+          notes?: string | null
+          passed?: boolean
+          sections?: Json | null
+          student_id: string
+          test_date?: string
+          test_type?: string
+          total_score?: number
+          warnings?: number
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          created_by?: string | null
+          halaqa_id?: string
+          hizb_number?: number | null
+          id?: string
+          mistakes?: number
+          narration_score?: number
+          notes?: string | null
+          passed?: boolean
+          sections?: Json | null
+          student_id?: string
+          test_date?: string
+          test_type?: string
+          total_score?: number
+          warnings?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narration_test_results_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narration_test_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_templates: {
         Row: {
           body: string
