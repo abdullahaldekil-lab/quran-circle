@@ -330,11 +330,18 @@ const StaffTasks = () => {
 
   const KanbanCard = ({ task }: { task: Task }) => {
     const isOverdue = task.status === "overdue";
+    const urgent = isUrgentSoon(task);
     return (
       <Card
-        className={`cursor-pointer hover:shadow-md transition-shadow mb-3 ${isOverdue ? "border-2 border-destructive" : ""}`}
+        className={`cursor-pointer hover:shadow-md transition-shadow mb-3 relative ${isOverdue ? "border-2 border-destructive" : ""} ${urgent ? "ring-2 ring-destructive ring-offset-1" : ""}`}
         onClick={() => openDetail(task)}
       >
+        {urgent && (
+          <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-destructive"></span>
+          </span>
+        )}
         <CardContent className="p-3 space-y-2">
           <p className="font-semibold text-sm leading-tight">{task.title}</p>
           <div className="flex flex-wrap gap-1">
