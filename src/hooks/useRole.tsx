@@ -81,7 +81,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/rankings", "/profile", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance-log",
-    "/notification-preferences", "/internal-requests",
+    "/notification-preferences", "/internal-requests", "/staff-tasks",
   ],
 };
 
