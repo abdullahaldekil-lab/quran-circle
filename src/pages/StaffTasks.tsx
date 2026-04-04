@@ -457,7 +457,7 @@ const StaffTasks = () => {
                     {(selectedTask.status === "pending" || selectedTask.status === "overdue") && (
                       <Button size="sm" onClick={handleStart} className="gap-1"><Play className="h-3 w-3" /> ابدأ</Button>
                     )}
-                    <Button size="sm" variant="default" onClick={() => setCompleteOpen(true)} className="gap-1 bg-green-600 hover:bg-green-700"><CheckCircle2 className="h-3 w-3" /> أكملت</Button>
+                    <Button size="sm" variant="default" onClick={() => setCompleteOpen(true)} className="gap-1"><CheckCircle2 className="h-3 w-3" /> أكملت</Button>
                     <Button size="sm" variant="destructive" onClick={handleCancel} className="gap-1"><XCircle className="h-3 w-3" /> إلغاء</Button>
                   </div>
                 )}
