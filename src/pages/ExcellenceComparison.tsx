@@ -218,7 +218,8 @@ const ExcellenceComparison = () => {
 
   return (
     <div className="p-4 md:p-6 space-y-6" dir="rtl">
-      <PageDateHeader title="مقارنة المتميزين" />
+      <h1 className="text-2xl font-bold">مقارنة المتميزين</h1>
+      <PageDateHeader />
 
       {/* Filters */}
       <Card>
