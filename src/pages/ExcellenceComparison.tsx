@@ -8,10 +8,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  LineChart, Line,
+} from "recharts";
 import { toast } from "@/hooks/use-toast";
-import PageDateHeader from "@/components/PageDateHeader";
-import { Scale, Users, Trophy, BookOpen, Eye, AlertCircle, Music } from "lucide-react";
+import { PageDateHeader } from "@/components/PageDateHeader";
+import { Scale, Users, Trophy, BookOpen, Eye, AlertCircle, Music, TrendingUp } from "lucide-react";
 
 const PERIOD_OPTIONS = [
   { value: "1", label: "آخر شهر" },
@@ -33,11 +37,17 @@ interface ComparisonData {
   avgRecitationScore: number;
 }
 
+interface MonthlyScore {
+  month: string; // "2026-01"
+  [studentName: string]: number | string;
+}
+
 const ExcellenceComparison = () => {
   const [trackId, setTrackId] = useState<string>("");
   const [period, setPeriod] = useState<string>("3");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [comparisonData, setComparisonData] = useState<ComparisonData[]>([]);
+  const [monthlyData, setMonthlyData] = useState<MonthlyScore[]>([]);
   const [isComparing, setIsComparing] = useState(false);
 
   const { data: tracks } = useQuery({
@@ -56,8 +66,7 @@ const ExcellenceComparison = () => {
         .from("excellence_elite_students")
         .select("student_id, students:student_id(id, full_name, halaqa_id)")
         .eq("halaqa_id", trackId);
-      
-      // If no results by halaqa_id, try getting all elite students
+
       if (!data || data.length === 0) {
         const { data: allElite } = await supabase
           .from("excellence_elite_students")
@@ -87,46 +96,66 @@ const ExcellenceComparison = () => {
     }
 
     setIsComparing(true);
+    const monthsCount = parseInt(period);
     const monthsAgo = new Date();
-    monthsAgo.setMonth(monthsAgo.getMonth() - parseInt(period));
+    monthsAgo.setMonth(monthsAgo.getMonth() - monthsCount);
     const startDate = monthsAgo.toISOString().split("T")[0];
 
     try {
       const results: ComparisonData[] = [];
 
+      // Pre-fetch sessions once
+      const { data: sessions } = await supabase
+        .from("excellence_sessions")
+        .select("id, session_date")
+        .gte("session_date", startDate);
+      const sessionIds = new Set(sessions?.map((s) => s.id) || []);
+      const sessionDateMap = new Map(sessions?.map((s) => [s.id, s.session_date]) || []);
+
+      // Build month labels
+      const monthLabels: string[] = [];
+      for (let i = monthsCount - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        monthLabels.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+      }
+
+      // Monthly scores map: month -> studentName -> avgScore
+      const monthlyMap: Record<string, Record<string, { sum: number; count: number }>> = {};
+      monthLabels.forEach((m) => (monthlyMap[m] = {}));
+
       for (const studentId of selectedStudents) {
-        // Get student name
-        const student = eliteStudents?.find((e: any) => {
-          const s = e.students as any;
-          return s?.id === studentId;
-        });
+        const student = eliteStudents?.find((e: any) => (e.students as any)?.id === studentId);
         const studentName = (student?.students as any)?.full_name || "غير معروف";
 
-        // 1. Excellence performance (avg score, total pages, total hizb, avg mistakes)
+        // Performance data
         const { data: perfData } = await supabase
           .from("excellence_performance")
           .select("total_score, pages_displayed, hizb_count, mistakes_count, session_id")
           .eq("student_id", studentId);
 
-        // Filter by sessions within the period
-        const { data: sessions } = await supabase
-          .from("excellence_sessions")
-          .select("id, session_date")
-          .gte("session_date", startDate);
-
-        const sessionIds = new Set(sessions?.map((s) => s.id) || []);
         const filteredPerf = perfData?.filter((p) => sessionIds.has(p.session_id)) || [];
 
         const avgScore = filteredPerf.length > 0
-          ? filteredPerf.reduce((sum, p) => sum + (Number(p.total_score) || 0), 0) / filteredPerf.length
-          : 0;
+          ? filteredPerf.reduce((sum, p) => sum + (Number(p.total_score) || 0), 0) / filteredPerf.length : 0;
         const totalPages = filteredPerf.reduce((sum, p) => sum + (Number(p.pages_displayed) || 0), 0);
         const totalHizb = filteredPerf.reduce((sum, p) => sum + (Number(p.hizb_count) || 0), 0);
         const avgMistakes = filteredPerf.length > 0
-          ? filteredPerf.reduce((sum, p) => sum + (Number(p.mistakes_count) || 0), 0) / filteredPerf.length
-          : 0;
+          ? filteredPerf.reduce((sum, p) => sum + (Number(p.mistakes_count) || 0), 0) / filteredPerf.length : 0;
 
-        // 2. Attendance rate
+        // Monthly breakdown for line chart
+        filteredPerf.forEach((p) => {
+          const sDate = sessionDateMap.get(p.session_id);
+          if (!sDate) return;
+          const monthKey = sDate.substring(0, 7);
+          if (monthlyMap[monthKey]) {
+            if (!monthlyMap[monthKey][studentName]) monthlyMap[monthKey][studentName] = { sum: 0, count: 0 };
+            monthlyMap[monthKey][studentName].sum += Number(p.total_score) || 0;
+            monthlyMap[monthKey][studentName].count += 1;
+          }
+        });
+
+        // Attendance
         const { data: attendanceData } = await supabase
           .from("excellence_attendance")
           .select("is_present, session_id")
@@ -134,10 +163,9 @@ const ExcellenceComparison = () => {
 
         const filteredAtt = attendanceData?.filter((a) => sessionIds.has(a.session_id)) || [];
         const attendanceRate = filteredAtt.length > 0
-          ? (filteredAtt.filter((a) => a.is_present).length / filteredAtt.length) * 100
-          : 0;
+          ? (filteredAtt.filter((a) => a.is_present).length / filteredAtt.length) * 100 : 0;
 
-        // 3. Recitation score
+        // Recitation
         const { data: recitationData } = await supabase
           .from("recitation_records" as any)
           .select("total_score")
@@ -146,12 +174,10 @@ const ExcellenceComparison = () => {
 
         const recArr = (recitationData as any[]) || [];
         const avgRecitationScore = recArr.length > 0
-          ? recArr.reduce((sum: number, r: any) => sum + (Number(r.total_score) || 0), 0) / recArr.length
-          : 0;
+          ? recArr.reduce((sum: number, r: any) => sum + (Number(r.total_score) || 0), 0) / recArr.length : 0;
 
         results.push({
-          studentId,
-          studentName,
+          studentId, studentName,
           avgScore: Math.round(avgScore * 10) / 10,
           attendanceRate: Math.round(attendanceRate * 10) / 10,
           totalPages: Math.round(totalPages * 10) / 10,
@@ -161,7 +187,19 @@ const ExcellenceComparison = () => {
         });
       }
 
+      // Build monthly line chart data
+      const studentNames = results.map((r) => r.studentName);
+      const lineData: MonthlyScore[] = monthLabels.map((m) => {
+        const point: MonthlyScore = { month: m };
+        studentNames.forEach((name) => {
+          const entry = monthlyMap[m]?.[name];
+          point[name] = entry && entry.count > 0 ? Math.round((entry.sum / entry.count) * 10) / 10 : 0;
+        });
+        return point;
+      });
+
       setComparisonData(results);
+      setMonthlyData(lineData);
     } catch (error) {
       console.error(error);
       toast({ title: "حدث خطأ أثناء المقارنة", variant: "destructive" });
@@ -170,11 +208,9 @@ const ExcellenceComparison = () => {
     }
   };
 
-  // Radar chart data
+  // Radar chart data (normalized 0-100)
   const radarData = useMemo(() => {
     if (comparisonData.length === 0) return [];
-    
-    // Normalize values for radar (0-100 scale)
     const maxPages = Math.max(...comparisonData.map((d) => d.totalPages), 1);
     const maxHizb = Math.max(...comparisonData.map((d) => d.totalHizb), 1);
     const maxMistakes = Math.max(...comparisonData.map((d) => d.avgMistakes), 1);
@@ -206,14 +242,29 @@ const ExcellenceComparison = () => {
     });
   }, [comparisonData]);
 
-  // Bar chart data
-  const barData = useMemo(() => {
-    return comparisonData.map((d) => ({
-      name: d.studentName.length > 12 ? d.studentName.substring(0, 12) + "…" : d.studentName,
-      "درجة التميز": d.avgScore,
-      "الحضور %": d.attendanceRate,
-      "درجة التسميع": d.avgRecitationScore,
-    }));
+  // Grouped bar chart data: each criteria is a group, each student is a bar
+  const groupedBarData = useMemo(() => {
+    if (comparisonData.length === 0) return [];
+    const maxPages = Math.max(...comparisonData.map((d) => d.totalPages), 1);
+    const maxHizb = Math.max(...comparisonData.map((d) => d.totalHizb), 1);
+    const maxMistakes = Math.max(...comparisonData.map((d) => d.avgMistakes), 1);
+
+    const criteria = [
+      { label: "درجة التميز", getValue: (d: ComparisonData) => d.avgScore },
+      { label: "الحضور %", getValue: (d: ComparisonData) => d.attendanceRate },
+      { label: "الأوجه", getValue: (d: ComparisonData) => (d.totalPages / maxPages) * 100 },
+      { label: "الأحزاب", getValue: (d: ComparisonData) => (d.totalHizb / maxHizb) * 100 },
+      { label: "قلة الأخطاء", getValue: (d: ComparisonData) => maxMistakes > 0 ? ((maxMistakes - d.avgMistakes) / maxMistakes) * 100 : 100 },
+      { label: "درجة التسميع", getValue: (d: ComparisonData) => d.avgRecitationScore },
+    ];
+
+    return criteria.map((c) => {
+      const point: any = { criteria: c.label };
+      comparisonData.forEach((d) => {
+        point[d.studentName] = Math.round(c.getValue(d) * 10) / 10;
+      });
+      return point;
+    });
   }, [comparisonData]);
 
   return (
@@ -260,7 +311,6 @@ const ExcellenceComparison = () => {
             </div>
           </div>
 
-          {/* Student Selection */}
           {trackId && (
             <div className="space-y-2">
               <Label>اختر الطلاب للمقارنة (2 - 6)</Label>
@@ -304,20 +354,22 @@ const ExcellenceComparison = () => {
         </CardContent>
       </Card>
 
-      {/* Results */}
       {comparisonData.length > 0 && (
         <>
-          {/* Radar Chart */}
+          {/* رسم 1 — Radar Chart كبير */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">مخطط المقارنة الشاملة (رادار)</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Trophy className="h-5 w-5" />
+                مخطط العنكبوت — المقارنة الشاملة
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <RadarChart data={radarData}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="axis" className="text-xs" />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} />
+              <ResponsiveContainer width="100%" height={500}>
+                <RadarChart data={radarData} outerRadius="80%">
+                  <PolarGrid gridType="polygon" />
+                  <PolarAngleAxis dataKey="axis" tick={{ fontSize: 13, fill: "hsl(var(--foreground))" }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 11 }} />
                   {comparisonData.map((d, i) => (
                     <Radar
                       key={d.studentId}
@@ -325,38 +377,106 @@ const ExcellenceComparison = () => {
                       dataKey={d.studentName}
                       stroke={COLORS[i]}
                       fill={COLORS[i]}
-                      fillOpacity={0.15}
+                      fillOpacity={0.12}
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: COLORS[i] }}
                     />
                   ))}
-                  <Legend />
-                  <Tooltip />
+                  <Legend
+                    wrapperStyle={{ paddingTop: 16 }}
+                    formatter={(value) => <span className="text-sm font-medium">{value}</span>}
+                  />
+                  <Tooltip
+                    contentStyle={{ textAlign: "right", direction: "rtl" }}
+                    formatter={(value: number, name: string) => [`${value}%`, name]}
+                  />
                 </RadarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          {/* Bar Chart */}
+          {/* رسم 2 — Grouped Bar Chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">مقارنة الدرجات</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Scale className="h-5 w-5" />
+                المقارنة المباشرة — المعايير الستة
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="درجة التميز" fill="#8b5cf6" />
-                  <Bar dataKey="الحضور %" fill="#06b6d4" />
-                  <Bar dataKey="درجة التسميع" fill="#f59e0b" />
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={groupedBarData} barCategoryGap="20%">
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="criteria" tick={{ fontSize: 12 }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{ textAlign: "right", direction: "rtl", borderRadius: 8 }}
+                    formatter={(value: number, name: string) => [`${value}`, name]}
+                    labelFormatter={(label) => `المعيار: ${label}`}
+                  />
+                  <Legend formatter={(value) => <span className="text-sm">{value}</span>} />
+                  {comparisonData.map((d, i) => (
+                    <Bar
+                      key={d.studentId}
+                      dataKey={d.studentName}
+                      fill={COLORS[i]}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          {/* Comparison Table */}
+          {/* رسم 3 — Line Chart التطور الزمني */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <TrendingUp className="h-5 w-5" />
+                التطور الزمني — درجة التميز الشهرية
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={350}>
+                <LineChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(m) => {
+                      const [y, mo] = m.split("-");
+                      const monthNames = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+                      return `${monthNames[parseInt(mo) - 1]} ${y}`;
+                    }}
+                  />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{ textAlign: "right", direction: "rtl", borderRadius: 8 }}
+                    labelFormatter={(m) => {
+                      const [y, mo] = (m as string).split("-");
+                      const monthNames = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+                      return `${monthNames[parseInt(mo) - 1]} ${y}`;
+                    }}
+                    formatter={(value: number, name: string) => [`${value}`, name]}
+                  />
+                  <Legend formatter={(value) => <span className="text-sm">{value}</span>} />
+                  {comparisonData.map((d, i) => (
+                    <Line
+                      key={d.studentId}
+                      type="monotone"
+                      dataKey={d.studentName}
+                      stroke={COLORS[i]}
+                      strokeWidth={2.5}
+                      dot={{ r: 5, fill: COLORS[i], strokeWidth: 2, stroke: "#fff" }}
+                      activeDot={{ r: 7 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* جدول المقارنة التفصيلي */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">جدول المقارنة التفصيلي</CardTitle>
