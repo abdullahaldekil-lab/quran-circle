@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
           user_id: recipientId,
           title: `⏰ تذكير: ${task.title}`,
           body: `اقترب موعد استحقاق المهمة: ${task.title}`,
-          channel: "in_app",
+          channel: "inApp",
           status: "sent",
           sent_at: now,
         });
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
           user_id: task.assigned_to,
           title: `🔴 مهمة متأخرة: ${task.title}`,
           body: `تجاوزت المهمة "${task.title}" موعد الاستحقاق`,
-          channel: "in_app",
+          channel: "inApp",
           status: "sent",
           sent_at: now,
         });
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
           user_id: task.assigned_by,
           title: `🔴 مهمة متأخرة: ${task.title}`,
           body: `المهمة "${task.title}" لم تُنجَز في الوقت المحدد`,
-          channel: "in_app",
+          channel: "inApp",
           status: "sent",
           sent_at: now,
         });
