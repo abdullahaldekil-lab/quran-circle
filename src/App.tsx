@@ -62,6 +62,7 @@ import ExcellenceReports from "./pages/ExcellenceReports";
 import ExcellenceTracks from "./pages/ExcellenceTracks";
 import DistinguishedStudents from "./pages/DistinguishedStudents";
 import ExcellenceTrackSettings from "./pages/ExcellenceTrackSettings";
+import ExcellenceComparison from "./pages/ExcellenceComparison";
 import InactiveStudents from "./pages/InactiveStudents";
 import StudentQuiz from "./pages/StudentQuiz";
 import QuizResults from "./pages/QuizResults";
