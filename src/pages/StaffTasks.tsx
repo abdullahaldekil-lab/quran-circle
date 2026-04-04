@@ -132,7 +132,55 @@ const StaffTasks = () => {
     enabled: !!selectedTask,
   });
 
-  // Mark overdue tasks
+  // Audio alert helper
+  const playTaskAlert = useCallback(() => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      gain.gain.value = 0.15;
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      osc.stop(audioCtx.currentTime + 0.4);
+    } catch {}
+  }, []);
+
+  // Realtime subscription
+  const prevTaskCountRef = useRef(myTasks.length);
+  useEffect(() => {
+    const channel = supabase
+      .channel("staff-tasks-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "staff_tasks" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+        queryClient.invalidateQueries({ queryKey: ["assigned-tasks"] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
+  // Play sound when new tasks appear
+  useEffect(() => {
+    if (myTasks.length > prevTaskCountRef.current) {
+      playTaskAlert();
+      toast.info("📋 تم إسناد مهمة جديدة إليك");
+    }
+    prevTaskCountRef.current = myTasks.length;
+  }, [myTasks.length, playTaskAlert]);
+
+  // Check if task is urgent and due within 1 hour
+  const isUrgentSoon = (task: Task) => {
+    if (!task.due_date || task.status === "completed" || task.status === "cancelled") return false;
+    const due = new Date(task.due_date + (task.due_time ? `T${task.due_time}` : "T23:59:59"));
+    const diff = due.getTime() - Date.now();
+    return diff > 0 && diff < 3600000; // less than 1 hour
+  };
+
+
   const processedMyTasks = useMemo(() => {
     const now = new Date();
     return myTasks.map(t => {
