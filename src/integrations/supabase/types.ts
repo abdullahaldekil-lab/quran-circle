@@ -2840,6 +2840,78 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_tasks: {
+        Row: {
+          actual_minutes: number | null
+          assigned_by: string | null
+          assigned_to: string | null
+          assigned_to_role: string | null
+          attachments: Json | null
+          category: string
+          completed_at: string | null
+          completion_note: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          due_time: string | null
+          estimated_minutes: number | null
+          id: string
+          priority: string
+          reminder_at: string | null
+          reminder_sent: boolean | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          actual_minutes?: number | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          assigned_to_role?: string | null
+          attachments?: Json | null
+          category?: string
+          completed_at?: string | null
+          completion_note?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          priority?: string
+          reminder_at?: string | null
+          reminder_sent?: boolean | null
+          started_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          actual_minutes?: number | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          assigned_to_role?: string | null
+          attachments?: Json | null
+          category?: string
+          completed_at?: string | null
+          completion_note?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          priority?: string
+          reminder_at?: string | null
+          reminder_sent?: boolean | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       strategic_change_log: {
         Row: {
           action: string
