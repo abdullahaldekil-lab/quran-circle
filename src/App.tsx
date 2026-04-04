@@ -62,6 +62,7 @@ import ExcellenceReports from "./pages/ExcellenceReports";
 import ExcellenceTracks from "./pages/ExcellenceTracks";
 import DistinguishedStudents from "./pages/DistinguishedStudents";
 import ExcellenceTrackSettings from "./pages/ExcellenceTrackSettings";
+import ExcellenceComparison from "./pages/ExcellenceComparison";
 import InactiveStudents from "./pages/InactiveStudents";
 import StudentQuiz from "./pages/StudentQuiz";
 import QuizResults from "./pages/QuizResults";
@@ -173,6 +174,7 @@ const AppRoutes = () => {
       <Route path="/excellence/tracks" element={<ProtectedRoute path="/excellence"><ExcellenceTracks /></ProtectedRoute>} />
       <Route path="/excellence/distinguished" element={<ProtectedRoute path="/excellence"><DistinguishedStudents /></ProtectedRoute>} />
       <Route path="/excellence/track-settings" element={<ProtectedRoute path="/excellence"><ExcellenceTrackSettings /></ProtectedRoute>} />
+      <Route path="/excellence-comparison" element={<ProtectedRoute path="/excellence-comparison"><ExcellenceComparison /></ProtectedRoute>} />
 
       <Route path="/student-attendance-report" element={<ProtectedRoute path="/student-attendance-report"><StudentAttendanceReport /></ProtectedRoute>} />
       <Route path="/staff-attendance" element={<ProtectedRoute path="/staff-attendance"><StaffAttendance /></ProtectedRoute>} />

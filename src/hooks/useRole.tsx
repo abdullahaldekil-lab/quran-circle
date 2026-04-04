@@ -25,7 +25,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
     "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij", "/madarij-report",
-    "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report", "/student-annual-plan",
@@ -36,7 +36,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report",
-    "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report", "/student-annual-plan",
@@ -45,7 +45,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report",
-    "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report", "/student-annual-plan",
@@ -70,7 +70,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij",
-    "/quran-narration", "/excellence", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance-log",
     "/student-attendance-report", "/student-annual-plan",

@@ -98,6 +98,7 @@ const navGroups: NavGroup[] = [
       { to: "/excellence/tracks", icon: Award, label: "إدارة المسارات" },
       { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
       { to: "/excellence/track-settings", icon: Settings, label: "إعدادات المسارات" },
+      { to: "/excellence-comparison", icon: Trophy, label: "مقارنة المتميزين" },
     ],
     subGroups: [
       {
