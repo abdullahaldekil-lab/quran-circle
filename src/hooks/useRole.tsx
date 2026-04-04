@@ -57,7 +57,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report",
-    "/notification-preferences", "/internal-requests", "/staff-tasks",
+    "/notification-preferences", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
@@ -65,7 +65,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
     "/student-attendance-report",
-    "/notification-preferences", "/internal-requests", "/staff-tasks",
+    "/notification-preferences", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
@@ -74,14 +74,14 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance-log",
     "/student-attendance-report", "/student-annual-plan",
-    "/notification-preferences", "/internal-requests", "/staff-tasks",
+    "/notification-preferences", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
     "/rankings", "/profile", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance-log",
-    "/notification-preferences", "/internal-requests", "/staff-tasks",
+    "/notification-preferences", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
   ],
 };
 

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,7 +132,55 @@ const StaffTasks = () => {
     enabled: !!selectedTask,
   });
 
-  // Mark overdue tasks
+  // Audio alert helper
+  const playTaskAlert = useCallback(() => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      gain.gain.value = 0.15;
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      osc.stop(audioCtx.currentTime + 0.4);
+    } catch {}
+  }, []);
+
+  // Realtime subscription
+  const prevTaskCountRef = useRef(myTasks.length);
+  useEffect(() => {
+    const channel = supabase
+      .channel("staff-tasks-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "staff_tasks" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+        queryClient.invalidateQueries({ queryKey: ["assigned-tasks"] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
+  // Play sound when new tasks appear
+  useEffect(() => {
+    if (myTasks.length > prevTaskCountRef.current) {
+      playTaskAlert();
+      toast.info("📋 تم إسناد مهمة جديدة إليك");
+    }
+    prevTaskCountRef.current = myTasks.length;
+  }, [myTasks.length, playTaskAlert]);
+
+  // Check if task is urgent and due within 1 hour
+  const isUrgentSoon = (task: Task) => {
+    if (!task.due_date || task.status === "completed" || task.status === "cancelled") return false;
+    const due = new Date(task.due_date + (task.due_time ? `T${task.due_time}` : "T23:59:59"));
+    const diff = due.getTime() - Date.now();
+    return diff > 0 && diff < 3600000; // less than 1 hour
+  };
+
+
   const processedMyTasks = useMemo(() => {
     const now = new Date();
     return myTasks.map(t => {
@@ -282,11 +330,18 @@ const StaffTasks = () => {
 
   const KanbanCard = ({ task }: { task: Task }) => {
     const isOverdue = task.status === "overdue";
+    const urgent = isUrgentSoon(task);
     return (
       <Card
-        className={`cursor-pointer hover:shadow-md transition-shadow mb-3 ${isOverdue ? "border-2 border-destructive" : ""}`}
+        className={`cursor-pointer hover:shadow-md transition-shadow mb-3 relative ${isOverdue ? "border-2 border-destructive" : ""} ${urgent ? "ring-2 ring-destructive ring-offset-1" : ""}`}
         onClick={() => openDetail(task)}
       >
+        {urgent && (
+          <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-destructive"></span>
+          </span>
+        )}
         <CardContent className="p-3 space-y-2">
           <p className="font-semibold text-sm leading-tight">{task.title}</p>
           <div className="flex flex-wrap gap-1">

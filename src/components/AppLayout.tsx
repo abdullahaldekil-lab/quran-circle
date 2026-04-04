@@ -216,6 +216,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { hasAccess, role } = useRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [urgentTasksCount, setUrgentTasksCount] = useState(0);
   const location = useLocation();
 
   useEffect(() => {
@@ -230,6 +231,31 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     };
     fetchPending();
   }, [profile?.id, role, location.pathname]);
+
+  // Fetch urgent pending tasks count
+  useEffect(() => {
+    if (!profile?.id) return;
+    const fetchUrgentTasks = async () => {
+      const { count } = await supabase
+        .from("staff_tasks")
+        .select("id", { count: "exact", head: true })
+        .or(`assigned_to.eq.${profile.id},assigned_to_role.eq.${role}`)
+        .in("status", ["pending", "in_progress", "overdue"])
+        .eq("priority", "عاجل");
+      setUrgentTasksCount(count || 0);
+    };
+    fetchUrgentTasks();
+
+    // Realtime subscription for urgent tasks count
+    const channel = supabase
+      .channel("urgent-tasks-sidebar")
+      .on("postgres_changes", { event: "*", schema: "public", table: "staff_tasks" }, () => {
+        fetchUrgentTasks();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.id, role]);
   // Determine which groups are open based on active route
   const getInitialOpenGroups = () => {
     const open: Record<string, boolean> = {};
@@ -365,6 +391,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         {item.to === "/internal-requests" && pendingRequestsCount > 0 && (
                           <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                             {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
+                          </span>
+                        )}
+                        {item.to === "/staff-tasks" && urgentTasksCount > 0 && (
+                          <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                            {urgentTasksCount > 9 ? "9+" : urgentTasksCount}
                           </span>
                         )}
                       </NavLink>
