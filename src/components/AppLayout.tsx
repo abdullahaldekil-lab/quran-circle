@@ -393,6 +393,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                             {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
                           </span>
                         )}
+                        {item.to === "/staff-tasks" && urgentTasksCount > 0 && (
+                          <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                            {urgentTasksCount > 9 ? "9+" : urgentTasksCount}
+                          </span>
+                        )}
                       </NavLink>
                     ))}
 
