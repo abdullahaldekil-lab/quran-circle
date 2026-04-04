@@ -75,6 +75,7 @@ import StudentAnnualPlan from "@/pages/StudentAnnualPlan";
 import InternalRequests from "@/pages/InternalRequests";
 import MadarijReport from "@/pages/MadarijReport";
 import StaffTasks from "@/pages/StaffTasks";
+import StaffTasksAnalytics from "@/pages/StaffTasksAnalytics";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -183,6 +184,7 @@ const AppRoutes = () => {
       <Route path="/staff-shifts" element={<ProtectedRoute path="/staff-shifts"><StaffShiftManagement /></ProtectedRoute>} />
       <Route path="/internal-requests" element={<ProtectedRoute path="/internal-requests"><InternalRequests /></ProtectedRoute>} />
       <Route path="/staff-tasks" element={<ProtectedRoute path="/staff-tasks"><StaffTasks /></ProtectedRoute>} />
+      <Route path="/staff-tasks-analytics" element={<ProtectedRoute path="/staff-tasks-analytics"><StaffTasksAnalytics /></ProtectedRoute>} />
 
       <Route path="/notification-templates" element={<ProtectedRoute path="/notification-templates"><NotificationTemplates /></ProtectedRoute>} />
       <Route path="/notification-log" element={<ProtectedRoute path="/notification-log"><NotificationLog /></ProtectedRoute>} />
