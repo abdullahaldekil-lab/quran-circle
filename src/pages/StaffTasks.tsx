@@ -322,7 +322,7 @@ const StaffTasks = () => {
 
   return (
     <div className="space-y-4" dir="rtl">
-      <PageDateHeader title="المهام" />
+      <PageDateHeader />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>

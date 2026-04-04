@@ -188,6 +188,7 @@ const navGroups: NavGroup[] = [
       { to: "/staff-attendance", icon: CheckSquare, label: "حضور العاملين" },
       { to: "/staff-attendance-log", icon: ClipboardList, label: "سجل الحضور" },
       { to: "/staff-shifts", icon: Clock, label: "جداول الدوام" },
+      { to: "/staff-tasks", icon: Target, label: "المهام" },
       { to: "/internal-requests", icon: ScrollText, label: "الطلبات الداخلية" },
     ],
   },
