@@ -65,7 +65,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
     "/student-attendance-report",
-    "/notification-preferences", "/internal-requests",
+    "/notification-preferences", "/internal-requests", "/staff-tasks",
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
