@@ -75,6 +75,7 @@ import StudentAnnualPlan from "@/pages/StudentAnnualPlan";
 import InternalRequests from "@/pages/InternalRequests";
 import MadarijReport from "@/pages/MadarijReport";
 import StaffTasks from "@/pages/StaffTasks";
+import StaffTasksAnalytics from "@/pages/StaffTasksAnalytics";
 
 const queryClient = new QueryClient({
   defaultOptions: {
