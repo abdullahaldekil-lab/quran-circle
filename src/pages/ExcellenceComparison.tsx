@@ -284,9 +284,20 @@ const ExcellenceComparison = () => {
       avgMistakes: (d) => maxMistakes > 0 ? ((maxMistakes - d.avgMistakes) / maxMistakes) * 100 : 100,
       avgRecitationScore: (d) => d.avgRecitationScore,
     };
+    const rawGetters: Record<string, (d: ComparisonData) => string> = {
+      avgScore: (d) => `${d.avgScore} درجة`,
+      attendanceRate: (d) => `${d.attendanceRate}%`,
+      totalPages: (d) => `${d.totalPages} وجه`,
+      totalHizb: (d) => `${d.totalHizb} حزب`,
+      avgMistakes: (d) => `${d.avgMistakes} خطأ`,
+      avgRecitationScore: (d) => `${d.avgRecitationScore} درجة`,
+    };
     return CRITERIA.map((c) => {
-      const point: any = { criteria: c.label };
-      comparisonData.forEach((d) => { point[d.studentName] = Math.round(getters[c.key](d) * 10) / 10; });
+      const point: any = { criteria: c.label, _key: c.key };
+      comparisonData.forEach((d) => {
+        point[d.studentName] = Math.round(getters[c.key](d) * 10) / 10;
+        point[`_raw_${d.studentName}`] = rawGetters[c.key](d);
+      });
       return point;
     });
   }, [comparisonData]);
