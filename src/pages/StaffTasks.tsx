@@ -508,7 +508,7 @@ const StaffTasks = () => {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setCompleteOpen(false)}>تراجع</Button>
-            <Button onClick={handleComplete} className="bg-green-600 hover:bg-green-700">تأكيد الإكمال</Button>
+            <Button onClick={handleComplete}>تأكيد الإكمال</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
