@@ -2840,6 +2840,38 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_task_comments: {
+        Row: {
+          body: string
+          created_at: string | null
+          from_user_id: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          from_user_id: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          from_user_id?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "staff_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_tasks: {
         Row: {
           actual_minutes: number | null
