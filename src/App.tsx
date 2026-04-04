@@ -174,6 +174,7 @@ const AppRoutes = () => {
       <Route path="/excellence/tracks" element={<ProtectedRoute path="/excellence"><ExcellenceTracks /></ProtectedRoute>} />
       <Route path="/excellence/distinguished" element={<ProtectedRoute path="/excellence"><DistinguishedStudents /></ProtectedRoute>} />
       <Route path="/excellence/track-settings" element={<ProtectedRoute path="/excellence"><ExcellenceTrackSettings /></ProtectedRoute>} />
+      <Route path="/excellence-comparison" element={<ProtectedRoute path="/excellence-comparison"><ExcellenceComparison /></ProtectedRoute>} />
 
       <Route path="/student-attendance-report" element={<ProtectedRoute path="/student-attendance-report"><StudentAttendanceReport /></ProtectedRoute>} />
       <Route path="/staff-attendance" element={<ProtectedRoute path="/staff-attendance"><StaffAttendance /></ProtectedRoute>} />
