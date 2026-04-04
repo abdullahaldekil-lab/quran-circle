@@ -555,7 +555,14 @@ const ExcellenceComparison = () => {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="criteria" tick={{ fontSize: 12 }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ textAlign: "right", direction: "rtl", borderRadius: 8 }} labelFormatter={(l) => `المعيار: ${l}`} />
+                  <Tooltip
+                    contentStyle={{ textAlign: "right", direction: "rtl", borderRadius: 8 }}
+                    labelFormatter={(l) => `المعيار: ${l}`}
+                    formatter={(value: number, name: string, props: any) => {
+                      const raw = props.payload?.[`_raw_${name}`];
+                      return raw ? [`${value}% (${raw})`, name] : [`${value}%`, name];
+                    }}
+                  />
                   <Legend />
                   {comparisonData.map((d, i) => (
                     <Bar key={d.studentId} dataKey={d.studentName} fill={COLORS[i]} radius={[4, 4, 0, 0]} />
