@@ -284,9 +284,20 @@ const ExcellenceComparison = () => {
       avgMistakes: (d) => maxMistakes > 0 ? ((maxMistakes - d.avgMistakes) / maxMistakes) * 100 : 100,
       avgRecitationScore: (d) => d.avgRecitationScore,
     };
+    const rawGetters: Record<string, (d: ComparisonData) => string> = {
+      avgScore: (d) => `${d.avgScore} درجة`,
+      attendanceRate: (d) => `${d.attendanceRate}%`,
+      totalPages: (d) => `${d.totalPages} وجه`,
+      totalHizb: (d) => `${d.totalHizb} حزب`,
+      avgMistakes: (d) => `${d.avgMistakes} خطأ`,
+      avgRecitationScore: (d) => `${d.avgRecitationScore} درجة`,
+    };
     return CRITERIA.map((c) => {
-      const point: any = { criteria: c.label };
-      comparisonData.forEach((d) => { point[d.studentName] = Math.round(getters[c.key](d) * 10) / 10; });
+      const point: any = { criteria: c.label, _key: c.key };
+      comparisonData.forEach((d) => {
+        point[d.studentName] = Math.round(getters[c.key](d) * 10) / 10;
+        point[`_raw_${d.studentName}`] = rawGetters[c.key](d);
+      });
       return point;
     });
   }, [comparisonData]);
@@ -544,7 +555,14 @@ const ExcellenceComparison = () => {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="criteria" tick={{ fontSize: 12 }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ textAlign: "right", direction: "rtl", borderRadius: 8 }} labelFormatter={(l) => `المعيار: ${l}`} />
+                  <Tooltip
+                    contentStyle={{ textAlign: "right", direction: "rtl", borderRadius: 8 }}
+                    labelFormatter={(l) => `المعيار: ${l}`}
+                    formatter={(value: number, name: string, props: any) => {
+                      const raw = props.payload?.[`_raw_${name}`];
+                      return raw ? [`${value}% (${raw})`, name] : [`${value}%`, name];
+                    }}
+                  />
                   <Legend />
                   {comparisonData.map((d, i) => (
                     <Bar key={d.studentId} dataKey={d.studentName} fill={COLORS[i]} radius={[4, 4, 0, 0]} />
