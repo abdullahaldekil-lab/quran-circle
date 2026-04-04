@@ -27,7 +27,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij", "/madarij-report",
     "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
-    "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
+    "/staff-attendance", "/staff-attendance-log", "/staff-shifts", "/staff-tasks",
     "/student-attendance-report", "/student-annual-plan",
     "/notification-templates", "/notification-log", "/notification-preferences",
     "/send-notification", "/bulk-email",
