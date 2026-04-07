@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import StudentNameLink from "@/components/StudentNameLink";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,9 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { ArrowRight, Printer, Save, Star } from "lucide-react";
+import { ArrowRight, Printer, Save, Star, Send, FileText, Users, BookOpen, BarChart3, Award } from "lucide-react";
 import { format } from "date-fns";
-import { formatHijriArabic } from "@/lib/hijri";
+import { formatHijriArabic, toHijri, toMiladi } from "@/lib/hijri";
+import { sendNotification } from "@/utils/sendNotification";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function ExcellenceReports() {
   const navigate = useNavigate();
