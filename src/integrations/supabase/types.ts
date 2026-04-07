@@ -3179,11 +3179,17 @@ export type Database = {
           academic_year: string
           created_at: string
           created_by: string | null
+          daily_linking_pages: number | null
+          daily_memorization_pages: number | null
+          daily_review_pages: number | null
           daily_target_pages: number
           end_date: string | null
           halaqa_id: string
           id: string
           plan_type: string
+          previous_memorized_from: string | null
+          previous_memorized_pages: number | null
+          previous_memorized_to: string | null
           start_date: string
           status: string
           student_id: string
@@ -3195,11 +3201,17 @@ export type Database = {
           academic_year?: string
           created_at?: string
           created_by?: string | null
+          daily_linking_pages?: number | null
+          daily_memorization_pages?: number | null
+          daily_review_pages?: number | null
           daily_target_pages?: number
           end_date?: string | null
           halaqa_id: string
           id?: string
           plan_type?: string
+          previous_memorized_from?: string | null
+          previous_memorized_pages?: number | null
+          previous_memorized_to?: string | null
           start_date?: string
           status?: string
           student_id: string
@@ -3211,11 +3223,17 @@ export type Database = {
           academic_year?: string
           created_at?: string
           created_by?: string | null
+          daily_linking_pages?: number | null
+          daily_memorization_pages?: number | null
+          daily_review_pages?: number | null
           daily_target_pages?: number
           end_date?: string | null
           halaqa_id?: string
           id?: string
           plan_type?: string
+          previous_memorized_from?: string | null
+          previous_memorized_pages?: number | null
+          previous_memorized_to?: string | null
           start_date?: string
           status?: string
           student_id?: string
@@ -3400,7 +3418,10 @@ export type Database = {
       }
       student_plan_progress: {
         Row: {
+          actual_linking: number | null
+          actual_memorization: number | null
           actual_pages: number
+          actual_review: number | null
           attendance_days: number
           commitment_percentage: number
           created_at: string
@@ -3415,7 +3436,10 @@ export type Database = {
           week_number: number
         }
         Insert: {
+          actual_linking?: number | null
+          actual_memorization?: number | null
           actual_pages?: number
+          actual_review?: number | null
           attendance_days?: number
           commitment_percentage?: number
           created_at?: string
@@ -3430,7 +3454,10 @@ export type Database = {
           week_number?: number
         }
         Update: {
+          actual_linking?: number | null
+          actual_memorization?: number | null
           actual_pages?: number
+          actual_review?: number | null
           attendance_days?: number
           commitment_percentage?: number
           created_at?: string

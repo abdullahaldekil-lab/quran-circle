@@ -38,6 +38,9 @@ const StudentAnnualPlan = () => {
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [editingMonth, setEditingMonth] = useState<any>(null);
   const [actualPages, setActualPages] = useState(0);
+  const [actualMemorization, setActualMemorization] = useState(0);
+  const [actualReview, setActualReview] = useState(0);
+  const [actualLinking, setActualLinking] = useState(0);
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
@@ -112,6 +115,10 @@ const StudentAnnualPlan = () => {
   const openUpdate = (monthRow: any) => {
     setEditingMonth(monthRow);
     setActualPages(monthRow.actual_pages || 0);
+    setActualMemorization(monthRow.actual_memorization || 0);
+    setActualReview(monthRow.actual_review || 0);
+    setActualLinking(monthRow.actual_linking || 0);
+    setUpdateDialogOpen(true);
     setUpdateDialogOpen(true);
   };
 
@@ -123,7 +130,14 @@ const StudentAnnualPlan = () => {
 
     const { error } = await supabase
       .from("student_plan_progress")
-      .update({ actual_pages: actualPages, commitment_percentage: pct, status: rowStatus })
+      .update({
+        actual_pages: actualPages,
+        actual_memorization: actualMemorization,
+        actual_review: actualReview,
+        actual_linking: actualLinking,
+        commitment_percentage: pct,
+        status: rowStatus,
+      })
       .eq("id", editingMonth.id);
 
     if (error) {
@@ -341,6 +355,9 @@ const StudentAnnualPlan = () => {
                 <TableHead>أيام العمل</TableHead>
                 <TableHead>الهدف</TableHead>
                 <TableHead>المنجز</TableHead>
+                <TableHead>الحفظ</TableHead>
+                <TableHead>المراجعة</TableHead>
+                <TableHead>الربط</TableHead>
                 <TableHead>الالتزام%</TableHead>
                 <TableHead>الحالة</TableHead>
                 {(isManager || isSupervisor || isTeacher) && <TableHead className="print:hidden">تحديث</TableHead>}
@@ -356,6 +373,9 @@ const StudentAnnualPlan = () => {
                     <TableCell>{p.attendance_days}</TableCell>
                     <TableCell>{p.target_pages}</TableCell>
                     <TableCell className="font-bold">{p.actual_pages}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.actual_memorization || 0}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.actual_review || 0}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.actual_linking || 0}</TableCell>
                     <TableCell>
                       <Badge variant={rowPct >= 85 ? "default" : rowPct >= 70 ? "secondary" : "destructive"} className="text-xs">
                         {rowPct}%
@@ -392,8 +412,22 @@ const StudentAnnualPlan = () => {
               الهدف الشهري: <span className="font-bold text-foreground">{editingMonth?.target_pages} وجه</span>
             </div>
             <div className="space-y-2">
-              <Label>الأوجه المنجزة فعلياً</Label>
+              <Label>الأوجه المنجزة فعلياً (إجمالي)</Label>
               <Input type="number" min={0} value={actualPages} onChange={(e) => setActualPages(Number(e.target.value))} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">الحفظ المنجز</Label>
+                <Input type="number" min={0} value={actualMemorization} onChange={(e) => setActualMemorization(Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">المراجعة المنجزة</Label>
+                <Input type="number" min={0} value={actualReview} onChange={(e) => setActualReview(Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">الربط المنجز</Label>
+                <Input type="number" min={0} value={actualLinking} onChange={(e) => setActualLinking(Number(e.target.value))} />
+              </div>
             </div>
             <Button onClick={handleUpdate} disabled={saving} className="w-full">
               {saving ? "جارٍ الحفظ..." : "حفظ التحديث"}
