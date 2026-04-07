@@ -39,12 +39,14 @@ export default function ExcellenceReports() {
   // Complex report (all students across all tracks)
   const [complexReport, setComplexReport] = useState<any>(null);
 
-  // Monthly report
-  const [monthYear, setMonthYear] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  });
+  // Monthly report — Hijri month/year
+  const currentHijri = toHijri(new Date());
+  const [hijriMonth, setHijriMonth] = useState(String(currentHijri.month));
+  const [hijriYear, setHijriYear] = useState(String(currentHijri.year));
   const [monthlyReport, setMonthlyReport] = useState<any[]>([]);
+  const [monthlyHalaqaReport, setMonthlyHalaqaReport] = useState<any[]>([]);
+  const [monthlySummary, setMonthlySummary] = useState<any>(null);
+  const [publishingMonthly, setPublishingMonthly] = useState(false);
 
   // Track report
   const [excellenceTracks, setExcellenceTracks] = useState<any[]>([]);
