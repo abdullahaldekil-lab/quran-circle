@@ -351,14 +351,19 @@ export default function QuranNarration() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <ScrollText className="w-5 h-5 text-primary" />
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+            <ScrollText className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">يوم السرد القرآني</h1>
-            <p className="text-sm text-muted-foreground">إدارة جلسات السرد ونتائج الطلاب</p>
+            <p className="text-sm text-muted-foreground">
+              {todayHijri ? formatHijriArabic(todayHijri) : ""}
+              <span className="mx-1">—</span>
+              إدارة جلسات السرد ونتائج الطلاب
+            </p>
           </div>
         </div>
         {canWrite && (
@@ -367,7 +372,7 @@ export default function QuranNarration() {
             if (!open) { setEditSession(null); resetForm(); }
           }}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2" size="lg">
                 <Plus className="w-4 h-4" />
                 جلسة جديدة
               </Button>
@@ -379,95 +384,51 @@ export default function QuranNarration() {
               <div className="space-y-4 pt-2">
                 <div className="space-y-1.5">
                   <Label>تاريخ الجلسة *</Label>
-                  <Input
-                    type="date"
-                    value={form.session_date}
-                    onChange={(e) => setForm((p) => ({ ...p, session_date: e.target.value }))}
-                  />
+                  <Input type="date" value={form.session_date} onChange={(e) => setForm((p) => ({ ...p, session_date: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>الحلقة</Label>
                   <Select value={form.halaqa_id} onValueChange={(v) => setForm((p) => ({ ...p, halaqa_id: v }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الحلقة" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
                     <SelectContent position="popper" className="z-[200]">
-                      {halaqat.map((h) => (
-                        <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-                      ))}
+                      {halaqat.map((h) => (<SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>عنوان الجلسة</Label>
-                  <Input
-                    placeholder="مثال: سرد الربع الأول"
-                    value={form.title}
-                    onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                  />
+                  <Input placeholder="مثال: سرد الربع الأول" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>ملاحظات</Label>
-                  <Textarea
-                    placeholder="ملاحظات عامة على الجلسة"
-                    value={form.notes}
-                    onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-                    rows={3}
-                  />
+                  <Textarea placeholder="ملاحظات عامة على الجلسة" value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} rows={3} />
                 </div>
-
-                {/* المعلم الخارجي */}
                 <div className="border-t pt-3 mt-3">
                   <p className="text-sm font-medium text-muted-foreground mb-2">معلم خارجي (اختياري)</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label>اسم المعلم</Label>
-                      <Input
-                        placeholder="اسم المعلم الخارجي"
-                        value={form.external_teacher_name}
-                        onChange={(e) => setForm((p) => ({ ...p, external_teacher_name: e.target.value }))}
-                      />
+                      <Input placeholder="اسم المعلم الخارجي" value={form.external_teacher_name} onChange={(e) => setForm((p) => ({ ...p, external_teacher_name: e.target.value }))} />
                     </div>
                     <div className="space-y-1.5">
                       <Label>رقم الهاتف</Label>
-                      <Input
-                        placeholder="05xxxxxxxx"
-                        value={form.external_teacher_phone}
-                        onChange={(e) => setForm((p) => ({ ...p, external_teacher_phone: e.target.value }))}
-                      />
+                      <Input placeholder="05xxxxxxxx" value={form.external_teacher_phone} onChange={(e) => setForm((p) => ({ ...p, external_teacher_phone: e.target.value }))} />
                     </div>
                   </div>
                 </div>
-
-                {/* نطاق الأحزاب */}
                 <div className="border-t pt-3 mt-3">
                   <p className="text-sm font-medium text-muted-foreground mb-2">نطاق أحزاب السرد (اختياري)</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label>من حزب</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={60}
-                        placeholder="1"
-                        value={form.hizb_from}
-                        onChange={(e) => setForm((p) => ({ ...p, hizb_from: e.target.value }))}
-                      />
+                      <Input type="number" min={1} max={60} placeholder="1" value={form.hizb_from} onChange={(e) => setForm((p) => ({ ...p, hizb_from: e.target.value }))} />
                     </div>
                     <div className="space-y-1.5">
                       <Label>إلى حزب</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={60}
-                        placeholder="60"
-                        value={form.hizb_to}
-                        onChange={(e) => setForm((p) => ({ ...p, hizb_to: e.target.value }))}
-                      />
+                      <Input type="number" min={1} max={60} placeholder="60" value={form.hizb_to} onChange={(e) => setForm((p) => ({ ...p, hizb_to: e.target.value }))} />
                     </div>
                   </div>
                 </div>
-
                 <div className="flex gap-2 justify-end pt-2">
                   <Button variant="outline" onClick={() => { setShowNewSessionDialog(false); setEditSession(null); resetForm(); }}>إلغاء</Button>
                   <Button onClick={handleSubmit} disabled={sessionMutation.isPending}>
@@ -480,53 +441,24 @@ export default function QuranNarration() {
         )}
       </div>
 
-      {/* الإحصائيات */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">إجمالي الجلسات</p>
-              <p className="text-2xl font-bold">{totalSessions}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-sky-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">مجموع السجلات</p>
-              <p className="text-2xl font-bold">{totalParticipants}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">متوسط الاجتياز</p>
-              <p className="text-2xl font-bold">{avgPassRate}%</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">المجتازون</p>
-              <p className="text-2xl font-bold">{totalPassed}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { label: "الجلسات", value: totalSessions, icon: CalendarDays, color: "text-primary" },
+          { label: "إجمالي الأحزاب", value: totalHizb.toFixed(1), icon: BookOpen, color: "text-primary" },
+          { label: "إجمالي الأوجه", value: totalPages, icon: ScrollText, color: "text-primary" },
+          { label: "نسبة الاجتياز", value: `${avgPassRate}%`, icon: TrendingUp, color: "text-primary" },
+          { label: "المجتازون", value: totalPassed, icon: CheckCircle, color: "text-primary" },
+          { label: "السجلات", value: totalParticipants, icon: Users, color: "text-primary" },
+        ].map((kpi, i) => (
+          <Card key={i}>
+            <CardContent className="p-3 text-center">
+              <kpi.icon className={`w-5 h-5 mx-auto mb-1 ${kpi.color}`} />
+              <p className="text-2xl font-bold">{kpi.value}</p>
+              <p className="text-xs text-muted-foreground">{kpi.label}</p>
+            </CardContent>
+          </Card>
+        ))}
 
       <Tabs defaultValue="sessions" dir="rtl">
         <TabsList>
