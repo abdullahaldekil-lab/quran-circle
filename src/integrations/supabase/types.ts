@@ -2505,6 +2505,8 @@ export type Database = {
           created_at: string
           halaqa_id: string
           id: string
+          linking_from: string | null
+          linking_to: string | null
           memorization_quality: number | null
           memorized_from: string | null
           memorized_to: string | null
@@ -2523,6 +2525,8 @@ export type Database = {
           created_at?: string
           halaqa_id: string
           id?: string
+          linking_from?: string | null
+          linking_to?: string | null
           memorization_quality?: number | null
           memorized_from?: string | null
           memorized_to?: string | null
@@ -2541,6 +2545,8 @@ export type Database = {
           created_at?: string
           halaqa_id?: string
           id?: string
+          linking_from?: string | null
+          linking_to?: string | null
           memorization_quality?: number | null
           memorized_from?: string | null
           memorized_to?: string | null
