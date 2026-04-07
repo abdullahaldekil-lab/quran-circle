@@ -124,35 +124,41 @@ export default function ExcellenceReports() {
     setComplexReport({ topStudents: top });
   };
 
-  // Monthly Report
+  // Monthly Report — uses Hijri month/year to determine Gregorian date range
   const loadMonthlyReport = async () => {
-    const [yearStr, monthStr] = monthYear.split("-");
-    const year = parseInt(yearStr);
-    const month = parseInt(monthStr);
-    const startDate = `${yearStr}-${monthStr}-01`;
-    const endDate = new Date(year, month, 0).toISOString().split("T")[0];
+    const hMonth = parseInt(hijriMonth);
+    const hYear = parseInt(hijriYear);
+    const startGreg = toMiladi(hYear, hMonth, 1);
+    const endGreg = toMiladi(hMonth === 12 ? hYear + 1 : hYear, hMonth === 12 ? 1 : hMonth + 1, 1);
+    endGreg.setDate(endGreg.getDate() - 1);
+    const startDate = startGreg.toISOString().split("T")[0];
+    const endDate = endGreg.toISOString().split("T")[0];
 
     const { data: sessionsInMonth } = await supabase
       .from("excellence_sessions")
-      .select("id")
+      .select("id, halaqa_id")
       .gte("session_date", startDate)
       .lte("session_date", endDate);
 
     const sessionIds = (sessionsInMonth || []).map((s) => s.id);
     if (sessionIds.length === 0) {
       setMonthlyReport([]);
+      setMonthlyHalaqaReport([]);
+      setMonthlySummary(null);
       return;
     }
 
     const [perfRes, attRes] = await Promise.all([
-      supabase.from("excellence_performance").select("*, students:student_id(full_name)").in("session_id", sessionIds),
+      supabase.from("excellence_performance").select("*, students:student_id(full_name, halaqa_id, halaqat:halaqa_id(name))").in("session_id", sessionIds),
       supabase.from("excellence_attendance").select("*").in("session_id", sessionIds).eq("is_present", true),
     ]);
 
-    const studentMap: Record<string, { name: string; totalScore: number; sessions: number; totalPages: number; totalHizb: number; attended: number }> = {};
+    const studentMap: Record<string, { name: string; halaqaName: string; totalScore: number; sessions: number; totalPages: number; totalHizb: number; attended: number }> = {};
     (perfRes.data || []).forEach((p: any) => {
       const sid = p.student_id;
-      if (!studentMap[sid]) studentMap[sid] = { name: (p as any).students?.full_name || "—", totalScore: 0, sessions: 0, totalPages: 0, totalHizb: 0, attended: 0 };
+      const sname = p.students?.full_name || "—";
+      const hName = p.students?.halaqat?.name || "—";
+      if (!studentMap[sid]) studentMap[sid] = { name: sname, halaqaName: hName, totalScore: 0, sessions: 0, totalPages: 0, totalHizb: 0, attended: 0 };
       studentMap[sid].totalScore += Number(p.total_score);
       studentMap[sid].totalPages += Number(p.pages_displayed);
       studentMap[sid].totalHizb += Number(p.hizb_count);
@@ -168,25 +174,88 @@ export default function ExcellenceReports() {
       .map((s, i) => ({ ...s, rank: i + 1 }));
 
     setMonthlyReport(ranked);
+
+    // Summary
+    const totalStudents = ranked.length;
+    const totalPages = ranked.reduce((sum, s) => sum + s.totalPages, 0);
+    const totalHizb = ranked.reduce((sum, s) => sum + s.totalHizb, 0);
+    const avgScore = totalStudents > 0 ? ranked.reduce((sum, s) => sum + s.avg, 0) / totalStudents : 0;
+    setMonthlySummary({ sessionCount: sessionIds.length, totalStudents, totalPages, totalHizb, avgScore });
+
+    // Halaqa comparison
+    const halaqaMap: Record<string, { name: string; students: number; totalAtt: number; totalSessions: number; totalScore: number; count: number }> = {};
+    ranked.forEach((s) => {
+      const hName = s.halaqaName;
+      if (!halaqaMap[hName]) halaqaMap[hName] = { name: hName, students: 0, totalAtt: 0, totalSessions: 0, totalScore: 0, count: 0 };
+      halaqaMap[hName].students += 1;
+      halaqaMap[hName].totalAtt += s.attended;
+      halaqaMap[hName].totalSessions += s.sessions;
+      halaqaMap[hName].totalScore += s.avg;
+      halaqaMap[hName].count += 1;
+    });
+    const halaqaList = Object.values(halaqaMap).map((h) => ({
+      ...h,
+      attendanceRate: h.totalSessions > 0 ? Math.round((h.totalAtt / h.totalSessions) * 100) : 0,
+      avgScore: h.count > 0 ? h.totalScore / h.count : 0,
+    })).sort((a, b) => b.avgScore - a.avgScore);
+    setMonthlyHalaqaReport(halaqaList);
   };
 
   const saveMonthlyReport = async () => {
-    const [yearStr, monthStr] = monthYear.split("-");
-    const year = parseInt(yearStr);
-    const month = parseInt(monthStr);
-
+    const year = parseInt(hijriYear);
+    const month = parseInt(hijriMonth);
     for (const s of monthlyReport) {
       await supabase.from("excellence_monthly_report").upsert({
         month, year, student_id: s.id,
-        total_attendance: s.attended,
-        total_pages: s.totalPages,
-        total_sessions: s.sessions,
-        total_hizb: s.totalHizb,
-        average_score: Math.round(s.avg * 100) / 100,
-        final_rank: s.rank,
+        total_attendance: s.attended, total_pages: s.totalPages,
+        total_sessions: s.sessions, total_hizb: s.totalHizb,
+        average_score: Math.round(s.avg * 100) / 100, final_rank: s.rank,
       }, { onConflict: "month,year,student_id" });
     }
     toast.success("تم حفظ التقرير الشهري");
+  };
+
+  const publishMonthlyReport = async () => {
+    setPublishingMonthly(true);
+    try {
+      await saveMonthlyReport();
+      const { data: teachers } = await supabase.from("profiles").select("id").in("role", ["teacher", "assistant_teacher"]);
+      const teacherIds = (teachers || []).map((t: any) => t.id);
+      if (teacherIds.length > 0) {
+        const monthName = HIJRI_MONTHS[parseInt(hijriMonth) - 1];
+        await sendNotification({
+          templateCode: "general",
+          recipientIds: teacherIds,
+          variables: { title: `تقرير التميز الشهري — ${monthName} ${hijriYear} هـ`, body: `تم نشر تقرير التميز لشهر ${monthName}. يرجى الاطلاع.` },
+        });
+      }
+      toast.success("تم نشر التقرير وإشعار المعلمين");
+    } catch (err: any) {
+      toast.error("خطأ أثناء النشر: " + err.message);
+    } finally {
+      setPublishingMonthly(false);
+    }
+  };
+
+  const exportMonthlyPDF = () => {
+    if (!monthlyReport.length) return;
+    const monthName = HIJRI_MONTHS[parseInt(hijriMonth) - 1];
+    const doc = new jsPDF({ orientation: "landscape", putOnlyUsedFonts: true });
+    doc.setFontSize(16);
+    doc.text("مجمع حلق جامع حويلان", 280, 15, { align: "right" });
+    doc.setFontSize(13);
+    doc.text(`تقرير التميز الشهري — ${monthName} ${hijriYear} هـ`, 280, 24, { align: "right" });
+    doc.setFontSize(10);
+    doc.text(`عدد الجلسات: ${monthlySummary?.sessionCount || 0} | الطلاب: ${monthlySummary?.totalStudents || 0} | متوسط الدرجة: ${(monthlySummary?.avgScore || 0).toFixed(1)}`, 280, 32, { align: "right" });
+    const rows = monthlyReport.map((s) => [String(s.rank), s.name, s.halaqaName, String(s.attended), String(s.totalPages), String(s.totalHizb), s.avg.toFixed(1)]);
+    autoTable(doc, { startY: 38, head: [["الترتيب", "الطالب", "الحلقة", "الحضور", "الأوجه", "الأحزاب", "متوسط الدرجة"]], body: rows, styles: { halign: "center", fontSize: 9 }, headStyles: { fillColor: [30, 58, 95] } });
+    if (monthlyHalaqaReport.length > 0) {
+      const halaqaY = (doc as any).lastAutoTable?.finalY + 12 || 120;
+      doc.setFontSize(11);
+      doc.text("مقارنة الحلقات", 280, halaqaY, { align: "right" });
+      autoTable(doc, { startY: halaqaY + 4, head: [["الحلقة", "عدد الطلاب", "نسبة الحضور", "متوسط الدرجات"]], body: monthlyHalaqaReport.map((h: any) => [h.name, String(h.students), `${h.attendanceRate}%`, h.avgScore.toFixed(1)]), styles: { halign: "center", fontSize: 9 }, headStyles: { fillColor: [30, 58, 95] } });
+    }
+    doc.save(`تقرير_التميز_${monthName}_${hijriYear}.pdf`);
   };
 
   const handlePrint = (elementId: string) => {
