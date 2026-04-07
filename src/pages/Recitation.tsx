@@ -31,6 +31,8 @@ const Recitation = () => {
     memorized_to: "",
     review_from: "",
     review_to: "",
+    linking_from: "",
+    linking_to: "",
     memorization_quality: 40,
     tajweed_score: 25,
     mistakes_count: 0,
@@ -74,6 +76,8 @@ const Recitation = () => {
       memorized_to: "",
       review_from: "",
       review_to: "",
+      linking_from: "",
+      linking_to: "",
       memorization_quality: 40,
       tajweed_score: 25,
       mistakes_count: 0,
@@ -103,6 +107,8 @@ const Recitation = () => {
       memorized_to: form.memorized_to || null,
       review_from: form.review_from || null,
       review_to: form.review_to || null,
+      linking_from: form.linking_from || null,
+      linking_to: form.linking_to || null,
       memorization_quality: form.memorization_quality,
       tajweed_score: form.tajweed_score,
       mistakes_count: form.mistakes_count,
@@ -257,82 +263,96 @@ const Recitation = () => {
                 بيانات التسميع
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">الحفظ من</Label>
-                  <Input placeholder="سورة / آية" value={form.memorized_from} onChange={(e) => setForm({ ...form, memorized_from: e.target.value })} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">الحفظ إلى</Label>
-                  <Input placeholder="سورة / آية" value={form.memorized_to} onChange={(e) => setForm({ ...form, memorized_to: e.target.value })} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">المراجعة من</Label>
-                  <Input placeholder="سورة / آية" value={form.review_from} onChange={(e) => setForm({ ...form, review_from: e.target.value })} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">المراجعة إلى</Label>
-                  <Input placeholder="سورة / آية" value={form.review_to} onChange={(e) => setForm({ ...form, review_to: e.target.value })} />
-                </div>
-              </div>
-
-              <div className="space-y-4 bg-muted/50 rounded-lg p-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label className="text-sm">جودة الحفظ</Label>
-                    <span className="text-sm font-bold text-primary">{form.memorization_quality}/50</span>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border">
+                {/* الحفظ */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-background">
+                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">الحفظ</span>
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <Input placeholder="من: سورة / آية" value={form.memorized_from} onChange={(e) => setForm({ ...form, memorized_from: e.target.value })} className="text-sm h-9" />
+                    <Input placeholder="إلى: سورة / آية" value={form.memorized_to} onChange={(e) => setForm({ ...form, memorized_to: e.target.value })} className="text-sm h-9" />
                   </div>
-                  <Slider value={[form.memorization_quality]} onValueChange={([v]) => setForm({ ...form, memorization_quality: v })} max={50} step={1} />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label className="text-sm">التجويد</Label>
-                    <span className="text-sm font-bold text-primary">{form.tajweed_score}/30</span>
+
+                {/* المراجعة */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
+                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">المراجعة</span>
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <Input placeholder="من: سورة / آية" value={form.review_from} onChange={(e) => setForm({ ...form, review_from: e.target.value })} className="text-sm h-9" />
+                    <Input placeholder="إلى: سورة / آية" value={form.review_to} onChange={(e) => setForm({ ...form, review_to: e.target.value })} className="text-sm h-9" />
                   </div>
-                  <Slider value={[form.tajweed_score]} onValueChange={([v]) => setForm({ ...form, tajweed_score: v })} max={30} step={1} />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label className="text-sm">عدد الأخطاء</Label>
-                    <span className="text-sm font-bold text-destructive">{form.mistakes_count}</span>
+
+                {/* الربط */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-background">
+                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">الربط</span>
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <Input placeholder="من: سورة / آية" value={form.linking_from} onChange={(e) => setForm({ ...form, linking_from: e.target.value })} className="text-sm h-9" />
+                    <Input placeholder="إلى: سورة / آية" value={form.linking_to} onChange={(e) => setForm({ ...form, linking_to: e.target.value })} className="text-sm h-9" />
                   </div>
-                  <Slider value={[form.mistakes_count]} onValueChange={([v]) => setForm({ ...form, mistakes_count: v })} max={20} step={1} />
+                </div>
+
+                {/* جودة الحفظ */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
+                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">جودة الحفظ</span>
+                  <div className="flex-1 flex items-center gap-3">
+                    <Slider value={[form.memorization_quality]} onValueChange={([v]) => setForm({ ...form, memorization_quality: v })} max={50} step={1} className="flex-1" />
+                    <span className="text-sm font-bold text-primary w-12 text-left">{form.memorization_quality}/50</span>
+                  </div>
+                </div>
+
+                {/* التجويد */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-background">
+                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">التجويد</span>
+                  <div className="flex-1 flex items-center gap-3">
+                    <Slider value={[form.tajweed_score]} onValueChange={([v]) => setForm({ ...form, tajweed_score: v })} max={30} step={1} className="flex-1" />
+                    <span className="text-sm font-bold text-primary w-12 text-left">{form.tajweed_score}/30</span>
+                  </div>
+                </div>
+
+                {/* الأخطاء */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
+                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">الأخطاء</span>
+                  <div className="flex-1 flex items-center gap-3">
+                    <Slider value={[form.mistakes_count]} onValueChange={([v]) => setForm({ ...form, mistakes_count: v })} max={20} step={1} className="flex-1" />
+                    <span className="text-sm font-bold text-destructive w-12 text-left">{form.mistakes_count}</span>
+                  </div>
+                </div>
+
+                {/* ملاحظات */}
+                <div className="flex items-start gap-3 px-4 py-3 bg-background">
+                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground pt-2">ملاحظات</span>
+                  <Textarea placeholder="أضف ملاحظاتك هنا..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="flex-1 text-sm" />
                 </div>
               </div>
 
-              <div className="text-center py-4 bg-card rounded-xl border">
-                <p className="text-sm text-muted-foreground">الدرجة النهائية</p>
-                <p className={`text-4xl font-bold ${scoreColor}`}>{totalScore}</p>
-                <p className="text-xs text-muted-foreground">من 100</p>
-              </div>
+              <div className="p-4 space-y-4">
+                {/* الدرجة النهائية */}
+                <div className="text-center py-4 bg-card rounded-xl border">
+                  <p className="text-sm text-muted-foreground">الدرجة النهائية</p>
+                  <p className={`text-4xl font-bold ${scoreColor}`}>{totalScore}</p>
+                  <p className="text-xs text-muted-foreground">من 100</p>
+                </div>
 
-              {/* Audio Recording */}
-              <div className="space-y-2">
-                <Label className="text-xs flex items-center gap-1">
-                  <Mic className="w-3 h-3" />
-                  تسجيل صوتي
-                </Label>
-                <AudioRecorder
-                  onAudioUrl={setAudioUrl}
-                  existingUrl={audioUrl}
-                  studentId={currentStudent.id}
-                  recordDate={new Date().toISOString().split("T")[0]}
-                />
-              </div>
+                {/* Audio Recording */}
+                <div className="space-y-2">
+                  <Label className="text-xs flex items-center gap-1">
+                    <Mic className="w-3 h-3" />
+                    تسجيل صوتي
+                  </Label>
+                  <AudioRecorder
+                    onAudioUrl={setAudioUrl}
+                    existingUrl={audioUrl}
+                    studentId={currentStudent.id}
+                    recordDate={new Date().toISOString().split("T")[0]}
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs">ملاحظات وتنبيهات</Label>
-                <Textarea placeholder="أضف ملاحظاتك هنا..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
+                <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
+                  <Save className="w-4 h-4 ml-2" />
+                  {saving ? "جارٍ الحفظ..." : "حفظ التسميع والانتقال للتالي"}
+                </Button>
               </div>
-
-              <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
-                <Save className="w-4 h-4 ml-2" />
-                {saving ? "جارٍ الحفظ..." : "حفظ التسميع والانتقال للتالي"}
-              </Button>
             </CardContent>
           </Card>
         </>
