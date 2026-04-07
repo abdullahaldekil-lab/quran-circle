@@ -67,8 +67,9 @@ export default function ExcellenceReports() {
   const getSessionDisplayName = (s: any) => {
     const trackName = s.excellence_tracks?.track_name;
     const halaqaName = s.halaqat?.name;
-    const hijri = s.session_hijri_date ? ` — ${formatHijriArabic(s.session_hijri_date)}` : "";
-    return `${format(new Date(s.session_date), "yyyy/MM/dd")}${hijri} — ${trackName || halaqaName || ""}`;
+    const hijriPart = s.session_hijri_date ? formatHijriArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd");
+    const gregPart = s.session_hijri_date ? ` (${format(new Date(s.session_date), "yyyy/MM/dd")})` : "";
+    return `${hijriPart}${gregPart} — ${trackName || halaqaName || ""}`;
   };
 
   // Session Report

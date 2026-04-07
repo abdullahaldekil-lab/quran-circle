@@ -358,10 +358,10 @@ export default function Excellence() {
                   </div>
                   <div>
                     <p className="font-semibold">
-                      {format(new Date(s.session_date), "yyyy/MM/dd")}
+                      {s.session_hijri_date ? formatHijriArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd")}
                       {s.session_hijri_date && (
                         <span className="text-muted-foreground text-sm mr-2">
-                          ({formatHijriArabic(s.session_hijri_date)})
+                          ({format(new Date(s.session_date), "yyyy/MM/dd")})
                         </span>
                       )}
                     </p>
@@ -389,7 +389,7 @@ export default function Excellence() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>حذف الجلسة</AlertDialogTitle>
                           <AlertDialogDescription>
-                            هل أنت متأكد من حذف جلسة {format(new Date(s.session_date), "yyyy/MM/dd")}؟ سيتم حذف جميع بيانات الحضور والأداء المرتبطة بها.
+                            هل أنت متأكد من حذف جلسة {s.session_hijri_date ? formatHijriArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd")}؟ سيتم حذف جميع بيانات الحضور والأداء المرتبطة بها.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter className="flex-row-reverse gap-2">
