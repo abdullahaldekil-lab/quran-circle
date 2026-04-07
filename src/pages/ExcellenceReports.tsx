@@ -403,53 +403,145 @@ export default function ExcellenceReports() {
         {/* Monthly Report */}
         <TabsContent value="monthly">
           <Card>
-            <CardHeader><CardTitle>التقرير الشهري — ترتيب على مستوى المجمع</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input type="month" value={monthYear} onChange={(e) => setMonthYear(e.target.value)} className="w-48" />
-                <Button onClick={loadMonthlyReport}>عرض</Button>
+            <CardHeader>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5" />التقرير الشهري النهائي</CardTitle>
                 {monthlyReport.length > 0 && (
-                  <>
+                  <div className="flex gap-2 flex-wrap">
                     {isManager && (
-                      <Button variant="secondary" onClick={saveMonthlyReport}>
-                        <Save className="w-4 h-4 ml-1" />حفظ
+                      <Button onClick={publishMonthlyReport} disabled={publishingMonthly}>
+                        <Send className="w-4 h-4 ml-1" />{publishingMonthly ? "جارٍ النشر..." : "نشر التقرير"}
                       </Button>
                     )}
+                    <Button variant="outline" onClick={exportMonthlyPDF}>
+                      <FileText className="w-4 h-4 ml-1" />تصدير PDF
+                    </Button>
                     <Button variant="outline" onClick={() => handlePrint("monthly-report-print")}>
                       <Printer className="w-4 h-4 ml-1" />طباعة
                     </Button>
-                  </>
+                  </div>
                 )}
               </div>
-              {monthlyReport.length > 0 && (
-                <div id="monthly-report-print">
-                  <Table>
-                    <TableHeader><TableRow>
-                      <TableHead className="text-center">الترتيب</TableHead>
-                      <TableHead className="text-right">الطالب</TableHead>
-                      <TableHead className="text-center">الحضور</TableHead>
-                      <TableHead className="text-center">الجلسات</TableHead>
-                      <TableHead className="text-center">الأوجه</TableHead>
-                      <TableHead className="text-center">الأحزاب</TableHead>
-                      <TableHead className="text-center">متوسط الدرجة</TableHead>
-                    </TableRow></TableHeader>
-                    <TableBody>
-                      {monthlyReport.map((s: any) => (
-                        <TableRow key={s.id}>
-                          <TableCell className="text-center font-bold text-primary">{s.rank}</TableCell>
-                          <TableCell><StudentNameLink studentId={s.id} studentName={s.name} /></TableCell>
-                          <TableCell className="text-center">{s.attended}</TableCell>
-                          <TableCell className="text-center">{s.sessions}</TableCell>
-                          <TableCell className="text-center">{s.totalPages}</TableCell>
-                          <TableCell className="text-center">{s.totalHizb}</TableCell>
-                          <TableCell className="text-center font-bold">{s.avg.toFixed(1)}</TableCell>
-                        </TableRow>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Hijri Month/Year Selectors */}
+              <div className="flex gap-3 items-end flex-wrap">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">الشهر الهجري</label>
+                  <Select value={hijriMonth} onValueChange={setHijriMonth}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {HIJRI_MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">السنة الهجرية</label>
+                  <Select value={hijriYear} onValueChange={setHijriYear}>
+                    <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 5 }, (_, i) => currentHijri.year - 2 + i).map((y) => (
+                        <SelectItem key={y} value={String(y)}>{y} هـ</SelectItem>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={loadMonthlyReport}>عرض التقرير</Button>
+              </div>
+
+              {/* KPI Summary Cards */}
+              {monthlySummary && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <Card><CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-primary">{monthlySummary.sessionCount}</p>
+                    <p className="text-xs text-muted-foreground">عدد الجلسات</p>
+                  </CardContent></Card>
+                  <Card><CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-primary">{monthlySummary.totalStudents}</p>
+                    <p className="text-xs text-muted-foreground">الطلاب المشاركون</p>
+                  </CardContent></Card>
+                  <Card><CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-primary">{monthlySummary.totalPages}</p>
+                    <p className="text-xs text-muted-foreground">إجمالي الأوجه</p>
+                  </CardContent></Card>
+                  <Card><CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-primary">{monthlySummary.totalHizb}</p>
+                    <p className="text-xs text-muted-foreground">إجمالي الأحزاب</p>
+                  </CardContent></Card>
+                  <Card><CardContent className="p-3 text-center">
+                    <p className="text-2xl font-bold text-primary">{monthlySummary.avgScore.toFixed(1)}</p>
+                    <p className="text-xs text-muted-foreground">متوسط الدرجة</p>
+                  </CardContent></Card>
                 </div>
               )}
-              {monthlyReport.length === 0 && (
+
+              {/* Student Ranking Table */}
+              {monthlyReport.length > 0 && (
+                <div id="monthly-report-print" className="space-y-6">
+                  <div>
+                    <h3 className="font-bold text-base mb-2 flex items-center gap-2"><Award className="w-4 h-4" />ترتيب الطلاب — {HIJRI_MONTHS[parseInt(hijriMonth) - 1]} {hijriYear} هـ</h3>
+                    <Table>
+                      <TableHeader><TableRow>
+                        <TableHead className="text-center">الترتيب</TableHead>
+                        <TableHead className="text-right">الطالب</TableHead>
+                        <TableHead className="text-right">الحلقة</TableHead>
+                        <TableHead className="text-center">أيام الحضور</TableHead>
+                        <TableHead className="text-center">الأوجه</TableHead>
+                        <TableHead className="text-center">الأحزاب</TableHead>
+                        <TableHead className="text-center">متوسط الدرجة</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {monthlyReport.map((s: any) => (
+                          <TableRow key={s.id}>
+                            <TableCell className="text-center">
+                              {s.rank <= 3 ? (
+                                <Badge className={s.rank === 1 ? "bg-amber-500" : s.rank === 2 ? "bg-gray-400" : "bg-amber-700"}>{s.rank} 🏆</Badge>
+                              ) : (
+                                <span className="font-bold text-primary">{s.rank}</span>
+                              )}
+                            </TableCell>
+                            <TableCell><StudentNameLink studentId={s.id} studentName={s.name} /></TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{s.halaqaName}</TableCell>
+                            <TableCell className="text-center">{s.attended}</TableCell>
+                            <TableCell className="text-center">{s.totalPages}</TableCell>
+                            <TableCell className="text-center">{s.totalHizb}</TableCell>
+                            <TableCell className="text-center font-bold">{s.avg.toFixed(1)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Halaqa Comparison Table */}
+                  {monthlyHalaqaReport.length > 0 && (
+                    <div>
+                      <h3 className="font-bold text-base mb-2 flex items-center gap-2"><Users className="w-4 h-4" />مقارنة الحلقات</h3>
+                      <Table>
+                        <TableHeader><TableRow>
+                          <TableHead className="text-right">الحلقة</TableHead>
+                          <TableHead className="text-center">عدد الطلاب</TableHead>
+                          <TableHead className="text-center">نسبة الحضور</TableHead>
+                          <TableHead className="text-center">متوسط الدرجات</TableHead>
+                        </TableRow></TableHeader>
+                        <TableBody>
+                          {monthlyHalaqaReport.map((h: any, i: number) => (
+                            <TableRow key={i}>
+                              <TableCell className="font-medium">{h.name}</TableCell>
+                              <TableCell className="text-center">{h.students}</TableCell>
+                              <TableCell className="text-center">{h.attendanceRate}%</TableCell>
+                              <TableCell className="text-center font-bold">{h.avgScore.toFixed(1)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!monthlySummary && monthlyReport.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">اختر الشهر والسنة الهجرية ثم اضغط «عرض التقرير»</p>
+              )}
+              {monthlySummary && monthlyReport.length === 0 && (
                 <p className="text-center text-muted-foreground py-4">لا توجد بيانات لهذا الشهر</p>
               )}
             </CardContent>
