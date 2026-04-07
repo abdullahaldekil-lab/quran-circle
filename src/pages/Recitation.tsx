@@ -15,6 +15,7 @@ import AudioRecorder from "@/components/AudioRecorder";
 import { sendNotification } from "@/utils/sendNotification";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import StudentNameLink from "@/components/StudentNameLink";
+import StudentAnnualPlanCard from "@/components/recitation/StudentAnnualPlanCard";
 
 const Recitation = () => {
   const { user } = useAuth();
@@ -239,6 +240,12 @@ const Recitation = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Annual Plan Target */}
+          <StudentAnnualPlanCard
+            studentId={currentStudent.id}
+            onApply={(from, to) => setForm(prev => ({ ...prev, memorized_from: from, memorized_to: to }))}
+          />
 
           {/* Student Recitation History */}
           <StudentHistory studentId={currentStudent.id} />
