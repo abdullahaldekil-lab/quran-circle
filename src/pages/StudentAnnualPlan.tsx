@@ -412,8 +412,22 @@ const StudentAnnualPlan = () => {
               الهدف الشهري: <span className="font-bold text-foreground">{editingMonth?.target_pages} وجه</span>
             </div>
             <div className="space-y-2">
-              <Label>الأوجه المنجزة فعلياً</Label>
+              <Label>الأوجه المنجزة فعلياً (إجمالي)</Label>
               <Input type="number" min={0} value={actualPages} onChange={(e) => setActualPages(Number(e.target.value))} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">الحفظ المنجز</Label>
+                <Input type="number" min={0} value={actualMemorization} onChange={(e) => setActualMemorization(Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">المراجعة المنجزة</Label>
+                <Input type="number" min={0} value={actualReview} onChange={(e) => setActualReview(Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">الربط المنجز</Label>
+                <Input type="number" min={0} value={actualLinking} onChange={(e) => setActualLinking(Number(e.target.value))} />
+              </div>
             </div>
             <Button onClick={handleUpdate} disabled={saving} className="w-full">
               {saving ? "جارٍ الحفظ..." : "حفظ التحديث"}
