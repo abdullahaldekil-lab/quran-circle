@@ -241,6 +241,12 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
           total_target_pages: summary.totalPages,
           daily_target_pages: summary.dailyPages,
           working_days_per_week: workingDays,
+          daily_memorization_pages: dailyMemorization,
+          daily_review_pages: dailyReview,
+          daily_linking_pages: dailyLinking,
+          previous_memorized_from: prevMemFrom || null,
+          previous_memorized_to: prevMemTo || null,
+          previous_memorized_pages: prevMemPages,
           status: "active",
           created_by: user?.id,
         })
