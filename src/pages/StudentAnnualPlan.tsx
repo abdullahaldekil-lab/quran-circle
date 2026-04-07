@@ -115,6 +115,10 @@ const StudentAnnualPlan = () => {
   const openUpdate = (monthRow: any) => {
     setEditingMonth(monthRow);
     setActualPages(monthRow.actual_pages || 0);
+    setActualMemorization(monthRow.actual_memorization || 0);
+    setActualReview(monthRow.actual_review || 0);
+    setActualLinking(monthRow.actual_linking || 0);
+    setUpdateDialogOpen(true);
     setUpdateDialogOpen(true);
   };
 
@@ -126,7 +130,14 @@ const StudentAnnualPlan = () => {
 
     const { error } = await supabase
       .from("student_plan_progress")
-      .update({ actual_pages: actualPages, commitment_percentage: pct, status: rowStatus })
+      .update({
+        actual_pages: actualPages,
+        actual_memorization: actualMemorization,
+        actual_review: actualReview,
+        actual_linking: actualLinking,
+        commitment_percentage: pct,
+        status: rowStatus,
+      })
       .eq("id", editingMonth.id);
 
     if (error) {
