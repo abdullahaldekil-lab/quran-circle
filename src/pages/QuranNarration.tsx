@@ -360,7 +360,7 @@ export default function QuranNarration() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">يوم السرد القرآني</h1>
             <p className="text-sm text-muted-foreground">
-              {todayHijri ? formatHijriArabic(todayHijri) : ""}
+              {todayHijriStr}
               <span className="mx-1">—</span>
               إدارة جلسات السرد ونتائج الطلاب
             </p>
