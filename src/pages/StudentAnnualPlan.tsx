@@ -355,6 +355,9 @@ const StudentAnnualPlan = () => {
                 <TableHead>أيام العمل</TableHead>
                 <TableHead>الهدف</TableHead>
                 <TableHead>المنجز</TableHead>
+                <TableHead>الحفظ</TableHead>
+                <TableHead>المراجعة</TableHead>
+                <TableHead>الربط</TableHead>
                 <TableHead>الالتزام%</TableHead>
                 <TableHead>الحالة</TableHead>
                 {(isManager || isSupervisor || isTeacher) && <TableHead className="print:hidden">تحديث</TableHead>}
@@ -370,6 +373,9 @@ const StudentAnnualPlan = () => {
                     <TableCell>{p.attendance_days}</TableCell>
                     <TableCell>{p.target_pages}</TableCell>
                     <TableCell className="font-bold">{p.actual_pages}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.actual_memorization || 0}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.actual_review || 0}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.actual_linking || 0}</TableCell>
                     <TableCell>
                       <Badge variant={rowPct >= 85 ? "default" : rowPct >= 70 ? "secondary" : "destructive"} className="text-xs">
                         {rowPct}%
