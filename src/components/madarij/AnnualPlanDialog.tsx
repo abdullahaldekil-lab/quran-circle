@@ -63,7 +63,6 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [prevMemFrom, setPrevMemFrom] = useState("");
   const [prevMemTo, setPrevMemTo] = useState("");
   const [prevMemPages, setPrevMemPages] = useState(0);
-  const [summary, setSummary] = useState({ totalWorkDays: 0, totalPages: 0, dailyPages: 0 });
 
   // Step 3
   const [monthlyDistribution, setMonthlyDistribution] = useState<MonthRow[]>([]);
