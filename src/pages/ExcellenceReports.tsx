@@ -19,9 +19,16 @@ import { sendNotification } from "@/utils/sendNotification";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const HIJRI_MONTHS = [
+  "محرّم", "صفر", "ربيع الأول", "ربيع الثاني",
+  "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
+  "رمضان", "شوّال", "ذو القعدة", "ذو الحجة",
+];
+
 export default function ExcellenceReports() {
   const navigate = useNavigate();
   const { isManager } = useRole();
+  const { user } = useAuth();
 
   const [sessions, setSessions] = useState<any[]>([]);
 
