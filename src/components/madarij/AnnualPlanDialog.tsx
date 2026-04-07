@@ -57,6 +57,13 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [workingDays, setWorkingDays] = useState(5);
   const [holidays, setHolidays] = useState<any[]>([]);
   const [summary, setSummary] = useState({ totalWorkDays: 0, totalPages: 0, dailyPages: 0 });
+  const [dailyMemorization, setDailyMemorization] = useState(0);
+  const [dailyReview, setDailyReview] = useState(0);
+  const [dailyLinking, setDailyLinking] = useState(0);
+  const [prevMemFrom, setPrevMemFrom] = useState("");
+  const [prevMemTo, setPrevMemTo] = useState("");
+  const [prevMemPages, setPrevMemPages] = useState(0);
+  const [summary, setSummary] = useState({ totalWorkDays: 0, totalPages: 0, dailyPages: 0 });
 
   // Step 3
   const [monthlyDistribution, setMonthlyDistribution] = useState<MonthRow[]>([]);
@@ -374,6 +381,44 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
                   {[4, 5, 6].map(d => <SelectItem key={d} value={String(d)}>{d} أيام</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Daily breakdown fields */}
+            <div className="border-t pt-3">
+              <p className="text-sm font-semibold mb-3">التوزيع اليومي (أوجه)</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">الحفظ اليومي</Label>
+                  <Input type="number" min={0} step={0.25} value={dailyMemorization} onChange={(e) => setDailyMemorization(Number(e.target.value))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">المراجعة اليومية</Label>
+                  <Input type="number" min={0} step={0.25} value={dailyReview} onChange={(e) => setDailyReview(Number(e.target.value))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">الربط اليومي</Label>
+                  <Input type="number" min={0} step={0.25} value={dailyLinking} onChange={(e) => setDailyLinking(Number(e.target.value))} />
+                </div>
+              </div>
+            </div>
+
+            {/* Previous memorization */}
+            <div className="border-t pt-3">
+              <p className="text-sm font-semibold mb-3">الحفظ السابق (اختياري)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">من</Label>
+                  <Input placeholder="مثال: البقرة آية 1" value={prevMemFrom} onChange={(e) => setPrevMemFrom(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">إلى</Label>
+                  <Input placeholder="مثال: آل عمران آية 50" value={prevMemTo} onChange={(e) => setPrevMemTo(e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-1 mt-2">
+                <Label className="text-xs">عدد الأوجه المحفوظة سابقاً</Label>
+                <Input type="number" min={0} value={prevMemPages} onChange={(e) => setPrevMemPages(Number(e.target.value))} className="w-32" />
+              </div>
             </div>
 
             <p className="text-xs text-muted-foreground">
