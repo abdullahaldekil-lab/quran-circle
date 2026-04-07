@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, FileSpreadsheet, FileText, CalendarDays, Save, History, CheckCircle, XCircle } from "lucide-react";
+import { Printer, FileSpreadsheet, FileText, CalendarDays, Save, History, CheckCircle, XCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -38,6 +38,7 @@ const NarrationTest = () => {
   const queryClient = useQueryClient();
   const [selectedHalaqaId, setSelectedHalaqaId] = useState("");
   const [studentRows, setStudentRows] = useState<Record<string, StudentRow>>({});
+  const [editingAttempt, setEditingAttempt] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("test");
@@ -92,6 +93,35 @@ const NarrationTest = () => {
     enabled: !!selectedHalaqaId && activeTab === "history",
   });
 
+  // Fetch previous attempt counts for auto-detection
+  const { data: attemptCounts = {} } = useQuery({
+    queryKey: ["narration_attempt_counts", selectedHalaqaId, students.map((s: any) => s.id).join(",")],
+    queryFn: async () => {
+      if (!students.length) return {};
+      const studentIds = students.map((s: any) => s.id);
+      const { data, error } = await supabase
+        .from("narration_test_results" as any)
+        .select("student_id")
+        .eq("halaqa_id", selectedHalaqaId)
+        .eq("test_type", "narration")
+        .in("student_id", studentIds);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data as any[])?.forEach((r: any) => {
+        counts[r.student_id] = (counts[r.student_id] || 0) + 1;
+      });
+      return counts;
+    },
+    enabled: !!selectedHalaqaId && students.length > 0,
+  });
+
+  const getAutoAttempt = (studentId: string): string => {
+    const count = (attemptCounts as Record<string, number>)[studentId] || 0;
+    if (count === 0) return "الأولى";
+    if (count === 1) return "الثانية";
+    return "الثالثة";
+  };
+
   useMemo(() => {
     const newRows: Record<string, StudentRow> = {};
     students.forEach((s: any) => {
@@ -101,9 +131,26 @@ const NarrationTest = () => {
     });
     if (JSON.stringify(Object.keys(newRows)) !== JSON.stringify(Object.keys(studentRows))) {
       setStudentRows(newRows);
+      setEditingAttempt({});
       setSaved(false);
     }
   }, [students]);
+
+  // Auto-set attempts when attemptCounts loads
+  useEffect(() => {
+    if (Object.keys(attemptCounts).length === 0 && students.length === 0) return;
+    setStudentRows((prev) => {
+      const updated = { ...prev };
+      let changed = false;
+      Object.keys(updated).forEach((id) => {
+        if (!updated[id].attempt) {
+          updated[id] = { ...updated[id], attempt: getAutoAttempt(id) };
+          changed = true;
+        }
+      });
+      return changed ? updated : prev;
+    });
+  }, [attemptCounts]);
 
   const updateRow = (id: string, field: keyof StudentRow, value: any) => {
     setStudentRows((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
@@ -309,10 +356,26 @@ const NarrationTest = () => {
                             <TableRow key={row.id}>
                               <TableCell><StudentNameLink studentId={row.id} studentName={row.full_name} /></TableCell>
                               <TableCell className="text-center">
-                                <Select value={row.attempt} onValueChange={(v) => updateRow(row.id, "attempt", v)}>
-                                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="اختر" /></SelectTrigger>
-                                  <SelectContent>{ATTEMPT_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                </Select>
+                                {editingAttempt[row.id] ? (
+                                  <Select value={row.attempt} onValueChange={(v) => { updateRow(row.id, "attempt", v); setEditingAttempt((p) => ({ ...p, [row.id]: false })); }}>
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="اختر" /></SelectTrigger>
+                                    <SelectContent>{ATTEMPT_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                  </Select>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Badge variant="outline" className={
+                                      row.attempt === "الأولى" ? "bg-emerald-100 text-emerald-800 border-emerald-300" :
+                                      row.attempt === "الثانية" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                                      row.attempt === "الثالثة" ? "bg-red-100 text-red-800 border-red-300" :
+                                      ""
+                                    }>
+                                      {row.attempt || "—"}
+                                    </Badge>
+                                    <button onClick={() => setEditingAttempt((p) => ({ ...p, [row.id]: true }))} className="text-muted-foreground hover:text-foreground transition-colors">
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                )}
                               </TableCell>
                               <TableCell className="text-center">
                                 <Select value={row.hizb} onValueChange={(v) => updateRow(row.id, "hizb", v)}>
