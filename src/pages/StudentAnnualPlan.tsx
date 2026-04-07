@@ -38,6 +38,9 @@ const StudentAnnualPlan = () => {
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [editingMonth, setEditingMonth] = useState<any>(null);
   const [actualPages, setActualPages] = useState(0);
+  const [actualMemorization, setActualMemorization] = useState(0);
+  const [actualReview, setActualReview] = useState(0);
+  const [actualLinking, setActualLinking] = useState(0);
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
