@@ -11,42 +11,23 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays, Target } from "lucide-react";
+import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays, Target, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatHijriArabic } from "@/lib/hijri";
 
 interface NarrationSession {
   id: string;
@@ -202,6 +183,9 @@ export default function QuranNarration() {
   const totalParticipants = allResults.length;
   const totalPassed = allResults.filter((r) => r.status === "pass").length;
   const avgPassRate = totalParticipants > 0 ? Math.round((totalPassed / totalParticipants) * 100) : 0;
+  const totalHizb = allResults.reduce((sum, r) => sum + (Number(r.total_hizb_count) || 0), 0);
+  const totalPages = Math.round(totalHizb * 10);
+  const todayHijriStr = formatHijriArabic(new Date());
 
   // Goal mutations
   const goalMutation = useMutation({
@@ -366,14 +350,19 @@ export default function QuranNarration() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <ScrollText className="w-5 h-5 text-primary" />
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+            <ScrollText className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">يوم السرد القرآني</h1>
-            <p className="text-sm text-muted-foreground">إدارة جلسات السرد ونتائج الطلاب</p>
+            <p className="text-sm text-muted-foreground">
+              {todayHijriStr}
+              <span className="mx-1">—</span>
+              إدارة جلسات السرد ونتائج الطلاب
+            </p>
           </div>
         </div>
         {canWrite && (
@@ -382,7 +371,7 @@ export default function QuranNarration() {
             if (!open) { setEditSession(null); resetForm(); }
           }}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2" size="lg">
                 <Plus className="w-4 h-4" />
                 جلسة جديدة
               </Button>
@@ -394,95 +383,51 @@ export default function QuranNarration() {
               <div className="space-y-4 pt-2">
                 <div className="space-y-1.5">
                   <Label>تاريخ الجلسة *</Label>
-                  <Input
-                    type="date"
-                    value={form.session_date}
-                    onChange={(e) => setForm((p) => ({ ...p, session_date: e.target.value }))}
-                  />
+                  <Input type="date" value={form.session_date} onChange={(e) => setForm((p) => ({ ...p, session_date: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>الحلقة</Label>
                   <Select value={form.halaqa_id} onValueChange={(v) => setForm((p) => ({ ...p, halaqa_id: v }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الحلقة" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
                     <SelectContent position="popper" className="z-[200]">
-                      {halaqat.map((h) => (
-                        <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-                      ))}
+                      {halaqat.map((h) => (<SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>عنوان الجلسة</Label>
-                  <Input
-                    placeholder="مثال: سرد الربع الأول"
-                    value={form.title}
-                    onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                  />
+                  <Input placeholder="مثال: سرد الربع الأول" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>ملاحظات</Label>
-                  <Textarea
-                    placeholder="ملاحظات عامة على الجلسة"
-                    value={form.notes}
-                    onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-                    rows={3}
-                  />
+                  <Textarea placeholder="ملاحظات عامة على الجلسة" value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} rows={3} />
                 </div>
-
-                {/* المعلم الخارجي */}
                 <div className="border-t pt-3 mt-3">
                   <p className="text-sm font-medium text-muted-foreground mb-2">معلم خارجي (اختياري)</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label>اسم المعلم</Label>
-                      <Input
-                        placeholder="اسم المعلم الخارجي"
-                        value={form.external_teacher_name}
-                        onChange={(e) => setForm((p) => ({ ...p, external_teacher_name: e.target.value }))}
-                      />
+                      <Input placeholder="اسم المعلم الخارجي" value={form.external_teacher_name} onChange={(e) => setForm((p) => ({ ...p, external_teacher_name: e.target.value }))} />
                     </div>
                     <div className="space-y-1.5">
                       <Label>رقم الهاتف</Label>
-                      <Input
-                        placeholder="05xxxxxxxx"
-                        value={form.external_teacher_phone}
-                        onChange={(e) => setForm((p) => ({ ...p, external_teacher_phone: e.target.value }))}
-                      />
+                      <Input placeholder="05xxxxxxxx" value={form.external_teacher_phone} onChange={(e) => setForm((p) => ({ ...p, external_teacher_phone: e.target.value }))} />
                     </div>
                   </div>
                 </div>
-
-                {/* نطاق الأحزاب */}
                 <div className="border-t pt-3 mt-3">
                   <p className="text-sm font-medium text-muted-foreground mb-2">نطاق أحزاب السرد (اختياري)</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label>من حزب</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={60}
-                        placeholder="1"
-                        value={form.hizb_from}
-                        onChange={(e) => setForm((p) => ({ ...p, hizb_from: e.target.value }))}
-                      />
+                      <Input type="number" min={1} max={60} placeholder="1" value={form.hizb_from} onChange={(e) => setForm((p) => ({ ...p, hizb_from: e.target.value }))} />
                     </div>
                     <div className="space-y-1.5">
                       <Label>إلى حزب</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={60}
-                        placeholder="60"
-                        value={form.hizb_to}
-                        onChange={(e) => setForm((p) => ({ ...p, hizb_to: e.target.value }))}
-                      />
+                      <Input type="number" min={1} max={60} placeholder="60" value={form.hizb_to} onChange={(e) => setForm((p) => ({ ...p, hizb_to: e.target.value }))} />
                     </div>
                   </div>
                 </div>
-
                 <div className="flex gap-2 justify-end pt-2">
                   <Button variant="outline" onClick={() => { setShowNewSessionDialog(false); setEditSession(null); resetForm(); }}>إلغاء</Button>
                   <Button onClick={handleSubmit} disabled={sessionMutation.isPending}>
@@ -495,52 +440,24 @@ export default function QuranNarration() {
         )}
       </div>
 
-      {/* الإحصائيات */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">إجمالي الجلسات</p>
-              <p className="text-2xl font-bold">{totalSessions}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-sky-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">مجموع السجلات</p>
-              <p className="text-2xl font-bold">{totalParticipants}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">متوسط الاجتياز</p>
-              <p className="text-2xl font-bold">{avgPassRate}%</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">المجتازون</p>
-              <p className="text-2xl font-bold">{totalPassed}</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { label: "الجلسات", value: totalSessions, icon: CalendarDays, color: "text-primary" },
+          { label: "إجمالي الأحزاب", value: totalHizb.toFixed(1), icon: BookOpen, color: "text-primary" },
+          { label: "إجمالي الأوجه", value: totalPages, icon: ScrollText, color: "text-primary" },
+          { label: "نسبة الاجتياز", value: `${avgPassRate}%`, icon: TrendingUp, color: "text-primary" },
+          { label: "المجتازون", value: totalPassed, icon: CheckCircle, color: "text-primary" },
+          { label: "السجلات", value: totalParticipants, icon: Users, color: "text-primary" },
+        ].map((kpi, i) => (
+          <Card key={i}>
+            <CardContent className="p-3 text-center">
+              <kpi.icon className={`w-5 h-5 mx-auto mb-1 ${kpi.color}`} />
+              <p className="text-2xl font-bold">{kpi.value}</p>
+              <p className="text-xs text-muted-foreground">{kpi.label}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Tabs defaultValue="sessions" dir="rtl">
@@ -590,62 +507,67 @@ export default function QuranNarration() {
                     <TableRow>
                       <TableHead className="text-right">التاريخ</TableHead>
                       <TableHead className="text-right">الحلقة</TableHead>
-                      <TableHead className="text-right">العنوان</TableHead>
+                      <TableHead className="text-center">الأحزاب</TableHead>
+                      <TableHead className="text-center">الأوجه</TableHead>
                       <TableHead className="text-center">الحضور</TableHead>
-                      <TableHead className="text-center">المجتازون</TableHead>
-                      <TableHead className="text-center">الراسبون</TableHead>
                       <TableHead className="text-center">نسبة الاجتياز</TableHead>
-                      <TableHead className="text-center">الإجراءات</TableHead>
+                      <TableHead className="text-center w-[140px]">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sessions.map((session) => {
                       const stats = getSessionStats(session.id);
+                      const sessionResults = allResults.filter(r => r.session_id === session.id);
+                      const sessionHizb = sessionResults.reduce((s, r) => s + (Number(r.total_hizb_count) || 0), 0);
+                      const sessionPages = Math.round(sessionHizb * 10);
                       const passRate = stats.total - stats.absent > 0
                         ? Math.round((stats.passed / (stats.total - stats.absent)) * 100)
                         : 0;
+                      const borderClass = passRate >= 80
+                        ? "border-r-4 border-r-emerald-500"
+                        : passRate >= 50
+                        ? "border-r-4 border-r-amber-400"
+                        : stats.total > 0
+                        ? "border-r-4 border-r-destructive/50"
+                        : "";
+                      const hijriDate = formatHijriArabic(session.session_date);
                       return (
-                        <TableRow key={session.id}>
-                          <TableCell className="font-medium">
-                            {new Date(session.session_date).toLocaleDateString("ar-SA")}
-                          </TableCell>
+                        <TableRow key={session.id} className={borderClass}>
                           <TableCell>
-                            {(session as any).halaqat?.name || (
-                              <span className="text-muted-foreground text-sm">—</span>
-                            )}
+                            <div>
+                              <p className="font-semibold text-sm">{hijriDate}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(session.session_date).toLocaleDateString("en-CA")}
+                              </p>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div>
-                              {session.title || <span className="text-muted-foreground text-sm">—</span>}
+                              <p className="font-medium text-sm">
+                                {(session as any).halaqat?.name || <span className="text-muted-foreground">—</span>}
+                              </p>
+                              {session.title && <p className="text-xs text-muted-foreground">{session.title}</p>}
                               {(session as any).external_teacher_name && (
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  معلم خارجي: {(session as any).external_teacher_name}
-                                </p>
-                              )}
-                              {(session as any).hizb_from && (session as any).hizb_to && (
-                                <p className="text-xs text-muted-foreground">
-                                  الأحزاب: {(session as any).hizb_from} → {(session as any).hizb_to}
-                                </p>
+                                <p className="text-xs text-muted-foreground">خارجي: {(session as any).external_teacher_name}</p>
                               )}
                             </div>
                           </TableCell>
+                          <TableCell className="text-center font-semibold">{sessionHizb > 0 ? sessionHizb.toFixed(1) : "—"}</TableCell>
+                          <TableCell className="text-center font-semibold">{sessionPages > 0 ? sessionPages : "—"}</TableCell>
                           <TableCell className="text-center">
-                            <Badge variant="outline">{stats.total}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200">{stats.passed}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="bg-destructive/10 text-destructive border-destructive/20">{stats.failed}</Badge>
+                            <span className="text-sm">{stats.passed}<span className="text-muted-foreground">/{stats.total}</span></span>
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge
+                              variant="outline"
                               className={
-                                passRate >= 70
-                                  ? "bg-emerald-500/10 text-emerald-700 border-emerald-200"
+                                passRate >= 80
+                                  ? "bg-emerald-500/10 text-emerald-700 border-emerald-300"
                                   : passRate >= 50
-                                  ? "bg-amber-500/10 text-amber-700 border-amber-200"
-                                  : "bg-destructive/10 text-destructive border-destructive/20"
+                                  ? "bg-amber-500/10 text-amber-700 border-amber-300"
+                                  : stats.total > 0
+                                  ? "bg-destructive/10 text-destructive border-destructive/30"
+                                  : ""
                               }
                             >
                               {passRate}%
@@ -654,47 +576,34 @@ export default function QuranNarration() {
                           <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                size="sm"
+                                variant="outline"
+                                className="h-8 gap-1 text-xs"
                                 onClick={() => navigate(`/quran-narration/${session.id}`)}
-                                title="عرض التفاصيل"
                               >
-                                <Eye className="w-4 h-4" />
+                                <Eye className="w-3.5 h-3.5" />
+                                فتح
                               </Button>
                               {canWrite && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => openEdit(session)}
-                                  title="تعديل"
-                                >
-                                  <Pencil className="w-4 h-4" />
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(session)} title="تعديل">
+                                  <Pencil className="w-3.5 h-3.5" />
                                 </Button>
                               )}
                               {isManager && (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="حذف">
-                                      <Trash2 className="w-4 h-4" />
+                                      <Trash2 className="w-3.5 h-3.5" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent dir="rtl">
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        سيتم حذف الجلسة وجميع نتائج الطلاب المرتبطة بها. هذا الإجراء لا يمكن التراجع عنه.
-                                      </AlertDialogDescription>
+                                      <AlertDialogDescription>سيتم حذف الجلسة وجميع نتائج الطلاب المرتبطة بها.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        onClick={() => deleteMutation.mutate(session.id)}
-                                      >
-                                        حذف
-                                      </AlertDialogAction>
+                                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(session.id)}>حذف</AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
