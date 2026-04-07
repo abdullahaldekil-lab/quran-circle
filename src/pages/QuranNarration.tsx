@@ -186,7 +186,7 @@ export default function QuranNarration() {
   const avgPassRate = totalParticipants > 0 ? Math.round((totalPassed / totalParticipants) * 100) : 0;
   const totalHizb = allResults.reduce((sum, r) => sum + (Number(r.total_hizb_count) || 0), 0);
   const totalPages = Math.round(totalHizb * 10);
-  const todayHijri = toHijri(new Date());
+  const todayHijriStr = formatHijriArabic(new Date());
 
   // Goal mutations
   const goalMutation = useMutation({
