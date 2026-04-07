@@ -508,62 +508,67 @@ export default function QuranNarration() {
                     <TableRow>
                       <TableHead className="text-right">التاريخ</TableHead>
                       <TableHead className="text-right">الحلقة</TableHead>
-                      <TableHead className="text-right">العنوان</TableHead>
+                      <TableHead className="text-center">الأحزاب</TableHead>
+                      <TableHead className="text-center">الأوجه</TableHead>
                       <TableHead className="text-center">الحضور</TableHead>
-                      <TableHead className="text-center">المجتازون</TableHead>
-                      <TableHead className="text-center">الراسبون</TableHead>
                       <TableHead className="text-center">نسبة الاجتياز</TableHead>
-                      <TableHead className="text-center">الإجراءات</TableHead>
+                      <TableHead className="text-center w-[140px]">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sessions.map((session) => {
                       const stats = getSessionStats(session.id);
+                      const sessionResults = allResults.filter(r => r.session_id === session.id);
+                      const sessionHizb = sessionResults.reduce((s, r) => s + (Number(r.total_hizb_count) || 0), 0);
+                      const sessionPages = Math.round(sessionHizb * 10);
                       const passRate = stats.total - stats.absent > 0
                         ? Math.round((stats.passed / (stats.total - stats.absent)) * 100)
                         : 0;
+                      const borderClass = passRate >= 80
+                        ? "border-r-4 border-r-emerald-500"
+                        : passRate >= 50
+                        ? "border-r-4 border-r-amber-400"
+                        : stats.total > 0
+                        ? "border-r-4 border-r-destructive/50"
+                        : "";
+                      const hijriDate = formatHijriArabic(session.session_date);
                       return (
-                        <TableRow key={session.id}>
-                          <TableCell className="font-medium">
-                            {new Date(session.session_date).toLocaleDateString("ar-SA")}
-                          </TableCell>
+                        <TableRow key={session.id} className={borderClass}>
                           <TableCell>
-                            {(session as any).halaqat?.name || (
-                              <span className="text-muted-foreground text-sm">—</span>
-                            )}
+                            <div>
+                              <p className="font-semibold text-sm">{hijriDate}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(session.session_date).toLocaleDateString("en-CA")}
+                              </p>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div>
-                              {session.title || <span className="text-muted-foreground text-sm">—</span>}
+                              <p className="font-medium text-sm">
+                                {(session as any).halaqat?.name || <span className="text-muted-foreground">—</span>}
+                              </p>
+                              {session.title && <p className="text-xs text-muted-foreground">{session.title}</p>}
                               {(session as any).external_teacher_name && (
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  معلم خارجي: {(session as any).external_teacher_name}
-                                </p>
-                              )}
-                              {(session as any).hizb_from && (session as any).hizb_to && (
-                                <p className="text-xs text-muted-foreground">
-                                  الأحزاب: {(session as any).hizb_from} → {(session as any).hizb_to}
-                                </p>
+                                <p className="text-xs text-muted-foreground">خارجي: {(session as any).external_teacher_name}</p>
                               )}
                             </div>
                           </TableCell>
+                          <TableCell className="text-center font-semibold">{sessionHizb > 0 ? sessionHizb.toFixed(1) : "—"}</TableCell>
+                          <TableCell className="text-center font-semibold">{sessionPages > 0 ? sessionPages : "—"}</TableCell>
                           <TableCell className="text-center">
-                            <Badge variant="outline">{stats.total}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200">{stats.passed}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="bg-destructive/10 text-destructive border-destructive/20">{stats.failed}</Badge>
+                            <span className="text-sm">{stats.passed}<span className="text-muted-foreground">/{stats.total}</span></span>
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge
+                              variant="outline"
                               className={
-                                passRate >= 70
-                                  ? "bg-emerald-500/10 text-emerald-700 border-emerald-200"
+                                passRate >= 80
+                                  ? "bg-emerald-500/10 text-emerald-700 border-emerald-300"
                                   : passRate >= 50
-                                  ? "bg-amber-500/10 text-amber-700 border-amber-200"
-                                  : "bg-destructive/10 text-destructive border-destructive/20"
+                                  ? "bg-amber-500/10 text-amber-700 border-amber-300"
+                                  : stats.total > 0
+                                  ? "bg-destructive/10 text-destructive border-destructive/30"
+                                  : ""
                               }
                             >
                               {passRate}%
@@ -572,47 +577,34 @@ export default function QuranNarration() {
                           <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                                size="sm"
+                                variant="outline"
+                                className="h-8 gap-1 text-xs"
                                 onClick={() => navigate(`/quran-narration/${session.id}`)}
-                                title="عرض التفاصيل"
                               >
-                                <Eye className="w-4 h-4" />
+                                <Eye className="w-3.5 h-3.5" />
+                                فتح
                               </Button>
                               {canWrite && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => openEdit(session)}
-                                  title="تعديل"
-                                >
-                                  <Pencil className="w-4 h-4" />
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(session)} title="تعديل">
+                                  <Pencil className="w-3.5 h-3.5" />
                                 </Button>
                               )}
                               {isManager && (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="حذف">
-                                      <Trash2 className="w-4 h-4" />
+                                      <Trash2 className="w-3.5 h-3.5" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent dir="rtl">
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        سيتم حذف الجلسة وجميع نتائج الطلاب المرتبطة بها. هذا الإجراء لا يمكن التراجع عنه.
-                                      </AlertDialogDescription>
+                                      <AlertDialogDescription>سيتم حذف الجلسة وجميع نتائج الطلاب المرتبطة بها.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        onClick={() => deleteMutation.mutate(session.id)}
-                                      >
-                                        حذف
-                                      </AlertDialogAction>
+                                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(session.id)}>حذف</AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
