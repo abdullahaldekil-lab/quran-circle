@@ -459,6 +459,7 @@ export default function QuranNarration() {
             </CardContent>
           </Card>
         ))}
+      </div>
 
       <Tabs defaultValue="sessions" dir="rtl">
         <TabsList>
