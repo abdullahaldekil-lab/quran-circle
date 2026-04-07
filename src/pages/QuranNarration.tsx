@@ -27,8 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays, Target, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { toHijri, formatHijriArabic } from "@/lib/hijri";
-import DualDateDisplay from "@/components/DualDateDisplay";
+import { formatHijriArabic } from "@/lib/hijri";
 
 interface NarrationSession {
   id: string;
