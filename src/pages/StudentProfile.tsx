@@ -160,6 +160,20 @@ const StudentProfile = () => {
     );
   }
 
+  const currentIndex = halaqaStudents.findIndex(s => s.id === id);
+  const prevStudent = halaqaStudents[currentIndex - 1];
+  const nextStudent = halaqaStudents[currentIndex + 1];
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" && nextStudent) navigate(`/students/${nextStudent.id}`);
+      if (e.key === "ArrowRight" && prevStudent) navigate(`/students/${prevStudent.id}`);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [prevStudent, nextStudent, navigate]);
+
   // Block direct URL access to students outside teacher's halaqat
   if (!canAccessStudent(student.halaqa_id)) {
     return (
