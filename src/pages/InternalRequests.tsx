@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -36,6 +37,7 @@ const PRIORITY_COLORS: Record<RequestPriority, string> = {
 const InternalRequests = () => {
   const { user } = useAuth();
   const { isManager, isSupervisor, role } = useRole();
+  const location = useLocation();
   const canViewAll = isManager || isSupervisor;
 
   const [inbox, setInbox] = useState<any[]>([]);
