@@ -48,6 +48,8 @@ const Finance = () => {
   const [saving, setSaving] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("");
@@ -162,13 +164,21 @@ const Finance = () => {
     fetchData();
   };
 
-  const deleteTransaction = async (txId: string) => {
+  const confirmDelete = (txId: string) => {
+    setDeleteTarget(txId);
+    setDeleteDialogOpen(true);
+  };
+
+  const deleteTransaction = async () => {
+    if (!deleteTarget) return;
     const { data: session } = await supabase.auth.getSession();
-    await supabase.from("financial_transactions").delete().eq("id", txId);
+    await supabase.from("financial_transactions").delete().eq("id", deleteTarget);
     await supabase.from("financial_audit_log").insert({
-      transaction_id: txId, action: "delete", details: "تم حذف المعاملة", performed_by: session?.session?.user?.id,
+      transaction_id: deleteTarget, action: "delete", details: "تم حذف المعاملة", performed_by: session?.session?.user?.id,
     } as any);
     toast({ title: "تم الحذف" });
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
     fetchData();
   };
 
