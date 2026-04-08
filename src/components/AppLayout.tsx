@@ -91,7 +91,6 @@ const navGroups: NavGroup[] = [
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
-      { to: "/preparation", icon: Clock, label: "وقت التحضير" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
       { to: "/madarij-report", icon: BarChart3, label: "تقارير مدارج" },
       { to: "/excellence", icon: Trophy, label: "مسار التميّز" },
@@ -134,6 +133,7 @@ const navGroups: NavGroup[] = [
       { to: "/attendance-audit", icon: ClipboardList, label: "سجل التدقيق" },
       { to: "/student-attendance-report", icon: BarChart3, label: "تقرير حضور الطلاب" },
       { to: "/academic-calendar", icon: CalendarDays, label: "التقويم الأكاديمي" },
+      { to: "/preparation", icon: Clock, label: "وقت التحضير" },
     ],
   },
   {

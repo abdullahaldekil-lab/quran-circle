@@ -54,10 +54,19 @@ const NotificationBell = () => {
                   }`}
                   onClick={() => {
                     if (!n.read_at) markAsRead(n.id);
-                    // Navigate to internal requests if it's a request notification
+                    // Navigate based on notification type
                     if (n.title?.includes("طلب جديد") || n.title?.includes("طلب داخلي")) {
                       setOpen(false);
-                      navigate("/internal-requests");
+                      if (n.meta_data?.request_id) {
+                        navigate("/internal-requests", {
+                          state: { openRequestId: n.meta_data.request_id }
+                        });
+                      } else {
+                        navigate("/internal-requests");
+                      }
+                    } else if (n.title?.includes("مهمة")) {
+                      setOpen(false);
+                      navigate("/staff-tasks");
                     }
                   }}
                 >
