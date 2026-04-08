@@ -34,6 +34,7 @@ const StudentProfile = () => {
   const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
   const { isManager } = useRole();
   const [student, setStudent] = useState<any>(null);
+  const [halaqaStudents, setHalaqaStudents] = useState<{id: string; full_name: string}[]>([]);
   const [records, setRecords] = useState<any[]>([]);
   const [recordsPage, setRecordsPage] = useState(0);
   const [recordsTotal, setRecordsTotal] = useState(0);
