@@ -14,8 +14,9 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   ClipboardList, CheckCircle2, XCircle, Clock, AlertCircle,
-  ArrowRightLeft, Trash2, MessageCircle, Copy, Users
+  ArrowRightLeft, Trash2, MessageCircle, Copy, Users, Pencil
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 type ReqStatus = "pending" | "approved" | "rejected" | "waiting_list";
 
@@ -71,6 +72,12 @@ const EnrollmentRequests = () => {
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [whatsAppMsg, setWhatsAppMsg] = useState("");
   const [whatsAppPhone, setWhatsAppPhone] = useState("");
+
+  // Edit dialog
+  const [editReq, setEditReq] = useState<EnrollmentReq | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editHalaqa, setEditHalaqa] = useState("");
+  const [editNotes, setEditNotes] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
