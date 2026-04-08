@@ -339,7 +339,7 @@ const KpiDashboard = () => {
     { id: "progress", label: "تقدم الطلاب", kpis: progressKpis, show: true },
     { id: "strategic", label: "الخطة الاستراتيجية", kpis: strategicKpis, show: isManager || isSupervisor },
     { id: "rewards", label: "الحوافز والتحفيز", kpis: rewardsKpis, show: true },
-    { id: "financial", label: "المؤشرات المالية", kpis: financialKpis, show: isManager },
+    { id: "financial", label: "المؤشرات المالية", kpis: financialKpis, show: isManager || isSupervisor },
   ];
 
   return (

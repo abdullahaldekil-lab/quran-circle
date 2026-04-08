@@ -218,7 +218,8 @@ serve(async (req) => {
           .update({ active: false })
           .eq("id", user_id);
 
-        await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876000h" });
+        const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876000h" });
+        if (banError) throw new Error("فشل تعطيل المستخدم: " + banError.message);
 
         await supabaseAdmin.from("admin_audit_log").insert({
           actor_user_id: caller.id,

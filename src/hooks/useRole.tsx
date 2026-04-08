@@ -36,7 +36,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report",
-    "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts", "/staff-tasks", "/staff-tasks-analytics",
     "/student-attendance-report", "/student-annual-plan",
@@ -45,7 +45,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report",
-    "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
+    "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts", "/staff-tasks", "/staff-tasks-analytics",
     "/student-attendance-report", "/student-annual-plan",

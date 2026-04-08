@@ -58,7 +58,7 @@ const Attendance = () => {
   const isToday = selectedDate === todayStr;
 
   // Admin = manager or secretary/admin_staff — no time restrictions
-  const isAdmin = isManager || isAdminStaff;
+  const isAdmin = isManager || isAdminStaff || isSupervisor;
 
   // Edit permission logic
   const canEditDate = useCallback((dateStr: string): boolean => {

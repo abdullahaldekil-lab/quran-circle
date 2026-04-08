@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -36,6 +37,7 @@ const PRIORITY_COLORS: Record<RequestPriority, string> = {
 const InternalRequests = () => {
   const { user } = useAuth();
   const { isManager, isSupervisor, role } = useRole();
+  const location = useLocation();
   const canViewAll = isManager || isSupervisor;
 
   const [inbox, setInbox] = useState<any[]>([]);
@@ -130,6 +132,20 @@ const InternalRequests = () => {
 
     return () => { supabase.removeChannel(channel); };
   }, [user, selectedRequest?.id]);
+
+  // Open specific request from notification navigation
+  useEffect(() => {
+    const openRequestId = (location.state as any)?.openRequestId;
+    if (openRequestId && !loading) {
+      const allItems = [...inbox, ...sent, ...allRequests];
+      const target = allItems.find((r: any) => r.id === openRequestId);
+      if (target) {
+        openDetail(target);
+        // Clear state to prevent reopening
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [location.state, loading, inbox, sent, allRequests]);
 
   const openDetail = async (req: any) => {
     setSelectedRequest(req);

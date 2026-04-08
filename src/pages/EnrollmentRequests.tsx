@@ -14,8 +14,9 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   ClipboardList, CheckCircle2, XCircle, Clock, AlertCircle,
-  ArrowRightLeft, Trash2, MessageCircle, Copy, Users
+  ArrowRightLeft, Trash2, MessageCircle, Copy, Users, Pencil
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 type ReqStatus = "pending" | "approved" | "rejected" | "waiting_list";
 
@@ -71,6 +72,12 @@ const EnrollmentRequests = () => {
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [whatsAppMsg, setWhatsAppMsg] = useState("");
   const [whatsAppPhone, setWhatsAppPhone] = useState("");
+
+  // Edit dialog
+  const [editReq, setEditReq] = useState<EnrollmentReq | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editHalaqa, setEditHalaqa] = useState("");
+  const [editNotes, setEditNotes] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -204,6 +211,27 @@ const EnrollmentRequests = () => {
   const handleDelete = async (id: string) => {
     await supabase.from("enrollment_requests").delete().eq("id", id);
     toast.success("تم الحذف");
+    fetchData();
+  };
+
+  const openEditDialog = (r: EnrollmentReq) => {
+    setEditReq(r);
+    setEditHalaqa(r.requested_halaqa_id || "");
+    setEditNotes(r.notes || "");
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editReq) return;
+    setProcessing(true);
+    await supabase.from("enrollment_requests").update({
+      requested_halaqa_id: editHalaqa || null,
+      notes: editNotes || null,
+    }).eq("id", editReq.id);
+    toast.success("تم تحديث الطلب");
+    setEditOpen(false);
+    setEditReq(null);
+    setProcessing(false);
     fetchData();
   };
 
@@ -370,6 +398,11 @@ const EnrollmentRequests = () => {
                                   <ArrowRightLeft className="w-3 h-3 ml-1" />قبول الآن
                                 </Button>
                               )}
+                              {(r.status === "pending" || r.status === "waiting_list") && !r.converted_student_id && (
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditDialog(r)}>
+                                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                                </Button>
+                              )}
                               {r.converted_student_id && (
                                 <Badge variant="secondary" className="text-xs">تم التحويل</Badge>
                               )}
@@ -480,6 +513,41 @@ const EnrollmentRequests = () => {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Request Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل طلب التسجيل</DialogTitle>
+          </DialogHeader>
+          {editReq && (
+            <div className="space-y-4">
+              <div>
+                <Label>اسم الطالب</Label>
+                <Input value={editReq.student_full_name} disabled className="bg-muted" />
+              </div>
+              <div>
+                <Label>الحلقة المطلوبة</Label>
+                <Select value={editHalaqa} onValueChange={setEditHalaqa}>
+                  <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                  <SelectContent>
+                    {halaqat.map((h) => (
+                      <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>ملاحظات</Label>
+                <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} />
+              </div>
+              <Button onClick={handleEditSave} disabled={processing} className="w-full">
+                {processing ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

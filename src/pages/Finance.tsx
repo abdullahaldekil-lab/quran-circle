@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +49,8 @@ const Finance = () => {
   const [saving, setSaving] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("");
@@ -162,13 +165,21 @@ const Finance = () => {
     fetchData();
   };
 
-  const deleteTransaction = async (txId: string) => {
+  const confirmDelete = (txId: string) => {
+    setDeleteTarget(txId);
+    setDeleteDialogOpen(true);
+  };
+
+  const deleteTransaction = async () => {
+    if (!deleteTarget) return;
     const { data: session } = await supabase.auth.getSession();
-    await supabase.from("financial_transactions").delete().eq("id", txId);
+    await supabase.from("financial_transactions").delete().eq("id", deleteTarget);
     await supabase.from("financial_audit_log").insert({
-      transaction_id: txId, action: "delete", details: "تم حذف المعاملة", performed_by: session?.session?.user?.id,
+      transaction_id: deleteTarget, action: "delete", details: "تم حذف المعاملة", performed_by: session?.session?.user?.id,
     } as any);
     toast({ title: "تم الحذف" });
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
     fetchData();
   };
 
@@ -417,7 +428,7 @@ const Finance = () => {
                 <TransactionCard key={tx.id} tx={tx} isManager={isManager}
                   onApprove={() => approveTransaction(tx.id)}
                   onReject={() => rejectTransaction(tx.id)}
-                  onDelete={() => deleteTransaction(tx.id)} />
+                  onDelete={() => confirmDelete(tx.id)} />
               ))}
             </div>
           )}
@@ -488,6 +499,23 @@ const Finance = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذه المعاملة؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteTransaction} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
