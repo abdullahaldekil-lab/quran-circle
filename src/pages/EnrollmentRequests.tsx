@@ -214,6 +214,27 @@ const EnrollmentRequests = () => {
     fetchData();
   };
 
+  const openEditDialog = (r: EnrollmentReq) => {
+    setEditReq(r);
+    setEditHalaqa(r.requested_halaqa_id || "");
+    setEditNotes(r.notes || "");
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editReq) return;
+    setProcessing(true);
+    await supabase.from("enrollment_requests").update({
+      requested_halaqa_id: editHalaqa || null,
+      notes: editNotes || null,
+    }).eq("id", editReq.id);
+    toast.success("تم تحديث الطلب");
+    setEditOpen(false);
+    setEditReq(null);
+    setProcessing(false);
+    fetchData();
+  };
+
   const copyWhatsApp = () => {
     navigator.clipboard.writeText(whatsAppMsg);
     toast.success("تم نسخ الرسالة");
