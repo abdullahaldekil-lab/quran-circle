@@ -34,6 +34,7 @@ const StudentProfile = () => {
   const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
   const { isManager } = useRole();
   const [student, setStudent] = useState<any>(null);
+  const [halaqaStudents, setHalaqaStudents] = useState<{id: string; full_name: string}[]>([]);
   const [records, setRecords] = useState<any[]>([]);
   const [recordsPage, setRecordsPage] = useState(0);
   const [recordsTotal, setRecordsTotal] = useState(0);
@@ -58,6 +59,17 @@ const StudentProfile = () => {
       ]);
 
       setStudent(studentRes.data);
+
+      // Fetch halaqa students for navigation
+      if (studentRes.data?.halaqa_id) {
+        const { data: hs } = await supabase
+          .from("students")
+          .select("id, full_name")
+          .eq("halaqa_id", studentRes.data.halaqa_id)
+          .eq("status", "active")
+          .order("full_name");
+        setHalaqaStudents(hs || []);
+      }
 
       const att = attendanceRes.data || [];
       setAttendanceStats({
@@ -140,6 +152,20 @@ const StudentProfile = () => {
     fetchRecords();
   }, [id, recordsPage]);
 
+  const currentIndex = halaqaStudents.findIndex(s => s.id === id);
+  const prevStudent = halaqaStudents[currentIndex - 1];
+  const nextStudent = halaqaStudents[currentIndex + 1];
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" && nextStudent) navigate(`/students/${nextStudent.id}`);
+      if (e.key === "ArrowRight" && prevStudent) navigate(`/students/${prevStudent.id}`);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [prevStudent, nextStudent, navigate]);
+
   if (!student || accessLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -176,6 +202,23 @@ const StudentProfile = () => {
         <ArrowRight className="w-4 h-4 ml-1" />
         رجوع
       </Button>
+
+      {/* Halaqa Student Navigation */}
+      {halaqaStudents.length > 1 && (
+        <div className="flex items-center justify-between">
+          <Button variant="outline" size="sm" disabled={!nextStudent}
+            onClick={() => nextStudent && navigate(`/students/${nextStudent.id}`)}>
+            التالي <ChevronLeft className="w-4 h-4 mr-1" />
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {currentIndex + 1} من {halaqaStudents.length} طالب في الحلقة
+          </span>
+          <Button variant="outline" size="sm" disabled={!prevStudent}
+            onClick={() => prevStudent && navigate(`/students/${prevStudent.id}`)}>
+            <ChevronRight className="w-4 h-4 ml-1" /> السابق
+          </Button>
+        </div>
+      )}
 
       {/* Student Header */}
       <Card>
