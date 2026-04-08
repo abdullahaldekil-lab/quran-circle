@@ -7,10 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ArrowRight, User, Calendar, TrendingUp, Play, BookOpen,
   CheckCircle2, XCircle, Clock, AlertTriangle, Award, MapPin,
+  FileText, Target,
 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { gregorianToHijri } from "@/lib/hijri";
 
 const GuardianChildProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +27,8 @@ const GuardianChildProfile = () => {
   const [trips, setTrips] = useState<any[]>([]);
   const [annualPlan, setAnnualPlan] = useState<any>(null);
   const [planProgress, setPlanProgress] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [narrationTests, setNarrationTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,7 +45,6 @@ const GuardianChildProfile = () => {
       if (!gProfile) { navigate("/guardian-auth"); return; }
       setGuardian(gProfile);
 
-      // Verify guardian has access to this student
       const { data: link } = await supabase
         .from("guardian_students")
         .select("id")
@@ -48,19 +53,22 @@ const GuardianChildProfile = () => {
         .maybeSingle();
       if (!link) { navigate("/guardian"); return; }
 
-      const [studentRes, recordsRes, attendanceRes, badgesRes] = await Promise.all([
+      const [studentRes, recordsRes, attendanceRes, badgesRes, quizzesRes, narrationRes] = await Promise.all([
         supabase.from("students").select("*, halaqat(name)").eq("id", id).maybeSingle(),
         supabase.from("recitation_records").select("*").eq("student_id", id).order("record_date", { ascending: false }).limit(30),
         supabase.from("attendance").select("*").eq("student_id", id).order("attendance_date", { ascending: false }).limit(30),
         supabase.from("student_badges").select("*, badges(name, icon, description)").eq("student_id", id).order("awarded_at", { ascending: false }),
+        supabase.from("student_quizzes").select("*").eq("student_id", id).order("quiz_date", { ascending: false }).limit(20),
+        supabase.from("narration_test_results").select("*").eq("student_id", id).order("test_date", { ascending: false }).limit(20),
       ]);
 
       setStudent(studentRes.data);
       setRecords(recordsRes.data || []);
       setAttendance(attendanceRes.data || []);
       setBadges(badgesRes.data || []);
+      setQuizzes(quizzesRes.data || []);
+      setNarrationTests(narrationRes.data || []);
 
-      // Get trips for this student's halaqa
       if (studentRes.data?.halaqa_id) {
         const { data: tripsData } = await supabase
           .from("trips")
@@ -71,7 +79,6 @@ const GuardianChildProfile = () => {
         setTrips(tripsData || []);
       }
 
-      // Get annual plan
       const { data: plans } = await supabase
         .from("student_annual_plans")
         .select("*")
@@ -83,8 +90,9 @@ const GuardianChildProfile = () => {
         setAnnualPlan(plans[0]);
         const { data: prog } = await supabase
           .from("student_plan_progress")
-          .select("actual_pages, target_pages")
-          .eq("plan_id", plans[0].id);
+          .select("*")
+          .eq("plan_id", plans[0].id)
+          .order("month_number");
         setPlanProgress(prog || []);
       }
 
@@ -135,12 +143,8 @@ const GuardianChildProfile = () => {
 
   const tripStatusLabel = (status: string) => {
     const map: Record<string, string> = {
-      not_started: "لم تبدأ",
-      departed: "انطلقت",
-      arrived: "وصلت",
-      activity_ongoing: "نشاط جارٍ",
-      returning: "في طريق العودة",
-      finished: "انتهت",
+      not_started: "لم تبدأ", departed: "انطلقت", arrived: "وصلت",
+      activity_ongoing: "نشاط جارٍ", returning: "في طريق العودة", finished: "انتهت",
     };
     return map[status] || status;
   };
@@ -157,6 +161,27 @@ const GuardianChildProfile = () => {
     }
   };
 
+  const formatHijriDate = (dateStr: string) => {
+    try { return gregorianToHijri(new Date(dateStr)); } catch { return dateStr; }
+  };
+
+  const gradeBadgeColor = (label: string) => {
+    if (label === "ممتاز") return "bg-success/15 text-success border-success/30";
+    if (label === "جيد جداً") return "bg-primary/15 text-primary border-primary/30";
+    if (label === "جيد") return "bg-warning/15 text-warning border-warning/30";
+    return "bg-destructive/15 text-destructive border-destructive/30";
+  };
+
+  // Chart data for quizzes + narration tests
+  const chartData = [
+    ...quizzes.map(q => ({ date: q.quiz_date, score: Number(q.score || 0), type: "اختبار" })),
+    ...narrationTests.map(n => ({ date: n.test_date, score: Number(n.total_score || 0), type: "سرد" })),
+  ].sort((a, b) => a.date.localeCompare(b.date));
+
+  const warningLevel = student.warning_level || 0;
+
+  const hijriMonths = ["محرم", "صفر", "ربيع الأول", "ربيع الثاني", "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة"];
+
   return (
     <GuardianLayout guardianName={guardian?.full_name}>
       <div className="space-y-4 animate-fade-in">
@@ -164,6 +189,16 @@ const GuardianChildProfile = () => {
           <ArrowRight className="w-4 h-4 ml-1" />
           رجوع
         </Button>
+
+        {/* Warning Alert */}
+        {warningLevel > 0 && (
+          <Alert variant="destructive" className={warningLevel >= 3 ? "animate-pulse" : ""}>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="font-medium">
+              ⚠️ تنبيه: الطالب {student.full_name} لديه إنذار غياب رقم {warningLevel} — يُرجى مراجعة إدارة المجمع
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Student Header */}
         <Card>
@@ -229,12 +264,14 @@ const GuardianChildProfile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="recitations" className="w-full">
-          <TabsList className="w-full grid grid-cols-5">
-            <TabsTrigger value="recitations" className="text-xs">التسميع</TabsTrigger>
-            <TabsTrigger value="attendance" className="text-xs">الحضور</TabsTrigger>
-            <TabsTrigger value="badges" className="text-xs">الشارات</TabsTrigger>
-            <TabsTrigger value="trips" className="text-xs">الرحلات</TabsTrigger>
-            <TabsTrigger value="madarij" className="text-xs">مدارج</TabsTrigger>
+          <TabsList className="w-full flex flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="recitations" className="text-xs flex-1 min-w-[60px]">التسميع</TabsTrigger>
+            <TabsTrigger value="attendance" className="text-xs flex-1 min-w-[60px]">الحضور</TabsTrigger>
+            <TabsTrigger value="badges" className="text-xs flex-1 min-w-[60px]">الشارات</TabsTrigger>
+            <TabsTrigger value="trips" className="text-xs flex-1 min-w-[60px]">الرحلات</TabsTrigger>
+            <TabsTrigger value="madarij" className="text-xs flex-1 min-w-[60px]">مدارج</TabsTrigger>
+            <TabsTrigger value="tests" className="text-xs flex-1 min-w-[60px]">الاختبارات</TabsTrigger>
+            <TabsTrigger value="annual-plan" className="text-xs flex-1 min-w-[60px]">الخطة السنوية</TabsTrigger>
           </TabsList>
 
           {/* Recitations Tab */}
@@ -270,15 +307,8 @@ const GuardianChildProfile = () => {
                           <p className="text-xs mt-1 text-muted-foreground bg-muted/50 rounded p-2">📝 {r.notes}</p>
                         )}
                         {r.audio_url && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2 h-7 text-xs"
-                            onClick={() => {
-                              const audio = new Audio(r.audio_url);
-                              audio.play();
-                            }}
-                          >
+                          <Button variant="outline" size="sm" className="mt-2 h-7 text-xs"
+                            onClick={() => { const audio = new Audio(r.audio_url); audio.play(); }}>
                             <Play className="w-3 h-3 ml-1" />
                             استمع للتلاوة
                           </Button>
@@ -417,6 +447,208 @@ const GuardianChildProfile = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Tests Tab */}
+          <TabsContent value="tests">
+            <div className="space-y-4">
+              {/* Score Chart */}
+              {chartData.length > 1 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">تطور الدرجات</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-2">
+                    <ResponsiveContainer width="100%" height={180}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                        <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} name="الدرجة" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Smart Quizzes */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    الاختبارات الذكية
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  {quizzes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">لا توجد اختبارات</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {quizzes.map((q) => (
+                        <div key={q.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                          <div>
+                            <p className="text-xs font-medium">{formatHijriDate(q.quiz_date)}</p>
+                            <p className="text-[10px] text-muted-foreground">{q.quiz_date}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold">{q.score}%</span>
+                            {q.grade_label && (
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${gradeBadgeColor(q.grade_label)}`}>
+                                {q.grade_label}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Narration Test Results */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    نتائج السرد والمراجعة
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  {narrationTests.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">لا توجد نتائج</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {narrationTests.map((n) => (
+                        <div key={n.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                          <div>
+                            <p className="text-xs font-medium">{formatHijriDate(n.test_date)}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Badge variant="outline" className="text-[10px] h-5">{n.test_type === "narration" ? "سرد" : n.test_type === "review" ? "مراجعة" : n.test_type}</Badge>
+                              <span className="text-[10px] text-muted-foreground">المرة {n.attempt_number}</span>
+                            </div>
+                          </div>
+                          <div className="text-left">
+                            <span className={`text-sm font-bold ${Number(n.total_score) >= 80 ? "text-success" : Number(n.total_score) >= 60 ? "text-warning" : "text-destructive"}`}>
+                              {n.total_score}
+                            </span>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              {n.passed ? (
+                                <Badge className="text-[10px] h-5 bg-success/15 text-success border-success/30" variant="outline">ناجح</Badge>
+                              ) : (
+                                <Badge className="text-[10px] h-5 bg-destructive/15 text-destructive border-destructive/30" variant="outline">لم يجتز</Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Annual Plan Tab */}
+          <TabsContent value="annual-plan">
+            <div className="space-y-4">
+              {!annualPlan ? (
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground text-center py-4">لا توجد خطة سنوية نشطة</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {/* Plan Summary */}
+                  <Card>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Target className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="text-sm font-bold">
+                              {annualPlan.plan_type === "silver" ? "🥈 المسار الفضي" : annualPlan.plan_type === "gold" ? "🥇 المسار الذهبي" : "⚙️ مخصص"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">السنة: {annualPlan.academic_year}</p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary">نشط</Badge>
+                      </div>
+
+                      {(() => {
+                        const totalActual = planProgress.reduce((s, p) => s + (p.actual_pages || 0), 0);
+                        const totalTarget = annualPlan.total_target_pages || 0;
+                        const pct = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
+                        const color = pct >= 80 ? "text-success" : pct >= 60 ? "text-warning" : "text-destructive";
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs">
+                              <span>المنجز: {totalActual} / {totalTarget} وجه</span>
+                              <span className={`font-bold ${color}`}>{pct}%</span>
+                            </div>
+                            <Progress value={pct} className={`h-3 ${pct >= 80 ? "[&>div]:bg-success" : pct >= 60 ? "[&>div]:bg-warning" : "[&>div]:bg-destructive"}`} />
+                          </div>
+                        );
+                      })()}
+
+                      {/* Daily targets */}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="bg-muted rounded-lg p-2">
+                          <p className="text-sm font-bold text-primary">{annualPlan.daily_memorization_pages || annualPlan.daily_target_pages || 0}</p>
+                          <p className="text-[10px] text-muted-foreground">حفظ يومي</p>
+                        </div>
+                        <div className="bg-muted rounded-lg p-2">
+                          <p className="text-sm font-bold text-primary">{annualPlan.daily_review_pages || 0}</p>
+                          <p className="text-[10px] text-muted-foreground">مراجعة يومية</p>
+                        </div>
+                        <div className="bg-muted rounded-lg p-2">
+                          <p className="text-sm font-bold text-primary">{annualPlan.daily_linking_pages || 0}</p>
+                          <p className="text-[10px] text-muted-foreground">ربط يومي</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Monthly Progress Table */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">المتابعة الشهرية</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2">
+                      {planProgress.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">لا توجد بيانات شهرية</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="py-2 px-1 text-right">الشهر</th>
+                                <th className="py-2 px-1 text-center">المستهدف</th>
+                                <th className="py-2 px-1 text-center">حفظ</th>
+                                <th className="py-2 px-1 text-center">مراجعة</th>
+                                <th className="py-2 px-1 text-center">ربط</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {planProgress.map((p) => (
+                                <tr key={p.id || p.month_number} className="border-b last:border-0">
+                                  <td className="py-2 px-1 font-medium">{hijriMonths[(p.month_number - 1) % 12] || `شهر ${p.month_number}`}</td>
+                                  <td className="py-2 px-1 text-center">{p.target_pages || 0}</td>
+                                  <td className="py-2 px-1 text-center text-success font-medium">{p.actual_memorization || 0}</td>
+                                  <td className="py-2 px-1 text-center text-primary font-medium">{p.actual_review || 0}</td>
+                                  <td className="py-2 px-1 text-center text-warning font-medium">{p.actual_linking || 0}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
