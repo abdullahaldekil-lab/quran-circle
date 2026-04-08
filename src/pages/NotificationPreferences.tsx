@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Bell, Mail, MessageCircle, GraduationCap, CheckSquare, Settings, Gift } from "lucide-react";
+import { Bell, Mail, MessageCircle, GraduationCap, CheckSquare, Settings, Gift, Phone } from "lucide-react";
 
 interface Prefs {
   id?: string;
@@ -16,6 +17,7 @@ interface Prefs {
   attendance_notifications: boolean;
   system_notifications: boolean;
   rewards_notifications: boolean;
+  whatsapp_phone?: string;
 }
 
 const defaultPrefs: Prefs = {
@@ -26,6 +28,7 @@ const defaultPrefs: Prefs = {
   attendance_notifications: true,
   system_notifications: true,
   rewards_notifications: true,
+  whatsapp_phone: "",
 };
 
 const NotificationPreferences = () => {
@@ -91,9 +94,27 @@ const NotificationPreferences = () => {
             <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /><Label>البريد الإلكتروني</Label></div>
             <Switch checked={prefs.enable_email} onCheckedChange={() => toggle("enable_email")} />
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-primary" /><Label>الواتساب</Label></div>
-            <Switch checked={prefs.enable_whatsapp} onCheckedChange={() => toggle("enable_whatsapp")} />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-primary" /><Label>الواتساب</Label></div>
+              <Switch checked={prefs.enable_whatsapp} onCheckedChange={() => toggle("enable_whatsapp")} />
+            </div>
+            {prefs.enable_whatsapp && (
+              <div className="mr-6 space-y-2">
+                <p className="text-xs text-muted-foreground">سيتم إرسال إشعارات الغياب والنتائج عبر WhatsApp</p>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={prefs.whatsapp_phone || ""}
+                    onChange={(e) => setPrefs(p => ({ ...p, whatsapp_phone: e.target.value }))}
+                    onBlur={() => save(prefs)}
+                    placeholder="05xxxxxxxx"
+                    dir="ltr"
+                    className="max-w-[200px] text-sm"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

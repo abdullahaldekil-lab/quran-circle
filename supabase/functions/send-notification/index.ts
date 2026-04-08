@@ -96,6 +96,9 @@ Deno.serve(async (req) => {
       meta_data: Record<string, unknown>;
     }> = [];
 
+    const waUrl = Deno.env.get("WHATSAPP_API_URL");
+    const waToken = Deno.env.get("WHATSAPP_API_TOKEN");
+
     for (const userId of recipientIds) {
       // Get user preferences
       const { data: prefs } = await adminClient
@@ -113,6 +116,7 @@ Deno.serve(async (req) => {
         attendance_notifications: true,
         system_notifications: true,
         rewards_notifications: true,
+        whatsapp_phone: null,
       };
 
       // Check if category is enabled
@@ -132,7 +136,6 @@ Deno.serve(async (req) => {
           if (channel === "inApp") {
             status = "sent"; // In-app delivered immediately
           }
-          // email and whatsapp stay pending for future processing
 
           notifications.push({
             user_id: userId,
@@ -143,6 +146,37 @@ Deno.serve(async (req) => {
             status,
             meta_data: { ...metaData, templateCode },
           });
+        }
+      }
+
+      // WhatsApp sending
+      if ((userPrefs as Record<string, unknown>).enable_whatsapp && waUrl && waToken) {
+        // Get phone from preferences or profile
+        let phone = (userPrefs as any).whatsapp_phone;
+        if (!phone) {
+          const { data: profile } = await adminClient
+            .from("profiles")
+            .select("phone")
+            .eq("id", userId)
+            .maybeSingle();
+          phone = profile?.phone;
+        }
+
+        if (phone) {
+          const cleaned = phone.replace(/\D/g, "");
+          const waNumber = cleaned.startsWith("966") ? cleaned : `966${cleaned.slice(-9)}`;
+
+          try {
+            const res = await fetch(`${waUrl}/send`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${waToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ to: waNumber, message: `*${resolvedTitle}*\n${resolvedBody}` }),
+            });
+            const waStatus = res.ok ? "sent" : "failed";
+            console.log(`WhatsApp ${waStatus} to ${waNumber}`);
+          } catch (e) {
+            console.error("WhatsApp error:", e);
+          }
         }
       }
     }
