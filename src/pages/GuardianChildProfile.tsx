@@ -269,7 +269,7 @@ const GuardianChildProfile = () => {
             <TabsTrigger value="attendance" className="text-xs flex-1 min-w-[60px]">الحضور</TabsTrigger>
             <TabsTrigger value="badges" className="text-xs flex-1 min-w-[60px]">الشارات</TabsTrigger>
             <TabsTrigger value="trips" className="text-xs flex-1 min-w-[60px]">الرحلات</TabsTrigger>
-            <TabsTrigger value="madarij" className="text-xs flex-1 min-w-[60px]">مدارج</TabsTrigger>
+            
             <TabsTrigger value="tests" className="text-xs flex-1 min-w-[60px]">الاختبارات</TabsTrigger>
             <TabsTrigger value="annual-plan" className="text-xs flex-1 min-w-[60px]">الخطة السنوية</TabsTrigger>
           </TabsList>
@@ -398,56 +398,6 @@ const GuardianChildProfile = () => {
             </Card>
           </TabsContent>
 
-          {/* Madarij Tab */}
-          <TabsContent value="madarij">
-            <Card>
-              <CardContent className="p-4">
-                {!annualPlan ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">لا توجد خطة سنوية نشطة</p>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">
-                          {annualPlan.plan_type === "silver" ? "🥈 المسار الفضي" : annualPlan.plan_type === "gold" ? "🥇 المسار الذهبي" : "⚙️ مخصص"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{annualPlan.academic_year}</p>
-                      </div>
-                      <Badge variant="secondary">{annualPlan.status === "active" ? "نشط" : "مكتمل"}</Badge>
-                    </div>
-                    {(() => {
-                      const totalActual = planProgress.reduce((s, p) => s + (p.actual_pages || 0), 0);
-                      const totalTarget = annualPlan.total_target_pages || 0;
-                      const pct = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
-                      return (
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs">
-                            <span>الإنجاز: {totalActual} / {totalTarget} وجه</span>
-                            <span className="font-bold">{pct}%</span>
-                          </div>
-                          <Progress value={pct} className="h-3" />
-                          <div className="grid grid-cols-3 gap-2 text-center mt-3">
-                            <div className="bg-muted rounded-lg p-2">
-                              <p className="text-lg font-bold text-primary">{totalTarget}</p>
-                              <p className="text-[10px] text-muted-foreground">المستهدف</p>
-                            </div>
-                            <div className="bg-muted rounded-lg p-2">
-                              <p className="text-lg font-bold text-success">{totalActual}</p>
-                              <p className="text-[10px] text-muted-foreground">المنجز</p>
-                            </div>
-                            <div className="bg-muted rounded-lg p-2">
-                              <p className="text-lg font-bold text-warning">{totalTarget - totalActual}</p>
-                              <p className="text-[10px] text-muted-foreground">المتبقي</p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Tests Tab */}
           <TabsContent value="tests">
