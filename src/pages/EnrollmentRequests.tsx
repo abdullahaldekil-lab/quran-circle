@@ -515,6 +515,41 @@ const EnrollmentRequests = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Request Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل طلب التسجيل</DialogTitle>
+          </DialogHeader>
+          {editReq && (
+            <div className="space-y-4">
+              <div>
+                <Label>اسم الطالب</Label>
+                <Input value={editReq.student_full_name} disabled className="bg-muted" />
+              </div>
+              <div>
+                <Label>الحلقة المطلوبة</Label>
+                <Select value={editHalaqa} onValueChange={setEditHalaqa}>
+                  <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                  <SelectContent>
+                    {halaqat.map((h) => (
+                      <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>ملاحظات</Label>
+                <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} />
+              </div>
+              <Button onClick={handleEditSave} disabled={processing} className="w-full">
+                {processing ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
