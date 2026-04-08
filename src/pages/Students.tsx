@@ -260,7 +260,21 @@ const Students = () => {
           <h1 className="text-2xl font-bold">الطلاب</h1>
           <p className="text-muted-foreground text-sm">{totalCount} طالب مسجّل</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {isManager && (
+            <Button variant="outline" size="sm" onClick={async () => {
+              try {
+                const { error } = await supabase.functions.invoke('check-absence-warnings');
+                if (error) throw error;
+                toast.success('تم فحص الغياب وإرسال الإنذارات');
+                fetchStudents();
+              } catch {
+                toast.error('حدث خطأ أثناء فحص الغياب');
+              }
+            }}>
+              فحص الغياب التراكمي
+            </Button>
+          )}
           {canBulkImport && (
             <Button variant="outline" onClick={() => setBulkOpen(true)}>
               <Upload className="w-4 h-4 ml-2" />
