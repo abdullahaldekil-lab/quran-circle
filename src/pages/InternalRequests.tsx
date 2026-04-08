@@ -133,6 +133,20 @@ const InternalRequests = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user, selectedRequest?.id]);
 
+  // Open specific request from notification navigation
+  useEffect(() => {
+    const openRequestId = (location.state as any)?.openRequestId;
+    if (openRequestId && !loading) {
+      const allItems = [...inbox, ...sent, ...allRequests];
+      const target = allItems.find((r: any) => r.id === openRequestId);
+      if (target) {
+        openDetail(target);
+        // Clear state to prevent reopening
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [location.state, loading, inbox, sent, allRequests]);
+
   const openDetail = async (req: any) => {
     setSelectedRequest(req);
     setDetailDialogOpen(true);
