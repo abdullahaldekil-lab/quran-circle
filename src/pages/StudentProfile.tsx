@@ -60,6 +60,17 @@ const StudentProfile = () => {
 
       setStudent(studentRes.data);
 
+      // Fetch halaqa students for navigation
+      if (studentRes.data?.halaqa_id) {
+        const { data: hs } = await supabase
+          .from("students")
+          .select("id, full_name")
+          .eq("halaqa_id", studentRes.data.halaqa_id)
+          .eq("status", "active")
+          .order("full_name");
+        setHalaqaStudents(hs || []);
+      }
+
       const att = attendanceRes.data || [];
       setAttendanceStats({
         present: att.filter((a: any) => a.status === "present").length,
