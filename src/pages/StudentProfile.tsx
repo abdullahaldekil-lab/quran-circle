@@ -203,6 +203,23 @@ const StudentProfile = () => {
         رجوع
       </Button>
 
+      {/* Halaqa Student Navigation */}
+      {halaqaStudents.length > 1 && (
+        <div className="flex items-center justify-between">
+          <Button variant="outline" size="sm" disabled={!nextStudent}
+            onClick={() => nextStudent && navigate(`/students/${nextStudent.id}`)}>
+            التالي <ChevronLeft className="w-4 h-4 mr-1" />
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {currentIndex + 1} من {halaqaStudents.length} طالب في الحلقة
+          </span>
+          <Button variant="outline" size="sm" disabled={!prevStudent}
+            onClick={() => prevStudent && navigate(`/students/${prevStudent.id}`)}>
+            <ChevronRight className="w-4 h-4 ml-1" /> السابق
+          </Button>
+        </div>
+      )}
+
       {/* Student Header */}
       <Card>
         <CardContent className="p-6">
