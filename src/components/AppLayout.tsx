@@ -99,6 +99,7 @@ const navGroups: NavGroup[] = [
       { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
       { to: "/excellence/track-settings", icon: Settings, label: "إعدادات المسارات" },
       { to: "/excellence-comparison", icon: Trophy, label: "مقارنة المتميزين" },
+      { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
     ],
     subGroups: [
       {
@@ -153,7 +154,6 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/trips", icon: BusIcon, label: "الرحلات" },
       { to: "/buses", icon: BusIcon, label: "الباصات" },
-      { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
       { to: "/documents", icon: FolderOpen, label: "المستندات" },
     ],
   },
