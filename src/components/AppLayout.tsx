@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import GlobalSearch from "@/components/GlobalSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  Search,
   CheckSquare,
   Upload,
   GraduationCap,
@@ -215,9 +217,22 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { profile, signOut } = useAuth();
   const { hasAccess, role } = useRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [urgentTasksCount, setUrgentTasksCount] = useState(0);
   const location = useLocation();
+
+  // Ctrl+K shortcut for global search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -323,6 +338,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {/* Global Search Button */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors mb-1"
+          >
+            <Search className="w-5 h-5" />
+            <span className="flex-1 text-right">بحث شامل</span>
+            <span className="text-[10px] text-sidebar-foreground/40">Ctrl+K</span>
+          </button>
           {/* Standalone items */}
           {filteredStandalone.map((item) => (
             <NavLink
@@ -512,6 +536,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
         <div className="p-4 lg:p-8">{children}</div>
       </main>
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
 };
