@@ -338,6 +338,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {/* Global Search Button */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors mb-1"
+          >
+            <Search className="w-5 h-5" />
+            <span className="flex-1 text-right">بحث شامل</span>
+            <span className="text-[10px] text-sidebar-foreground/40">Ctrl+K</span>
+          </button>
           {/* Standalone items */}
           {filteredStandalone.map((item) => (
             <NavLink
