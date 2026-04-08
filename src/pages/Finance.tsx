@@ -427,7 +427,7 @@ const Finance = () => {
                 <TransactionCard key={tx.id} tx={tx} isManager={isManager}
                   onApprove={() => approveTransaction(tx.id)}
                   onReject={() => rejectTransaction(tx.id)}
-                  onDelete={() => deleteTransaction(tx.id)} />
+                  onDelete={() => confirmDelete(tx.id)} />
               ))}
             </div>
           )}
