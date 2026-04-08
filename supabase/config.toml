@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.send-bulk-email]
 verify_jwt = false
+
+[functions.check-absence-warnings]
+verify_jwt = false
