@@ -217,9 +217,22 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { profile, signOut } = useAuth();
   const { hasAccess, role } = useRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [urgentTasksCount, setUrgentTasksCount] = useState(0);
   const location = useLocation();
+
+  // Ctrl+K shortcut for global search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   useEffect(() => {
     if (!profile?.id) return;
