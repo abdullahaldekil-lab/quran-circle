@@ -122,6 +122,42 @@ const Recitation = () => {
       return;
     }
 
+    // تحديث الخطة السنوية للطالب
+    if (form.memorized_from && form.memorized_to) {
+      const { data: plans } = await supabase
+        .from('student_annual_plans')
+        .select('id, daily_memorization_pages, daily_review_pages, daily_linking_pages')
+        .eq('student_id', currentStudent.id)
+        .eq('status', 'active')
+        .limit(1);
+
+      if (plans?.[0]) {
+        const planId = plans[0].id;
+        const today = new Date();
+        const monthNumber = today.getMonth() + 1;
+
+        const { data: monthRow } = await supabase
+          .from('student_plan_progress')
+          .select('id, actual_pages, actual_memorization, actual_review, actual_linking')
+          .eq('plan_id', planId)
+          .eq('month_number', monthNumber)
+          .maybeSingle();
+
+        if (monthRow) {
+          const memPages = Number(plans[0].daily_memorization_pages) || 0;
+          const revPages = Number(plans[0].daily_review_pages) || 0;
+          const linkPages = Number(plans[0].daily_linking_pages) || 0;
+
+          await supabase.from('student_plan_progress').update({
+            actual_pages:        (monthRow.actual_pages || 0) + memPages,
+            actual_memorization: (monthRow.actual_memorization || 0) + memPages,
+            actual_review:       (monthRow.actual_review || 0) + revPages,
+            actual_linking:      (monthRow.actual_linking || 0) + linkPages,
+          }).eq('id', monthRow.id);
+        }
+      }
+    }
+
     // Auto-progress: advance student level if score >= 80
     if (totalScore >= 80) {
       await advanceStudentLevel(currentStudent.id);
