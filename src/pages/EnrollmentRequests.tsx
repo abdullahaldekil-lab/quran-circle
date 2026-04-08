@@ -398,6 +398,11 @@ const EnrollmentRequests = () => {
                                   <ArrowRightLeft className="w-3 h-3 ml-1" />قبول الآن
                                 </Button>
                               )}
+                              {(r.status === "pending" || r.status === "waiting_list") && !r.converted_student_id && (
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditDialog(r)}>
+                                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                                </Button>
+                              )}
                               {r.converted_student_id && (
                                 <Badge variant="secondary" className="text-xs">تم التحويل</Badge>
                               )}
