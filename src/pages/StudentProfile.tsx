@@ -152,14 +152,6 @@ const StudentProfile = () => {
     fetchRecords();
   }, [id, recordsPage]);
 
-  if (!student || accessLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const currentIndex = halaqaStudents.findIndex(s => s.id === id);
   const prevStudent = halaqaStudents[currentIndex - 1];
   const nextStudent = halaqaStudents[currentIndex + 1];
@@ -173,6 +165,14 @@ const StudentProfile = () => {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [prevStudent, nextStudent, navigate]);
+
+  if (!student || accessLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // Block direct URL access to students outside teacher's halaqat
   if (!canAccessStudent(student.halaqa_id)) {
