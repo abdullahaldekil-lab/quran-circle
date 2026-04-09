@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Eye, BookOpen, Pencil } from "lucide-react";
+import { Plus, Eye, BookOpen, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -24,6 +25,7 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   const [branches, setBranches] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({
     track_id: "", level_track_id: "", branch_id: "", part_number: 1, hizb_number: 1,
     start_date: new Date().toISOString().split("T")[0], end_date: "",
@@ -139,6 +141,15 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
     fetchEnrollments();
   };
 
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from("madarij_enrollments").delete().eq("id", deleteId);
+    if (error) { toast.error("خطأ في حذف التسجيل"); return; }
+    toast.success("تم حذف التسجيل بنجاح");
+    setDeleteId(null);
+    fetchEnrollments();
+  };
+
   const filteredBranches = form.level_track_id
     ? branches.filter(b => b.level_track_id === form.level_track_id)
     : [];
@@ -178,9 +189,14 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
                     {en.status === "active" ? "نشط" : "مكتمل"}
                   </Badge>
                   {isManager && en.status === "active" && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(en)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
+                    <>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(en)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(en.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
                   )}
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/madarij/${en.id}`)}>
                     <Eye className="w-4 h-4" />
@@ -239,6 +255,20 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
           </form>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!deleteId} onOpenChange={(v) => { if (!v) setDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف التسجيل</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذا التسجيل؟ سيتم حذف جميع بيانات المتابعة المرتبطة به. لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
