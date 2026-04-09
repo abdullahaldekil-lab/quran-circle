@@ -530,14 +530,15 @@ export default function QuranNarration() {
                         : stats.total > 0
                         ? "border-r-4 border-r-destructive/50"
                         : "";
-                      const hijriDate = formatHijriArabic(session.session_date);
+                      const hijriDate = formatDateHijriOnly(session.session_date);
+                      const gregDate = formatGregorianArabic(session.session_date);
                       return (
                         <TableRow key={session.id} className={borderClass}>
                           <TableCell>
                             <div>
                               <p className="font-semibold text-sm">{hijriDate}</p>
                               <p className="text-xs text-muted-foreground">
-                                {new Date(session.session_date).toLocaleDateString("en-CA")}
+                                {gregDate}
                               </p>
                             </div>
                           </TableCell>
