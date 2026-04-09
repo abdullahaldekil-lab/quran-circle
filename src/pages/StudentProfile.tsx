@@ -243,7 +243,7 @@ const StudentProfile = () => {
                     <p>تاريخ الميلاد (ميلادي): {student.birth_date_gregorian}</p>
                   )}
                   {student.birth_date_hijri && (
-                    <p>تاريخ الميلاد (هجري): {formatHijriArabic(student.birth_date_hijri)}</p>
+                    <p>تاريخ الميلاد (هجري): {formatHijriStringArabic(student.birth_date_hijri)}</p>
                   )}
                 </div>
               )}

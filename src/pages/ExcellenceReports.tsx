@@ -80,7 +80,7 @@ export default function ExcellenceReports() {
   const getSessionDisplayName = (s: any) => {
     const trackName = s.excellence_tracks?.track_name;
     const halaqaName = s.halaqat?.name;
-    const hijriPart = s.session_hijri_date ? formatHijriArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd");
+    const hijriPart = s.session_hijri_date ? formatHijriStringArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd");
     const gregPart = s.session_hijri_date ? ` (${format(new Date(s.session_date), "yyyy/MM/dd")})` : "";
     return `${hijriPart}${gregPart} — ${trackName || halaqaName || ""}`;
   };
@@ -315,7 +315,7 @@ export default function ExcellenceReports() {
                 <div id="session-report-print">
                   <div className="mb-3 text-sm text-muted-foreground">
                     {sessionReport.session?.session_hijri_date && (
-                      <p>التاريخ الهجري: {formatHijriArabic(sessionReport.session.session_hijri_date)}</p>
+                      <p>التاريخ الهجري: {formatHijriStringArabic(sessionReport.session.session_hijri_date)}</p>
                     )}
                     <p>المسار: {(sessionReport.session as any)?.excellence_tracks?.track_name || (sessionReport.session as any)?.halaqat?.name || "—"}</p>
                   </div>

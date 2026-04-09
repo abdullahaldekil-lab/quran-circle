@@ -368,7 +368,7 @@ export default function ExcellenceSession() {
           </Button>
           <div>
             <h1 className="text-xl font-bold text-foreground">
-              جلسة التميّز — {sessionHijri ? formatHijriArabic(sessionHijri) : ""}
+              جلسة التميّز — {sessionHijri ? formatHijriStringArabic(sessionHijri) : ""}
               {session?.session_date && (
                 <span className="text-muted-foreground text-base mr-2">
                   ({format(new Date(session.session_date), "yyyy/MM/dd")})
