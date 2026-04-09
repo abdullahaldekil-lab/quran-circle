@@ -348,7 +348,7 @@ const MadarijEnrollment = () => {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="daily" dir="rtl">
+      <Tabs defaultValue="followup" dir="rtl">
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="followup">نموذج المتابعة</TabsTrigger>
           <TabsTrigger value="daily">المتابعة اليومية</TabsTrigger>
