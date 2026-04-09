@@ -16,6 +16,7 @@ import { ArrowRight, Plus, Pencil, Trash2, Printer, AlertTriangle, FlaskConical 
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import MadarijPrintTemplate from "@/components/MadarijPrintTemplate";
+import FollowUpFormTab from "@/components/madarij/FollowUpFormTab";
 
 const MadarijEnrollment = () => {
   const { enrollmentId } = useParams<{ enrollmentId: string }>();
