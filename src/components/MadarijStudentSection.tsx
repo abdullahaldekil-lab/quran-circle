@@ -141,6 +141,15 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
     fetchEnrollments();
   };
 
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from("madarij_enrollments").delete().eq("id", deleteId);
+    if (error) { toast.error("خطأ في حذف التسجيل"); return; }
+    toast.success("تم حذف التسجيل بنجاح");
+    setDeleteId(null);
+    fetchEnrollments();
+  };
+
   const filteredBranches = form.level_track_id
     ? branches.filter(b => b.level_track_id === form.level_track_id)
     : [];
