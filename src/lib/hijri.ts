@@ -135,4 +135,18 @@ export function parseHijriString(hijriStr: string): { year: number; month: numbe
   }
 }
 
+/**
+ * Format an already-Hijri string (YYYY/MM/DD) into Arabic display: "15 رمضان 1447 هـ"
+ * Use this instead of formatHijriArabic when the input is already a Hijri date string.
+ */
+export function formatHijriStringArabic(hijriStr: string): string {
+  if (!hijriStr) return hijriStr;
+  const parts = hijriStr.split("/").map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return hijriStr;
+  const [year, month, day] = parts;
+  if (month < 1 || month > 12 || day < 1 || day > 31) return hijriStr;
+  const monthName = HIJRI_MONTHS[month - 1] || "";
+  return `${day} ${monthName} ${year} هـ`;
+}
+
 export { HIJRI_MONTHS, GREGORIAN_MONTHS, WEEKDAYS };

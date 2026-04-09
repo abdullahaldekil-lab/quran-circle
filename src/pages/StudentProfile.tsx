@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare } from "lucide-react";
-import { formatHijriArabic, gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
+import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
@@ -243,7 +243,7 @@ const StudentProfile = () => {
                     <p>تاريخ الميلاد (ميلادي): {student.birth_date_gregorian}</p>
                   )}
                   {student.birth_date_hijri && (
-                    <p>تاريخ الميلاد (هجري): {formatHijriArabic(student.birth_date_hijri)}</p>
+                    <p>تاريخ الميلاد (هجري): {formatHijriStringArabic(student.birth_date_hijri)}</p>
                   )}
                 </div>
               )}

@@ -14,7 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { Plus, Calendar, Users, BookOpen, Trophy, Star, Settings, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { gregorianToHijri, formatHijriArabic } from "@/lib/hijri";
+import { gregorianToHijri, formatHijriArabic, formatHijriStringArabic } from "@/lib/hijri";
 
 interface Session {
   id: string;
@@ -276,7 +276,7 @@ export default function Excellence() {
                       className="text-right"
                     />
                     {newHijriDate && (
-                      <p className="text-xs text-muted-foreground mt-1">{formatHijriArabic(newHijriDate)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{formatHijriStringArabic(newHijriDate)}</p>
                     )}
                   </div>
                   <div>
@@ -358,7 +358,7 @@ export default function Excellence() {
                   </div>
                   <div>
                     <p className="font-semibold">
-                      {s.session_hijri_date ? formatHijriArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd")}
+                      {s.session_hijri_date ? formatHijriStringArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd")}
                       {s.session_hijri_date && (
                         <span className="text-muted-foreground text-sm mr-2">
                           ({format(new Date(s.session_date), "yyyy/MM/dd")})
@@ -389,7 +389,7 @@ export default function Excellence() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>حذف الجلسة</AlertDialogTitle>
                           <AlertDialogDescription>
-                            هل أنت متأكد من حذف جلسة {s.session_hijri_date ? formatHijriArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd")}؟ سيتم حذف جميع بيانات الحضور والأداء المرتبطة بها.
+                            هل أنت متأكد من حذف جلسة {s.session_hijri_date ? formatHijriStringArabic(s.session_hijri_date) : format(new Date(s.session_date), "yyyy/MM/dd")}؟ سيتم حذف جميع بيانات الحضور والأداء المرتبطة بها.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter className="flex-row-reverse gap-2">
