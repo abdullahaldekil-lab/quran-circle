@@ -25,6 +25,7 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   const [branches, setBranches] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({
     track_id: "", level_track_id: "", branch_id: "", part_number: 1, hizb_number: 1,
     start_date: new Date().toISOString().split("T")[0], end_date: "",
