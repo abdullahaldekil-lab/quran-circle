@@ -14,7 +14,7 @@ import { useRole } from "@/hooks/useRole";
 import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import { sendNotification } from "@/utils/sendNotification";
-import { formatDualDate, formatFullDateHeader } from "@/lib/hijri";
+import { formatDualDate, formatFullDateHeader, formatDateSmart, getCurrentFullDateHeader } from "@/lib/hijri";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
