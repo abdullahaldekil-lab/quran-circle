@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { ArrowRight, Save, Printer, Users, BarChart3, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
-import { formatHijriArabic } from "@/lib/hijri";
+import { formatHijriStringArabic } from "@/lib/hijri";
 import ExcellencePrintTemplate from "@/components/ExcellencePrintTemplate";
 
 interface Student {

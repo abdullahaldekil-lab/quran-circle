@@ -14,7 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { Plus, Calendar, Users, BookOpen, Trophy, Star, Settings, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { gregorianToHijri, formatHijriArabic } from "@/lib/hijri";
+import { gregorianToHijri, formatHijriArabic, formatHijriStringArabic } from "@/lib/hijri";
 
 interface Session {
   id: string;

@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { ArrowRight, Printer, Save, Star, Send, FileText, Users, BookOpen, BarChart3, Award } from "lucide-react";
 import { format } from "date-fns";
-import { formatHijriArabic, toHijri, toMiladi } from "@/lib/hijri";
+import { formatHijriArabic, formatHijriStringArabic, toHijri, toMiladi } from "@/lib/hijri";
 import { sendNotification } from "@/utils/sendNotification";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
