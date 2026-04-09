@@ -128,7 +128,7 @@ const StudentQuiz = () => {
 
       const { data: enrollment } = await supabase
         .from("madarij_enrollments")
-        .select("*, madarij_tracks(name)")
+        .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name)")
         .eq("student_id", selectedStudent)
         .eq("status", "active")
         .limit(1)

@@ -70,7 +70,7 @@ const MadarijEnrollment = () => {
     if (!enrollmentId) return;
     setLoading(true);
     const [enrollRes, dpRes, mistakesRes, examsRes] = await Promise.all([
-      supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks(name, days_required), level_tracks(name)").eq("id", enrollmentId).maybeSingle(),
+      supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required), level_tracks(name)").eq("id", enrollmentId).maybeSingle(),
       supabase.from("madarij_daily_progress").select("*").eq("enrollment_id", enrollmentId).order("progress_date"),
       supabase.from("madarij_mistakes").select("*").eq("enrollment_id", enrollmentId).order("created_at"),
       supabase.from("madarij_hizb_exams").select("*").eq("enrollment_id", enrollmentId).order("attempt_number", { ascending: false }),
