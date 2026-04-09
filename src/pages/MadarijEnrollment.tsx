@@ -349,11 +349,24 @@ const MadarijEnrollment = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="daily" dir="rtl">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
+          <TabsTrigger value="followup">نموذج المتابعة</TabsTrigger>
           <TabsTrigger value="daily">المتابعة اليومية</TabsTrigger>
           <TabsTrigger value="mistakes">تدوين الأخطاء</TabsTrigger>
           <TabsTrigger value="exam">اختبار نهاية الحزب</TabsTrigger>
         </TabsList>
+
+        {/* Follow-up Form Tab */}
+        <TabsContent value="followup">
+          <FollowUpFormTab
+            enrollment={enrollment}
+            dailyProgress={dailyProgress}
+            mistakes={mistakes}
+            exams={exams}
+            canEdit={canEdit}
+            onRefresh={fetchAll}
+          />
+        </TabsContent>
 
         {/* Daily Progress Tab */}
         <TabsContent value="daily">
