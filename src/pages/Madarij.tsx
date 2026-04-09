@@ -33,7 +33,7 @@ const Madarij = () => {
     setLoading(true);
     const [tracksRes, enrollRes] = await Promise.all([
       supabase.from("madarij_tracks").select("*").eq("active", true).order("created_at"),
-      supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks(name)").order("created_at", { ascending: false }).limit(50),
+      supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name)").order("created_at", { ascending: false }).limit(50),
     ]);
     setTracks(tracksRes.data || []);
     setEnrollments(enrollRes.data || []);

@@ -31,7 +31,7 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   const fetchEnrollments = async () => {
     const { data } = await supabase
       .from("madarij_enrollments")
-      .select("*, madarij_tracks(name, days_required)")
+      .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required)")
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
     setEnrollments(data || []);

@@ -28,8 +28,8 @@ const MadarijReport = () => {
   const fetchData = async () => {
     setLoading(true);
     const [enrollRes, examsRes, changesRes, tracksRes] = await Promise.all([
-      supabase.from("madarij_enrollments").select("*, students(full_name, halaqa_id, halaqat(name)), madarij_tracks(name, days_required)"),
-      supabase.from("madarij_hizb_exams").select("*, madarij_enrollments(student_id, students(full_name, halaqat(name)), madarij_tracks(name))").eq("exam_type", "official"),
+      supabase.from("madarij_enrollments").select("*, students(full_name, halaqa_id, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required)"),
+      supabase.from("madarij_hizb_exams").select("*, madarij_enrollments(student_id, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name))").eq("exam_type", "official"),
       supabase.from("madarij_level_changes" as any).select("*, students(full_name), old_track:madarij_tracks!madarij_level_changes_old_track_id_fkey(name), new_track:madarij_tracks!madarij_level_changes_new_track_id_fkey(name)"),
       supabase.from("madarij_tracks").select("*").eq("active", true),
     ]);
