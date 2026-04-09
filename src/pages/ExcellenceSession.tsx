@@ -12,8 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { ArrowRight, Save, Printer, Users, BarChart3, ClipboardList } from "lucide-react";
-import { format } from "date-fns";
-import { formatHijriStringArabic } from "@/lib/hijri";
+
+import { formatHijriStringArabic, formatGregorianArabic } from "@/lib/hijri";
 import ExcellencePrintTemplate from "@/components/ExcellencePrintTemplate";
 
 interface Student {
@@ -371,7 +371,7 @@ export default function ExcellenceSession() {
               جلسة التميّز — {sessionHijri ? formatHijriStringArabic(sessionHijri) : ""}
               {session?.session_date && (
                 <span className="text-muted-foreground text-base mr-2">
-                  ({format(new Date(session.session_date), "yyyy/MM/dd")})
+                  ({formatGregorianArabic(session.session_date)})
                 </span>
               )}
             </h1>

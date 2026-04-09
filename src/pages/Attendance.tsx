@@ -14,7 +14,7 @@ import { useRole } from "@/hooks/useRole";
 import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import { sendNotification } from "@/utils/sendNotification";
-import { formatDualDate, formatFullDateHeader } from "@/lib/hijri";
+import { formatDualDate, formatFullDateHeader, formatDateSmart, getCurrentFullDateHeader } from "@/lib/hijri";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
@@ -390,7 +390,7 @@ const Attendance = () => {
         <div>
           <h1 className="text-2xl font-bold">الحضور والغياب</h1>
           <p className="text-muted-foreground text-sm">
-            {new Date().toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            {getCurrentFullDateHeader()}
           </p>
         </div>
         <Card className="border-2 border-muted">

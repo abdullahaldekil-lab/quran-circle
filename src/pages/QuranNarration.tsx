@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays, Target, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatHijriArabic } from "@/lib/hijri";
+import { formatHijriArabic, formatDateSmart, formatDateHijriOnly, formatGregorianArabic } from "@/lib/hijri";
 
 interface NarrationSession {
   id: string;
@@ -530,14 +530,15 @@ export default function QuranNarration() {
                         : stats.total > 0
                         ? "border-r-4 border-r-destructive/50"
                         : "";
-                      const hijriDate = formatHijriArabic(session.session_date);
+                      const hijriDate = formatDateHijriOnly(session.session_date);
+                      const gregDate = formatGregorianArabic(session.session_date);
                       return (
                         <TableRow key={session.id} className={borderClass}>
                           <TableCell>
                             <div>
                               <p className="font-semibold text-sm">{hijriDate}</p>
                               <p className="text-xs text-muted-foreground">
-                                {new Date(session.session_date).toLocaleDateString("en-CA")}
+                                {gregDate}
                               </p>
                             </div>
                           </TableCell>

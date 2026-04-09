@@ -149,4 +149,69 @@ export function formatHijriStringArabic(hijriStr: string): string {
   return `${day} ${monthName} ${year} هـ`;
 }
 
+/**
+ * Detect if a string looks like a Hijri date (YYYY/MM/DD where year > 1300 and < 1500)
+ */
+export function isHijriString(str: string): boolean {
+  if (!str || typeof str !== "string") return false;
+  const parts = str.split("/").map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return false;
+  const [year] = parts;
+  return year >= 1300 && year <= 1500;
+}
+
+/**
+ * Smart date formatter: auto-detects Hijri vs Gregorian input
+ * Returns Hijri as primary with Gregorian as secondary in parentheses
+ * Input can be: Date object, ISO string, Gregorian date string, or Hijri string (YYYY/MM/DD)
+ */
+export function formatDateSmart(date: Date | string): string {
+  if (!date) return "";
+  const str = typeof date === "string" ? date : "";
+
+  // If it's already a Hijri string like "1447/09/15"
+  if (str && isHijriString(str)) {
+    const hijriDisplay = formatHijriStringArabic(str);
+    const gregDate = hijriToGregorian(str);
+    const gregDisplay = gregDate ? formatGregorianArabic(gregDate) : "";
+    return gregDisplay ? `${hijriDisplay} (${gregDisplay})` : hijriDisplay;
+  }
+
+  // Otherwise treat as Gregorian
+  const hijriDisplay = formatHijriArabic(date);
+  const gregDisplay = formatGregorianArabic(date);
+  return `${hijriDisplay} (${gregDisplay})`;
+}
+
+/**
+ * Smart date formatter returning only Hijri part
+ */
+export function formatDateHijriOnly(date: Date | string): string {
+  if (!date) return "";
+  const str = typeof date === "string" ? date : "";
+  if (str && isHijriString(str)) return formatHijriStringArabic(str);
+  return formatHijriArabic(date);
+}
+
+/**
+ * Smart dual date: returns { hijri, gregorian } regardless of input type
+ */
+export function formatDualDateSmart(date: Date | string): { hijri: string; gregorian: string } {
+  if (!date) return { hijri: "", gregorian: "" };
+  const str = typeof date === "string" ? date : "";
+
+  if (str && isHijriString(str)) {
+    const gregDate = hijriToGregorian(str);
+    return {
+      hijri: formatHijriStringArabic(str),
+      gregorian: gregDate ? formatGregorianArabic(gregDate) : "",
+    };
+  }
+
+  return {
+    hijri: formatHijriArabic(date),
+    gregorian: formatGregorianArabic(date),
+  };
+}
+
 export { HIJRI_MONTHS, GREGORIAN_MONTHS, WEEKDAYS };

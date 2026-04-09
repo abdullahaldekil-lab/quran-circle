@@ -1,4 +1,4 @@
-import { formatDualDate } from "@/lib/hijri";
+import { formatDualDate, formatDualDateSmart, isHijriString } from "@/lib/hijri";
 
 interface DualDateDisplayProps {
   date: Date | string;
@@ -10,7 +10,7 @@ interface DualDateDisplayProps {
  * Displays date with Hijri as primary and Gregorian as secondary
  */
 export function DualDateDisplay({ date, className = "", size = "md" }: DualDateDisplayProps) {
-  const { hijri, gregorian } = formatDualDate(date);
+  const { hijri, gregorian } = formatDualDateSmart(date);
 
   const sizeClasses = {
     sm: { primary: "text-sm", secondary: "text-xs" },
@@ -35,7 +35,7 @@ interface InlineDualDateProps {
  * Displays date inline: "15 رمضان 1447 ، 4 مارس 2026"
  */
 export function InlineDualDate({ date, className = "" }: InlineDualDateProps) {
-  const { hijri, gregorian } = formatDualDate(date);
+  const { hijri, gregorian } = formatDualDateSmart(date);
 
   return (
     <span className={className}>
