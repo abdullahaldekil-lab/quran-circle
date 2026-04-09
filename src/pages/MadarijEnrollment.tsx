@@ -16,6 +16,7 @@ import { ArrowRight, Plus, Pencil, Trash2, Printer, AlertTriangle, FlaskConical 
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import MadarijPrintTemplate from "@/components/MadarijPrintTemplate";
+import FollowUpFormTab from "@/components/madarij/FollowUpFormTab";
 
 const MadarijEnrollment = () => {
   const { enrollmentId } = useParams<{ enrollmentId: string }>();
@@ -347,12 +348,25 @@ const MadarijEnrollment = () => {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="daily" dir="rtl">
-        <TabsList className="grid grid-cols-3 w-full">
+      <Tabs defaultValue="followup" dir="rtl">
+        <TabsList className="grid grid-cols-4 w-full">
+          <TabsTrigger value="followup">نموذج المتابعة</TabsTrigger>
           <TabsTrigger value="daily">المتابعة اليومية</TabsTrigger>
           <TabsTrigger value="mistakes">تدوين الأخطاء</TabsTrigger>
           <TabsTrigger value="exam">اختبار نهاية الحزب</TabsTrigger>
         </TabsList>
+
+        {/* Follow-up Form Tab */}
+        <TabsContent value="followup">
+          <FollowUpFormTab
+            enrollment={enrollment}
+            dailyProgress={dailyProgress}
+            mistakes={mistakes}
+            exams={exams}
+            canEdit={canEdit}
+            onRefresh={fetchAll}
+          />
+        </TabsContent>
 
         {/* Daily Progress Tab */}
         <TabsContent value="daily">
