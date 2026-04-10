@@ -191,6 +191,15 @@ const Attendance = () => {
         supabase.from("attendance").select("student_id, status, marked_at").eq("halaqa_id", selectedHalaqa).eq("attendance_date", selectedDate),
       ]);
 
+      if (studentsRes.error) {
+        console.error("Error fetching students:", studentsRes.error);
+        toast.error("حدث خطأ في جلب بيانات الطلاب");
+      }
+      if (attendanceRes.error) {
+        console.error("Error fetching attendance:", attendanceRes.error);
+        toast.error("حدث خطأ في جلب بيانات الحضور");
+      }
+
       const studentList = studentsRes.data || [];
       setStudents(studentList);
 

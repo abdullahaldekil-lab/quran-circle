@@ -134,11 +134,15 @@ const Dashboard = () => {
 
         // Fetch pending internal requests for current user
         const role = profile?.role || "teacher";
-        const { count: reqCount } = await supabase
+        const isManagerRole = profile?.role === "manager";
+        let reqQuery = supabase
           .from("internal_requests")
           .select("id", { count: "exact", head: true })
-          .or(`to_user_id.eq.${user.id},to_role.eq.${role}`)
           .in("status", ["new", "in_progress"]);
+        if (!isManagerRole) {
+          reqQuery = reqQuery.or(`to_user_id.eq.${user.id},to_role.eq.${role}`);
+        }
+        const { count: reqCount } = await reqQuery;
         if (!cancelled) setPendingRequests(reqCount || 0);
       } catch (e) {
         console.error("Dashboard fetch error:", e);
