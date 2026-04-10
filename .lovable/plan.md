@@ -1,39 +1,39 @@
 
 
-# إصلاح مشكلة التاريخ الهجري (NaN)
+# خطة الإصلاحات
 
-## سبب المشكلة
+## 1. إصلاح عداد الطلبات المعلقة في Dashboard.tsx
+**المشكلة**: استعلام `internal_requests` يفلتر بـ `to_user_id` و `to_role` للجميع، مما يمنع المدير من رؤية كل الطلبات.
 
-الدالة `formatHijriArabic()` تستقبل أي نص وتفترض أنه تاريخ ميلادي فتحوّله للهجري. لكن في عدة أماكن يتم تمريرها تاريخ **هجري مسبقاً** (مثل `session_hijri_date` = `"1447/09/15"`) فتحدث تحويل مزدوج ينتج `NaN` وسنة خاطئة مثل `1355`.
-
-## الحل
-
-### 1. إضافة دالة جديدة في `src/lib/hijri.ts`
-
-إنشاء دالة `formatHijriStringArabic(hijriStr)` تأخذ نص هجري بصيغة `YYYY/MM/DD` وتعرضه بالعربي مباشرة **بدون تحويل**:
-
+**الحل**: إضافة شرط `isManager` لتجاوز الفلتر:
 ```typescript
-export function formatHijriStringArabic(hijriStr: string): string {
-  const parts = hijriStr.split("/").map(Number);
-  if (parts.length !== 3 || parts.some(isNaN)) return hijriStr;
-  const [year, month, day] = parts;
-  const monthName = HIJRI_MONTHS[month - 1] || "";
-  return `${day} ${monthName} ${year} هـ`;
+const isManagerRole = profile?.role === 'manager';
+let reqQuery = supabase.from('internal_requests')
+  .select('id', { count: 'exact', head: true })
+  .in('status', ['new', 'in_progress']);
+if (!isManagerRole) {
+  reqQuery = reqQuery.or(`to_user_id.eq.${user.id},to_role.eq.${role}`);
 }
 ```
 
-### 2. استبدال الاستدعاءات الخاطئة في 4 ملفات
+**الملف**: `src/pages/Dashboard.tsx` (سطر ~128-133)
 
-| الملف | السطر | التغيير |
-|---|---|---|
-| `Excellence.tsx` | 279, 361, 392 | `formatHijriArabic(s.session_hijri_date)` → `formatHijriStringArabic(s.session_hijri_date)` |
-| `ExcellenceSession.tsx` | 371 | `formatHijriArabic(sessionHijri)` → `formatHijriStringArabic(sessionHijri)` |
-| `ExcellenceReports.tsx` | 83, 318 | نفس الاستبدال للحقول الهجرية |
-| `StudentProfile.tsx` | 246 | `formatHijriArabic(student.birth_date_hijri)` → `formatHijriStringArabic(student.birth_date_hijri)` |
+---
 
-الملفات التي تمرر تاريخ ميلادي فعلي (`new Date()` أو `session_date` أو `created_at`) تبقى كما هي بدون تغيير.
+## 2. تحسين معالجة أخطاء الحضور في Attendance.tsx
+**الحل**: إضافة `console.error` ورسالة واجهة عند فشل استعلام الحضور، والتأكد من أن تغيير التاريخ يعمل بدقة مع التنسيق `yyyy-MM-dd`.
 
-### النتيجة المتوقعة
+**الملف**: `src/pages/Attendance.tsx`
 
-بدلاً من `NaN ذو الحجة 1355 هـ` سيظهر التاريخ صحيحاً مثل: `7 شوّال 1447 هـ`
+---
+
+## ملاحظات - بنود لا تحتاج تعديل
+- **أدوار التعيين**: `roleLabels` يحتوي بالفعل على الأدوار السبعة كاملة ويُستخدم في نماذج الإنشاء والتعديل عبر `Object.entries(roleLabels).map()`
+- **تقارير التميز الشهرية**: `loadMonthlyReport` تفلتر بالفعل بنطاق تاريخ هجري→ميلادي وتستخدم `sessionIds` للأداء
+
+---
+
+## تفاصيل تقنية
+- لا حاجة لتعديل قاعدة البيانات
+- ملفان فقط يتأثران: `Dashboard.tsx` و `Attendance.tsx`
 
