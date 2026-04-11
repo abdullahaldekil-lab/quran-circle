@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Save, ChevronLeft, ChevronRight, ClipboardList, Mic, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Save, ChevronLeft, ChevronRight, ClipboardList, Mic, History, ChevronDown, ChevronUp, BookOpen, RefreshCw, Link2, Minus, Plus } from "lucide-react";
 import AudioRecorder from "@/components/AudioRecorder";
 import { sendNotification } from "@/utils/sendNotification";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -299,67 +299,70 @@ const Recitation = () => {
                 بيانات التسميع
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {/* الحفظ */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-background">
-                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">الحفظ</span>
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <Input placeholder="من: سورة / آية" value={form.memorized_from} onChange={(e) => setForm({ ...form, memorized_from: e.target.value })} className="text-sm h-9" />
-                    <Input placeholder="إلى: سورة / آية" value={form.memorized_to} onChange={(e) => setForm({ ...form, memorized_to: e.target.value })} className="text-sm h-9" />
+            <CardContent className="space-y-0">
+              {/* قسم الحفظ الجديد */}
+              <div className="p-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-green-600" />
+                  <span className="font-semibold text-green-800 dark:text-green-300">الحفظ الجديد</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="من: سورة / آية" value={form.memorized_from} onChange={(e) => setForm({ ...form, memorized_from: e.target.value })} className="text-sm h-9" />
+                  <Input placeholder="إلى: سورة / آية" value={form.memorized_to} onChange={(e) => setForm({ ...form, memorized_to: e.target.value })} className="text-sm h-9" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300 w-20 shrink-0">جودة الحفظ</span>
+                  <Slider value={[form.memorization_quality]} onValueChange={([v]) => setForm({ ...form, memorization_quality: v })} max={50} step={1} className="flex-1" />
+                  <span className="text-sm font-bold text-green-700 w-12 text-left">{form.memorization_quality}/50</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300 w-20 shrink-0">الأخطاء</span>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setForm({ ...form, mistakes_count: Math.max(0, form.mistakes_count - 1) })}>
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="text-lg font-bold text-destructive w-8 text-center">{form.mistakes_count}</span>
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setForm({ ...form, mistakes_count: Math.min(20, form.mistakes_count + 1) })}>
+                      <Plus className="w-4 h-4" />
+                    </Button>
                   </div>
+                  <span className="text-xs text-muted-foreground">({Math.max(0, 20 - form.mistakes_count)}/20 درجة)</span>
                 </div>
+              </div>
 
-                {/* المراجعة */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
-                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">المراجعة</span>
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <Input placeholder="من: سورة / آية" value={form.review_from} onChange={(e) => setForm({ ...form, review_from: e.target.value })} className="text-sm h-9" />
-                    <Input placeholder="إلى: سورة / آية" value={form.review_to} onChange={(e) => setForm({ ...form, review_to: e.target.value })} className="text-sm h-9" />
-                  </div>
+              {/* قسم المراجعة */}
+              <div className="p-4 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 space-y-3 mt-3">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5 text-blue-600" />
+                  <span className="font-semibold text-blue-800 dark:text-blue-300">المراجعة</span>
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="من: سورة / آية" value={form.review_from} onChange={(e) => setForm({ ...form, review_from: e.target.value })} className="text-sm h-9" />
+                  <Input placeholder="إلى: سورة / آية" value={form.review_to} onChange={(e) => setForm({ ...form, review_to: e.target.value })} className="text-sm h-9" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300 w-20 shrink-0">التجويد</span>
+                  <Slider value={[form.tajweed_score]} onValueChange={([v]) => setForm({ ...form, tajweed_score: v })} max={30} step={1} className="flex-1" />
+                  <span className="text-sm font-bold text-blue-700 w-12 text-left">{form.tajweed_score}/30</span>
+                </div>
+              </div>
 
-                {/* الربط */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-background">
-                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">الربط</span>
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <Input placeholder="من: سورة / آية" value={form.linking_from} onChange={(e) => setForm({ ...form, linking_from: e.target.value })} className="text-sm h-9" />
-                    <Input placeholder="إلى: سورة / آية" value={form.linking_to} onChange={(e) => setForm({ ...form, linking_to: e.target.value })} className="text-sm h-9" />
-                  </div>
+              {/* قسم الربط */}
+              <div className="p-4 rounded-lg border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800 space-y-3 mt-3">
+                <div className="flex items-center gap-2">
+                  <Link2 className="w-5 h-5 text-purple-600" />
+                  <span className="font-semibold text-purple-800 dark:text-purple-300">الربط</span>
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="من: سورة / آية" value={form.linking_from} onChange={(e) => setForm({ ...form, linking_from: e.target.value })} className="text-sm h-9" />
+                  <Input placeholder="إلى: سورة / آية" value={form.linking_to} onChange={(e) => setForm({ ...form, linking_to: e.target.value })} className="text-sm h-9" />
+                </div>
+              </div>
 
-                {/* جودة الحفظ */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
-                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">جودة الحفظ</span>
-                  <div className="flex-1 flex items-center gap-3">
-                    <Slider value={[form.memorization_quality]} onValueChange={([v]) => setForm({ ...form, memorization_quality: v })} max={50} step={1} className="flex-1" />
-                    <span className="text-sm font-bold text-primary w-12 text-left">{form.memorization_quality}/50</span>
-                  </div>
-                </div>
-
-                {/* التجويد */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-background">
-                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">التجويد</span>
-                  <div className="flex-1 flex items-center gap-3">
-                    <Slider value={[form.tajweed_score]} onValueChange={([v]) => setForm({ ...form, tajweed_score: v })} max={30} step={1} className="flex-1" />
-                    <span className="text-sm font-bold text-primary w-12 text-left">{form.tajweed_score}/30</span>
-                  </div>
-                </div>
-
-                {/* الأخطاء */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
-                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground">الأخطاء</span>
-                  <div className="flex-1 flex items-center gap-3">
-                    <Slider value={[form.mistakes_count]} onValueChange={([v]) => setForm({ ...form, mistakes_count: v })} max={20} step={1} className="flex-1" />
-                    <span className="text-sm font-bold text-destructive w-12 text-left">{form.mistakes_count}</span>
-                  </div>
-                </div>
-
-                {/* ملاحظات */}
-                <div className="flex items-start gap-3 px-4 py-3 bg-background">
-                  <span className="w-20 shrink-0 text-sm font-semibold text-foreground pt-2">ملاحظات</span>
-                  <Textarea placeholder="أضف ملاحظاتك هنا..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="flex-1 text-sm" />
-                </div>
+              {/* ملاحظات */}
+              <div className="flex items-start gap-3 px-1 py-3">
+                <span className="w-20 shrink-0 text-sm font-semibold text-foreground pt-2">ملاحظات</span>
+                <Textarea placeholder="أضف ملاحظاتك هنا..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="flex-1 text-sm" />
               </div>
 
               <div className="p-4 space-y-4">

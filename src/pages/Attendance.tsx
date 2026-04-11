@@ -274,43 +274,46 @@ const Attendance = () => {
     }
 
     // Send automatic notifications for absent/late students
-    const absentStudents = Object.entries(finalAttendance).filter(([, s]) => s === "absent");
-    const lateStudents = Object.entries(finalAttendance).filter(([, s]) => s === "late");
+    let notificationsSent = 0;
+    try {
+      const absentStudents = Object.entries(finalAttendance).filter(([, s]) => s === "absent");
+      const lateStudents = Object.entries(finalAttendance).filter(([, s]) => s === "late");
 
-    if (absentStudents.length > 0) {
       for (const [sid] of absentStudents) {
         const student = students.find((s: any) => s.id === sid);
         if (!student) continue;
         const { data: links } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", sid).eq("active", true);
         if (links && links.length > 0) {
-          sendNotification({
+          await sendNotification({
             templateCode: "STUDENT_ABSENT",
             recipientIds: links.map((l: any) => l.guardian_id),
             variables: { studentName: student.full_name, date: selectedDate },
-          }).catch(console.error);
+          });
+          notificationsSent += links.length;
         }
       }
-    }
 
-    if (lateStudents.length > 0) {
       for (const [sid] of lateStudents) {
         const student = students.find((s: any) => s.id === sid);
         if (!student) continue;
         const { data: links } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", sid).eq("active", true);
         if (links && links.length > 0) {
-          sendNotification({
+          await sendNotification({
             templateCode: "STUDENT_LATE",
             recipientIds: links.map((l: any) => l.guardian_id),
             variables: { studentName: student.full_name, date: selectedDate },
-          }).catch(console.error);
+          });
+          notificationsSent += links.length;
         }
       }
+    } catch (notifErr) {
+      console.error("خطأ في إرسال الإشعارات:", notifErr);
     }
 
     setSaving(false);
     setAttendance(finalAttendance);
     setOriginalAttendance({ ...finalAttendance });
-    toast.success("تم حفظ الحضور بنجاح");
+    toast.success(`تم حفظ الحضور بنجاح${notificationsSent > 0 ? ` — تم إرسال ${notificationsSent} إشعار لأولياء الأمور` : ""}`);
   };
 
   const statusIcons: Record<AttendanceStatus, any> = {

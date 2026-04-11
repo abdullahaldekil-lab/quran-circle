@@ -25,8 +25,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays, Target, TrendingUp } from "lucide-react";
+import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays, Target, TrendingUp, CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatHijriArabic, formatDateSmart, formatDateHijriOnly, formatGregorianArabic } from "@/lib/hijri";
 
 interface NarrationSession {
@@ -64,6 +65,8 @@ export default function QuranNarration() {
 
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [editSession, setEditSession] = useState<NarrationSession | null>(null);
+  const [quickEditSessionId, setQuickEditSessionId] = useState<string | null>(null);
+  const [quickEditDate, setQuickEditDate] = useState("");
   const [form, setForm] = useState({
     session_date: new Date().toISOString().split("T")[0],
     halaqa_id: "",
@@ -535,11 +538,44 @@ export default function QuranNarration() {
                       return (
                         <TableRow key={session.id} className={borderClass}>
                           <TableCell>
-                            <div>
-                              <p className="font-semibold text-sm">{hijriDate}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {gregDate}
-                              </p>
+                            <div className="flex items-center gap-1">
+                              <div>
+                                <p className="font-semibold text-sm">{hijriDate}</p>
+                                <p className="text-xs text-muted-foreground">{gregDate}</p>
+                              </div>
+                              {(isManager || role === "supervisor") && (
+                                <Popover open={quickEditSessionId === session.id} onOpenChange={(open) => {
+                                  if (open) {
+                                    setQuickEditSessionId(session.id);
+                                    setQuickEditDate(session.session_date);
+                                  } else {
+                                    setQuickEditSessionId(null);
+                                  }
+                                }}>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 p-0" title="تعديل التاريخ">
+                                      <CalendarIcon className="w-3 h-3 text-muted-foreground" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-3 space-y-2" align="start">
+                                    <Label className="text-xs">تاريخ الجلسة</Label>
+                                    <Input type="date" value={quickEditDate} onChange={(e) => setQuickEditDate(e.target.value)} className="text-sm" />
+                                    {quickEditDate && (
+                                      <p className="text-xs text-muted-foreground">{formatHijriArabic(new Date(quickEditDate))}</p>
+                                    )}
+                                    <Button size="sm" className="w-full" onClick={async () => {
+                                      const { error } = await supabase.from("narration_sessions" as any).update({ session_date: quickEditDate }).eq("id", session.id);
+                                      if (error) {
+                                        toast({ title: "خطأ في تحديث التاريخ", variant: "destructive" });
+                                      } else {
+                                        queryClient.invalidateQueries({ queryKey: ["narration-sessions"] });
+                                        toast({ title: "تم تحديث تاريخ الجلسة" });
+                                        setQuickEditSessionId(null);
+                                      }
+                                    }}>حفظ</Button>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
