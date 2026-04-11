@@ -17,7 +17,7 @@ import {
   Plus, DollarSign, TrendingUp, TrendingDown, Wallet,
   Calendar, FileText, CheckCircle2, Clock, XCircle,
   Loader2, Settings, ArrowUpRight, ArrowDownRight, Search,
-  Download,
+  Download, Pencil,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -51,6 +51,9 @@ const Finance = () => {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ amount: "", category: "", description: "", transaction_date: "", transaction_type: "income" as "income" | "expense" });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("");
@@ -194,6 +197,46 @@ const Finance = () => {
     setAccountSettingsOpen(false);
     setSaving(false);
     fetchData();
+  };
+
+  const openEditTransaction = (tx: any) => {
+    setEditTarget(tx);
+    setEditForm({
+      amount: String(tx.amount),
+      category: tx.category,
+      description: tx.description || "",
+      transaction_date: tx.transaction_date,
+      transaction_type: tx.transaction_type,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const editTransaction = async () => {
+    if (!editTarget) return;
+    setSaving(true);
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+    const { error } = await supabase.from("financial_transactions").update({
+      amount: parseFloat(editForm.amount),
+      category: editForm.category,
+      description: editForm.description || null,
+      transaction_date: editForm.transaction_date,
+    } as any).eq("id", editTarget.id);
+    if (error) {
+      toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    } else {
+      await supabase.from("financial_audit_log").insert({
+        transaction_id: editTarget.id,
+        action: "edit",
+        details: `تعديل: المبلغ=${editForm.amount}, التصنيف=${editForm.category}`,
+        performed_by: userId,
+      } as any);
+      toast({ title: "تم تعديل المعاملة بنجاح" });
+      setEditDialogOpen(false);
+      setEditTarget(null);
+      fetchData();
+    }
+    setSaving(false);
   };
 
   // Calculations
@@ -428,7 +471,8 @@ const Finance = () => {
                 <TransactionCard key={tx.id} tx={tx} isManager={isManager}
                   onApprove={() => approveTransaction(tx.id)}
                   onReject={() => rejectTransaction(tx.id)}
-                  onDelete={() => confirmDelete(tx.id)} />
+                  onDelete={() => confirmDelete(tx.id)}
+                  onEdit={() => openEditTransaction(tx)} />
               ))}
             </div>
           )}
