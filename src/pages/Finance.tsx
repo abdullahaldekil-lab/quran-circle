@@ -560,11 +560,47 @@ const Finance = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Transaction Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>تعديل المعاملة</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>المبلغ (ر.س) *</Label>
+              <Input type="number" min="0" step="0.01" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} dir="ltr" />
+            </div>
+            <div>
+              <Label>التصنيف *</Label>
+              <Select value={editForm.category} onValueChange={(v) => setEditForm({ ...editForm, category: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(editForm.transaction_type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>الوصف</Label>
+              <Textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+            </div>
+            <div>
+              <Label>التاريخ *</Label>
+              <Input type="date" value={editForm.transaction_date} onChange={(e) => setEditForm({ ...editForm, transaction_date: e.target.value })} />
+            </div>
+            <Button onClick={editTransaction} disabled={saving} className="w-full">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Pencil className="w-4 h-4 ml-1" />}
+              حفظ التعديلات
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-const TransactionCard = ({ tx, isManager, onApprove, onReject, onDelete }: any) => {
+const TransactionCard = ({ tx, isManager, onApprove, onReject, onDelete, onEdit }: any) => {
   const isIncome = tx.transaction_type === "income";
   const catLabel = INCOME_CATEGORIES[tx.category] || EXPENSE_CATEGORIES[tx.category] || tx.category;
 
@@ -601,15 +637,20 @@ const TransactionCard = ({ tx, isManager, onApprove, onReject, onDelete }: any) 
             <p className={`text-sm font-bold ${isIncome ? "text-success" : "text-destructive"}`}>
               {isIncome ? "+" : "-"}{Number(tx.amount).toLocaleString("ar-SA")} <span className="text-[10px]">ر.س</span>
             </p>
-            {isManager && tx.status === "pending" && (
-              <div className="flex gap-1 mt-1">
-                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-success" onClick={onApprove}><CheckCircle2 className="w-3.5 h-3.5" /></Button>
-                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" onClick={onReject}><XCircle className="w-3.5 h-3.5" /></Button>
-              </div>
-            )}
-            {isManager && tx.status !== "approved" && (
-              <Button size="sm" variant="ghost" className="h-6 text-[10px] text-destructive mt-1" onClick={onDelete}>حذف</Button>
-            )}
+            <div className="flex gap-1 mt-1">
+              {isManager && tx.status === "pending" && (
+                <>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-success" onClick={onApprove}><CheckCircle2 className="w-3.5 h-3.5" /></Button>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" onClick={onReject}><XCircle className="w-3.5 h-3.5" /></Button>
+                </>
+              )}
+              {isManager && (
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-primary" onClick={onEdit} title="تعديل"><Pencil className="w-3.5 h-3.5" /></Button>
+              )}
+              {isManager && (
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" onClick={onDelete} title="حذف"><XCircle className="w-3.5 h-3.5" /></Button>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
