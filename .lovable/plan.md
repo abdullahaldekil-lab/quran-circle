@@ -1,39 +1,43 @@
 
 
-# خطة الإصلاحات
+# خطة التنفيذ — 5 تعديلات
 
-## 1. إصلاح عداد الطلبات المعلقة في Dashboard.tsx
-**المشكلة**: استعلام `internal_requests` يفلتر بـ `to_user_id` و `to_role` للجميع، مما يمنع المدير من رؤية كل الطلبات.
+## 1. إضافة حالة «مستأذن» لحضور الموظفين (StaffAttendance.tsx)
+- إضافة `excused: { label: "مستأذن", variant: "outline" }` في `STATUS_MAP` (سطر 54-60)
+- إضافة `<SelectItem value="excused">مستأذن</SelectItem>` في قائمة الحالات بنموذج التعديل اليدوي (سطر 436-441)
+- إضافة بطاقة ملخص «مستأذن» بأيقونة زرقاء في شبكة البطاقات (سطر 342-348)
+- تعديل `summary` ليحسب عدد المستأذنين: `const excused = records.filter(r => r.status === "excused").length`
+- تعديل Badge لتظهر بلون أزرق فاتح: عند عرض حالة `excused` يُضاف `className="bg-blue-100 text-blue-800"`
 
-**الحل**: إضافة شرط `isManager` لتجاوز الفلتر:
-```typescript
-const isManagerRole = profile?.role === 'manager';
-let reqQuery = supabase.from('internal_requests')
-  .select('id', { count: 'exact', head: true })
-  .in('status', ['new', 'in_progress']);
-if (!isManagerRole) {
-  reqQuery = reqQuery.or(`to_user_id.eq.${user.id},to_role.eq.${role}`);
-}
-```
+## 2. تعديل المعاملات المالية للمدير (Finance.tsx)
+- إضافة state: `editTarget`, `editDialogOpen`, `editForm`
+- إضافة دالة `editTransaction` تنفذ `supabase.from('financial_transactions').update(...)` + تسجيل في `financial_audit_log`
+- إضافة زر ✏️ في `TransactionCard` يظهر للمدير فقط (`isManager`)
+- إضافة Dialog تعديل يحتوي على: المبلغ، التصنيف (منسدل)، الوصف، التاريخ
+- تمرير `onEdit` callback من المكون الرئيسي إلى `TransactionCard`
 
-**الملف**: `src/pages/Dashboard.tsx` (سطر ~128-133)
+## 3. فصل إدخالات التسميع بصرياً (Recitation.tsx)
+- تحويل الأقسام الثلاثة (الحفظ، المراجعة، الربط) من صفوف بسيطة إلى أقسام مستقلة بخلفيات ملونة:
+  - الحفظ: `bg-green-50 border-green-200` مع أيقونة BookOpen خضراء
+  - المراجعة: `bg-blue-50 border-blue-200` مع أيقونة RefreshCw زرقاء
+  - الربط: `bg-purple-50 border-purple-200` مع أيقونة Link بنفسجية
+- نقل Slider جودة الحفظ داخل قسم الحفظ، والتجويد داخل قسم المراجعة
+- استبدال Slider الأخطاء بحقل رقمي مع أزرار `+` و `-` لتسهيل الإدخال السريع
 
----
+## 4. إشعارات الغياب والتأخر (Attendance.tsx)
+- الكود الحالي (سطور 276-308) يرسل إشعارات بالفعل عبر `sendNotification` لكل طالب غائب/متأخر
+- **التحسين**: إضافة عداد لعدد الإشعارات المُرسلة وعرض toast بعد الحفظ: `تم إرسال X إشعار لأولياء الأمور`
+- إضافة `try/catch` حول حلقة الإشعارات لضمان عدم فشل الحفظ بسبب خطأ في الإشعارات
 
-## 2. تحسين معالجة أخطاء الحضور في Attendance.tsx
-**الحل**: إضافة `console.error` ورسالة واجهة عند فشل استعلام الحضور، والتأكد من أن تغيير التاريخ يعمل بدقة مع التنسيق `yyyy-MM-dd`.
-
-**الملف**: `src/pages/Attendance.tsx`
-
----
-
-## ملاحظات - بنود لا تحتاج تعديل
-- **أدوار التعيين**: `roleLabels` يحتوي بالفعل على الأدوار السبعة كاملة ويُستخدم في نماذج الإنشاء والتعديل عبر `Object.entries(roleLabels).map()`
-- **تقارير التميز الشهرية**: `loadMonthlyReport` تفلتر بالفعل بنطاق تاريخ هجري→ميلادي وتستخدم `sessionIds` للأداء
+## 5. تعديل تاريخ جلسة السرد (QuranNarration.tsx)
+- الجلسة تدعم التعديل بالفعل عبر `openEdit` (سطر 324-337) الذي يفتح نفس Dialog الإنشاء
+- **التحسين**: إضافة زر ✏️ سريع بجانب تاريخ كل جلسة في القائمة (للمدير والمشرف فقط) يفتح Popover صغير
+- Popover يحتوي على: حقل تاريخ ميلادي + عرض التاريخ الهجري المقابل تلقائياً
+- عند الحفظ: `supabase.from('narration_sessions').update({ session_date: newDate }).eq('id', sessionId)` + invalidate queries
 
 ---
 
 ## تفاصيل تقنية
-- لا حاجة لتعديل قاعدة البيانات
-- ملفان فقط يتأثران: `Dashboard.tsx` و `Attendance.tsx`
+- لا حاجة لأي تعديل في قاعدة البيانات (جميع الأعمدة المطلوبة موجودة)
+- الملفات المتأثرة: `StaffAttendance.tsx`, `Finance.tsx`, `Recitation.tsx`, `Attendance.tsx`, `QuranNarration.tsx`
 
