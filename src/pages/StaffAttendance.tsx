@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, LogIn, LogOut, Users, Clock, AlertTriangle, UserX, CalendarOff, Pencil, Printer, FileDown } from "lucide-react";
+import { CalendarIcon, LogIn, LogOut, Users, Clock, AlertTriangle, UserX, CalendarOff, Pencil, Printer, FileDown, ShieldCheck } from "lucide-react";
 
 interface StaffProfile {
   id: string;
@@ -57,6 +57,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
   absent: { label: "غائب", variant: "destructive" },
   early_leave: { label: "خروج مبكر", variant: "outline" },
   leave: { label: "إجازة", variant: "outline" },
+  excused: { label: "مستأذن", variant: "outline" },
 };
 
 const StaffAttendance = () => {
@@ -295,8 +296,9 @@ const StaffAttendance = () => {
     const present = records.filter((r) => r.status === "present").length;
     const late = records.filter((r) => r.status === "late").length;
     const earlyLeave = records.filter((r) => r.status === "early_leave").length;
+    const excused = records.filter((r) => r.status === "excused").length;
     const absent = staffList.length - records.length;
-    return { present, late, earlyLeave, absent };
+    return { present, late, earlyLeave, excused, absent };
   }, [records, staffList]);
 
   return (
@@ -339,10 +341,11 @@ const StaffAttendance = () => {
       )}
 
       {!isDayOff && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Card><CardContent className="p-4 flex items-center gap-3"><Users className="w-8 h-8 text-emerald-500" /><div><p className="text-2xl font-bold">{summary.present}</p><p className="text-sm text-muted-foreground">حاضر</p></div></CardContent></Card>
           <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-8 h-8 text-amber-500" /><div><p className="text-2xl font-bold">{summary.late}</p><p className="text-sm text-muted-foreground">متأخر</p></div></CardContent></Card>
           <Card><CardContent className="p-4 flex items-center gap-3"><AlertTriangle className="w-8 h-8 text-orange-500" /><div><p className="text-2xl font-bold">{summary.earlyLeave}</p><p className="text-sm text-muted-foreground">خروج مبكر</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><ShieldCheck className="w-8 h-8 text-blue-500" /><div><p className="text-2xl font-bold">{summary.excused}</p><p className="text-sm text-muted-foreground">مستأذن</p></div></CardContent></Card>
           <Card><CardContent className="p-4 flex items-center gap-3"><UserX className="w-8 h-8 text-destructive" /><div><p className="text-2xl font-bold">{summary.absent}</p><p className="text-sm text-muted-foreground">غائب</p></div></CardContent></Card>
           <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-8 h-8 text-primary" /><div><p className="text-2xl font-bold">{staffList.length > 0 ? Math.round(((summary.present + summary.late) / staffList.length) * 100) : 0}%</p><p className="text-sm text-muted-foreground">نسبة الحضور</p></div></CardContent></Card>
         </div>
@@ -381,7 +384,7 @@ const StaffAttendance = () => {
                         <TableCell>{record?.check_in_time ? format(new Date(record.check_in_time), "HH:mm") : "—"}</TableCell>
                         <TableCell>{record?.check_out_time ? format(new Date(record.check_out_time), "HH:mm") : "—"}</TableCell>
                         <TableCell>
-                          <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                          <Badge variant={statusInfo.variant} className={record?.status === "excused" ? "bg-blue-100 text-blue-800 border-blue-200" : ""}>{statusInfo.label}</Badge>
                           {record?.late_minutes > 0 && <span className="text-xs text-muted-foreground mr-1">({record.late_minutes} د)</span>}
                         </TableCell>
                         {canManage && (
@@ -438,6 +441,7 @@ const StaffAttendance = () => {
                   <SelectItem value="absent">غائب</SelectItem>
                   <SelectItem value="leave">إجازة</SelectItem>
                   <SelectItem value="early_leave">خروج مبكر</SelectItem>
+                  <SelectItem value="excused">مستأذن</SelectItem>
                 </SelectContent>
               </Select>
             </div>
