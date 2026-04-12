@@ -358,12 +358,16 @@ const Attendance = () => {
 
   const cycleStatus = (studentId: string) => {
     if (!canEdit) return;
-    // Admin can cycle all 4 statuses; teachers use the new tap system
-    if (!isAdmin) {
+
+    const order: AttendanceStatus[] = ["present", "absent", "late", "excused"];
+
+    if (!isAdmin && !attendance[studentId]) {
+      // Teacher first tap: auto-detect status based on time
       handleTeacherMark(studentId);
       return;
     }
-    const order: AttendanceStatus[] = ["present", "absent", "late", "excused"];
+
+    // Cycle through all 4 statuses for everyone (admin + teacher after first tap)
     const current = attendance[studentId] || "present";
     const idx = order.indexOf(current);
     setAttendance({ ...attendance, [studentId]: order[(idx + 1) % order.length] });
