@@ -202,6 +202,9 @@ export default function ExcellenceReports() {
       avgScore: h.count > 0 ? h.totalScore / h.count : 0,
     })).sort((a, b) => b.avgScore - a.avgScore);
     setMonthlyHalaqaReport(halaqaList);
+    } finally {
+      setMonthlyLoading(false);
+    }
   };
 
   const saveMonthlyReport = async () => {
