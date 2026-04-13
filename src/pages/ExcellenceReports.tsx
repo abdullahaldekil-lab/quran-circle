@@ -47,6 +47,7 @@ export default function ExcellenceReports() {
   const [monthlyHalaqaReport, setMonthlyHalaqaReport] = useState<any[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<any>(null);
   const [publishingMonthly, setPublishingMonthly] = useState(false);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
 
   // Track report
   const [excellenceTracks, setExcellenceTracks] = useState<any[]>([]);
@@ -126,27 +127,29 @@ export default function ExcellenceReports() {
 
   // Monthly Report — uses Hijri month/year to determine Gregorian date range
   const loadMonthlyReport = async () => {
-    const hMonth = parseInt(hijriMonth);
-    const hYear = parseInt(hijriYear);
-    const startGreg = toMiladi(hYear, hMonth, 1);
-    const endGreg = toMiladi(hMonth === 12 ? hYear + 1 : hYear, hMonth === 12 ? 1 : hMonth + 1, 1);
-    endGreg.setDate(endGreg.getDate() - 1);
-    const startDate = startGreg.toISOString().split("T")[0];
-    const endDate = endGreg.toISOString().split("T")[0];
+    setMonthlyLoading(true);
+    try {
+      const hMonth = parseInt(hijriMonth);
+      const hYear = parseInt(hijriYear);
+      const startGreg = toMiladi(hYear, hMonth, 1);
+      const endGreg = toMiladi(hMonth === 12 ? hYear + 1 : hYear, hMonth === 12 ? 1 : hMonth + 1, 1);
+      endGreg.setDate(endGreg.getDate() - 1);
+      const startDate = startGreg.toISOString().split("T")[0];
+      const endDate = endGreg.toISOString().split("T")[0];
 
-    const { data: sessionsInMonth } = await supabase
-      .from("excellence_sessions")
-      .select("id, halaqa_id")
-      .gte("session_date", startDate)
-      .lte("session_date", endDate);
+      const { data: sessionsInMonth } = await supabase
+        .from("excellence_sessions")
+        .select("id, halaqa_id")
+        .gte("session_date", startDate)
+        .lte("session_date", endDate);
 
-    const sessionIds = (sessionsInMonth || []).map((s) => s.id);
-    if (sessionIds.length === 0) {
-      setMonthlyReport([]);
-      setMonthlyHalaqaReport([]);
-      setMonthlySummary(null);
-      return;
-    }
+      const sessionIds = (sessionsInMonth || []).map((s) => s.id);
+      if (sessionIds.length === 0) {
+        setMonthlyReport([]);
+        setMonthlyHalaqaReport([]);
+        setMonthlySummary(null);
+        return;
+      }
 
     const [perfRes, attRes] = await Promise.all([
       supabase.from("excellence_performance").select("*, students:student_id(full_name, halaqa_id, halaqat:halaqa_id(name))").in("session_id", sessionIds),
@@ -199,6 +202,9 @@ export default function ExcellenceReports() {
       avgScore: h.count > 0 ? h.totalScore / h.count : 0,
     })).sort((a, b) => b.avgScore - a.avgScore);
     setMonthlyHalaqaReport(halaqaList);
+    } finally {
+      setMonthlyLoading(false);
+    }
   };
 
   const saveMonthlyReport = async () => {
@@ -446,11 +452,23 @@ export default function ExcellenceReports() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={loadMonthlyReport}>عرض التقرير</Button>
+                <Button onClick={loadMonthlyReport} disabled={monthlyLoading}>
+                  {monthlyLoading ? "جارٍ التحميل..." : "عرض التقرير"}
+                </Button>
               </div>
 
+              {monthlyLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+
+              {!monthlyLoading && !monthlySummary && monthlyReport.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">لا توجد جلسات مسجلة في هذا الشهر</p>
+              )}
+
               {/* KPI Summary Cards */}
-              {monthlySummary && (
+              {!monthlyLoading && monthlySummary && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <Card><CardContent className="p-3 text-center">
                     <p className="text-2xl font-bold text-primary">{monthlySummary.sessionCount}</p>
@@ -476,7 +494,7 @@ export default function ExcellenceReports() {
               )}
 
               {/* Student Ranking Table */}
-              {monthlyReport.length > 0 && (
+              {!monthlyLoading && monthlyReport.length > 0 && (
                 <div id="monthly-report-print" className="space-y-6">
                   <div>
                     <h3 className="font-bold text-base mb-2 flex items-center gap-2"><Award className="w-4 h-4" />ترتيب الطلاب — {HIJRI_MONTHS[parseInt(hijriMonth) - 1]} {hijriYear} هـ</h3>
