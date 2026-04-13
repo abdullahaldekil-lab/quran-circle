@@ -642,8 +642,8 @@ const PermissionsManagement = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">كل الأدوار</SelectItem>
-                      {Object.entries(roleLabels).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      {(Object.keys(roleLabels) as Array<keyof typeof roleLabels>).map((key) => (
+                        <SelectItem key={key} value={key}>{roleLabels[key]}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
