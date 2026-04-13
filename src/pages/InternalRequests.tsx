@@ -56,6 +56,7 @@ const InternalRequests = () => {
   // Filters for admin tab
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterSender, setFilterSender] = useState<string>("all");
 
   // New request form
   const [form, setForm] = useState({
