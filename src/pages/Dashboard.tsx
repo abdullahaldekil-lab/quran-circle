@@ -89,6 +89,21 @@ const Dashboard = () => {
         if (todayCount > 0 && avg >= 80) {
           newAlerts.push({ type: "success", message: `أداء ممتاز اليوم! متوسط الدرجات ${Math.round(avg)}` });
         }
+
+        // Upcoming holidays alert
+        const twoDaysLater = new Date(Date.now() + 2 * 864e5).toISOString().split("T")[0];
+        const { data: upcomingHolidays } = await supabase
+          .from("holidays")
+          .select("title, start_date, end_date")
+          .gte("start_date", today)
+          .lte("start_date", twoDaysLater);
+        if (upcomingHolidays?.length) {
+          newAlerts.push({
+            type: "info",
+            message: `📅 تنبيه: إجازة «${upcomingHolidays[0].title}» تبدأ ${upcomingHolidays[0].start_date}`,
+          });
+        }
+
         setAlerts(newAlerts);
 
         // Fetch staff attendance percentage
@@ -187,16 +202,20 @@ const Dashboard = () => {
           {alerts.map((alert, i) => (
             <div
               key={i}
-              className={`flex items-center gap-3 p-3 rounded-lg text-sm ${
+             className={`flex items-center gap-3 p-3 rounded-lg text-sm ${
                 alert.type === "error"
                   ? "bg-destructive/10 text-destructive"
                   : alert.type === "warning"
                   ? "bg-warning/10 text-warning"
+                  : alert.type === "info"
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300"
                   : "bg-success/10 text-success"
               }`}
             >
               {alert.type === "success" ? (
                 <CheckCircle className="w-4 h-4 shrink-0" />
+              ) : alert.type === "info" ? (
+                <CalendarDays className="w-4 h-4 shrink-0" />
               ) : (
                 <AlertTriangle className="w-4 h-4 shrink-0" />
               )}
