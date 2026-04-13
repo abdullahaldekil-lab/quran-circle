@@ -8,9 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Search, Shield, Users, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Shield, Users, Lock, UserCog, RefreshCw } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Role {
   id: string;
@@ -32,6 +36,8 @@ interface Profile {
   full_name: string;
   role: string;
   active: boolean;
+  job_title?: string | null;
+  updated_at?: string | null;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -49,8 +55,39 @@ const categoryLabels: Record<string, string> = {
   settings: "الإعدادات",
 };
 
+const roleLabels: Record<string, string> = {
+  manager: "مدير المجمع",
+  supervisor: "مشرف تعليمي",
+  assistant_supervisor: "مساعد مشرف",
+  secretary: "سكرتير",
+  admin_staff: "موظف إداري",
+  teacher: "معلم",
+  assistant_teacher: "معلم مساعد",
+};
+
+const roleBadgeColors: Record<string, string> = {
+  manager: "bg-red-100 text-red-800",
+  supervisor: "bg-purple-100 text-purple-800",
+  assistant_supervisor: "bg-indigo-100 text-indigo-800",
+  secretary: "bg-yellow-100 text-yellow-800",
+  admin_staff: "bg-orange-100 text-orange-800",
+  teacher: "bg-green-100 text-green-800",
+  assistant_teacher: "bg-teal-100 text-teal-800",
+};
+
+interface AuditLogEntry {
+  id: string;
+  created_at: string;
+  action_type: string;
+  details: string | null;
+  actor_user_id: string | null;
+  target_user_id: string | null;
+  actor_name?: string;
+  target_name?: string;
+}
+
 const PermissionsManagement = () => {
-  const { session } = useAuth();
+  const { session, profile: authProfile } = useAuth();
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -69,6 +106,19 @@ const PermissionsManagement = () => {
   const [userRolePerms, setUserRolePerms] = useState<string[]>([]);
   const [userSearch, setUserSearch] = useState("");
 
+  // Role change tab
+  const [roleChangeSearch, setRoleChangeSearch] = useState("");
+  const [roleChangeFilter, setRoleChangeFilter] = useState("all");
+  const [roleChangeDialogOpen, setRoleChangeDialogOpen] = useState(false);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<Profile | null>(null);
+  const [newRoleValue, setNewRoleValue] = useState("");
+  const [roleChangeReason, setRoleChangeReason] = useState("");
+  const [newRolePermIds, setNewRolePermIds] = useState<string[]>([]);
+  const [roleChangeSaving, setRoleChangeSaving] = useState(false);
+  const [roleAuditLog, setRoleAuditLog] = useState<AuditLogEntry[]>([]);
+
+  const isManager = authProfile?.role === "manager";
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -78,7 +128,7 @@ const PermissionsManagement = () => {
     const [rolesRes, permsRes, profilesRes] = await Promise.all([
       supabase.from("roles").select("*").order("is_system", { ascending: false }),
       supabase.from("permissions").select("*").order("category"),
-      supabase.from("profiles").select("id, full_name, role, active").eq("active", true).order("full_name"),
+      supabase.from("profiles").select("id, full_name, role, active, job_title, updated_at").eq("active", true).order("full_name"),
     ]);
     setRoles(rolesRes.data || []);
     setPermissions(permsRes.data || []);
@@ -155,14 +205,12 @@ const PermissionsManagement = () => {
   // ---- USERS TAB ----
   const selectUser = async (user: Profile) => {
     setSelectedUser(user);
-    // Get role permissions
     const { data: rps } = await supabase
       .from("role_permissions")
       .select("permission_id, roles!inner(name)")
       .eq("roles.name", user.role);
     setUserRolePerms(rps?.map((rp) => rp.permission_id) || []);
 
-    // Get user overrides
     const { data: ups } = await supabase
       .from("user_permissions")
       .select("permission_id, granted")
@@ -178,7 +226,6 @@ const PermissionsManagement = () => {
     const hasRolePerm = userRolePerms.includes(permId);
 
     if (currentOverride === undefined || currentOverride === null) {
-      // No override - add one (opposite of role)
       const granted = !hasRolePerm;
       await supabase.from("user_permissions").upsert({
         user_id: selectedUser.id,
@@ -187,7 +234,6 @@ const PermissionsManagement = () => {
       }, { onConflict: "user_id,permission_id" });
       setUserPermOverrides((prev) => ({ ...prev, [permId]: granted }));
     } else {
-      // Has override - remove it (revert to role default)
       await supabase.from("user_permissions").delete()
         .eq("user_id", selectedUser.id).eq("permission_id", permId);
       setUserPermOverrides((prev) => {
@@ -217,6 +263,127 @@ const PermissionsManagement = () => {
     return acc;
   }, {} as Record<string, Permission[]>);
 
+  // ---- ROLE CHANGE TAB ----
+  const roleChangeProfiles = profiles.filter((p) => {
+    const matchSearch = p.full_name.includes(roleChangeSearch) || p.role.includes(roleChangeSearch);
+    const matchFilter = roleChangeFilter === "all" || p.role === roleChangeFilter;
+    return matchSearch && matchFilter;
+  });
+
+  const fetchNewRolePerms = async (roleName: string) => {
+    const { data } = await supabase
+      .from("role_permissions")
+      .select("permission_id, roles!inner(name)")
+      .eq("roles.name", roleName);
+    setNewRolePermIds(data?.map((rp) => rp.permission_id) || []);
+  };
+
+  const openRoleChangeDialog = (user: Profile) => {
+    setRoleChangeTarget(user);
+    setNewRoleValue("");
+    setRoleChangeReason("");
+    setNewRolePermIds([]);
+    setRoleChangeDialogOpen(true);
+  };
+
+  const fetchRoleAuditLog = async () => {
+    const { data } = await supabase
+      .from("admin_audit_log")
+      .select("*")
+      .eq("action_type", "role_changed")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (data && data.length > 0) {
+      const userIds = new Set<string>();
+      data.forEach((d) => {
+        if (d.actor_user_id) userIds.add(d.actor_user_id);
+        if (d.target_user_id) userIds.add(d.target_user_id);
+      });
+      const { data: names } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", Array.from(userIds));
+      const nameMap: Record<string, string> = {};
+      names?.forEach((n) => { nameMap[n.id] = n.full_name; });
+
+      setRoleAuditLog(data.map((d) => ({
+        ...d,
+        actor_name: d.actor_user_id ? nameMap[d.actor_user_id] || "—" : "—",
+        target_name: d.target_user_id ? nameMap[d.target_user_id] || "—" : "—",
+      })));
+    } else {
+      setRoleAuditLog([]);
+    }
+  };
+
+  const handleRoleChange = async () => {
+    if (!roleChangeTarget || !newRoleValue || !session?.user?.id) return;
+    if (newRoleValue === roleChangeTarget.role) {
+      toast({ title: "الدور الجديد مطابق للحالي", variant: "destructive" });
+      return;
+    }
+
+    // Check if changing last manager
+    if (roleChangeTarget.role === "manager" && newRoleValue !== "manager") {
+      const managerCount = profiles.filter((p) => p.role === "manager").length;
+      if (managerCount <= 1) {
+        toast({ title: "لا يمكن تغيير دور المدير الأخير في النظام", variant: "destructive" });
+        return;
+      }
+    }
+
+    setRoleChangeSaving(true);
+    try {
+      const oldRole = roleChangeTarget.role;
+
+      // 1. Update profile role
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ role: newRoleValue as any })
+        .eq("id", roleChangeTarget.id);
+
+      if (updateError) throw updateError;
+
+      // 2. Call manage-users edge function
+      try {
+        await supabase.functions.invoke("manage-users", {
+          body: {
+            action: "admin_edit_user",
+            user_id: roleChangeTarget.id,
+            role: newRoleValue,
+          },
+        });
+      } catch (e) {
+        console.error("Edge function error (non-blocking):", e);
+      }
+
+      // 3. Audit log
+      await supabase.from("admin_audit_log").insert({
+        actor_user_id: session.user.id,
+        action_type: "role_changed",
+        target_user_id: roleChangeTarget.id,
+        details: `تغيير الدور من ${roleLabels[oldRole] || oldRole} إلى ${roleLabels[newRoleValue] || newRoleValue}. السبب: ${roleChangeReason || "غير محدد"}`,
+      });
+
+      toast({ title: "تم تغيير الدور بنجاح" });
+      setRoleChangeDialogOpen(false);
+      fetchData();
+      fetchRoleAuditLog();
+    } catch (e: any) {
+      toast({ title: "خطأ", description: e.message, variant: "destructive" });
+    } finally {
+      setRoleChangeSaving(false);
+    }
+  };
+
+  // Fetch audit log when role-change tab is selected
+  const handleTabChange = (value: string) => {
+    if (value === "role-change") {
+      fetchRoleAuditLog();
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -235,17 +402,19 @@ const PermissionsManagement = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="roles" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="roles" className="space-y-4" onValueChange={handleTabChange}>
+        <TabsList className={`grid w-full ${isManager ? "grid-cols-4" : "grid-cols-3"}`}>
           <TabsTrigger value="roles" className="gap-2"><Shield className="w-4 h-4" /> الأدوار</TabsTrigger>
           <TabsTrigger value="permissions" className="gap-2"><Lock className="w-4 h-4" /> الصلاحيات</TabsTrigger>
           <TabsTrigger value="users" className="gap-2"><Users className="w-4 h-4" /> المستخدمون</TabsTrigger>
+          {isManager && (
+            <TabsTrigger value="role-change" className="gap-2"><UserCog className="w-4 h-4" /> تغيير الأدوار</TabsTrigger>
+          )}
         </TabsList>
 
         {/* === ROLES TAB === */}
         <TabsContent value="roles" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Roles list */}
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -281,7 +450,6 @@ const PermissionsManagement = () => {
               </CardContent>
             </Card>
 
-            {/* Role permissions */}
             <Card className="lg:col-span-2">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">
@@ -315,7 +483,6 @@ const PermissionsManagement = () => {
             </Card>
           </div>
 
-          {/* Role dialog */}
           <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
             <DialogContent dir="rtl">
               <DialogHeader>
@@ -365,7 +532,6 @@ const PermissionsManagement = () => {
         {/* === USERS TAB === */}
         <TabsContent value="users" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* User list */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">المستخدمون</CardTitle>
@@ -397,7 +563,6 @@ const PermissionsManagement = () => {
               </CardContent>
             </Card>
 
-            {/* User permissions */}
             <Card className="lg:col-span-2">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">
@@ -447,6 +612,233 @@ const PermissionsManagement = () => {
             </Card>
           </div>
         </TabsContent>
+
+        {/* === ROLE CHANGE TAB === */}
+        {isManager && (
+          <TabsContent value="role-change" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <UserCog className="w-5 h-5" /> تغيير أدوار الموظفين
+                  </CardTitle>
+                  <Button size="sm" variant="outline" onClick={fetchRoleAuditLog}>
+                    <RefreshCw className="w-4 h-4 ml-1" /> تحديث
+                  </Button>
+                </div>
+                <div className="flex gap-3 mt-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      className="pr-9"
+                      placeholder="بحث بالاسم..."
+                      value={roleChangeSearch}
+                      onChange={(e) => setRoleChangeSearch(e.target.value)}
+                    />
+                  </div>
+                  <Select value={roleChangeFilter} onValueChange={setRoleChangeFilter}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="كل الأدوار" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">كل الأدوار</SelectItem>
+                      {(Object.keys(roleLabels) as Array<keyof typeof roleLabels>).map((key) => (
+                        <SelectItem key={key} value={key}>{roleLabels[key]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">الاسم</TableHead>
+                        <TableHead className="text-right">الدور الحالي</TableHead>
+                        <TableHead className="text-right">المسمى الوظيفي</TableHead>
+                        <TableHead className="text-right">آخر تعديل</TableHead>
+                        <TableHead className="text-right w-[120px]">إجراء</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {roleChangeProfiles.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.full_name}</TableCell>
+                          <TableCell>
+                            <Badge className={`${roleBadgeColors[user.role] || "bg-muted text-muted-foreground"}`}>
+                              {roleLabels[user.role] || user.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{user.job_title || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {user.updated_at ? new Date(user.updated_at).toLocaleDateString("ar-SA") : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openRoleChangeDialog(user)}
+                            >
+                              <Pencil className="w-3.5 h-3.5 ml-1" /> تغيير الدور
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {roleChangeProfiles.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">لا يوجد موظفون</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Role Change Dialog */}
+            <Dialog open={roleChangeDialogOpen} onOpenChange={setRoleChangeDialogOpen}>
+              <DialogContent dir="rtl" className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>تغيير دور الموظف</DialogTitle>
+                </DialogHeader>
+                {roleChangeTarget && (
+                  <div className="space-y-4 mt-2">
+                    <div>
+                      <Label className="text-muted-foreground text-xs">اسم الموظف</Label>
+                      <p className="font-semibold">{roleChangeTarget.full_name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">الدور الحالي</Label>
+                      <div className="mt-1">
+                        <Badge className={`${roleBadgeColors[roleChangeTarget.role] || ""}`}>
+                          {roleLabels[roleChangeTarget.role] || roleChangeTarget.role}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>الدور الجديد</Label>
+                      <Select
+                        value={newRoleValue}
+                        onValueChange={(val) => {
+                          setNewRoleValue(val);
+                          fetchNewRolePerms(val);
+                        }}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="اختر الدور الجديد" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(roleLabels).map(([key, label]) => (
+                            <SelectItem key={key} value={key} disabled={key === roleChangeTarget.role}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* New role permissions preview */}
+                    {newRoleValue && (
+                      <div>
+                        <Label className="text-muted-foreground text-xs">صلاحيات الدور الجديد</Label>
+                        <ScrollArea className="h-[200px] mt-2 border rounded-md p-3">
+                          {newRoleValue === "manager" ? (
+                            <p className="text-sm text-green-700 font-medium">المدير يملك جميع الصلاحيات</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {Object.entries(groupedPermissions).map(([cat, perms]) => {
+                                const activePerms = perms.filter((p) => newRolePermIds.includes(p.id));
+                                if (activePerms.length === 0) return null;
+                                return (
+                                  <div key={cat}>
+                                    <p className="text-xs font-bold text-muted-foreground mb-1">{categoryLabels[cat] || cat}</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {perms.map((p) => (
+                                        <Badge
+                                          key={p.id}
+                                          variant={newRolePermIds.includes(p.id) ? "default" : "outline"}
+                                          className="text-xs"
+                                        >
+                                          {p.name_ar}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {newRolePermIds.length === 0 && (
+                                <p className="text-sm text-muted-foreground">لا توجد صلاحيات مخصصة لهذا الدور</p>
+                              )}
+                            </div>
+                          )}
+                        </ScrollArea>
+                      </div>
+                    )}
+
+                    <div>
+                      <Label>سبب التغيير (اختياري)</Label>
+                      <Textarea
+                        className="mt-1"
+                        placeholder="أدخل سبب تغيير الدور..."
+                        value={roleChangeReason}
+                        onChange={(e) => setRoleChangeReason(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      onClick={handleRoleChange}
+                      disabled={!newRoleValue || roleChangeSaving}
+                    >
+                      {roleChangeSaving ? "جارٍ الحفظ..." : "تأكيد التغيير"}
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Audit Log */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">سجل تغييرات الأدوار</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {roleAuditLog.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-6">لا توجد تغييرات مسجلة</p>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-right">التاريخ</TableHead>
+                          <TableHead className="text-right">المُغيِّر</TableHead>
+                          <TableHead className="text-right">الموظف</TableHead>
+                          <TableHead className="text-right">التفاصيل</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {roleAuditLog.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell className="text-sm">
+                              {new Date(log.created_at).toLocaleDateString("ar-SA")}
+                            </TableCell>
+                            <TableCell className="text-sm">{log.actor_name}</TableCell>
+                            <TableCell className="text-sm">{log.target_name}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-[300px] truncate">
+                              {log.details}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
