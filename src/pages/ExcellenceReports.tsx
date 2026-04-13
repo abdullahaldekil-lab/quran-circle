@@ -452,11 +452,23 @@ export default function ExcellenceReports() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={loadMonthlyReport}>عرض التقرير</Button>
+                <Button onClick={loadMonthlyReport} disabled={monthlyLoading}>
+                  {monthlyLoading ? "جارٍ التحميل..." : "عرض التقرير"}
+                </Button>
               </div>
 
+              {monthlyLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+
+              {!monthlyLoading && !monthlySummary && monthlyReport.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">لا توجد جلسات مسجلة في هذا الشهر</p>
+              )}
+
               {/* KPI Summary Cards */}
-              {monthlySummary && (
+              {!monthlyLoading && monthlySummary && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <Card><CardContent className="p-3 text-center">
                     <p className="text-2xl font-bold text-primary">{monthlySummary.sessionCount}</p>
