@@ -253,6 +253,11 @@ const PermissionsManagement = () => {
     return { active: hasRole, source: "role" };
   };
 
+  const getRoleLabel = (roleName: string) => {
+    const found = roles.find((r) => r.name === roleName);
+    return found?.name_ar || roleLabels[roleName] || roleName;
+  };
+
   const filteredProfiles = profiles.filter((p) =>
     p.full_name.includes(userSearch) || p.role.includes(userSearch)
   );
@@ -363,7 +368,7 @@ const PermissionsManagement = () => {
         actor_user_id: session.user.id,
         action_type: "role_changed",
         target_user_id: roleChangeTarget.id,
-        details: `تغيير الدور من ${roleLabels[oldRole] || oldRole} إلى ${roleLabels[newRoleValue] || newRoleValue}. السبب: ${roleChangeReason || "غير محدد"}`,
+        details: `تغيير الدور من ${getRoleLabel(oldRole)} إلى ${getRoleLabel(newRoleValue)}. السبب: ${roleChangeReason || "غير محدد"}`,
       });
 
       toast({ title: "تم تغيير الدور بنجاح" });
@@ -642,8 +647,8 @@ const PermissionsManagement = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">كل الأدوار</SelectItem>
-                      {(Object.keys(roleLabels) as Array<keyof typeof roleLabels>).map((key) => (
-                        <SelectItem key={key} value={key}>{roleLabels[key]}</SelectItem>
+                      {roles.map((r) => (
+                        <SelectItem key={r.name} value={r.name}>{r.name_ar}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -667,7 +672,7 @@ const PermissionsManagement = () => {
                           <TableCell className="font-medium">{user.full_name}</TableCell>
                           <TableCell>
                             <Badge className={`${roleBadgeColors[user.role] || "bg-muted text-muted-foreground"}`}>
-                              {roleLabels[user.role] || user.role}
+                              {getRoleLabel(user.role)}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">{user.job_title || "—"}</TableCell>
@@ -712,7 +717,7 @@ const PermissionsManagement = () => {
                       <Label className="text-muted-foreground text-xs">الدور الحالي</Label>
                       <div className="mt-1">
                         <Badge className={`${roleBadgeColors[roleChangeTarget.role] || ""}`}>
-                          {roleLabels[roleChangeTarget.role] || roleChangeTarget.role}
+                          {getRoleLabel(roleChangeTarget.role)}
                         </Badge>
                       </div>
                     </div>
@@ -729,9 +734,9 @@ const PermissionsManagement = () => {
                           <SelectValue placeholder="اختر الدور الجديد" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(roleLabels).map(([key, label]) => (
-                            <SelectItem key={key} value={key} disabled={key === roleChangeTarget.role}>
-                              {label}
+                          {roles.map((r) => (
+                            <SelectItem key={r.name} value={r.name} disabled={r.name === roleChangeTarget.role}>
+                              {r.name_ar}
                             </SelectItem>
                           ))}
                         </SelectContent>
