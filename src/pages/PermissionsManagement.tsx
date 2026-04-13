@@ -340,7 +340,7 @@ const PermissionsManagement = () => {
       // 1. Update profile role
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ role: newRoleValue })
+        .update({ role: newRoleValue as any })
         .eq("id", roleChangeTarget.id);
 
       if (updateError) throw updateError;
