@@ -127,27 +127,29 @@ export default function ExcellenceReports() {
 
   // Monthly Report — uses Hijri month/year to determine Gregorian date range
   const loadMonthlyReport = async () => {
-    const hMonth = parseInt(hijriMonth);
-    const hYear = parseInt(hijriYear);
-    const startGreg = toMiladi(hYear, hMonth, 1);
-    const endGreg = toMiladi(hMonth === 12 ? hYear + 1 : hYear, hMonth === 12 ? 1 : hMonth + 1, 1);
-    endGreg.setDate(endGreg.getDate() - 1);
-    const startDate = startGreg.toISOString().split("T")[0];
-    const endDate = endGreg.toISOString().split("T")[0];
+    setMonthlyLoading(true);
+    try {
+      const hMonth = parseInt(hijriMonth);
+      const hYear = parseInt(hijriYear);
+      const startGreg = toMiladi(hYear, hMonth, 1);
+      const endGreg = toMiladi(hMonth === 12 ? hYear + 1 : hYear, hMonth === 12 ? 1 : hMonth + 1, 1);
+      endGreg.setDate(endGreg.getDate() - 1);
+      const startDate = startGreg.toISOString().split("T")[0];
+      const endDate = endGreg.toISOString().split("T")[0];
 
-    const { data: sessionsInMonth } = await supabase
-      .from("excellence_sessions")
-      .select("id, halaqa_id")
-      .gte("session_date", startDate)
-      .lte("session_date", endDate);
+      const { data: sessionsInMonth } = await supabase
+        .from("excellence_sessions")
+        .select("id, halaqa_id")
+        .gte("session_date", startDate)
+        .lte("session_date", endDate);
 
-    const sessionIds = (sessionsInMonth || []).map((s) => s.id);
-    if (sessionIds.length === 0) {
-      setMonthlyReport([]);
-      setMonthlyHalaqaReport([]);
-      setMonthlySummary(null);
-      return;
-    }
+      const sessionIds = (sessionsInMonth || []).map((s) => s.id);
+      if (sessionIds.length === 0) {
+        setMonthlyReport([]);
+        setMonthlyHalaqaReport([]);
+        setMonthlySummary(null);
+        return;
+      }
 
     const [perfRes, attRes] = await Promise.all([
       supabase.from("excellence_performance").select("*, students:student_id(full_name, halaqa_id, halaqat:halaqa_id(name))").in("session_id", sessionIds),
