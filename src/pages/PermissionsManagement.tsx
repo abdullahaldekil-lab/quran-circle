@@ -368,7 +368,7 @@ const PermissionsManagement = () => {
         actor_user_id: session.user.id,
         action_type: "role_changed",
         target_user_id: roleChangeTarget.id,
-        details: `تغيير الدور من ${roleLabels[oldRole] || oldRole} إلى ${roleLabels[newRoleValue] || newRoleValue}. السبب: ${roleChangeReason || "غير محدد"}`,
+        details: `تغيير الدور من ${getRoleLabel(oldRole)} إلى ${getRoleLabel(newRoleValue)}. السبب: ${roleChangeReason || "غير محدد"}`,
       });
 
       toast({ title: "تم تغيير الدور بنجاح" });
@@ -672,7 +672,7 @@ const PermissionsManagement = () => {
                           <TableCell className="font-medium">{user.full_name}</TableCell>
                           <TableCell>
                             <Badge className={`${roleBadgeColors[user.role] || "bg-muted text-muted-foreground"}`}>
-                              {roleLabels[user.role] || user.role}
+                              {getRoleLabel(user.role)}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">{user.job_title || "—"}</TableCell>
@@ -717,7 +717,7 @@ const PermissionsManagement = () => {
                       <Label className="text-muted-foreground text-xs">الدور الحالي</Label>
                       <div className="mt-1">
                         <Badge className={`${roleBadgeColors[roleChangeTarget.role] || ""}`}>
-                          {roleLabels[roleChangeTarget.role] || roleChangeTarget.role}
+                          {getRoleLabel(roleChangeTarget.role)}
                         </Badge>
                       </div>
                     </div>
