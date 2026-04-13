@@ -249,6 +249,7 @@ const StaffTasks = () => {
         due_time: dueDateTime ? format(dueDateTime, "HH:mm:ss") : null,
         estimated_minutes: form.estimated_minutes ? Number(form.estimated_minutes) : null,
         reminder_at: reminderAt,
+        recurrence: form.recurrence || "none",
       };
 
       if (form.assigned_to) {
@@ -261,6 +262,23 @@ const StaffTasks = () => {
 
       const { error } = await supabase.from("staff_tasks").insert(payload);
       if (error) throw error;
+
+      // Create recurring copies if needed
+      if (form.recurrence !== "none" && dueDateTime) {
+        const copies = [];
+        for (let i = 1; i <= 4; i++) {
+          const nextDate = new Date(dueDateTime);
+          if (form.recurrence === "daily") nextDate.setDate(nextDate.getDate() + i);
+          else if (form.recurrence === "weekly") nextDate.setDate(nextDate.getDate() + i * 7);
+          copies.push({
+            ...payload,
+            due_date: format(nextDate, "yyyy-MM-dd"),
+            due_time: dueDateTime ? format(dueDateTime, "HH:mm:ss") : null,
+            reminder_at: form.reminder_minutes ? new Date(nextDate.getTime() - Number(form.reminder_minutes) * 60000).toISOString() : null,
+          });
+        }
+        await supabase.from("staff_tasks").insert(copies);
+      }
 
       // Send notification
       if (form.assigned_to) {
@@ -377,24 +395,131 @@ const StaffTasks = () => {
     </div>
   );
 
+  // Calendar helpers
+  const calendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startPad = firstDay.getDay(); // 0=Sun
+    const days: { date: string; day: number; inMonth: boolean }[] = [];
+    // Pad start
+    for (let i = startPad - 1; i >= 0; i--) {
+      const d = new Date(year, month, -i);
+      days.push({ date: format(d, "yyyy-MM-dd"), day: d.getDate(), inMonth: false });
+    }
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      days.push({ date: format(new Date(year, month, d), "yyyy-MM-dd"), day: d, inMonth: true });
+    }
+    // Pad end to fill 35 slots
+    while (days.length < 35) {
+      const d = new Date(year, month + 1, days.length - lastDay.getDate() - startPad + 1);
+      days.push({ date: format(d, "yyyy-MM-dd"), day: d.getDate(), inMonth: false });
+    }
+    return days;
+  }, [calendarMonth]);
+
+  const tasksByDate = useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    processedMyTasks.forEach(t => {
+      if (t.due_date) {
+        if (!map[t.due_date]) map[t.due_date] = [];
+        map[t.due_date].push(t);
+      }
+    });
+    return map;
+  }, [processedMyTasks]);
+
+  const filteredByCalendarDate = useMemo(() => {
+    if (!selectedCalendarDate) return processedMyTasks;
+    return processedMyTasks.filter(t => t.due_date === selectedCalendarDate);
+  }, [processedMyTasks, selectedCalendarDate]);
+
   return (
     <div className="space-y-4" dir="rtl">
       <PageDateHeader />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="my-tasks">مهامي</TabsTrigger>
-          {(isManager || isSupervisor) && <TabsTrigger value="assigned">المهام المُسنَدة</TabsTrigger>}
-        </TabsList>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <TabsList>
+            <TabsTrigger value="my-tasks">مهامي</TabsTrigger>
+            {(isManager || isSupervisor) && <TabsTrigger value="assigned">المهام المُسنَدة</TabsTrigger>}
+          </TabsList>
+          {activeTab === "my-tasks" && (
+            <Button variant="outline" size="sm" onClick={() => { setViewMode(v => v === "kanban" ? "calendar" : "kanban"); setSelectedCalendarDate(null); }}>
+              <CalendarDays className="h-4 w-4 ml-1" />
+              {viewMode === "kanban" ? "تقويم" : "Kanban"}
+            </Button>
+          )}
+        </div>
 
-        {/* My Tasks - Kanban */}
+        {/* My Tasks */}
         <TabsContent value="my-tasks" className="mt-4">
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            <KanbanColumn title="معلّقة" icon={<Clock className="h-4 w-4" />} tasks={kanbanColumns.pending} color="bg-muted/50" />
-            <KanbanColumn title="قيد التنفيذ" icon={<Play className="h-4 w-4" />} tasks={kanbanColumns.in_progress} color="bg-blue-50 dark:bg-blue-950/30" />
-            <KanbanColumn title="مكتملة" icon={<CheckCircle2 className="h-4 w-4" />} tasks={kanbanColumns.completed} color="bg-green-50 dark:bg-green-950/30" />
-            <KanbanColumn title="متأخرة" icon={<AlertTriangle className="h-4 w-4" />} tasks={kanbanColumns.overdue} color="bg-red-50 dark:bg-red-950/30" />
-          </div>
+          {viewMode === "kanban" ? (
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              <KanbanColumn title="معلّقة" icon={<Clock className="h-4 w-4" />} tasks={kanbanColumns.pending} color="bg-muted/50" />
+              <KanbanColumn title="قيد التنفيذ" icon={<Play className="h-4 w-4" />} tasks={kanbanColumns.in_progress} color="bg-blue-50 dark:bg-blue-950/30" />
+              <KanbanColumn title="مكتملة" icon={<CheckCircle2 className="h-4 w-4" />} tasks={kanbanColumns.completed} color="bg-green-50 dark:bg-green-950/30" />
+              <KanbanColumn title="متأخرة" icon={<AlertTriangle className="h-4 w-4" />} tasks={kanbanColumns.overdue} color="bg-red-50 dark:bg-red-950/30" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Calendar header */}
+              <div className="flex items-center justify-between">
+                <Button variant="ghost" size="icon" onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <span className="font-semibold">{calendarMonth.toLocaleDateString("ar-SA", { month: "long", year: "numeric" })}</span>
+                <Button variant="ghost" size="icon" onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              {/* Day labels */}
+              <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+                {["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"].map(d => <div key={d}>{d}</div>)}
+              </div>
+              {/* Calendar grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((cell, i) => {
+                  const dayTasks = tasksByDate[cell.date] || [];
+                  const isSelected = selectedCalendarDate === cell.date;
+                  const isToday = cell.date === new Date().toISOString().split("T")[0];
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => setSelectedCalendarDate(isSelected ? null : cell.date)}
+                      className={`min-h-[60px] p-1 border rounded cursor-pointer text-xs transition-colors ${
+                        !cell.inMonth ? "opacity-30" : ""
+                      } ${isSelected ? "border-primary bg-primary/5" : "border-border"} ${isToday ? "bg-blue-50 dark:bg-blue-950/20" : ""}`}
+                    >
+                      <div className="font-medium mb-0.5">{cell.day}</div>
+                      {dayTasks.slice(0, 3).map(t => (
+                        <Badge key={t.id} className={`text-[10px] px-1 py-0 mb-0.5 block truncate ${PRIORITY_COLORS[t.priority]}`}>
+                          {t.title}
+                        </Badge>
+                      ))}
+                      {dayTasks.length > 3 && <span className="text-[10px] text-muted-foreground">+{dayTasks.length - 3}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Tasks for selected date */}
+              {selectedCalendarDate && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">مهام {selectedCalendarDate}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {filteredByCalendarDate.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">لا توجد مهام في هذا اليوم</p>
+                    ) : (
+                      filteredByCalendarDate.map(t => <KanbanCard key={t.id} task={t} />)
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </TabsContent>
 
         {/* Assigned Tasks Table */}
@@ -638,8 +763,19 @@ const StaffTasks = () => {
                     {REMINDER_OPTIONS.map(r => <SelectItem key={r.minutes} value={String(r.minutes)}>{r.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
             </div>
+            <div>
+              <Label>التكرار</Label>
+              <Select value={form.recurrence} onValueChange={v => setForm(f => ({ ...f, recurrence: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">بدون تكرار</SelectItem>
+                  <SelectItem value="daily">يومي</SelectItem>
+                  <SelectItem value="weekly">أسبوعي</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setCreateOpen(false)}>إلغاء</Button>
