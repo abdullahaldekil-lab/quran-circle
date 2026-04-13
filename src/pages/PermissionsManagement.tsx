@@ -253,6 +253,11 @@ const PermissionsManagement = () => {
     return { active: hasRole, source: "role" };
   };
 
+  const getRoleLabel = (roleName: string) => {
+    const found = roles.find((r) => r.name === roleName);
+    return found?.name_ar || roleLabels[roleName] || roleName;
+  };
+
   const filteredProfiles = profiles.filter((p) =>
     p.full_name.includes(userSearch) || p.role.includes(userSearch)
   );
