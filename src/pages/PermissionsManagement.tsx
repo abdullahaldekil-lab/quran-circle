@@ -642,8 +642,8 @@ const PermissionsManagement = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">كل الأدوار</SelectItem>
-                      {(Object.keys(roleLabels) as Array<keyof typeof roleLabels>).map((key) => (
-                        <SelectItem key={key} value={key}>{roleLabels[key]}</SelectItem>
+                      {roles.map((r) => (
+                        <SelectItem key={r.name} value={r.name}>{r.name_ar}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -729,9 +729,9 @@ const PermissionsManagement = () => {
                           <SelectValue placeholder="اختر الدور الجديد" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(roleLabels).map(([key, label]) => (
-                            <SelectItem key={key} value={key} disabled={key === roleChangeTarget.role}>
-                              {label}
+                          {roles.map((r) => (
+                            <SelectItem key={r.name} value={r.name} disabled={r.name === roleChangeTarget.role}>
+                              {r.name_ar}
                             </SelectItem>
                           ))}
                         </SelectContent>
