@@ -47,6 +47,7 @@ export default function ExcellenceReports() {
   const [monthlyHalaqaReport, setMonthlyHalaqaReport] = useState<any[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<any>(null);
   const [publishingMonthly, setPublishingMonthly] = useState(false);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
 
   // Track report
   const [excellenceTracks, setExcellenceTracks] = useState<any[]>([]);

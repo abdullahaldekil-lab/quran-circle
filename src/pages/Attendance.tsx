@@ -197,7 +197,7 @@ const Attendance = () => {
       }
       if (attendanceRes.error) {
         console.error("Error fetching attendance:", attendanceRes.error);
-        toast.error("حدث خطأ في جلب بيانات الحضور");
+        toast.error("تعذّر جلب سجل الحضور، يرجى المحاولة مجدداً");
       }
 
       const studentList = studentsRes.data || [];
