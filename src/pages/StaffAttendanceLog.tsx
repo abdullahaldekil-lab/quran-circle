@@ -21,6 +21,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
   absent: { label: "غائب", variant: "destructive", color: "hsl(var(--destructive))" },
   early_leave: { label: "خروج مبكر", variant: "outline", color: "#f97316" },
   leave: { label: "إجازة", variant: "outline", color: "#6b7280" },
+  excused: { label: "مستأذن", variant: "outline", color: "#3b82f6" },
 };
 
 const CHART_COLORS = ["hsl(142, 76%, 36%)", "#f59e0b", "hsl(0, 84%, 60%)", "#6b7280", "#f97316"];
