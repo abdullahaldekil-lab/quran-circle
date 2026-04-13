@@ -119,8 +119,9 @@ const StaffAttendanceLog = () => {
     const late = filteredRecords.filter((r) => r.status === "late").length;
     const earlyLeave = filteredRecords.filter((r) => r.status === "early_leave").length;
     const absent = filteredRecords.filter((r) => r.status === "absent").length;
+    const excused = filteredRecords.filter((r) => r.status === "excused").length;
     const totalWork = filteredRecords.reduce((sum, r) => sum + (r.total_work_minutes || 0), 0);
-    return { present, late, earlyLeave, absent, totalWork };
+    return { present, late, earlyLeave, absent, excused, totalWork };
   }, [filteredRecords]);
 
   // Individual staff monthly detail
@@ -331,6 +332,7 @@ const StaffAttendanceLog = () => {
                   <SelectItem value="absent">غائب</SelectItem>
                   <SelectItem value="early_leave">خروج مبكر</SelectItem>
                   <SelectItem value="leave">إجازة</SelectItem>
+                  <SelectItem value="excused">مستأذن</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -339,10 +341,11 @@ const StaffAttendanceLog = () => {
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 print:hidden">
         <Card><CardContent className="p-4 flex items-center gap-3"><Users className="w-7 h-7 text-emerald-500" /><div><p className="text-xl font-bold">{dailySummary.present}</p><p className="text-xs text-muted-foreground">حاضر</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-7 h-7 text-amber-500" /><div><p className="text-xl font-bold">{dailySummary.late}</p><p className="text-xs text-muted-foreground">متأخر</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><AlertTriangle className="w-7 h-7 text-orange-500" /><div><p className="text-xl font-bold">{dailySummary.earlyLeave}</p><p className="text-xs text-muted-foreground">خروج مبكر</p></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3"><div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center"><Clock className="w-4 h-4 text-blue-600" /></div><div><p className="text-xl font-bold">{dailySummary.excused}</p><p className="text-xs text-muted-foreground">مستأذن</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><UserX className="w-7 h-7 text-destructive" /><div><p className="text-xl font-bold">{dailySummary.absent}</p><p className="text-xs text-muted-foreground">غائب</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><FileText className="w-7 h-7 text-primary" /><div><p className="text-xl font-bold">{formatMinutes(dailySummary.totalWork)}</p><p className="text-xs text-muted-foreground">إجمالي العمل</p></div></CardContent></Card>
       </div>
