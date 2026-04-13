@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.check-absence-warnings]
 verify_jwt = false
+
+[functions.award-monthly-badges]
+verify_jwt = false
