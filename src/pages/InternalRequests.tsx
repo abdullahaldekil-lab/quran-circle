@@ -250,6 +250,7 @@ const InternalRequests = () => {
   const filteredAll = allRequests.filter((r) => {
     if (filterType !== "all" && r.request_type !== filterType) return false;
     if (filterStatus !== "all" && r.status !== filterStatus) return false;
+    if (filterSender !== "all" && r.from_user_id !== filterSender) return false;
     return true;
   });
 
