@@ -171,9 +171,8 @@ const ExcellenceComparison = () => {
     const startDate = monthsAgo.toISOString().split("T")[0];
 
     try {
-      const results: ComparisonData[] = [];
       const { data: sessions } = await supabase.from("excellence_sessions").select("id, session_date").gte("session_date", startDate);
-      const sessionIds = new Set(sessions?.map((s) => s.id) || []);
+      const sessionIds = (sessions || []).map(s => s.id);
       const sessionDateMap = new Map(sessions?.map((s) => [s.id, s.session_date]) || []);
 
       const monthLabels: string[] = [];
@@ -181,22 +180,41 @@ const ExcellenceComparison = () => {
         const d = new Date(); d.setMonth(d.getMonth() - i);
         monthLabels.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
       }
+
+      // Batch queries instead of N+1
+      const [perfRes, attRes, recRes] = await Promise.all([
+        supabase.from("excellence_performance")
+          .select("student_id, total_score, pages_displayed, hizb_count, mistakes_count, session_id")
+          .in("student_id", selectedStudents)
+          .in("session_id", sessionIds),
+        supabase.from("excellence_attendance")
+          .select("student_id, is_present, session_id")
+          .in("student_id", selectedStudents)
+          .in("session_id", sessionIds),
+        supabase.from("recitation_records" as any)
+          .select("student_id, total_score")
+          .in("student_id", selectedStudents)
+          .gte("record_date", startDate),
+      ]);
+
+      const perfData = perfRes.data || [];
+      const attData = attRes.data || [];
+      const recData = (recRes.data as any[]) || [];
+
       const monthlyMap: Record<string, Record<string, { sum: number; count: number }>> = {};
       monthLabels.forEach((m) => (monthlyMap[m] = {}));
 
-      for (const studentId of selectedStudents) {
+      const results: ComparisonData[] = selectedStudents.map(studentId => {
         const student = eliteStudents?.find((e: any) => (e.students as any)?.id === studentId);
         const studentName = (student?.students as any)?.full_name || "غير معروف";
 
-        const { data: perfData } = await supabase.from("excellence_performance").select("total_score, pages_displayed, hizb_count, mistakes_count, session_id").eq("student_id", studentId);
-        const filteredPerf = perfData?.filter((p) => sessionIds.has(p.session_id)) || [];
+        const studentPerf = perfData.filter(p => p.student_id === studentId);
+        const avgScore = studentPerf.length > 0 ? studentPerf.reduce((sum, p) => sum + (Number(p.total_score) || 0), 0) / studentPerf.length : 0;
+        const totalPages = studentPerf.reduce((sum, p) => sum + (Number(p.pages_displayed) || 0), 0);
+        const totalHizb = studentPerf.reduce((sum, p) => sum + (Number(p.hizb_count) || 0), 0);
+        const avgMistakes = studentPerf.length > 0 ? studentPerf.reduce((sum, p) => sum + (Number(p.mistakes_count) || 0), 0) / studentPerf.length : 0;
 
-        const avgScore = filteredPerf.length > 0 ? filteredPerf.reduce((sum, p) => sum + (Number(p.total_score) || 0), 0) / filteredPerf.length : 0;
-        const totalPages = filteredPerf.reduce((sum, p) => sum + (Number(p.pages_displayed) || 0), 0);
-        const totalHizb = filteredPerf.reduce((sum, p) => sum + (Number(p.hizb_count) || 0), 0);
-        const avgMistakes = filteredPerf.length > 0 ? filteredPerf.reduce((sum, p) => sum + (Number(p.mistakes_count) || 0), 0) / filteredPerf.length : 0;
-
-        filteredPerf.forEach((p) => {
+        studentPerf.forEach(p => {
           const sDate = sessionDateMap.get(p.session_id);
           if (!sDate) return;
           const monthKey = sDate.substring(0, 7);
@@ -207,15 +225,13 @@ const ExcellenceComparison = () => {
           }
         });
 
-        const { data: attendanceData } = await supabase.from("excellence_attendance").select("is_present, session_id").eq("student_id", studentId);
-        const filteredAtt = attendanceData?.filter((a) => sessionIds.has(a.session_id)) || [];
-        const attendanceRate = filteredAtt.length > 0 ? (filteredAtt.filter((a) => a.is_present).length / filteredAtt.length) * 100 : 0;
+        const studentAtt = attData.filter(a => a.student_id === studentId);
+        const attendanceRate = studentAtt.length > 0 ? (studentAtt.filter(a => a.is_present).length / studentAtt.length) * 100 : 0;
 
-        const { data: recitationData } = await supabase.from("recitation_records" as any).select("total_score").eq("student_id", studentId).gte("record_date", startDate);
-        const recArr = (recitationData as any[]) || [];
-        const avgRecitationScore = recArr.length > 0 ? recArr.reduce((sum: number, r: any) => sum + (Number(r.total_score) || 0), 0) / recArr.length : 0;
+        const studentRec = recData.filter((r: any) => r.student_id === studentId);
+        const avgRecitationScore = studentRec.length > 0 ? studentRec.reduce((sum: number, r: any) => sum + (Number(r.total_score) || 0), 0) / studentRec.length : 0;
 
-        results.push({
+        return {
           studentId, studentName,
           avgScore: Math.round(avgScore * 10) / 10,
           attendanceRate: Math.round(attendanceRate * 10) / 10,
@@ -223,8 +239,8 @@ const ExcellenceComparison = () => {
           totalHizb: Math.round(totalHizb * 10) / 10,
           avgMistakes: Math.round(avgMistakes * 10) / 10,
           avgRecitationScore: Math.round(avgRecitationScore * 10) / 10,
-        });
-      }
+        };
+      });
 
       const studentNames = results.map((r) => r.studentName);
       const lineData: MonthlyScore[] = monthLabels.map((m) => {

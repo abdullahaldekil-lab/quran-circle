@@ -208,8 +208,13 @@ const FollowUpFormTab = ({ enrollment, dailyProgress, mistakes, exams, canEdit, 
     if (error) { toast.error("خطأ في حفظ الاختبار"); return; }
 
     if (examPassed) {
-      await supabase.from("madarij_enrollments").update({ status: "completed" } as any).eq("id", enrollment.id);
-      toast.success("تم اجتياز الاختبار بنجاح!");
+      // Auto-promote to next hizb
+      const nextHizb = (enrollment.hizb_number || 1) + 1;
+      await supabase.from("madarij_enrollments").update({
+        hizb_number: nextHizb,
+        updated_at: new Date().toISOString(),
+      } as any).eq("id", enrollment.id);
+      toast.success(`🎉 تهانٍ! تمت ترقية الطالب للحزب ${nextHizb}`);
     } else {
       toast.warning("لم يجتز الطالب الاختبار");
     }

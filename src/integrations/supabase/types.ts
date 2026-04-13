@@ -1730,6 +1730,7 @@ export type Database = {
           daily_target: string | null
           description: string | null
           id: string
+          madarij_track_id: string | null
           name: string
           review_requirement: string | null
           sort_order: number
@@ -1742,6 +1743,7 @@ export type Database = {
           daily_target?: string | null
           description?: string | null
           id?: string
+          madarij_track_id?: string | null
           name: string
           review_requirement?: string | null
           sort_order?: number
@@ -1754,13 +1756,22 @@ export type Database = {
           daily_target?: string | null
           description?: string | null
           id?: string
+          madarij_track_id?: string | null
           name?: string
           review_requirement?: string | null
           sort_order?: number
           suitable_for?: string | null
           target_memorization?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "memorization_levels_madarij_track_id_fkey"
+            columns: ["madarij_track_id"]
+            isOneToOne: false
+            referencedRelation: "madarij_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       narration_attempts: {
         Row: {
@@ -2904,6 +2915,7 @@ export type Database = {
           estimated_minutes: number | null
           id: string
           priority: string
+          recurrence: string | null
           reminder_at: string | null
           reminder_sent: boolean | null
           started_at: string | null
@@ -2927,6 +2939,7 @@ export type Database = {
           estimated_minutes?: number | null
           id?: string
           priority?: string
+          recurrence?: string | null
           reminder_at?: string | null
           reminder_sent?: boolean | null
           started_at?: string | null
@@ -2950,6 +2963,7 @@ export type Database = {
           estimated_minutes?: number | null
           id?: string
           priority?: string
+          recurrence?: string | null
           reminder_at?: string | null
           reminder_sent?: boolean | null
           started_at?: string | null
@@ -3725,6 +3739,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "students_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talqeen_sessions: {
+        Row: {
+          created_at: string | null
+          from_ayah: number | null
+          halaqa_id: string
+          id: string
+          notes: string | null
+          session_date: string
+          status: string | null
+          surah: string
+          to_ayah: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_ayah?: number | null
+          halaqa_id: string
+          id?: string
+          notes?: string | null
+          session_date?: string
+          status?: string | null
+          surah: string
+          to_ayah?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          from_ayah?: number | null
+          halaqa_id?: string
+          id?: string
+          notes?: string | null
+          session_date?: string
+          status?: string | null
+          surah?: string
+          to_ayah?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_sessions_halaqa_id_fkey"
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"

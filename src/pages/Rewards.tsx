@@ -161,6 +161,14 @@ const Rewards = () => {
     );
   }
 
+  const handleAwardMonthlyBadges = async () => {
+    toast({ title: "جارٍ منح الشارات الشهرية..." });
+    const { data, error } = await supabase.functions.invoke("award-monthly-badges");
+    if (error) { toast({ title: "خطأ", description: error.message, variant: "destructive" }); return; }
+    toast({ title: `تم منح ${data?.awarded || 0} شارة شهرية` });
+    fetchAll();
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -168,6 +176,11 @@ const Rewards = () => {
           <h1 className="text-2xl font-bold">الحوافز والمكافآت</h1>
           <p className="text-muted-foreground">نظام التحفيز والتكريم</p>
         </div>
+        {profile?.role === "manager" && (
+          <Button onClick={handleAwardMonthlyBadges} variant="outline" className="gap-1">
+            <Award className="h-4 w-4" /> منح الشارات الشهرية
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="points" dir="rtl">
