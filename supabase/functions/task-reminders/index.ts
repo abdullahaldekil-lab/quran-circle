@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
           channel: "inApp",
           status: "sent",
           sent_at: now,
+          meta_data: { templateCode: "TASK_DUE", task_id: task.id },
         });
       }
 
