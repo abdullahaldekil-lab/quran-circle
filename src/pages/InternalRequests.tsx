@@ -39,6 +39,7 @@ const InternalRequests = () => {
   const { isManager, isSupervisor, role } = useRole();
   const location = useLocation();
   const canViewAll = isManager || isSupervisor;
+  const defaultTab = (location.state as any)?.defaultTab || (canViewAll ? "admin" : "inbox");
 
   const [inbox, setInbox] = useState<any[]>([]);
   const [sent, setSent] = useState<any[]>([]);
@@ -286,11 +287,20 @@ const InternalRequests = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="inbox" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList>
-          <TabsTrigger value="inbox" className="gap-1"><Inbox className="w-4 h-4" /> الوارد ({inbox.length})</TabsTrigger>
-          <TabsTrigger value="sent" className="gap-1"><Send className="w-4 h-4" /> الصادر ({sent.length})</TabsTrigger>
-          {canViewAll && <TabsTrigger value="admin" className="gap-1"><BarChart3 className="w-4 h-4" /> الأوامر</TabsTrigger>}
+          {canViewAll ? (
+            <>
+              <TabsTrigger value="admin" className="gap-1">📋 جميع الطلبات ({allRequests.length})</TabsTrigger>
+              <TabsTrigger value="inbox" className="gap-1">📥 الواردة لي ({inbox.length})</TabsTrigger>
+              <TabsTrigger value="sent" className="gap-1">📤 الصادرة ({sent.length})</TabsTrigger>
+            </>
+          ) : (
+            <>
+              <TabsTrigger value="inbox" className="gap-1"><Inbox className="w-4 h-4" /> الوارد ({inbox.length})</TabsTrigger>
+              <TabsTrigger value="sent" className="gap-1"><Send className="w-4 h-4" /> الصادر ({sent.length})</TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         {/* Inbox Tab */}

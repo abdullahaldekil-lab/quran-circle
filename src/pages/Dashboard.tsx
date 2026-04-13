@@ -284,7 +284,7 @@ const Dashboard = () => {
             {pendingRequests > 0 && (
               <Card
                 className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
-                onClick={() => navigate("/internal-requests")}
+                onClick={() => navigate("/internal-requests", { state: { defaultTab: isManager || isSupervisor ? "admin" : "inbox" } })}
               >
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">الطلبات المعلقة</CardTitle>
