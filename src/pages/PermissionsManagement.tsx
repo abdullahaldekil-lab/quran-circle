@@ -222,27 +222,68 @@ const PermissionsManagement = () => {
 
   const toggleUserPermission = async (permId: string) => {
     if (!selectedUser) return;
-    const currentOverride = userPermOverrides[permId];
+    const state = getUserPermState(permId);
     const hasRolePerm = userRolePerms.includes(permId);
 
-    if (currentOverride === undefined || currentOverride === null) {
-      const granted = !hasRolePerm;
-      await supabase.from("user_permissions").upsert({
-        user_id: selectedUser.id,
-        permission_id: permId,
-        granted,
-      }, { onConflict: "user_id,permission_id" });
-      setUserPermOverrides((prev) => ({ ...prev, [permId]: granted }));
+    if (state.active) {
+      // Currently active → deny it
+      if (hasRolePerm) {
+        // Role grants it, so we need an explicit deny override
+        const { error } = await supabase.from("user_permissions").upsert({
+          user_id: selectedUser.id,
+          permission_id: permId,
+          granted: false,
+        }, { onConflict: "user_id,permission_id" });
+        if (error) {
+          toast({ title: "خطأ في تحديث الصلاحية", description: error.message, variant: "destructive" });
+          return;
+        }
+        setUserPermOverrides((prev) => ({ ...prev, [permId]: false }));
+      } else {
+        // It was a user-level grant, just remove the override
+        const { error } = await supabase.from("user_permissions").delete()
+          .eq("user_id", selectedUser.id).eq("permission_id", permId);
+        if (error) {
+          toast({ title: "خطأ في تحديث الصلاحية", description: error.message, variant: "destructive" });
+          return;
+        }
+        setUserPermOverrides((prev) => {
+          const next = { ...prev };
+          delete next[permId];
+          return next;
+        });
+      }
+      toast({ title: "تم إلغاء الصلاحية" });
     } else {
-      await supabase.from("user_permissions").delete()
-        .eq("user_id", selectedUser.id).eq("permission_id", permId);
-      setUserPermOverrides((prev) => {
-        const next = { ...prev };
-        delete next[permId];
-        return next;
-      });
+      // Currently inactive → grant it
+      if (hasRolePerm) {
+        // Role already grants it, just remove the deny override
+        const { error } = await supabase.from("user_permissions").delete()
+          .eq("user_id", selectedUser.id).eq("permission_id", permId);
+        if (error) {
+          toast({ title: "خطأ في تحديث الصلاحية", description: error.message, variant: "destructive" });
+          return;
+        }
+        setUserPermOverrides((prev) => {
+          const next = { ...prev };
+          delete next[permId];
+          return next;
+        });
+      } else {
+        // Not from role, add a user-level grant
+        const { error } = await supabase.from("user_permissions").upsert({
+          user_id: selectedUser.id,
+          permission_id: permId,
+          granted: true,
+        }, { onConflict: "user_id,permission_id" });
+        if (error) {
+          toast({ title: "خطأ في تحديث الصلاحية", description: error.message, variant: "destructive" });
+          return;
+        }
+        setUserPermOverrides((prev) => ({ ...prev, [permId]: true }));
+      }
+      toast({ title: "تم منح الصلاحية" });
     }
-    toast({ title: "تم التحديث" });
   };
 
   const getUserPermState = (permId: string): { active: boolean; source: "role" | "user" | "denied" } => {
