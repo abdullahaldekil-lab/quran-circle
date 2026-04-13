@@ -21,9 +21,10 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
   absent: { label: "غائب", variant: "destructive", color: "hsl(var(--destructive))" },
   early_leave: { label: "خروج مبكر", variant: "outline", color: "#f97316" },
   leave: { label: "إجازة", variant: "outline", color: "#6b7280" },
+  excused: { label: "مستأذن", variant: "outline", color: "#3b82f6" },
 };
 
-const CHART_COLORS = ["hsl(142, 76%, 36%)", "#f59e0b", "hsl(0, 84%, 60%)", "#6b7280", "#f97316"];
+const CHART_COLORS = ["hsl(142, 76%, 36%)", "#f59e0b", "hsl(0, 84%, 60%)", "#6b7280", "#f97316", "#3b82f6"];
 
 const StaffAttendanceLog = () => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
@@ -118,8 +119,9 @@ const StaffAttendanceLog = () => {
     const late = filteredRecords.filter((r) => r.status === "late").length;
     const earlyLeave = filteredRecords.filter((r) => r.status === "early_leave").length;
     const absent = filteredRecords.filter((r) => r.status === "absent").length;
+    const excused = filteredRecords.filter((r) => r.status === "excused").length;
     const totalWork = filteredRecords.reduce((sum, r) => sum + (r.total_work_minutes || 0), 0);
-    return { present, late, earlyLeave, absent, totalWork };
+    return { present, late, earlyLeave, absent, excused, totalWork };
   }, [filteredRecords]);
 
   // Individual staff monthly detail
@@ -159,7 +161,7 @@ const StaffAttendanceLog = () => {
 
   // Pie chart: status distribution
   const pieChartData = useMemo(() => {
-    const counts: Record<string, number> = { present: 0, late: 0, absent: 0, leave: 0, early_leave: 0 };
+    const counts: Record<string, number> = { present: 0, late: 0, absent: 0, leave: 0, early_leave: 0, excused: 0 };
     filteredRecords.forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1; });
     // Add absent (no record)
     const totalExpected = filteredStaff.length * monthDays.length;
@@ -184,6 +186,7 @@ const StaffAttendanceLog = () => {
       case "absent": return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300";
       case "leave": return "bg-muted text-muted-foreground";
       case "early_leave": return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300";
+      case "excused": return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300";
       default: return "bg-muted/30";
     }
   };
@@ -330,6 +333,7 @@ const StaffAttendanceLog = () => {
                   <SelectItem value="absent">غائب</SelectItem>
                   <SelectItem value="early_leave">خروج مبكر</SelectItem>
                   <SelectItem value="leave">إجازة</SelectItem>
+                  <SelectItem value="excused">مستأذن</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -338,10 +342,11 @@ const StaffAttendanceLog = () => {
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 print:hidden">
         <Card><CardContent className="p-4 flex items-center gap-3"><Users className="w-7 h-7 text-emerald-500" /><div><p className="text-xl font-bold">{dailySummary.present}</p><p className="text-xs text-muted-foreground">حاضر</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-7 h-7 text-amber-500" /><div><p className="text-xl font-bold">{dailySummary.late}</p><p className="text-xs text-muted-foreground">متأخر</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><AlertTriangle className="w-7 h-7 text-orange-500" /><div><p className="text-xl font-bold">{dailySummary.earlyLeave}</p><p className="text-xs text-muted-foreground">خروج مبكر</p></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3"><div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center"><Clock className="w-4 h-4 text-blue-600" /></div><div><p className="text-xl font-bold">{dailySummary.excused}</p><p className="text-xs text-muted-foreground">مستأذن</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><UserX className="w-7 h-7 text-destructive" /><div><p className="text-xl font-bold">{dailySummary.absent}</p><p className="text-xs text-muted-foreground">غائب</p></div></CardContent></Card>
         <Card><CardContent className="p-4 flex items-center gap-3"><FileText className="w-7 h-7 text-primary" /><div><p className="text-xl font-bold">{formatMinutes(dailySummary.totalWork)}</p><p className="text-xs text-muted-foreground">إجمالي العمل</p></div></CardContent></Card>
       </div>
