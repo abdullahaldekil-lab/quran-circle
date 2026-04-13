@@ -494,7 +494,7 @@ export default function ExcellenceReports() {
               )}
 
               {/* Student Ranking Table */}
-              {monthlyReport.length > 0 && (
+              {!monthlyLoading && monthlyReport.length > 0 && (
                 <div id="monthly-report-print" className="space-y-6">
                   <div>
                     <h3 className="font-bold text-base mb-2 flex items-center gap-2"><Award className="w-4 h-4" />ترتيب الطلاب — {HIJRI_MONTHS[parseInt(hijriMonth) - 1]} {hijriYear} هـ</h3>
