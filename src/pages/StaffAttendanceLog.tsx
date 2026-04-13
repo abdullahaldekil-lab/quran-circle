@@ -24,7 +24,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
   excused: { label: "مستأذن", variant: "outline", color: "#3b82f6" },
 };
 
-const CHART_COLORS = ["hsl(142, 76%, 36%)", "#f59e0b", "hsl(0, 84%, 60%)", "#6b7280", "#f97316"];
+const CHART_COLORS = ["hsl(142, 76%, 36%)", "#f59e0b", "hsl(0, 84%, 60%)", "#6b7280", "#f97316", "#3b82f6"];
 
 const StaffAttendanceLog = () => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
@@ -161,7 +161,7 @@ const StaffAttendanceLog = () => {
 
   // Pie chart: status distribution
   const pieChartData = useMemo(() => {
-    const counts: Record<string, number> = { present: 0, late: 0, absent: 0, leave: 0, early_leave: 0 };
+    const counts: Record<string, number> = { present: 0, late: 0, absent: 0, leave: 0, early_leave: 0, excused: 0 };
     filteredRecords.forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1; });
     // Add absent (no record)
     const totalExpected = filteredStaff.length * monthDays.length;
@@ -186,6 +186,7 @@ const StaffAttendanceLog = () => {
       case "absent": return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300";
       case "leave": return "bg-muted text-muted-foreground";
       case "early_leave": return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300";
+      case "excused": return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300";
       default: return "bg-muted/30";
     }
   };
