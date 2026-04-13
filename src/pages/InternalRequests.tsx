@@ -424,6 +424,16 @@ const InternalRequests = () => {
                       <SelectItem value="rejected">مرفوض</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Select value={filterSender} onValueChange={setFilterSender}>
+                    <SelectTrigger className="w-48"><SelectValue placeholder="المُرسِل" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع المرسلين</SelectItem>
+                      {staff.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground mr-auto">{filteredAll.length} طلب</span>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
