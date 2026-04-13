@@ -7,7 +7,8 @@ export type StaffRole =
   | "assistant_supervisor"
   | "admin_staff"
   | "teacher"
-  | "assistant_teacher";
+  | "assistant_teacher"
+  | (string & {}); // للأدوار المخصصة
 
 // Role mapping to conceptual RBAC names:
 // manager          → super_admin (full access)
