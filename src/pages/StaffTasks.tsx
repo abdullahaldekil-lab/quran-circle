@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Clock, CheckCircle2, XCircle, AlertTriangle, Play, MessageSquare, Send, RotateCcw } from "lucide-react";
+import { Plus, Clock, CheckCircle2, XCircle, AlertTriangle, Play, MessageSquare, Send, RotateCcw, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { sendNotification } from "@/utils/sendNotification";
 import PageDateHeader from "@/components/PageDateHeader";
@@ -63,7 +63,9 @@ const StaffTasks = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [newComment, setNewComment] = useState("");
-
+  const [viewMode, setViewMode] = useState<"kanban" | "calendar">("kanban");
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
   // Filters for assigned tab
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -74,7 +76,7 @@ const StaffTasks = () => {
   const [form, setForm] = useState({
     title: "", description: "", category: "عام", priority: "عادي",
     assigned_to: "", assigned_to_role: "", due_date: "", estimated_minutes: "",
-    reminder_minutes: "",
+    reminder_minutes: "", recurrence: "none",
   });
   const [completionNote, setCompletionNote] = useState("");
   const [actualMinutes, setActualMinutes] = useState("");
