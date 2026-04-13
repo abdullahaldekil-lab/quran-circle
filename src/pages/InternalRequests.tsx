@@ -71,13 +71,19 @@ const InternalRequests = () => {
     if (!user) return;
     setLoading(true);
 
-    // Fetch inbox (received)
-    const { data: inboxData } = await supabase
+    // Fetch inbox (received) — managers see all requests
+    let inboxQuery = supabase
       .from("internal_requests")
       .select("*, from_user:profiles!internal_requests_from_user_id_fkey(full_name)")
-      .or(`to_user_id.eq.${user.id},to_role.eq.${role}`)
-      .neq("from_user_id", user.id)
       .order("created_at", { ascending: false });
+
+    if (!canViewAll) {
+      inboxQuery = inboxQuery
+        .or(`to_user_id.eq.${user.id},to_role.eq.${role}`)
+        .neq("from_user_id", user.id);
+    }
+
+    const { data: inboxData } = await inboxQuery;
     setInbox(inboxData || []);
 
     // Fetch sent
