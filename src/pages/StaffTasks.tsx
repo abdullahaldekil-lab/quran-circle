@@ -274,7 +274,7 @@ const StaffTasks = () => {
     onSuccess: () => {
       toast.success("تم إنشاء المهمة بنجاح");
       setCreateOpen(false);
-      setForm({ title: "", description: "", category: "عام", priority: "عادي", assigned_to: "", assigned_to_role: "", due_date: "", estimated_minutes: "", reminder_minutes: "" });
+      setForm({ title: "", description: "", category: "عام", priority: "عادي", assigned_to: "", assigned_to_role: "", due_date: "", estimated_minutes: "", reminder_minutes: "", recurrence: "none" });
       queryClient.invalidateQueries({ queryKey: ["assigned-tasks"] });
     },
     onError: () => toast.error("حدث خطأ أثناء إنشاء المهمة"),
