@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { sendNotification } from "@/utils/sendNotification";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,6 +172,18 @@ const InternalRequests = () => {
     if (error) { toast.error("خطأ في تحديث الحالة"); return; }
     toast.success("تم تحديث الحالة");
     setSelectedRequest({ ...selectedRequest, status });
+
+    // Notify the request creator about status change
+    if (selectedRequest.from_user_id && selectedRequest.from_user_id !== user?.id) {
+      const statusLabel = status === "done" ? "مكتمل" : status === "rejected" ? "مرفوض" : "قيد التنفيذ";
+      sendNotification({
+        templateCode: "REQUEST_STATUS",
+        recipientIds: [selectedRequest.from_user_id],
+        variables: { title: selectedRequest.title, status: statusLabel },
+        metaData: { request_id: selectedRequest.id, templateCode: "REQUEST_STATUS" },
+      });
+    }
+
     fetchData();
   };
 
@@ -185,6 +198,18 @@ const InternalRequests = () => {
     if (error) { toast.error("خطأ في إرسال الرد"); setSaving(false); return; }
     toast.success("تم إرسال الرد");
     setReplyText("");
+
+    // Notify original requester about the reply
+    if (selectedRequest.from_user_id && selectedRequest.from_user_id !== user.id) {
+      const currentUserName = staff.find(s => s.id === user.id)?.full_name || "موظف";
+      sendNotification({
+        templateCode: "REQUEST_REPLY",
+        recipientIds: [selectedRequest.from_user_id],
+        variables: { senderName: currentUserName, title: selectedRequest.title },
+        metaData: { request_id: selectedRequest.id, templateCode: "REQUEST_REPLY" },
+      });
+    }
+
     const { data } = await supabase
       .from("internal_request_replies")
       .select("*, from_user:profiles!internal_request_replies_from_user_id_fkey(full_name)")
@@ -209,35 +234,22 @@ const InternalRequests = () => {
     if (form.to_user_id && form.to_user_id !== "none") payload.to_user_id = form.to_user_id;
     if (form.to_role && form.to_role !== "none") payload.to_role = form.to_role;
 
-    const { error } = await supabase.from("internal_requests").insert(payload);
+    const { data: newReqData, error } = await supabase.from("internal_requests").insert(payload).select("id").single();
     if (error) { toast.error("خطأ في إرسال الطلب"); setSaving(false); return; }
 
-    // Send in-app notification to recipient(s)
+    // Send notification via unified sendNotification
     const senderName = staff.find(s => s.id === user.id)?.full_name || "موظف";
-    const notifTitle = `طلب جديد: ${form.request_type}`;
-    const notifBody = `${senderName} أرسل طلباً: ${form.title}`;
+    const recipientIds = payload.to_user_id
+      ? [payload.to_user_id]
+      : staff.filter(s => s.role === payload.to_role && s.id !== user.id).map(s => s.id);
 
-    if (payload.to_user_id) {
-      await supabase.from("notifications").insert({
-        user_id: payload.to_user_id,
-        title: notifTitle,
-        body: notifBody,
-        channel: "inApp",
-        status: "sent",
+    if (recipientIds.length > 0) {
+      sendNotification({
+        templateCode: "NEW_REQUEST",
+        recipientIds,
+        variables: { requestType: form.request_type, senderName, title: form.title },
+        metaData: { request_id: newReqData?.id, templateCode: "NEW_REQUEST" },
       });
-    } else if (payload.to_role) {
-      const recipients = staff.filter(s => s.role === payload.to_role && s.id !== user.id);
-      if (recipients.length > 0) {
-        await supabase.from("notifications").insert(
-          recipients.map(r => ({
-            user_id: r.id,
-            title: notifTitle,
-            body: notifBody,
-            channel: "inApp",
-            status: "sent",
-          }))
-        );
-      }
     }
 
     toast.success("تم إرسال الطلب بنجاح");

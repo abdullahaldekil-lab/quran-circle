@@ -283,9 +283,10 @@ const StaffTasks = () => {
       // Send notification
       if (form.assigned_to) {
         sendNotification({
-          templateCode: "general_notification",
+          templateCode: "NEW_TASK",
           recipientIds: [form.assigned_to],
-          variables: { title: `مهمة جديدة: ${form.title}`, body: form.description || "تم إسناد مهمة جديدة إليك" },
+          variables: { title: form.title, priority: form.priority },
+          metaData: { templateCode: "NEW_TASK" },
         });
       }
     },
@@ -332,6 +333,18 @@ const StaffTasks = () => {
         actual_minutes: actualMinutes ? Number(actualMinutes) : null,
       },
     });
+
+    // Notify task assigner about completion
+    if (selectedTask.assigned_by && selectedTask.assigned_by !== userId) {
+      const currentUserName = profile?.full_name || "موظف";
+      sendNotification({
+        templateCode: "TASK_COMPLETED",
+        recipientIds: [selectedTask.assigned_by],
+        variables: { staffName: currentUserName, title: selectedTask.title },
+        metaData: { task_id: selectedTask.id, templateCode: "TASK_COMPLETED" },
+      });
+    }
+
     setCompleteOpen(false);
     setDetailOpen(false);
     setCompletionNote("");
