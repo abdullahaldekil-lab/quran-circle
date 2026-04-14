@@ -717,12 +717,17 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
 
 
 
-const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, setYear }: {
+const AttendanceTabContent = ({ attRecords, trendData, hijriMonth, hijriYear, setHijriMonth, setHijriYear }: {
   attRecords: any[]; trendData: { month: string; pct: number }[];
-  month: number; year: number; setMonth: (m: number) => void; setYear: (y: number) => void;
+  hijriMonth: number; hijriYear: number; setHijriMonth: (m: number) => void; setHijriYear: (y: number) => void;
 }) => {
-  const dateObj = new Date(year, month, 1);
-  const monthDays = eachDayOfInterval({ start: startOfMonth(dateObj), end: endOfMonth(dateObj) }).filter((d: Date) => {
+  // Convert Hijri month range to Gregorian days for the grid
+  const { toMiladi } = require("@/lib/hijri");
+  const startGreg = toMiladi(hijriYear, hijriMonth, 1);
+  let endGreg: Date;
+  try { endGreg = toMiladi(hijriYear, hijriMonth, 30); } catch { try { endGreg = toMiladi(hijriYear, hijriMonth, 29); } catch { endGreg = toMiladi(hijriYear, hijriMonth, 28); } }
+  
+  const monthDays = eachDayOfInterval({ start: startGreg, end: endGreg }).filter((d: Date) => {
     const day = getDay(d);
     return day !== 5 && day !== 6;
   });
@@ -743,19 +748,19 @@ const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, se
     excused: { label: "مستأذن", color: "bg-muted", badge: "outline" },
   };
 
-  const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date(2024, i).toLocaleDateString("ar-SA", { month: "long" }) }));
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+  const hijriMonthOptions = HIJRI_MONTHS.map((name, i) => ({ value: i + 1, label: name }));
+  const hijriYears = Array.from({ length: 5 }, (_, i) => hijriYear - 2 + i);
 
   return (
     <div className="space-y-4">
       <div className="flex gap-3">
-        <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+        <Select value={String(hijriMonth)} onValueChange={(v) => setHijriMonth(Number(v))}>
           <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{months.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}</SelectContent>
+          <SelectContent>{hijriMonthOptions.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}</SelectContent>
         </Select>
-        <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+        <Select value={String(hijriYear)} onValueChange={(v) => setHijriYear(Number(v))}>
           <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+          <SelectContent>{hijriYears.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
@@ -782,10 +787,11 @@ const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, se
                 const dateStr = fmtDate(day, "yyyy-MM-dd");
                 const status = attMap[dateStr];
                 const info = STATUS_MAP[status];
+                const hijriDay = toHijri(day);
                 return (
                   <tr key={dateStr} className={`border-b ${info?.color || ""}`}>
-                    <td className="p-2">{fmtDate(day, "d/M")}</td>
-                    <td className="p-2">{fmtDate(day, "EEEE", { locale: ar })}</td>
+                    <td className="p-2">{hijriDay.day}/{hijriDay.month}</td>
+                    <td className="p-2">{getWeekdayArabic(day)}</td>
                     <td className="p-2 text-center">
                       {info ? <Badge variant={info.badge}>{info.label}</Badge> : <span className="text-muted-foreground">—</span>}
                     </td>
