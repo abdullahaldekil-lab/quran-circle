@@ -483,7 +483,7 @@ const StaffTasks = () => {
                 <Button variant="ghost" size="icon" onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
-                <span className="font-semibold">{calendarMonth.toLocaleDateString("ar-SA", { month: "long", year: "numeric" })}</span>
+                <span className="font-semibold">{formatDateSmart(calendarMonth)}</span>
                 <Button variant="ghost" size="icon" onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>

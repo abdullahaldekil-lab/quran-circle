@@ -295,7 +295,7 @@ export default function NarrationReports() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => exportSessionToExcel({
-                    sessionDate: new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"),
+                    sessionDate: formatDateSmart(selectedSessionData?.session_date),
                     sessionTitle: selectedSessionData?.title || "",
                     halaqaName: selectedSessionData?.halaqat?.name || "",
                     attempts,
@@ -304,7 +304,7 @@ export default function NarrationReports() {
                     تصدير Excel
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => exportSessionToPdf({
-                    sessionDate: new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"),
+                    sessionDate: formatDateSmart(selectedSessionData?.session_date),
                     sessionTitle: selectedSessionData?.title || "",
                     halaqaName: selectedSessionData?.halaqat?.name || "",
                     attempts,
@@ -325,7 +325,7 @@ export default function NarrationReports() {
                         halaqaRank: i + 1,
                         sessionDate: selectedSessionData?.session_date || "",
                       }));
-                    exportBulkCertificatesPdf(rankedCerts, new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"));
+                    exportBulkCertificatesPdf(rankedCerts, formatDateSmart(selectedSessionData?.session_date));
                   }}>
                     <Printer className="w-4 h-4 ml-2" />
                     تصدير جميع الشهادات PDF

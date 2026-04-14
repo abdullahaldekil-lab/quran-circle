@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendNotification } from "@/utils/sendNotification";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { formatDateSmart } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -285,7 +286,7 @@ const InternalRequests = () => {
         <TableCell>{req.request_type}</TableCell>
         <TableCell><span className={PRIORITY_COLORS[req.priority as RequestPriority] || ""}>{req.priority}</span></TableCell>
         <TableCell>{req.title}</TableCell>
-        <TableCell className="text-xs text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ar-SA")}</TableCell>
+        <TableCell className="text-xs text-muted-foreground">{formatDateSmart(req.created_at)}</TableCell>
         <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
       </TableRow>
     );
@@ -376,7 +377,7 @@ const InternalRequests = () => {
                           <TableCell>{r.request_type}</TableCell>
                           <TableCell><span className={PRIORITY_COLORS[r.priority as RequestPriority] || ""}>{r.priority}</span></TableCell>
                           <TableCell>{r.title}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDateSmart(r.created_at)}</TableCell>
                           <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                         </TableRow>
                       );
@@ -493,7 +494,7 @@ const InternalRequests = () => {
                 </div>
                 {selectedRequest.body && <p className="text-sm bg-muted p-3 rounded-md">{selectedRequest.body}</p>}
                 {selectedRequest.due_date && (
-                  <p className="text-xs text-muted-foreground">تاريخ الاستحقاق: {new Date(selectedRequest.due_date).toLocaleDateString("ar-SA")}</p>
+                  <p className="text-xs text-muted-foreground">تاريخ الاستحقاق: {formatDateSmart(selectedRequest.due_date)}</p>
                 )}
 
                 {/* Status actions (for receiver/manager) */}
