@@ -53,6 +53,14 @@ const categoryLabels: Record<string, string> = {
   admin: "الإدارة",
   enrollment: "القبول والتسجيل",
   settings: "الإعدادات",
+  excellence: "التميز",
+  narration: "السرد",
+  quizzes: "الاختبارات",
+  staff: "شؤون الموظفين",
+  notifications: "الإشعارات",
+  health: "الصحة",
+  guardians: "أولياء الأمور",
+  programs: "البرامج",
 };
 
 const roleLabels: Record<string, string> = {
