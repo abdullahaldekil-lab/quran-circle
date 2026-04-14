@@ -372,7 +372,7 @@ const InternalRequests = () => {
                       const st = STATUS_MAP[r.status as RequestStatus] || STATUS_MAP.new;
                       return (
                         <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetail(r)}>
-                          <TableCell className="font-medium">{r.to_user?.full_name || r.to_role || "—"}</TableCell>
+                          <TableCell className="font-medium">{getStaffName(r.to_user_id) !== "—" ? getStaffName(r.to_user_id) : r.to_role || "—"}</TableCell>
                           <TableCell>{r.request_type}</TableCell>
                           <TableCell><span className={PRIORITY_COLORS[r.priority as RequestPriority] || ""}>{r.priority}</span></TableCell>
                           <TableCell>{r.title}</TableCell>
