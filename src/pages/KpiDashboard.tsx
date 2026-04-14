@@ -52,7 +52,7 @@ const KpiDashboard = () => {
 
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [isManager]);
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -72,7 +72,7 @@ const KpiDashboard = () => {
       supabase.from("strategic_objectives").select("*"),
       supabase.from("strategic_tasks").select("*"),
       supabase.from("reward_nominations").select("*").gte("created_at", monthStart + "T00:00:00"),
-      isManager ? supabase.from("financial_transactions").select("*").gte("transaction_date", monthStart).lte("transaction_date", today) : Promise.resolve({ data: [] }),
+      isManager ? supabase.from("financial_transactions").select("*") : Promise.resolve({ data: [] }),
     ]);
 
     setHalaqat(halaqatRes.data || []);
