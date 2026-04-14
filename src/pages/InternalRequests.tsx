@@ -219,7 +219,7 @@ const InternalRequests = () => {
 
     const { data } = await supabase
       .from("internal_request_replies")
-      .select("*, from_user:profiles!internal_request_replies_from_user_id_fkey(full_name)")
+      .select("*")
       .eq("request_id", selectedRequest.id)
       .order("created_at");
     setReplies(data || []);
