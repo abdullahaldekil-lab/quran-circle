@@ -15,8 +15,9 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   ClipboardList, CheckCircle2, XCircle, Clock, AlertCircle,
-  ArrowRightLeft, Trash2, MessageCircle, Copy, Users, Pencil
+  ArrowRightLeft, Trash2, MessageCircle, Copy, Users, Pencil, Printer
 } from "lucide-react";
+import AcceptanceLetterTemplate from "@/components/enrollment/AcceptanceLetterTemplate";
 import { Input } from "@/components/ui/input";
 
 type ReqStatus = "pending" | "approved" | "rejected" | "waiting_list";
@@ -73,6 +74,10 @@ const EnrollmentRequests = () => {
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [whatsAppMsg, setWhatsAppMsg] = useState("");
   const [whatsAppPhone, setWhatsAppPhone] = useState("");
+
+  // Print acceptance letter
+  const [printReq, setPrintReq] = useState<EnrollmentReq | null>(null);
+  const [showPrint, setShowPrint] = useState(false);
 
   // Edit dialog
   const [editReq, setEditReq] = useState<EnrollmentReq | null>(null);
@@ -404,6 +409,11 @@ const EnrollmentRequests = () => {
                                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                                 </Button>
                               )}
+                              {r.status === "approved" && (
+                                <Button size="icon" variant="ghost" className="h-7 w-7" title="طباعة خطاب القبول" onClick={() => { setPrintReq(r); setShowPrint(true); }}>
+                                  <Printer className="w-3.5 h-3.5 text-primary" />
+                                </Button>
+                              )}
                               {r.converted_student_id && (
                                 <Badge variant="secondary" className="text-xs">تم التحويل</Badge>
                               )}
@@ -548,6 +558,27 @@ const EnrollmentRequests = () => {
                 {processing ? "جارٍ الحفظ..." : "حفظ التعديلات"}
               </Button>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* Print Acceptance Letter Dialog */}
+      <Dialog open={showPrint} onOpenChange={setShowPrint}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Printer className="w-5 h-5" />
+              خطاب القبول
+            </DialogTitle>
+          </DialogHeader>
+          {printReq && (
+            <AcceptanceLetterTemplate
+              studentName={printReq.student_full_name}
+              guardianName={printReq.guardian_full_name}
+              guardianPhone={printReq.guardian_phone}
+              halaqaName={getHalaqaName(printReq.assigned_halaqa_id)}
+              approvedAt={printReq.created_at}
+              requestId={printReq.id}
+            />
           )}
         </DialogContent>
       </Dialog>
