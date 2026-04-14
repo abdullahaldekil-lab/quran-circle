@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { formatDateTimeSmart, formatDateHijriOnly } from "@/lib/hijri";
 import {
   Plus, MapPin, Calendar, Clock, Users, Play, CheckCircle2,
   Bus, Flag, RotateCcw, PartyPopper, ArrowRight, Loader2,
@@ -393,7 +394,7 @@ const Trips = () => {
                           <ArrowRight className="w-3 h-3 text-muted-foreground" />
                           <StatusBadge status={log.new_status} small />
                           <span className="text-muted-foreground">
-                            {new Date(log.changed_at).toLocaleString("ar-SA")}
+                            {formatDateTimeSmart(log.changed_at)}
                           </span>
                           {log.profiles?.full_name && (
                             <span className="text-muted-foreground">— {log.profiles.full_name}</span>
@@ -438,7 +439,7 @@ const TripCard = ({ trip, halaqaName, onStatusUpdate, onViewDetails, getNextStat
               <StatusBadge status={trip.status} />
             </div>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{trip.trip_date}</span>
+              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDateHijriOnly(trip.trip_date)}</span>
               {trip.start_time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{trip.start_time}</span>}
               {trip.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{trip.location}</span>}
             </div>

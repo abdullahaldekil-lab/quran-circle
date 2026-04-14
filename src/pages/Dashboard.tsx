@@ -14,6 +14,7 @@ import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
 import QuizAnalytics from "@/components/dashboard/QuizAnalytics";
 import DailyAttendanceSummary from "@/components/dashboard/DailyAttendanceSummary";
 import PageDateHeader from "@/components/PageDateHeader";
+import { formatDateHijriOnly } from "@/lib/hijri";
 
 const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promise<T> => {
   const p = Promise.resolve(promise);
@@ -100,7 +101,7 @@ const Dashboard = () => {
         if (upcomingHolidays?.length) {
           newAlerts.push({
             type: "info",
-            message: `📅 تنبيه: إجازة «${upcomingHolidays[0].title}» تبدأ ${upcomingHolidays[0].start_date}`,
+            message: `📅 تنبيه: إجازة «${upcomingHolidays[0].title}» تبدأ ${formatDateHijriOnly(upcomingHolidays[0].start_date)}`,
           });
         }
 

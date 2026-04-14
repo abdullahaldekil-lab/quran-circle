@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { formatHijriArabic } from "@/lib/hijri";
+import { formatHijriArabic, formatDateHijriOnly } from "@/lib/hijri";
 
 interface Props {
   enrollment: any;
@@ -56,7 +56,7 @@ const FollowUpPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onCl
             <div><strong>الجزء:</strong> {enrollment.part_number}</div>
             <div><strong>الحزب:</strong> {enrollment.hizb_number}</div>
             <div><strong>الفرع:</strong> {enrollment.branch_id ? "محدد" : "—"}</div>
-            <div><strong>البداية:</strong> {enrollment.start_date}</div>
+            <div><strong>البداية:</strong> {formatDateHijriOnly(enrollment.start_date)}</div>
           </div>
 
           {/* Daily Progress Table */}
@@ -82,7 +82,7 @@ const FollowUpPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onCl
                 {dailyProgress.length > 0 ? dailyProgress.map((dp, idx) => (
                   <tr key={dp.id}>
                     <td className="border p-1">{idx + 1}</td>
-                    <td className="border p-1">{dp.progress_date}</td>
+                    <td className="border p-1">{formatDateHijriOnly(dp.progress_date)}</td>
                     <td className="border p-1">{dp.memorization || ""}</td>
                     <td className="border p-1">{dp.listening ?? 0}</td>
                     <td className="border p-1">{dp.linking || ""}</td>

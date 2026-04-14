@@ -14,7 +14,7 @@ import {
   FileText, Target,
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { gregorianToHijri } from "@/lib/hijri";
+import { gregorianToHijri, formatDateHijriOnly } from "@/lib/hijri";
 
 const GuardianChildProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -214,7 +214,7 @@ const GuardianChildProfile = () => {
                   <Badge variant="secondary" className="text-xs">{student.current_level}</Badge>
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    منذ {student.join_date}
+                    منذ {formatDateHijriOnly(student.join_date)}
                   </span>
                 </div>
               </div>
@@ -285,7 +285,7 @@ const GuardianChildProfile = () => {
                     {records.map((r) => (
                       <div key={r.id} className="py-3 border-b last:border-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-muted-foreground">{r.record_date}</span>
+                          <span className="text-xs text-muted-foreground">{formatDateHijriOnly(r.record_date)}</span>
                           <span className={`text-sm font-bold ${
                             Number(r.total_score) >= 80 ? "text-success" : Number(r.total_score) >= 60 ? "text-warning" : "text-destructive"
                           }`}>
@@ -335,7 +335,7 @@ const GuardianChildProfile = () => {
                           {statusIcon(a.status)}
                           <span className="text-sm">{statusLabel(a.status)}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">{a.attendance_date}</span>
+                        <span className="text-xs text-muted-foreground">{formatDateHijriOnly(a.attendance_date)}</span>
                       </div>
                     ))}
                   </div>
@@ -386,7 +386,7 @@ const GuardianChildProfile = () => {
                             {tripStatusLabel(trip.status)}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground">{trip.trip_date}</p>
+                        <p className="text-xs text-muted-foreground">{formatDateHijriOnly(trip.trip_date)}</p>
                         {trip.description && (
                           <p className="text-xs text-muted-foreground mt-1">{trip.description}</p>
                         )}
@@ -438,8 +438,7 @@ const GuardianChildProfile = () => {
                       {quizzes.map((q) => (
                         <div key={q.id} className="flex items-center justify-between py-2 border-b last:border-0">
                           <div>
-                            <p className="text-xs font-medium">{formatHijriDate(q.quiz_date)}</p>
-                            <p className="text-[10px] text-muted-foreground">{q.quiz_date}</p>
+                            <p className="text-xs font-medium">{formatDateHijriOnly(q.quiz_date)}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold">{q.score}%</span>
@@ -472,7 +471,7 @@ const GuardianChildProfile = () => {
                       {narrationTests.map((n) => (
                         <div key={n.id} className="flex items-center justify-between py-2 border-b last:border-0">
                           <div>
-                            <p className="text-xs font-medium">{formatHijriDate(n.test_date)}</p>
+                            <p className="text-xs font-medium">{formatDateHijriOnly(n.test_date)}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <Badge variant="outline" className="text-[10px] h-5">{n.test_type === "narration" ? "سرد" : n.test_type === "review" ? "مراجعة" : n.test_type}</Badge>
                               <span className="text-[10px] text-muted-foreground">المرة {n.attempt_number}</span>

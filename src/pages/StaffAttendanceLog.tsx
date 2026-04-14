@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, subWeeks, getDay } from "date-fns";
 import { ar } from "date-fns/locale";
-import { formatDateHijriOnly, formatTime12h } from "@/lib/hijri";
+import { formatDateHijriOnly, formatTime12h, formatHijriArabic, toHijri, HIJRI_MONTHS } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -241,7 +241,7 @@ const StaffAttendanceLog = () => {
       import("jspdf-autotable").then(() => {
         const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
         doc.setFontSize(14);
-        doc.text(`تقرير الحضور الأسبوعي — ${format(weekDays[0], "d/M")} إلى ${format(weekDays[4], "d/M/yyyy")}`, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+        doc.text(`تقرير الحضور الأسبوعي — ${formatDateHijriOnly(weekDays[0])} إلى ${formatDateHijriOnly(weekDays[4])}`, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
         const head = ["الموظف", ...weekDays.map(d => format(d, "EEEE", { locale: ar }))];
         const body = filteredStaff.map(s => [
           s.full_name,
@@ -261,7 +261,7 @@ const StaffAttendanceLog = () => {
       import("jspdf-autotable").then(() => {
         const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
         doc.setFontSize(14);
-        doc.text(`تقرير الحضور الشهري — ${format(selectedMonth, "MMMM yyyy", { locale: ar })}`, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+        doc.text(`تقرير الحضور الشهري — ${HIJRI_MONTHS[toHijri(selectedMonth).month - 1]} ${toHijri(selectedMonth).year} هـ`, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
         const head = ["الموظف", "القسم", "حضور", "غياب", "تأخر", "دقائق التأخر", "ساعات العمل", "النسبة%"];
         const body = filteredStaff.map(s => {
           const recs = records.filter(r => r.staff_id === s.id);
@@ -295,7 +295,7 @@ const StaffAttendanceLog = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-right">
-                    <CalendarIcon className="ml-2 h-4 w-4" />{format(selectedMonth, "MMMM yyyy", { locale: ar })}
+                    <CalendarIcon className="ml-2 h-4 w-4" />{HIJRI_MONTHS[toHijri(selectedMonth).month - 1]} {toHijri(selectedMonth).year} هـ
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -413,7 +413,7 @@ const StaffAttendanceLog = () => {
         <TabsContent value="weekly" className="space-y-4">
           <div className="flex items-center gap-2 print:hidden flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setSelectedWeek(subWeeks(selectedWeek, 1))}>→ الأسبوع السابق</Button>
-            <span className="text-sm font-medium px-2">{format(weekDays[0], "d/M")} – {format(weekDays[4], "d/M/yyyy")}</span>
+            <span className="text-sm font-medium px-2">{formatDateHijriOnly(weekDays[0])} – {formatDateHijriOnly(weekDays[4])}</span>
             <Button variant="outline" size="sm" onClick={() => setSelectedWeek(addWeeks(selectedWeek, 1))}>الأسبوع التالي ←</Button>
             <div className="mr-auto flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
@@ -430,7 +430,7 @@ const StaffAttendanceLog = () => {
                     {weekDays.map(day => (
                       <TableHead key={day.toISOString()} className="text-center min-w-[80px]">
                         <div>{format(day, "EEEE", { locale: ar })}</div>
-                        <div className="text-xs text-muted-foreground">{format(day, "d/M")}</div>
+                        <div className="text-xs text-muted-foreground">{toHijri(day).day}/{toHijri(day).month}</div>
                       </TableHead>
                     ))}
                   </TableRow>

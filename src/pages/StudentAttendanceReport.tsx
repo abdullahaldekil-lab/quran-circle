@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from "date-fns";
 import { ar } from "date-fns/locale";
+import { formatDateHijriOnly, formatHijriArabic, toHijri, HIJRI_MONTHS } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -139,7 +140,7 @@ const StudentAttendanceReport = () => {
       }).length;
       const present = recs.filter(a => a.status === "present" || a.status === "late").length;
       const pct = workDays > 0 ? Math.round((present / workDays) * 100) : 0;
-      months.push({ month: format(d, "MMM yyyy", { locale: ar }), pct });
+      months.push({ month: `${HIJRI_MONTHS[toHijri(d).month - 1]} ${toHijri(d).year}`, pct });
     }
     return months;
   }, [filterStudentId, trendAttendance, selectedMonth, selectedYear]);
@@ -160,7 +161,7 @@ const StudentAttendanceReport = () => {
         doc.text("Student Attendance Report", 105, 20, { align: "center" });
         doc.setFontSize(11);
         doc.text(`Student: ${selectedStudent.full_name}`, 105, 30, { align: "center" });
-        doc.text(`Month: ${format(dateObj, "MMMM yyyy")}`, 105, 37, { align: "center" });
+        doc.text(`الشهر: ${HIJRI_MONTHS[toHijri(dateObj).month - 1]} ${toHijri(dateObj).year} هـ`, 105, 37, { align: "center" });
 
         doc.setFontSize(10);
         doc.text(`Present: ${selectedStudent.present} | Late: ${selectedStudent.late} | Absent: ${selectedStudent.absent} | Excused: ${selectedStudent.excused} | Rate: ${selectedStudent.pct}%`, 105, 47, { align: "center" });
@@ -371,7 +372,7 @@ const StudentAttendanceReport = () => {
                         const info = STATUS_LABELS[status || ""];
                         return (
                           <TableRow key={dateStr} className={info?.color || ""}>
-                            <TableCell>{format(day, "d/M/yyyy")}</TableCell>
+                            <TableCell>{formatDateHijriOnly(day)}</TableCell>
                             <TableCell>{format(day, "EEEE", { locale: ar })}</TableCell>
                             <TableCell className="text-center">
                               {info ? (

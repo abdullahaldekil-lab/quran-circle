@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Eye, BookOpen, Pencil, Trash2 } from "lucide-react";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import { toast } from "sonner";
 
 interface Props {
@@ -182,7 +183,7 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
               <div key={en.id} className="flex items-center justify-between py-2 border-b last:border-0">
                 <div>
                   <p className="text-sm font-medium">{(en.madarij_tracks as any)?.name} — الجزء {en.part_number} / الحزب {en.hizb_number}</p>
-                  <p className="text-xs text-muted-foreground">{en.start_date} → {en.end_date || "—"}</p>
+                  <p className="text-xs text-muted-foreground">{formatDateHijriOnly(en.start_date)} → {en.end_date ? formatDateHijriOnly(en.end_date) : "—"}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={en.status === "active" ? "default" : "secondary"} className="text-xs">

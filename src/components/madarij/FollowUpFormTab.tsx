@@ -13,7 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, BookOpen, GraduationCap, Printer } from "lucide-react";
 import { toast } from "sonner";
-import { formatHijriArabic } from "@/lib/hijri";
+import { formatHijriArabic, formatDateHijriOnly } from "@/lib/hijri";
 import FollowUpPrintTemplate from "./FollowUpPrintTemplate";
 
 interface FollowUpFormTabProps {
@@ -329,7 +329,7 @@ const FollowUpFormTab = ({ enrollment, dailyProgress, mistakes, exams, canEdit, 
                 const status = dp.execution;
                 return (
                   <TableRow key={dp.id}>
-                    <TableCell className="whitespace-nowrap text-xs">{dp.progress_date}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">{formatDateHijriOnly(dp.progress_date)}</TableCell>
                     <TableCell className="text-xs">{dp.memorization || "—"}</TableCell>
                     <TableCell>{dp.listening ?? 0}</TableCell>
                     <TableCell className="text-xs">{dp.linking || "—"}</TableCell>

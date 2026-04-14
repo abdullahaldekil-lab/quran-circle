@@ -15,7 +15,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-import { formatDualDate } from "@/lib/hijri";
+import { formatDualDate, formatDateHijriOnly } from "@/lib/hijri";
 
 const GRADE_LABELS: Record<string, { label: string; color: string }> = {
   excellent: { label: "ممتاز", color: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300" },
@@ -558,7 +558,7 @@ const QuizResults = () => {
                           const gl = GRADE_LABELS[q.grade_label];
                           return (
                             <TableRow key={q.id}>
-                              <TableCell>{q.quiz_date}</TableCell>
+                              <TableCell>{formatDateHijriOnly(q.quiz_date)}</TableCell>
                               <TableCell className="font-bold">{Number(q.score)}%</TableCell>
                               <TableCell>
                                 <Badge variant="outline" className={gl?.color || ""}>{gl?.label || q.grade_label}</Badge>

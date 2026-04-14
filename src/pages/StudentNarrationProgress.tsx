@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowRight, BookOpen, Trophy, TrendingUp, BarChart3, Hash, Award, Star, Flame, Zap } from "lucide-react";
+import { formatDateSmart, formatDateHijriOnly } from "@/lib/hijri";
 import {
   ChartContainer,
   ChartTooltip,
@@ -85,7 +86,7 @@ const StudentNarrationProgress = () => {
   const gradeChartData = useMemo(
     () =>
       attempts.map((a) => ({
-        date: a.session?.session_date || a.created_at.slice(0, 10),
+        date: formatDateHijriOnly(a.session?.session_date || a.created_at.slice(0, 10)),
         grade: Number(a.grade),
       })),
     [attempts]
@@ -94,7 +95,7 @@ const StudentNarrationProgress = () => {
   const hizbChartData = useMemo(
     () =>
       attempts.map((a) => ({
-        date: a.session?.session_date || a.created_at.slice(0, 10),
+        date: formatDateHijriOnly(a.session?.session_date || a.created_at.slice(0, 10)),
         hizb: Number(a.total_hizb_count),
       })),
     [attempts]
@@ -280,7 +281,7 @@ const StudentNarrationProgress = () => {
                   {[...attempts].reverse().map((a) => (
                     <TableRow key={a.id}>
                       <TableCell className="text-sm">
-                        {a.session?.session_date || a.created_at.slice(0, 10)}
+                        {formatDateSmart(a.session?.session_date || a.created_at.slice(0, 10))}
                       </TableCell>
                       <TableCell className="text-sm">
                         {a.session?.title || "—"}

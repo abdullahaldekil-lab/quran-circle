@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Printer, FileSpreadsheet, FileText, Users, CheckCircle, Activity, TrendingDown, Award, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import StudentNameLink from "@/components/StudentNameLink";
 import * as XLSX from "xlsx-js-style";
 import jsPDF from "jspdf";
@@ -404,7 +405,7 @@ const MadarijReport = () => {
                     <TableCell>{lc.old_track?.name || "—"}</TableCell>
                     <TableCell>{lc.new_track?.name || "—"}</TableCell>
                     <TableCell>{lc.reason || "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap">{lc.created_at?.split("T")[0]}</TableCell>
+                    <TableCell className="whitespace-nowrap">{lc.created_at ? formatDateHijriOnly(lc.created_at) : "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

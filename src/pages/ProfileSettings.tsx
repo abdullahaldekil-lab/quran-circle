@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
-import { formatDateSmart } from "@/lib/hijri";
+import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -378,7 +378,7 @@ const ProfileSettings = () => {
                   <span className="text-muted-foreground">آخر تسجيل دخول:</span>
                   <span className="font-medium">
                     {profile?.last_login_at
-                      ? new Date(profile.last_login_at).toLocaleString("ar-SA")
+                      ? formatDateTimeSmart(profile.last_login_at)
                       : "—"}
                   </span>
                 </div>

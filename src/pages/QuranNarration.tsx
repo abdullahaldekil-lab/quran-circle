@@ -541,7 +541,6 @@ export default function QuranNarration() {
                             <div className="flex items-center gap-1">
                               <div>
                                 <p className="font-semibold text-sm">{hijriDate}</p>
-                                <p className="text-xs text-muted-foreground">{gregDate}</p>
                               </div>
                               {(isManager || role === "supervisor") && (
                                 <Popover open={quickEditSessionId === session.id} onOpenChange={(open) => {

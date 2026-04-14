@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { ArrowRight, Printer, Save, Star, Send, FileText, Users, BookOpen, BarChart3, Award } from "lucide-react";
 
-import { formatHijriArabic, formatHijriStringArabic, formatGregorianArabic, formatDateSmart, toHijri, toMiladi } from "@/lib/hijri";
+import { formatHijriArabic, formatHijriStringArabic, formatGregorianArabic, formatDateSmart, toHijri, toMiladi, formatDateHijriOnly } from "@/lib/hijri";
 import { sendNotification } from "@/utils/sendNotification";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -715,8 +715,7 @@ export default function ExcellenceReports() {
                   {distStudentReport.sessions.length > 0 && (
                     <Table>
                       <TableHeader><TableRow>
-                        <TableHead className="text-center">التاريخ الميلادي</TableHead>
-                        <TableHead className="text-center">التاريخ الهجري</TableHead>
+                        <TableHead className="text-center">التاريخ</TableHead>
                         <TableHead className="text-center">الدرجة</TableHead>
                         <TableHead className="text-center">الأحزاب</TableHead>
                         <TableHead className="text-center">الأوجه</TableHead>
@@ -724,8 +723,7 @@ export default function ExcellenceReports() {
                       <TableBody>
                         {distStudentReport.sessions.map((s: any, i: number) => (
                           <TableRow key={i}>
-                            <TableCell className="text-center">{s.date}</TableCell>
-                            <TableCell className="text-center">{s.hijriDate ? formatHijriArabic(s.hijriDate) : "—"}</TableCell>
+                            <TableCell className="text-center">{s.hijriDate ? formatHijriArabic(s.hijriDate) : formatDateHijriOnly(s.date)}</TableCell>
                             <TableCell className="text-center font-bold">{s.score.toFixed(1)}</TableCell>
                             <TableCell className="text-center">{s.hizb}</TableCell>
                             <TableCell className="text-center">{s.pages}</TableCell>

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import StudentNameLink from "@/components/StudentNameLink";
-import { formatFullDateHeader, formatDualDate } from "@/lib/hijri";
+import { formatFullDateHeader, formatDualDate, formatDateHijriOnly } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -454,7 +454,7 @@ const NarrationTest = () => {
                       ) : (
                         historyData.map((r: any) => (
                           <TableRow key={r.id}>
-                            <TableCell>{r.test_date}</TableCell>
+                            <TableCell>{formatDateHijriOnly(r.test_date)}</TableCell>
                             <TableCell>{r.students?.full_name || "—"}</TableCell>
                             <TableCell className="text-center">{r.hizb_number || "—"}</TableCell>
                             <TableCell className="text-center">{r.attempt_number}</TableCell>

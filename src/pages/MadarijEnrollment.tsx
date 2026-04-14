@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowRight, Plus, Pencil, Trash2, Printer, AlertTriangle, FlaskConical } from "lucide-react";
-import { formatDateSmart } from "@/lib/hijri";
+import { formatDateSmart, formatDateHijriOnly } from "@/lib/hijri";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import MadarijPrintTemplate from "@/components/MadarijPrintTemplate";
@@ -331,8 +331,8 @@ const MadarijEnrollment = () => {
             <div><span className="text-muted-foreground">المسار:</span> <strong>{(enrollment.madarij_tracks as any)?.name}</strong></div>
             <div><span className="text-muted-foreground">الجزء:</span> <strong>{enrollment.part_number}</strong></div>
             <div><span className="text-muted-foreground">الحزب:</span> <strong>{enrollment.hizb_number}</strong></div>
-            <div><span className="text-muted-foreground">تاريخ البداية:</span> <strong>{enrollment.start_date}</strong></div>
-            <div><span className="text-muted-foreground">تاريخ النهاية:</span> <strong>{enrollment.end_date || "—"}</strong></div>
+            <div><span className="text-muted-foreground">تاريخ البداية:</span> <strong>{formatDateHijriOnly(enrollment.start_date)}</strong></div>
+            <div><span className="text-muted-foreground">تاريخ النهاية:</span> <strong>{enrollment.end_date ? formatDateHijriOnly(enrollment.end_date) : "—"}</strong></div>
             <div><span className="text-muted-foreground">الأيام:</span> <strong>{(enrollment.madarij_tracks as any)?.days_required} يوم</strong></div>
             <div className="flex items-center gap-2">
               <Badge variant={enrollment.status === "active" ? "default" : "secondary"}>
@@ -403,7 +403,7 @@ const MadarijEnrollment = () => {
                     <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground">لا توجد سجلات</TableCell></TableRow>
                   ) : dailyProgress.map((dp) => (
                     <TableRow key={dp.id}>
-                      <TableCell className="whitespace-nowrap">{dp.progress_date}</TableCell>
+                      <TableCell className="whitespace-nowrap">{formatDateHijriOnly(dp.progress_date)}</TableCell>
                       <TableCell>{dp.memorization}</TableCell>
                       <TableCell>{dp.listening}</TableCell>
                       <TableCell>{dp.repetition_before}</TableCell>
