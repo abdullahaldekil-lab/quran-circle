@@ -333,7 +333,7 @@ const Trips = () => {
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">{TRIP_TYPES[detailTrip.trip_type] || detailTrip.trip_type}</Badge>
                   <StatusBadge status={detailTrip.status} />
-                  <Badge variant="outline" className="gap-1"><Calendar className="w-3 h-3" />{detailTrip.trip_date}</Badge>
+                  <Badge variant="outline" className="gap-1"><Calendar className="w-3 h-3" />{formatDateHijriOnly(detailTrip.trip_date)}</Badge>
                   {detailTrip.location && <Badge variant="outline" className="gap-1"><MapPin className="w-3 h-3" />{detailTrip.location}</Badge>}
                 </div>
                 {detailTrip.description && <p className="text-sm text-muted-foreground">{detailTrip.description}</p>}
