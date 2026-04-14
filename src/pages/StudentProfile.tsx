@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare } from "lucide-react";
-import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian, formatDateSmart, toHijri, HIJRI_MONTHS, getWeekdayArabic } from "@/lib/hijri";
+import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian, formatDateSmart, toHijri, toMiladi, HIJRI_MONTHS, getWeekdayArabic } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
@@ -657,7 +657,6 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
   useEffect(() => {
     const fetchAttendance = async () => {
       // Convert Hijri month range to Gregorian for querying
-      const { toMiladi } = await import("@/lib/hijri");
       const startGreg = toMiladi(hijriYear, hijriMonth, 1);
       // End of Hijri month (~30 days)
       const endDay = hijriMonth === 12 ? 30 : 30;
@@ -722,7 +721,6 @@ const AttendanceTabContent = ({ attRecords, trendData, hijriMonth, hijriYear, se
   hijriMonth: number; hijriYear: number; setHijriMonth: (m: number) => void; setHijriYear: (y: number) => void;
 }) => {
   // Convert Hijri month range to Gregorian days for the grid
-  const { toMiladi } = require("@/lib/hijri");
   const startGreg = toMiladi(hijriYear, hijriMonth, 1);
   let endGreg: Date;
   try { endGreg = toMiladi(hijriYear, hijriMonth, 30); } catch { try { endGreg = toMiladi(hijriYear, hijriMonth, 29); } catch { endGreg = toMiladi(hijriYear, hijriMonth, 28); } }
