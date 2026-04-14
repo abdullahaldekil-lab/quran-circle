@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { CalendarDays, Plus, Trash2, Pencil } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
+import { formatDateSmart } from "@/lib/hijri";
 
 interface Holiday {
   id: string;
