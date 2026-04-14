@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { formatTime12h } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -245,8 +246,8 @@ const StaffAttendance = () => {
     const record = recordMap[staff.id];
     setEditStaffId(staff.id);
     setEditStaffName(staff.full_name);
-    setEditCheckIn(record?.check_in_time ? format(new Date(record.check_in_time), "HH:mm") : "");
-    setEditCheckOut(record?.check_out_time ? format(new Date(record.check_out_time), "HH:mm") : "");
+    setEditCheckIn(record?.check_in_time ? formatTime12h(record.check_in_time) : "");
+    setEditCheckOut(record?.check_out_time ? formatTime12h(record.check_out_time) : "");
     setEditStatus(record?.status || "present");
     setEditNotes(record?.notes || "");
     setEditDialogOpen(true);
