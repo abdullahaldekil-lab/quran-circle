@@ -214,4 +214,31 @@ export function formatDualDateSmart(date: Date | string): { hijri: string; grego
   };
 }
 
+/**
+ * Format a date+time as Hijri with 12h clock: "15 رمضان 1447 هـ 03:45 م"
+ */
+export function formatDateTimeSmart(date: Date | string): string {
+  if (!date) return "";
+  const d = typeof date === "string" ? new Date(date) : date;
+  const hijri = formatDateHijriOnly(date);
+  const hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  const period = hours >= 12 ? "م" : "ص";
+  const h12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+  return `${hijri} ${h12}:${minutes} ${period}`;
+}
+
+/**
+ * Format time only in 12h: "03:45 م"
+ */
+export function formatTime12h(date: Date | string): string {
+  if (!date) return "";
+  const d = typeof date === "string" ? new Date(date) : date;
+  const hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  const period = hours >= 12 ? "م" : "ص";
+  const h12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+  return `${h12}:${minutes} ${period}`;
+}
+
 export { HIJRI_MONTHS, GREGORIAN_MONTHS, WEEKDAYS };
