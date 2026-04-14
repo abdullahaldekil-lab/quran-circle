@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateSmart } from "@/lib/hijri";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +69,7 @@ const EnrollmentStatusCheck = ({ initialPhone = "" }: Props) => {
                     <Badge className={st.color}>{st.label}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(r.created_at).toLocaleDateString("ar-SA")}
+                    {formatDateSmart(r.created_at)}
                   </p>
                   {r.rejection_reason && (
                     <p className="text-xs text-destructive">السبب: {r.rejection_reason}</p>
