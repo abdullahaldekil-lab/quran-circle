@@ -70,14 +70,24 @@ const InternalRequests = () => {
     due_date: "",
   });
 
+  // Helper to get staff name by id
+  const getStaffName = (id: string | null) => {
+    if (!id) return "—";
+    return staff.find((s) => s.id === id)?.full_name || "—";
+  };
+
   const fetchData = async () => {
     if (!user) return;
     setLoading(true);
 
-    // Fetch inbox (received) — managers see all requests
+    // Fetch staff first (needed for name resolution)
+    const { data: staffData } = await supabase.from("profiles").select("id, full_name, role").order("full_name");
+    setStaff(staffData || []);
+
+    // Fetch inbox (received)
     let inboxQuery = supabase
       .from("internal_requests")
-      .select("*, from_user:profiles!internal_requests_from_user_id_fkey(full_name)")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (!canViewAll) {
@@ -86,13 +96,14 @@ const InternalRequests = () => {
         .neq("from_user_id", user.id);
     }
 
-    const { data: inboxData } = await inboxQuery;
+    const { data: inboxData, error: inboxErr } = await inboxQuery;
+    if (inboxErr) console.error("inbox error:", inboxErr);
     setInbox(inboxData || []);
 
     // Fetch sent
     const { data: sentData } = await supabase
       .from("internal_requests")
-      .select("*, to_user:profiles!internal_requests_to_user_id_fkey(full_name)")
+      .select("*")
       .eq("from_user_id", user.id)
       .order("created_at", { ascending: false });
     setSent(sentData || []);
@@ -101,14 +112,10 @@ const InternalRequests = () => {
     if (canViewAll) {
       const { data: allData } = await supabase
         .from("internal_requests")
-        .select("*, from_user:profiles!internal_requests_from_user_id_fkey(full_name), to_user:profiles!internal_requests_to_user_id_fkey(full_name)")
+        .select("*")
         .order("created_at", { ascending: false });
       setAllRequests(allData || []);
     }
-
-    // Fetch staff for new request
-    const { data: staffData } = await supabase.from("profiles").select("id, full_name, role").order("full_name");
-    setStaff(staffData || []);
 
     setLoading(false);
   };
@@ -116,7 +123,7 @@ const InternalRequests = () => {
   const fetchReplies = async (requestId: string) => {
     const { data } = await supabase
       .from("internal_request_replies")
-      .select("*, from_user:profiles!internal_request_replies_from_user_id_fkey(full_name)")
+      .select("*")
       .eq("request_id", requestId)
       .order("created_at");
     setReplies(data || []);
@@ -212,7 +219,7 @@ const InternalRequests = () => {
 
     const { data } = await supabase
       .from("internal_request_replies")
-      .select("*, from_user:profiles!internal_request_replies_from_user_id_fkey(full_name)")
+      .select("*")
       .eq("request_id", selectedRequest.id)
       .order("created_at");
     setReplies(data || []);
@@ -274,7 +281,7 @@ const InternalRequests = () => {
     const st = STATUS_MAP[req.status as RequestStatus] || STATUS_MAP.new;
     return (
       <TableRow key={req.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetail(req)}>
-        {showSender && <TableCell className="font-medium">{req.from_user?.full_name || "—"}</TableCell>}
+        {showSender && <TableCell className="font-medium">{getStaffName(req.from_user_id)}</TableCell>}
         <TableCell>{req.request_type}</TableCell>
         <TableCell><span className={PRIORITY_COLORS[req.priority as RequestPriority] || ""}>{req.priority}</span></TableCell>
         <TableCell>{req.title}</TableCell>
@@ -365,7 +372,7 @@ const InternalRequests = () => {
                       const st = STATUS_MAP[r.status as RequestStatus] || STATUS_MAP.new;
                       return (
                         <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetail(r)}>
-                          <TableCell className="font-medium">{r.to_user?.full_name || r.to_role || "—"}</TableCell>
+                          <TableCell className="font-medium">{getStaffName(r.to_user_id) !== "—" ? getStaffName(r.to_user_id) : r.to_role || "—"}</TableCell>
                           <TableCell>{r.request_type}</TableCell>
                           <TableCell><span className={PRIORITY_COLORS[r.priority as RequestPriority] || ""}>{r.priority}</span></TableCell>
                           <TableCell>{r.title}</TableCell>
@@ -517,7 +524,7 @@ const InternalRequests = () => {
                   <p className="text-sm font-semibold">الردود ({replies.length})</p>
                   {replies.map((r) => (
                     <div key={r.id} className="bg-muted/50 p-2 rounded-md text-sm">
-                      <p className="font-medium text-xs text-primary">{r.from_user?.full_name}</p>
+                      <p className="font-medium text-xs text-primary">{getStaffName(r.from_user_id)}</p>
                       <p>{r.body}</p>
                       <p className="text-[10px] text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString("ar-SA")}</p>
                     </div>
