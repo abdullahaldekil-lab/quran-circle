@@ -524,7 +524,7 @@ const InternalRequests = () => {
                   <p className="text-sm font-semibold">الردود ({replies.length})</p>
                   {replies.map((r) => (
                     <div key={r.id} className="bg-muted/50 p-2 rounded-md text-sm">
-                      <p className="font-medium text-xs text-primary">{r.from_user?.full_name}</p>
+                      <p className="font-medium text-xs text-primary">{getStaffName(r.from_user_id)}</p>
                       <p>{r.body}</p>
                       <p className="text-[10px] text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString("ar-SA")}</p>
                     </div>
