@@ -106,11 +106,11 @@ const NotificationLog = () => {
       if (dateFilter !== "all") {
         const now = new Date();
         let from: string;
-        if (dateFilter === "today") from = format(now, "yyyy-MM-dd");
+        if (dateFilter === "today") from = new Date().toISOString().split("T")[0];
         else if (dateFilter === "week") {
-          const d = new Date(now); d.setDate(d.getDate() - 7); from = format(d, "yyyy-MM-dd");
+          const d = new Date(); d.setDate(d.getDate() - 7); from = d.toISOString().split("T")[0];
         } else {
-          const d = new Date(now); d.setMonth(d.getMonth() - 1); from = format(d, "yyyy-MM-dd");
+          const d = new Date(); d.setMonth(d.getMonth() - 1); from = d.toISOString().split("T")[0];
         }
         query = query.gte("created_at", from);
       }
