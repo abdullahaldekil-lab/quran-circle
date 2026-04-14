@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import StudentNameLink from "@/components/StudentNameLink";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -374,7 +375,7 @@ const TalqeenHalaqat = () => {
               (studentsByHalaqa[studentsDialogId || ""] || []).map((s: any) => (
                 <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg border">
                   <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{s.full_name}</span>
+                  <StudentNameLink studentId={s.id} studentName={s.full_name} className="text-sm" />
                 </div>
               ))
             )}
