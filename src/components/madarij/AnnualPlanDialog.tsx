@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toHijri } from "@/lib/hijri";
+import { toHijri, formatDateSmart } from "@/lib/hijri";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -169,7 +169,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
       if (workDays > 0) {
         months.push({
           month: monthIndex + 1,
-          monthName: current.toLocaleDateString("ar-SA", { month: "long", year: "numeric" }),
+          monthName: formatDateSmart(current),
           workDays,
           targetPages,
         });

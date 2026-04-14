@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { formatDateSmart } from "@/lib/hijri";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -123,10 +124,7 @@ const AttendanceCalendar = ({ halaqaId, selectedDate, onSelectDate }: Attendance
 
   const dayHeaders = ["س", "ح", "ن", "ث", "ر", "خ", "ج"]; // Sat–Fri
 
-  const monthLabel = new Date(currentMonth.year, currentMonth.month).toLocaleDateString("ar-SA", {
-    year: "numeric",
-    month: "long",
-  });
+  const monthLabel = formatDateSmart(new Date(currentMonth.year, currentMonth.month));
 
   return (
     <div className="space-y-3">
