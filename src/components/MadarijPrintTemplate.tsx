@@ -92,7 +92,7 @@ const MadarijPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onClo
                 return (
                   <tr key={i}>
                     <td className="border border-black p-1 text-center">{i + 1}</td>
-                    <td className="border border-black p-1 text-center">{dp?.progress_date || ""}</td>
+                    <td className="border border-black p-1 text-center">{dp?.progress_date ? formatDateHijriOnly(dp.progress_date) : ""}</td>
                     <td className="border border-black p-1 text-center">{dp?.memorization || ""}</td>
                     <td className="border border-black p-1 text-center">{dp?.listening ?? ""}</td>
                     <td className="border border-black p-1 text-center">{dp?.repetition_before ?? ""}</td>
