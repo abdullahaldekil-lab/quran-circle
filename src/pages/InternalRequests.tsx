@@ -123,7 +123,7 @@ const InternalRequests = () => {
   const fetchReplies = async (requestId: string) => {
     const { data } = await supabase
       .from("internal_request_replies")
-      .select("*, from_user:profiles!internal_request_replies_from_user_id_fkey(full_name)")
+      .select("*")
       .eq("request_id", requestId)
       .order("created_at");
     setReplies(data || []);
