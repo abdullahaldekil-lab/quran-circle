@@ -280,8 +280,9 @@ const KpiDashboard = () => {
   // --- Financial KPIs (manager only) ---
   const financialKpis = useMemo((): KpiCard[] => {
     if (!isManager) return [];
-    const income = transactions.filter((t: any) => t.transaction_type === "income").reduce((a: number, t: any) => a + Number(t.amount), 0);
-    const expense = transactions.filter((t: any) => t.transaction_type === "expense").reduce((a: number, t: any) => a + Number(t.amount), 0);
+    const approved = transactions.filter((t: any) => t.status === "approved");
+    const income = approved.filter((t: any) => t.transaction_type === "income").reduce((a: number, t: any) => a + Number(t.amount), 0);
+    const expense = approved.filter((t: any) => t.transaction_type === "expense").reduce((a: number, t: any) => a + Number(t.amount), 0);
     const balance = income - expense;
 
     return [

@@ -176,14 +176,19 @@ const Finance = () => {
   const deleteTransaction = async () => {
     if (!deleteTarget) return;
     const { data: session } = await supabase.auth.getSession();
-    await supabase.from("financial_transactions").delete().eq("id", deleteTarget);
-    await supabase.from("financial_audit_log").insert({
-      transaction_id: deleteTarget, action: "delete", details: "تم حذف المعاملة", performed_by: session?.session?.user?.id,
-    } as any);
-    toast({ title: "تم الحذف" });
+    const userId = session?.session?.user?.id;
+    const { error } = await supabase.from("financial_transactions").delete().eq("id", deleteTarget);
+    if (error) {
+      toast({ title: "خطأ في الحذف", description: error.message, variant: "destructive" });
+    } else {
+      await supabase.from("financial_audit_log").insert({
+        transaction_id: deleteTarget, action: "delete", details: "تم حذف المعاملة", performed_by: userId,
+      } as any);
+      toast({ title: "تم الحذف بنجاح" });
+      fetchData();
+    }
     setDeleteDialogOpen(false);
     setDeleteTarget(null);
-    fetchData();
   };
 
   const updateAccount = async () => {
