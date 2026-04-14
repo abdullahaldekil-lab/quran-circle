@@ -167,7 +167,7 @@ const AcademicCalendar = () => {
                         {isActive && <Badge className="bg-green-100 text-green-800 text-xs">جارية</Badge>}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(h.start_date).toLocaleDateString("ar-SA")} – {new Date(h.end_date).toLocaleDateString("ar-SA")}
+                        {formatDateSmart(h.start_date)} – {formatDateSmart(h.end_date)}
                       </p>
                     </div>
                     {isManager && isFuture && (

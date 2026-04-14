@@ -320,7 +320,7 @@ const ProfileSettings = () => {
                     <span className="text-muted-foreground">تاريخ الانضمام:</span>
                     <span className="font-medium">
                       {profile?.created_at
-                        ? new Date(profile.created_at).toLocaleDateString("ar-SA")
+                        ? formatDateSmart(profile.created_at)
                         : "—"}
                     </span>
                   </div>

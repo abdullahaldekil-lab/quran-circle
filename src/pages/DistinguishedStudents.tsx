@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Plus, ArrowRight, Search, Trash2, ArrowLeftRight, Star, Users } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateSmart } from "@/lib/hijri";
 import { sendNotification } from "@/utils/sendNotification";
 
 interface Track {
@@ -303,7 +303,7 @@ export default function DistinguishedStudents() {
                       <Badge variant="outline">{d.track_name}</Badge>
                     </TableCell>
                     <TableCell className="text-center text-sm text-muted-foreground">
-                      {format(new Date(d.date_added), "yyyy/MM/dd")}
+                      {formatDateSmart(d.date_added)}
                     </TableCell>
                     <TableCell className="text-center">
                       {d.is_star && <Star className="w-4 h-4 fill-amber-400 text-amber-400 mx-auto" />}

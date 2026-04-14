@@ -578,7 +578,7 @@ const MadarijEnrollment = () => {
                               <Badge variant="secondary">رسمي</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{new Date(ex.created_at).toLocaleDateString('ar-SA')}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDateSmart(ex.created_at)}</TableCell>
                           <TableCell>{ex.final_grade}</TableCell>
                           <TableCell>
                             <Badge variant={ex.passed ? "default" : "destructive"}>

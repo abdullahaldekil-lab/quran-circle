@@ -149,7 +149,7 @@ export default function NarrationReports() {
       const passed = sa.filter((a: any) => a.status === "pass");
       const rate = presented.length > 0 ? Math.round((passed.length / presented.length) * 100) : 0;
       return {
-        date: new Date(s.session_date).toLocaleDateString("ar-SA", { month: "short", day: "numeric" }),
+        date: formatDateHijriOnly(s.session_date),
         rate,
       };
     }).reverse();
@@ -278,7 +278,7 @@ export default function NarrationReports() {
               <SelectContent>
                 {sessions.map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {new Date(s.session_date).toLocaleDateString("ar-SA")} — {s.halaqat?.name || s.title || "جلسة"}
+                    {formatDateSmart(s.session_date)} — {s.halaqat?.name || s.title || "جلسة"}
                   </SelectItem>
                 ))}
               </SelectContent>

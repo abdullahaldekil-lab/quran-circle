@@ -452,7 +452,7 @@ export default function NarrationSession() {
                 {session?.halaqat?.name && `حلقة: ${session.halaqat.name} · `}
                 {session?.external_teacher_name && `معلم خارجي: ${session.external_teacher_name} · `}
                 {session?.hizb_from && session?.hizb_to && `الأحزاب: ${session.hizb_from} → ${session.hizb_to} · `}
-                {session?.session_date && new Date(session.session_date).toLocaleDateString("ar-SA")}
+                {session?.session_date && formatDateSmart(session.session_date)}
               </p>
             </div>
           </div>

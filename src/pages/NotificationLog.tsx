@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { formatDateTimeSmart } from "@/lib/hijri";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 
@@ -248,8 +248,8 @@ const NotificationLog = () => {
                   </TableCell>
                   <TableCell>{CHANNEL_MAP[n.channel] || n.channel}</TableCell>
                   <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
-                  <TableCell className="text-xs">{format(new Date(n.created_at), "yyyy/MM/dd HH:mm")}</TableCell>
-                  <TableCell className="text-xs">{n.read_at ? format(new Date(n.read_at), "yyyy/MM/dd HH:mm") : "—"}</TableCell>
+                  <TableCell className="text-xs">{formatDateTimeSmart(n.created_at)}</TableCell>
+                  <TableCell className="text-xs">{n.read_at ? formatDateTimeSmart(n.read_at) : "—"}</TableCell>
                 </TableRow>
               );
             })}

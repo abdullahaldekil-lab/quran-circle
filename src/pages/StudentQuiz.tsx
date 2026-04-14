@@ -286,7 +286,7 @@ const StudentQuiz = () => {
               studentName: selectedStudentData?.full_name || "",
               score: `${score}%`,
               gradeLabel: gradeLabelAr,
-              date: new Date().toLocaleDateString("ar-SA"),
+              date: formatDateHijriOnly(new Date()),
             },
           }).catch(console.error);
         }

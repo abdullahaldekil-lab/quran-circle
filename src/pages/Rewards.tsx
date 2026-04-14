@@ -287,7 +287,7 @@ const Rewards = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{new Date(sb.awarded_at).toLocaleDateString("ar-SA")}</span>
+                          <span className="text-xs text-muted-foreground">{formatDateSmart(sb.awarded_at)}</span>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
                             const newNote = prompt("تعديل الملاحظة:", sb.note || "");
                             if (newNote === null) return;
