@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getWeekdayArabic } from "@/lib/hijri";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
@@ -58,7 +59,7 @@ const AttendanceAnalytics = () => {
           const total = dayRows.length;
           const rate = total > 0 ? Math.round((present / total) * 100) : 0;
           const d = new Date(date);
-          const dayName = d.toLocaleDateString("ar-SA", { weekday: "short" });
+          const dayName = getWeekdayArabic(d);
           return { day: dayName, rate };
         });
         setDailyData(dailyRates);

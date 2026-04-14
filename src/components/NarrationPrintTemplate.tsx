@@ -1,4 +1,5 @@
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
+import { formatDateSmart } from "@/lib/hijri";
 import type { NarrationRange } from "./narration/NarrationValidation";
 
 interface StudentResult {
@@ -79,7 +80,7 @@ export default function NarrationPrintTemplate({ session, rows, settings }: Prop
         <h1 style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 4px" }}>مجمع حويلان لتحفيظ القرآن الكريم</h1>
         <h2 style={{ fontSize: "15px", fontWeight: "bold", margin: "0 0 8px", color: "#2563eb" }}>يوم السرد القرآني</h2>
         <div style={{ display: "flex", justifyContent: "center", gap: "32px", fontSize: "12px", color: "#555" }}>
-          <span>التاريخ: {new Date(session.session_date).toLocaleDateString("ar-SA")}</span>
+          <span>التاريخ: {formatDateSmart(session.session_date)}</span>
           {session.halaqat?.name && <span>الحلقة: {session.halaqat.name}</span>}
           {session.title && <span>العنوان: {session.title}</span>}
         </div>

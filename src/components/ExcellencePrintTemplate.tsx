@@ -1,4 +1,5 @@
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
+import { formatDateSmart } from "@/lib/hijri";
 
 interface Student {
   id: string;
@@ -64,7 +65,7 @@ export default function ExcellencePrintTemplate({ session, students, attendance,
         <h1 style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 4px" }}>مجمع حويلان لتحفيظ القرآن الكريم</h1>
         <h2 style={{ fontSize: "15px", fontWeight: "bold", margin: "0 0 8px", color: "#b45309" }}>تقرير مسار التميّز</h2>
         <div style={{ display: "flex", justifyContent: "center", gap: "32px", fontSize: "12px", color: "#555" }}>
-          <span>التاريخ: {new Date(session.session_date).toLocaleDateString("ar-SA")}</span>
+          <span>التاريخ: {formatDateSmart(session.session_date)}</span>
           {session.halaqat?.name && <span>الحلقة: {session.halaqat.name}</span>}
         </div>
       </div>

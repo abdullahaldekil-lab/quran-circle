@@ -1,4 +1,5 @@
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
+import { formatDateSmart } from "@/lib/hijri";
 
 interface Props {
   studentName: string;
@@ -57,7 +58,7 @@ export default function NarrationCertificate({
         <p>يشهد مجمع حويلان لتحفيظ القرآن الكريم بأن الطالب</p>
         <p style={{ fontSize: "20px", fontWeight: "bold", color: "#1e3a5f", margin: "8px 0" }}>{studentName}</p>
         <p>من حلقة <strong>{halaqaName}</strong></p>
-        <p>قد شارك في يوم السرد القرآني بتاريخ <strong>{new Date(sessionDate).toLocaleDateString("ar-SA")}</strong></p>
+        <p>قد شارك في يوم السرد القرآني بتاريخ <strong>{formatDateSmart(sessionDate)}</strong></p>
         <p>وقام بسرد <strong>{totalHizb}</strong> حزب/أحزاب</p>
       </div>
 

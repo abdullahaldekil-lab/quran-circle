@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import StudentNameLink from "@/components/StudentNameLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { formatDateSmart } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -287,7 +288,7 @@ const Rewards = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{new Date(sb.awarded_at).toLocaleDateString("ar-SA")}</span>
+                          <span className="text-xs text-muted-foreground">{formatDateSmart(sb.awarded_at)}</span>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
                             const newNote = prompt("تعديل الملاحظة:", sb.note || "");
                             if (newNote === null) return;

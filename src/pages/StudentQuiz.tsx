@@ -15,7 +15,7 @@ import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2, Printer
 import QuizQuestionCard from "@/components/quiz/QuizQuestionCard";
 import { sendNotification } from "@/utils/sendNotification";
 import QuizCertificate from "@/components/quiz/QuizCertificate";
-import { formatDualDate } from "@/lib/hijri";
+import { formatDualDate, formatDateHijriOnly } from "@/lib/hijri";
 
 interface QuizQuestion {
   question_number: number;
@@ -286,7 +286,7 @@ const StudentQuiz = () => {
               studentName: selectedStudentData?.full_name || "",
               score: `${score}%`,
               gradeLabel: gradeLabelAr,
-              date: new Date().toLocaleDateString("ar-SA"),
+              date: formatDateHijriOnly(new Date()),
             },
           }).catch(console.error);
         }

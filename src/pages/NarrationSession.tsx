@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { formatDateSmart } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -452,7 +453,7 @@ export default function NarrationSession() {
                 {session?.halaqat?.name && `حلقة: ${session.halaqat.name} · `}
                 {session?.external_teacher_name && `معلم خارجي: ${session.external_teacher_name} · `}
                 {session?.hizb_from && session?.hizb_to && `الأحزاب: ${session.hizb_from} → ${session.hizb_to} · `}
-                {session?.session_date && new Date(session.session_date).toLocaleDateString("ar-SA")}
+                {session?.session_date && formatDateSmart(session.session_date)}
               </p>
             </div>
           </div>

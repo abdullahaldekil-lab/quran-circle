@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { formatDateSmart } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -514,7 +515,7 @@ const UserManagement = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
-                          {new Date(s.created_at).toLocaleDateString("ar-SA")}
+                          {formatDateSmart(s.created_at)}
                         </TableCell>
                         {isManager && (
                           <TableCell>
@@ -616,7 +617,7 @@ const UserManagement = () => {
                           <TableCell className="font-medium">{s.full_name}</TableCell>
                           <TableCell dir="ltr">{s.phone || "-"}</TableCell>
                           <TableCell><Badge variant="secondary">{roleLabels[s.role] || s.role}</Badge></TableCell>
-                          <TableCell className="text-muted-foreground text-sm">{new Date(s.created_at).toLocaleDateString("ar-SA")}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{formatDateSmart(s.created_at)}</TableCell>
                           <TableCell><Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">احتياطي</Badge></TableCell>
                         </TableRow>
                       ))}
@@ -670,7 +671,7 @@ const UserManagement = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
-                          {new Date(g.created_at).toLocaleDateString("ar-SA")}
+                          {formatDateSmart(g.created_at)}
                         </TableCell>
                         {isManager && (
                           <TableCell>

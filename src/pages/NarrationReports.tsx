@@ -3,6 +3,7 @@ import StudentNameLink from "@/components/StudentNameLink";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/useRole";
+import { formatDateSmart, formatDateHijriOnly } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -149,7 +150,7 @@ export default function NarrationReports() {
       const passed = sa.filter((a: any) => a.status === "pass");
       const rate = presented.length > 0 ? Math.round((passed.length / presented.length) * 100) : 0;
       return {
-        date: new Date(s.session_date).toLocaleDateString("ar-SA", { month: "short", day: "numeric" }),
+        date: formatDateHijriOnly(s.session_date),
         rate,
       };
     }).reverse();
@@ -278,7 +279,7 @@ export default function NarrationReports() {
               <SelectContent>
                 {sessions.map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {new Date(s.session_date).toLocaleDateString("ar-SA")} — {s.halaqat?.name || s.title || "جلسة"}
+                    {formatDateSmart(s.session_date)} — {s.halaqat?.name || s.title || "جلسة"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -294,7 +295,7 @@ export default function NarrationReports() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => exportSessionToExcel({
-                    sessionDate: new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"),
+                    sessionDate: formatDateSmart(selectedSessionData?.session_date),
                     sessionTitle: selectedSessionData?.title || "",
                     halaqaName: selectedSessionData?.halaqat?.name || "",
                     attempts,
@@ -303,7 +304,7 @@ export default function NarrationReports() {
                     تصدير Excel
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => exportSessionToPdf({
-                    sessionDate: new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"),
+                    sessionDate: formatDateSmart(selectedSessionData?.session_date),
                     sessionTitle: selectedSessionData?.title || "",
                     halaqaName: selectedSessionData?.halaqat?.name || "",
                     attempts,
@@ -324,7 +325,7 @@ export default function NarrationReports() {
                         halaqaRank: i + 1,
                         sessionDate: selectedSessionData?.session_date || "",
                       }));
-                    exportBulkCertificatesPdf(rankedCerts, new Date(selectedSessionData?.session_date).toLocaleDateString("ar-SA"));
+                    exportBulkCertificatesPdf(rankedCerts, formatDateSmart(selectedSessionData?.session_date));
                   }}>
                     <Printer className="w-4 h-4 ml-2" />
                     تصدير جميع الشهادات PDF

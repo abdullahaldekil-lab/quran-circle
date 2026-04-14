@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays, addWeeks, subWeeks, getDay } from "date-fns";
 import { ar } from "date-fns/locale";
+import { formatDateHijriOnly, formatTime12h } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -591,10 +592,10 @@ const StaffAttendanceLog = () => {
                         const rec = recordsByStaffDate[filterStaffId]?.[dateStr];
                         return (
                           <TableRow key={dateStr} className={statusBg(rec?.status)}>
-                            <TableCell>{format(day, "d/M")}</TableCell>
+                            <TableCell>{formatDateHijriOnly(day)}</TableCell>
                             <TableCell>{format(day, "EEEE", { locale: ar })}</TableCell>
-                            <TableCell className="text-center">{rec?.check_in_time ? format(new Date(rec.check_in_time), "HH:mm") : "—"}</TableCell>
-                            <TableCell className="text-center">{rec?.check_out_time ? format(new Date(rec.check_out_time), "HH:mm") : "—"}</TableCell>
+                            <TableCell className="text-center">{rec?.check_in_time ? formatTime12h(rec.check_in_time) : "—"}</TableCell>
+                            <TableCell className="text-center">{rec?.check_out_time ? formatTime12h(rec.check_out_time) : "—"}</TableCell>
                             <TableCell className="text-center">{rec?.late_minutes > 0 ? rec.late_minutes : "—"}</TableCell>
                             <TableCell className="text-center">{rec?.early_leave_minutes > 0 ? rec.early_leave_minutes : "—"}</TableCell>
                             <TableCell className="text-center">{rec?.total_work_minutes > 0 ? formatMinutes(rec.total_work_minutes) : "—"}</TableCell>
@@ -641,10 +642,10 @@ const StaffAttendanceLog = () => {
                       return (
                         <TableRow key={r.id}>
                           <TableCell className="font-medium">{staff?.full_name || "—"}</TableCell>
-                          <TableCell>{r.attendance_date}</TableCell>
+                          <TableCell>{formatDateHijriOnly(r.attendance_date)}</TableCell>
                           <TableCell>{staff?.department || "—"}</TableCell>
-                          <TableCell>{r.check_in_time ? format(new Date(r.check_in_time), "HH:mm") : "—"}</TableCell>
-                          <TableCell>{r.check_out_time ? format(new Date(r.check_out_time), "HH:mm") : "—"}</TableCell>
+                          <TableCell>{r.check_in_time ? formatTime12h(r.check_in_time) : "—"}</TableCell>
+                          <TableCell>{r.check_out_time ? formatTime12h(r.check_out_time) : "—"}</TableCell>
                           <TableCell><Badge variant={statusInfo.variant}>{statusInfo.label}</Badge></TableCell>
                           <TableCell>{r.late_minutes > 0 ? `${r.late_minutes} د` : "—"}</TableCell>
                           <TableCell>{r.total_work_minutes > 0 ? formatMinutes(r.total_work_minutes) : "—"}</TableCell>

@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { formatDateSmart } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -320,7 +321,7 @@ const ProfileSettings = () => {
                     <span className="text-muted-foreground">تاريخ الانضمام:</span>
                     <span className="font-medium">
                       {profile?.created_at
-                        ? new Date(profile.created_at).toLocaleDateString("ar-SA")
+                        ? formatDateSmart(profile.created_at)
                         : "—"}
                     </span>
                   </div>

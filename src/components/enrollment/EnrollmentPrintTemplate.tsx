@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { formatDateSmart } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import type { EnrollmentFormData } from "./EnrollmentForm";
@@ -59,7 +60,7 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
     </div>
   );
 
-  const today = new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
+  const today = formatDateSmart(new Date());
 
   return (
     <div>

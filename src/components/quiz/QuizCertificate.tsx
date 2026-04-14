@@ -1,4 +1,5 @@
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
+import { formatDateSmart } from "@/lib/hijri";
 
 interface QuizQuestion {
   question_number: number;
@@ -146,7 +147,7 @@ export default function QuizCertificate({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "30px", fontSize: "12px", color: "#6b7280" }}>
         <div>
           <p style={{ margin: "0 0 4px" }}>المصحح: <strong style={{ color: "#1a1a1a" }}>{teacherName}</strong></p>
-          <p style={{ margin: "0 0 16px" }}>التاريخ: <strong style={{ color: "#1a1a1a" }}>{new Date(quizDate).toLocaleDateString("ar-SA")}</strong></p>
+          <p style={{ margin: "0 0 16px" }}>التاريخ: <strong style={{ color: "#1a1a1a" }}>{formatDateSmart(quizDate)}</strong></p>
           <p>التوقيع: ___________________</p>
         </div>
         <div style={{ textAlign: "left" }}>

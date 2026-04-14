@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowRight, Plus, Pencil, Trash2, Printer, AlertTriangle, FlaskConical } from "lucide-react";
+import { formatDateSmart } from "@/lib/hijri";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import MadarijPrintTemplate from "@/components/MadarijPrintTemplate";
@@ -578,7 +579,7 @@ const MadarijEnrollment = () => {
                               <Badge variant="secondary">رسمي</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{new Date(ex.created_at).toLocaleDateString('ar-SA')}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{formatDateSmart(ex.created_at)}</TableCell>
                           <TableCell>{ex.final_grade}</TableCell>
                           <TableCell>
                             <Badge variant={ex.passed ? "default" : "destructive"}>
