@@ -385,7 +385,7 @@ const StaffTasks = () => {
           {task.due_date && (
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {format(new Date(task.due_date), "yyyy/MM/dd")}
+              {formatDateSmart(task.due_date)}
               {task.due_time && ` ${task.due_time.slice(0, 5)}`}
             </p>
           )}
@@ -607,7 +607,7 @@ const StaffTasks = () => {
                         <TableCell><Badge variant="outline">{t.category}</Badge></TableCell>
                         <TableCell><Badge className={PRIORITY_COLORS[t.priority]}>{t.priority}</Badge></TableCell>
                         <TableCell><Badge variant="secondary">{STATUS_LABELS[t.status] || t.status}</Badge></TableCell>
-                        <TableCell className="text-sm">{t.due_date ? format(new Date(t.due_date), "yyyy/MM/dd") : "—"}</TableCell>
+                        <TableCell className="text-sm">{t.due_date ? formatDateSmart(t.due_date) : "—"}</TableCell>
                       </TableRow>
                     ))}
                     {filteredAssigned.length === 0 && (
@@ -639,7 +639,7 @@ const StaffTasks = () => {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div><span className="text-muted-foreground">من:</span> {getProfileName(selectedTask.assigned_by)}</div>
                   <div><span className="text-muted-foreground">إلى:</span> {selectedTask.assigned_to ? getProfileName(selectedTask.assigned_to) : selectedTask.assigned_to_role || "—"}</div>
-                  {selectedTask.due_date && <div><span className="text-muted-foreground">الاستحقاق:</span> {format(new Date(selectedTask.due_date), "yyyy/MM/dd")} {selectedTask.due_time?.slice(0, 5)}</div>}
+                  {selectedTask.due_date && <div><span className="text-muted-foreground">الاستحقاق:</span> {formatDateSmart(selectedTask.due_date)} {selectedTask.due_time?.slice(0, 5)}</div>}
                   {selectedTask.estimated_minutes && <div><span className="text-muted-foreground">الوقت المُقدَّر:</span> {selectedTask.estimated_minutes} دقيقة</div>}
                   {selectedTask.actual_minutes && <div><span className="text-muted-foreground">الوقت الفعلي:</span> {selectedTask.actual_minutes} دقيقة</div>}
                 </div>
@@ -668,7 +668,7 @@ const StaffTasks = () => {
                       <div key={c.id} className="bg-muted/50 p-2 rounded mb-2">
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>{getProfileName(c.from_user_id)}</span>
-                          <span>{format(new Date(c.created_at), "MM/dd HH:mm")}</span>
+                          <span>{formatDateTimeSmart(c.created_at)}</span>
                         </div>
                         <p className="text-sm mt-1">{c.body}</p>
                       </div>
