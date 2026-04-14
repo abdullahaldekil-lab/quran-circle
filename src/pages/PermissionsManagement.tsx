@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { formatDateSmart } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -726,7 +727,7 @@ const PermissionsManagement = () => {
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">{user.job_title || "—"}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">
-                            {user.updated_at ? new Date(user.updated_at).toLocaleDateString("ar-SA") : "—"}
+                            {user.updated_at ? formatDateSmart(user.updated_at) : "—"}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -876,7 +877,7 @@ const PermissionsManagement = () => {
                         {roleAuditLog.map((log) => (
                           <TableRow key={log.id}>
                             <TableCell className="text-sm">
-                              {new Date(log.created_at).toLocaleDateString("ar-SA")}
+                              {formatDateSmart(log.created_at)}
                             </TableCell>
                             <TableCell className="text-sm">{log.actor_name}</TableCell>
                             <TableCell className="text-sm">{log.target_name}</TableCell>
