@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { CheckCircle2, Clock, AlertTriangle, TrendingUp, Zap, ListChecks, Download } from "lucide-react";
 import { format, subDays, subMonths, startOfWeek, endOfWeek, isAfter, isBefore, parseISO } from "date-fns";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx-js-style";
@@ -136,7 +137,7 @@ const StaffTasksAnalytics = () => {
     for (let i = 3; i >= 0; i--) {
       const ws = startOfWeek(subDays(new Date(), i * 7), { weekStartsOn: 0 });
       const we = endOfWeek(ws, { weekStartsOn: 0 });
-      const label = `${format(ws, "MM/dd")}`;
+      const label = formatDateHijriOnly(ws);
       const count = tasks.filter(t => {
         if (t.status !== "completed" || !t.completed_at) return false;
         const d = parseISO(t.completed_at);
