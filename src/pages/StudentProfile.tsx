@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare } from "lucide-react";
-import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian, formatDateSmart } from "@/lib/hijri";
+import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian, formatDateSmart, toHijri, toMiladi, HIJRI_MONTHS, getWeekdayArabic } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
@@ -646,17 +646,25 @@ const AudioTab = ({ studentId }: { studentId: string }) => {
 
 // Attendance tab with monthly grid and trend chart
 const AttendanceTab = ({ studentId }: { studentId: string }) => {
-  const [month, setMonth] = useState(new Date().getMonth());
-  const [year, setYear] = useState(new Date().getFullYear());
+  // Use Hijri month/year as state
+  const currentHijri = toHijri(new Date());
+  const [hijriMonth, setHijriMonth] = useState(currentHijri.month);
+  const [hijriYear, setHijriYear] = useState(currentHijri.year);
   const [loaded, setLoaded] = useState(false);
   const [attRecords, setAttRecords] = useState<any[]>([]);
   const [trendData, setTrendData] = useState<{ month: string; pct: number }[]>([]);
 
   useEffect(() => {
     const fetchAttendance = async () => {
-      const dateObj = new Date(year, month, 1);
-      const ms = fmtDate(startOfMonth(dateObj), "yyyy-MM-dd");
-      const me = fmtDate(endOfMonth(dateObj), "yyyy-MM-dd");
+      // Convert Hijri month range to Gregorian for querying
+      const startGreg = toMiladi(hijriYear, hijriMonth, 1);
+      // End of Hijri month (~30 days)
+      const endDay = hijriMonth === 12 ? 30 : 30;
+      let endGreg: Date;
+      try { endGreg = toMiladi(hijriYear, hijriMonth, endDay); } catch { endGreg = toMiladi(hijriYear, hijriMonth, 29); }
+      
+      const ms = fmtDate(startGreg, "yyyy-MM-dd");
+      const me = fmtDate(endGreg, "yyyy-MM-dd");
 
       const { data } = await supabase
         .from("attendance")
@@ -666,49 +674,58 @@ const AttendanceTab = ({ studentId }: { studentId: string }) => {
         .lte("attendance_date", me);
       setAttRecords(data || []);
 
-      const sixAgo = fmtDate(startOfMonth(subMonths(dateObj, 5)), "yyyy-MM-dd");
-      const { data: tData } = await supabase
-        .from("attendance")
-        .select("attendance_date, status")
-        .eq("student_id", studentId)
-        .gte("attendance_date", sixAgo)
-        .lte("attendance_date", me);
-
+      // Trend: last 6 Hijri months
       const trend: { month: string; pct: number }[] = [];
       for (let i = 5; i >= 0; i--) {
-        const d = subMonths(dateObj, i);
-        const s = fmtDate(startOfMonth(d), "yyyy-MM-dd");
-        const e = fmtDate(endOfMonth(d), "yyyy-MM-dd");
-        const recs = (tData || []).filter((a: any) => a.attendance_date >= s && a.attendance_date <= e);
-        const workDays = eachDayOfInterval({ start: startOfMonth(d), end: endOfMonth(d) }).filter((dd: Date) => {
+        let tM = hijriMonth - i;
+        let tY = hijriYear;
+        while (tM < 1) { tM += 12; tY--; }
+        const tStart = toMiladi(tY, tM, 1);
+        let tEnd: Date;
+        try { tEnd = toMiladi(tY, tM, 30); } catch { try { tEnd = toMiladi(tY, tM, 29); } catch { tEnd = toMiladi(tY, tM, 28); } }
+        const tMs = fmtDate(tStart, "yyyy-MM-dd");
+        const tMe = fmtDate(tEnd, "yyyy-MM-dd");
+        
+        const { data: tData } = await supabase
+          .from("attendance")
+          .select("attendance_date, status")
+          .eq("student_id", studentId)
+          .gte("attendance_date", tMs)
+          .lte("attendance_date", tMe);
+        
+        const workDays = eachDayOfInterval({ start: tStart, end: tEnd }).filter((dd: Date) => {
           const day = getDay(dd);
           return day !== 5 && day !== 6;
         }).length;
-        const present = recs.filter((a: any) => a.status === "present" || a.status === "late").length;
-        trend.push({ month: fmtDate(d, "MMM", { locale: ar }), pct: workDays > 0 ? Math.round((present / workDays) * 100) : 0 });
+        const present = (tData || []).filter((a: any) => a.status === "present" || a.status === "late").length;
+        trend.push({ month: HIJRI_MONTHS[tM - 1], pct: workDays > 0 ? Math.round((present / workDays) * 100) : 0 });
       }
       setTrendData(trend);
       setLoaded(true);
     };
     fetchAttendance();
-  }, [studentId, month, year]);
+  }, [studentId, hijriMonth, hijriYear]);
 
   if (!loaded) {
     return <Card><CardContent className="py-12 flex justify-center"><div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" /></CardContent></Card>;
   }
 
-  return <AttendanceTabContent attRecords={attRecords} trendData={trendData} month={month} year={year} setMonth={(m) => { setMonth(m); setLoaded(false); }} setYear={(y) => { setYear(y); setLoaded(false); }} />;
+  return <AttendanceTabContent attRecords={attRecords} trendData={trendData} hijriMonth={hijriMonth} hijriYear={hijriYear} setHijriMonth={(m) => { setHijriMonth(m); setLoaded(false); }} setHijriYear={(y) => { setHijriYear(y); setLoaded(false); }} />;
 };
 
 
 
 
-const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, setYear }: {
+const AttendanceTabContent = ({ attRecords, trendData, hijriMonth, hijriYear, setHijriMonth, setHijriYear }: {
   attRecords: any[]; trendData: { month: string; pct: number }[];
-  month: number; year: number; setMonth: (m: number) => void; setYear: (y: number) => void;
+  hijriMonth: number; hijriYear: number; setHijriMonth: (m: number) => void; setHijriYear: (y: number) => void;
 }) => {
-  const dateObj = new Date(year, month, 1);
-  const monthDays = eachDayOfInterval({ start: startOfMonth(dateObj), end: endOfMonth(dateObj) }).filter((d: Date) => {
+  // Convert Hijri month range to Gregorian days for the grid
+  const startGreg = toMiladi(hijriYear, hijriMonth, 1);
+  let endGreg: Date;
+  try { endGreg = toMiladi(hijriYear, hijriMonth, 30); } catch { try { endGreg = toMiladi(hijriYear, hijriMonth, 29); } catch { endGreg = toMiladi(hijriYear, hijriMonth, 28); } }
+  
+  const monthDays = eachDayOfInterval({ start: startGreg, end: endGreg }).filter((d: Date) => {
     const day = getDay(d);
     return day !== 5 && day !== 6;
   });
@@ -729,19 +746,19 @@ const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, se
     excused: { label: "مستأذن", color: "bg-muted", badge: "outline" },
   };
 
-  const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date(2024, i).toLocaleDateString("ar-SA", { month: "long" }) }));
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+  const hijriMonthOptions = HIJRI_MONTHS.map((name, i) => ({ value: i + 1, label: name }));
+  const hijriYears = Array.from({ length: 5 }, (_, i) => hijriYear - 2 + i);
 
   return (
     <div className="space-y-4">
       <div className="flex gap-3">
-        <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+        <Select value={String(hijriMonth)} onValueChange={(v) => setHijriMonth(Number(v))}>
           <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{months.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}</SelectContent>
+          <SelectContent>{hijriMonthOptions.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}</SelectContent>
         </Select>
-        <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+        <Select value={String(hijriYear)} onValueChange={(v) => setHijriYear(Number(v))}>
           <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+          <SelectContent>{hijriYears.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
@@ -768,10 +785,11 @@ const AttendanceTabContent = ({ attRecords, trendData, month, year, setMonth, se
                 const dateStr = fmtDate(day, "yyyy-MM-dd");
                 const status = attMap[dateStr];
                 const info = STATUS_MAP[status];
+                const hijriDay = toHijri(day);
                 return (
                   <tr key={dateStr} className={`border-b ${info?.color || ""}`}>
-                    <td className="p-2">{fmtDate(day, "d/M")}</td>
-                    <td className="p-2">{fmtDate(day, "EEEE", { locale: ar })}</td>
+                    <td className="p-2">{hijriDay.day}/{hijriDay.month}</td>
+                    <td className="p-2">{getWeekdayArabic(day)}</td>
                     <td className="p-2 text-center">
                       {info ? <Badge variant={info.badge}>{info.label}</Badge> : <span className="text-muted-foreground">—</span>}
                     </td>
