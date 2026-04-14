@@ -246,8 +246,8 @@ const StaffAttendance = () => {
     const record = recordMap[staff.id];
     setEditStaffId(staff.id);
     setEditStaffName(staff.full_name);
-    setEditCheckIn(record?.check_in_time ? formatTime12h(record.check_in_time) : "");
-    setEditCheckOut(record?.check_out_time ? formatTime12h(record.check_out_time) : "");
+    setEditCheckIn(record?.check_in_time ? format(new Date(record.check_in_time), "HH:mm") : "");
+    setEditCheckOut(record?.check_out_time ? format(new Date(record.check_out_time), "HH:mm") : "");
     setEditStatus(record?.status || "present");
     setEditNotes(record?.notes || "");
     setEditDialogOpen(true);
