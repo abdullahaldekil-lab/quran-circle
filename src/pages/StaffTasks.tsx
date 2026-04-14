@@ -18,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Clock, CheckCircle2, XCircle, AlertTriangle, Play, MessageSquare, Send, RotateCcw, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
 import { sendNotification } from "@/utils/sendNotification";
 import PageDateHeader from "@/components/PageDateHeader";
 
