@@ -17,7 +17,7 @@ import {
   ClipboardList, CheckCircle2, XCircle, Clock, AlertCircle,
   ArrowRightLeft, Trash2, MessageCircle, Copy, Users, Pencil, Printer
 } from "lucide-react";
-import AcceptanceLetterTemplate from "@/components/enrollment/AcceptanceLetterTemplate";
+import EnrollmentCombinedPrint from "@/components/enrollment/EnrollmentCombinedPrint";
 import { Input } from "@/components/ui/input";
 
 type ReqStatus = "pending" | "approved" | "rejected" | "waiting_list";
@@ -28,6 +28,7 @@ interface EnrollmentReq {
   guardian_phone: string;
   student_full_name: string;
   student_birth_year: number | null;
+  form_data: Record<string, string> | null;
   requested_halaqa_id: string | null;
   preferred_time: string | null;
   notes: string | null;
@@ -88,7 +89,7 @@ const EnrollmentRequests = () => {
   const fetchData = async () => {
     setLoading(true);
     const [reqRes, halaqatRes] = await Promise.all([
-      supabase.from("enrollment_requests").select("*").order("created_at", { ascending: false }),
+      supabase.from("enrollment_requests").select("*, form_data").order("created_at", { ascending: false }),
       supabase.from("halaqat").select("id, name, capacity_max").eq("active", true),
     ]);
 
@@ -561,23 +562,25 @@ const EnrollmentRequests = () => {
           )}
         </DialogContent>
       </Dialog>
-      {/* Print Acceptance Letter Dialog */}
+      {/* Print Combined Dialog */}
       <Dialog open={showPrint} onOpenChange={setShowPrint}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Printer className="w-5 h-5" />
-              خطاب القبول
+              طباعة استمارات القبول والتسجيل
             </DialogTitle>
           </DialogHeader>
           {printReq && (
-            <AcceptanceLetterTemplate
+            <EnrollmentCombinedPrint
               studentName={printReq.student_full_name}
               guardianName={printReq.guardian_full_name}
               guardianPhone={printReq.guardian_phone}
               halaqaName={getHalaqaName(printReq.assigned_halaqa_id)}
               approvedAt={printReq.created_at}
               requestId={printReq.id}
+              formData={printReq.form_data ?? {}}
+              notes={printReq.notes}
             />
           )}
         </DialogContent>
