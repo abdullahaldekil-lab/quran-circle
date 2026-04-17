@@ -127,7 +127,7 @@ const Recitation = () => {
     if (form.memorized_from && form.memorized_to) {
       const { data: plans } = await supabase
         .from('student_annual_plans')
-        .select('id, daily_memorization_pages, daily_review_pages, daily_linking_pages')
+        .select('id, start_date, daily_memorization_pages, daily_review_pages, daily_linking_pages')
         .eq('student_id', currentStudent.id)
         .eq('status', 'active')
         .limit(1);
@@ -135,7 +135,9 @@ const Recitation = () => {
       if (plans?.[0]) {
         const planId = plans[0].id;
         const today = new Date();
-        const monthNumber = today.getMonth() + 1;
+        const planStart = new Date(plans[0].start_date);
+        const monthsDiff = (today.getFullYear() - planStart.getFullYear()) * 12 + (today.getMonth() - planStart.getMonth());
+        const monthNumber = Math.max(1, monthsDiff + 1);
 
         const { data: monthRow } = await supabase
           .from('student_plan_progress')

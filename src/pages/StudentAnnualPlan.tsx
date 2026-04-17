@@ -42,6 +42,8 @@ const StudentAnnualPlan = () => {
   const [actualReview, setActualReview] = useState(0);
   const [actualLinking, setActualLinking] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [recitationCounts, setRecitationCounts] = useState<Record<number, number>>({});
 
   const fetchData = async () => {
     if (!studentId) return;
@@ -63,14 +65,31 @@ const StudentAnnualPlan = () => {
     }
     setPlan(activePlan);
 
-    // Fetch student and progress in parallel
-    const [studentRes, progressRes] = await Promise.all([
+    // Fetch student, progress and recitation counts in parallel
+    const [studentRes, progressRes, recitationRes] = await Promise.all([
       supabase.from("students").select("full_name, halaqat(name)").eq("id", studentId).single(),
       supabase.from("student_plan_progress").select("*").eq("plan_id", activePlan.id).order("month_number"),
+      supabase
+        .from("recitation_records")
+        .select("created_at")
+        .eq("student_id", studentId)
+        .gte("created_at", activePlan.start_date)
+        .lte("created_at", activePlan.end_date || new Date().toISOString()),
     ]);
 
     setStudent(studentRes.data);
     setProgress(progressRes.data || []);
+
+    // Calculate session counts per plan month
+    const planStart = new Date(activePlan.start_date);
+    const counts: Record<number, number> = {};
+    for (const rec of recitationRes.data || []) {
+      const recDate = new Date(rec.created_at);
+      const diff = (recDate.getFullYear() - planStart.getFullYear()) * 12 + (recDate.getMonth() - planStart.getMonth());
+      const mn = Math.max(1, diff + 1);
+      counts[mn] = (counts[mn] || 0) + 1;
+    }
+    setRecitationCounts(counts);
     setLoading(false);
   };
 
@@ -148,6 +167,51 @@ const StudentAnnualPlan = () => {
       fetchData();
     }
     setSaving(false);
+  };
+
+  const handleSyncFromRecitation = async () => {
+    if (!plan || !studentId) return;
+    setSyncing(true);
+
+    const { data: records } = await supabase
+      .from("recitation_records")
+      .select("created_at, memorized_from, memorized_to, review_from, review_to, linking_from, linking_to")
+      .eq("student_id", studentId)
+      .gte("created_at", plan.start_date)
+      .lte("created_at", plan.end_date || new Date().toISOString());
+
+    if (!records) { setSyncing(false); return; }
+
+    const planStart = new Date(plan.start_date);
+    const groups: Record<number, { mem: number; rev: number; link: number }> = {};
+
+    for (const rec of records) {
+      const recDate = new Date(rec.created_at);
+      const diff = (recDate.getFullYear() - planStart.getFullYear()) * 12 + (recDate.getMonth() - planStart.getMonth());
+      const mn = Math.max(1, diff + 1);
+      if (!groups[mn]) groups[mn] = { mem: 0, rev: 0, link: 0 };
+      if (rec.memorized_from && rec.memorized_to) groups[mn].mem += Number(plan.daily_memorization_pages) || 0;
+      if (rec.review_from && rec.review_to) groups[mn].rev += Number(plan.daily_review_pages) || 0;
+      if (rec.linking_from && rec.linking_to) groups[mn].link += Number(plan.daily_linking_pages) || 0;
+    }
+
+    for (const [mnStr, data] of Object.entries(groups)) {
+      const mn = Number(mnStr);
+      const totalPages = data.mem + data.rev + data.link;
+      const targetPages = progress.find((p) => p.month_number === mn)?.target_pages || 0;
+      const pct = targetPages > 0 ? Math.round((totalPages / targetPages) * 100) : 0;
+      const rowStatus = pct >= 100 ? "ahead" : pct >= 70 ? "on_track" : "behind";
+
+      await supabase
+        .from("student_plan_progress")
+        .update({ actual_pages: totalPages, actual_memorization: data.mem, actual_review: data.rev, actual_linking: data.link, commitment_percentage: pct, status: rowStatus })
+        .eq("plan_id", plan.id)
+        .eq("month_number", mn);
+    }
+
+    toast.success("تم مزامنة التقدم من سجلات التسميع");
+    fetchData();
+    setSyncing(false);
   };
 
   const handleRecoveryPlan = async () => {
@@ -246,6 +310,12 @@ const StudentAnnualPlan = () => {
           <p className="text-sm text-muted-foreground">{student?.full_name} — {(student?.halaqat as any)?.name}</p>
         </div>
         <div className="flex gap-2">
+          {(isManager || isSupervisor || isTeacher) && (
+            <Button variant="outline" size="sm" onClick={handleSyncFromRecitation} disabled={syncing}>
+              <RefreshCw className={`w-4 h-4 ml-1 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "جارٍ المزامنة..." : "مزامنة التسميع"}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
           <Button variant="outline" size="sm" onClick={handleExportPDF}><FileText className="w-4 h-4 ml-1" />تصدير PDF</Button>
         </div>
@@ -358,6 +428,7 @@ const StudentAnnualPlan = () => {
                 <TableHead>الحفظ</TableHead>
                 <TableHead>المراجعة</TableHead>
                 <TableHead>الربط</TableHead>
+                <TableHead>الجلسات</TableHead>
                 <TableHead>الالتزام%</TableHead>
                 <TableHead>الحالة</TableHead>
                 {(isManager || isSupervisor || isTeacher) && <TableHead className="print:hidden">تحديث</TableHead>}
@@ -376,6 +447,9 @@ const StudentAnnualPlan = () => {
                     <TableCell className="text-muted-foreground">{p.actual_memorization || 0}</TableCell>
                     <TableCell className="text-muted-foreground">{p.actual_review || 0}</TableCell>
                     <TableCell className="text-muted-foreground">{p.actual_linking || 0}</TableCell>
+                    <TableCell>
+                      <span className="text-xs font-medium text-primary">{recitationCounts[p.month_number] || 0}</span>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={rowPct >= 85 ? "default" : rowPct >= 70 ? "secondary" : "destructive"} className="text-xs">
                         {rowPct}%
