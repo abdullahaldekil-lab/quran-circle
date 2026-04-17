@@ -16,6 +16,7 @@ import {
   Target, Plus, ChevronDown, ChevronUp, Calendar, AlertTriangle,
   CheckCircle, Clock, TrendingUp, ListChecks, Edit, Trash2, Flag
 } from "lucide-react";
+import { formatDateHijriOnly } from "@/lib/hijri";
 
 const AXES = [
   { value: "memorization_quality", label: "الحفظ والجودة" },
@@ -376,7 +377,7 @@ const StrategicPlan = () => {
                     {expandedGoal === goal.id && (
                       <CardContent className="p-4 pt-0 space-y-4">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Calendar className="w-3 h-3" />{goal.start_date} — {goal.end_date}
+                          <Calendar className="w-3 h-3" />{formatDateHijriOnly(goal.start_date)} — {goal.end_date ? formatDateHijriOnly(goal.end_date) : "—"}
                         </div>
 
                         {canManageGoals && (
@@ -425,7 +426,7 @@ const StrategicPlan = () => {
                                 <div className="space-y-3 pt-2">
                                   {obj.description && <p className="text-xs text-muted-foreground">{obj.description}</p>}
                                   <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Calendar className="w-3 h-3" />{obj.start_date} — {obj.end_date}
+                                    <Calendar className="w-3 h-3" />{formatDateHijriOnly(obj.start_date)} — {obj.end_date ? formatDateHijriOnly(obj.end_date) : "—"}
                                   </div>
                                   {canManageTasks && (
                                     <div className="flex gap-2">
@@ -622,7 +623,7 @@ const TaskCard = ({ task, profiles, canManage, canEdit, onStatusChange, onEdit, 
         </div>
       </div>
       <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{task.start_date} — {task.end_date}</span>
+        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDateHijriOnly(task.start_date)} — {task.end_date ? formatDateHijriOnly(task.end_date) : "—"}</span>
         {assignedProfile && <span>{assignedProfile.full_name}</span>}
       </div>
       {task.notes && <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">{task.notes}</p>}

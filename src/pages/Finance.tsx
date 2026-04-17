@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { formatDateHijriOnly, toHijri, HIJRI_MONTHS } from "@/lib/hijri";
 import {
   Plus, DollarSign, TrendingUp, TrendingDown, Wallet,
   Calendar, FileText, CheckCircle2, Clock, XCircle,
@@ -497,7 +498,7 @@ const Finance = () => {
                     return (
                       <div key={month} className="p-3 rounded-lg border">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-sm">{month}</span>
+                          <span className="font-medium text-sm">{(() => { const [y, m] = month.split("-").map(Number); const h = toHijri(new Date(y, m - 1, 1)); return `${HIJRI_MONTHS[h.month - 1]} ${h.year} هـ`; })()}</span>
                           <span className={`text-sm font-bold ${net >= 0 ? "text-success" : "text-destructive"}`}>
                             {net >= 0 ? "+" : ""}{net.toLocaleString("ar-SA")} ر.س
                           </span>
@@ -633,7 +634,7 @@ const TransactionCard = ({ tx, isManager, onApprove, onReject, onDelete, onEdit 
               </div>
               {tx.description && <p className="text-xs text-muted-foreground mt-0.5">{tx.description}</p>}
               <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-0.5"><Calendar className="w-2.5 h-2.5" />{tx.transaction_date}</span>
+                <span className="flex items-center gap-0.5"><Calendar className="w-2.5 h-2.5" />{formatDateHijriOnly(tx.transaction_date)}</span>
                 {tx.reference_number && <span className="flex items-center gap-0.5"><FileText className="w-2.5 h-2.5" />{tx.reference_number}</span>}
               </div>
             </div>

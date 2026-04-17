@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { formatDateSmart } from "@/lib/hijri";
+import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -798,7 +798,7 @@ const UserManagement = () => {
                           </TableCell>
                           <TableCell className="text-sm">{log.details}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">
-                            {new Date(log.created_at).toLocaleString("ar-SA")}
+                            {formatDateTimeSmart(log.created_at)}
                           </TableCell>
                         </TableRow>
                       ))

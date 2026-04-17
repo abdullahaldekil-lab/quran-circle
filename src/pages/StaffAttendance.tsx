@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
-import { formatTime12h } from "@/lib/hijri";
+import { formatTime12h, formatHijriArabic } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -313,7 +313,7 @@ const StaffAttendance = () => {
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("w-[200px] justify-start text-right", !selectedDate && "text-muted-foreground")}>
-                <CalendarIcon className="ml-2 h-4 w-4" />{format(selectedDate, "yyyy-MM-dd")}
+                <CalendarIcon className="ml-2 h-4 w-4" />{formatHijriArabic(selectedDate)}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -354,7 +354,7 @@ const StaffAttendance = () => {
 
       {!isDayOff && (
         <Card>
-          <CardHeader><CardTitle>قائمة العاملين - {format(selectedDate, "yyyy-MM-dd")}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>قائمة العاملين - {formatHijriArabic(selectedDate)}</CardTitle></CardHeader>
           <CardContent>
             {!activeShift ? (
               <p className="text-center text-muted-foreground py-8">يرجى إضافة فترة دوام أولاً من صفحة "جداول الدوام"</p>

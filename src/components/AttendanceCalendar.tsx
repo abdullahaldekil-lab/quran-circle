@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { formatDateSmart } from "@/lib/hijri";
+import { formatDateSmart, toHijri } from "@/lib/hijri";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -162,7 +162,7 @@ const AttendanceCalendar = ({ halaqaId, selectedDate, onSelectDate }: Attendance
                 ${isFuture ? "cursor-default" : "hover:ring-1 hover:ring-primary/50"}
               `}
             >
-              {date.getDate()}
+              {toHijri(date).day}
             </button>
           );
         })}

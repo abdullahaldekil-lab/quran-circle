@@ -15,6 +15,7 @@ import AudioRecorder from "@/components/AudioRecorder";
 import { sendNotification } from "@/utils/sendNotification";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import StudentNameLink from "@/components/StudentNameLink";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import StudentAnnualPlanCard from "@/components/recitation/StudentAnnualPlanCard";
 
 const Recitation = () => {
@@ -464,7 +465,7 @@ const StudentHistory = ({ studentId }: { studentId: string }) => {
                   return (
                     <div key={r.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 border text-sm">
                       <div className="space-y-0.5">
-                        <p className="font-medium">{r.record_date}</p>
+                        <p className="font-medium">{formatDateHijriOnly(r.record_date)}</p>
                         <p className="text-xs text-muted-foreground">
                           {r.memorized_from && r.memorized_to
                             ? `حفظ: ${r.memorized_from} → ${r.memorized_to}`

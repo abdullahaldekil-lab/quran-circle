@@ -418,7 +418,7 @@ const StudentQuiz = () => {
                     const gl = GRADE_LABELS[q.grade_label];
                     return (
                       <Badge key={q.id} variant="outline" className={`text-xs ${gl?.color || ""}`}>
-                        {q.quiz_date} — {q.score}% {gl?.label || ""}
+                        {formatDateHijriOnly(q.quiz_date)} — {q.score}% {gl?.label || ""}
                       </Badge>
                     );
                   })}

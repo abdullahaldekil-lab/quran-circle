@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ClipboardList, Search } from "lucide-react";
+import { formatDateTimeSmart, formatDateHijriOnly } from "@/lib/hijri";
 
 interface AuditEntry {
   id: string;
@@ -138,7 +139,7 @@ const AttendanceAuditLog = () => {
                 {filtered.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="font-medium text-right">{entry.student_name}</TableCell>
-                    <TableCell className="text-right">{entry.attendance_date}</TableCell>
+                    <TableCell className="text-right">{formatDateHijriOnly(entry.attendance_date)}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant={statusVariant(entry.old_status)}>
                         {statusLabels[entry.old_status] || entry.old_status}
@@ -151,9 +152,7 @@ const AttendanceAuditLog = () => {
                     </TableCell>
                     <TableCell className="text-right">{entry.editor_name}</TableCell>
                     <TableCell className="text-muted-foreground text-xs text-right">
-                      {new Date(entry.edited_at).toLocaleString("ar-SA", {
-                        timeZone: "Asia/Riyadh",
-                      })}
+                      {formatDateTimeSmart(entry.edited_at)}
                     </TableCell>
                   </TableRow>
                 ))}

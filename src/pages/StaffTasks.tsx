@@ -18,7 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Clock, CheckCircle2, XCircle, AlertTriangle, Play, MessageSquare, Send, RotateCcw, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
-import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
+import { formatDateSmart, formatDateTimeSmart, toHijri } from "@/lib/hijri";
 import { sendNotification } from "@/utils/sendNotification";
 import PageDateHeader from "@/components/PageDateHeader";
 
@@ -506,7 +506,7 @@ const StaffTasks = () => {
                         !cell.inMonth ? "opacity-30" : ""
                       } ${isSelected ? "border-primary bg-primary/5" : "border-border"} ${isToday ? "bg-blue-50 dark:bg-blue-950/20" : ""}`}
                     >
-                      <div className="font-medium mb-0.5">{cell.day}</div>
+                      <div className="font-medium mb-0.5">{toHijri(cell.date).day}</div>
                       {dayTasks.slice(0, 3).map(t => (
                         <Badge key={t.id} className={`text-[10px] px-1 py-0 mb-0.5 block truncate ${PRIORITY_COLORS[t.priority]}`}>
                           {t.title}

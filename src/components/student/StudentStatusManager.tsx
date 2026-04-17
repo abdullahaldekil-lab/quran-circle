@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AlertTriangle, ArrowRightLeft, UserX, FileText, Shield, Undo2 } from "lucide-react";
+import { formatDateHijriOnly } from "@/lib/hijri";
 
 interface Props {
   student: any;
@@ -92,7 +93,7 @@ const StudentStatusManager = ({ student, isManager, onStatusChanged }: Props) =>
 
   const handleTransfer = () => {
     if (!transferDest.trim()) { toast.error("أدخل اسم المجمع الجديد"); return; }
-    logAndUpdate("inactive_transferred", "transfer", `انتقال إلى: ${transferDest}${transferDate ? ` بتاريخ ${transferDate}` : ""}`, transferDest);
+    logAndUpdate("inactive_transferred", "transfer", `انتقال إلى: ${transferDest}${transferDate ? ` بتاريخ ${formatDateHijriOnly(transferDate)}` : ""}`, transferDest);
   };
 
   const handleExclude = () => {

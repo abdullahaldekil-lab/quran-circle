@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendNotification } from "@/utils/sendNotification";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
-import { formatDateSmart } from "@/lib/hijri";
+import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -527,7 +527,7 @@ const InternalRequests = () => {
                     <div key={r.id} className="bg-muted/50 p-2 rounded-md text-sm">
                       <p className="font-medium text-xs text-primary">{getStaffName(r.from_user_id)}</p>
                       <p>{r.body}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString("ar-SA")}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">{formatDateTimeSmart(r.created_at)}</p>
                     </div>
                   ))}
                 </div>
