@@ -3677,60 +3677,144 @@ export type Database = {
       }
       students: {
         Row: {
+          accompanied_by: string | null
           birth_date_gregorian: string | null
           birth_date_hijri: string | null
           created_at: string
           current_level: string | null
+          father_alive: boolean | null
           full_name: string
+          grade: string | null
           guardian_name: string | null
+          guardian_national_id: string | null
           guardian_phone: string | null
+          guardian_phone_alt: string | null
+          guardian_relation: string | null
+          guardian_work: string | null
           halaqa_id: string | null
+          has_anemia: boolean | null
+          has_asthma: boolean | null
+          has_chest_sensitivity: boolean | null
+          has_diabetes: boolean | null
+          has_epilepsy: boolean | null
+          has_frequent_urination: boolean | null
+          has_hearing_impairment: boolean | null
+          has_hypertension: boolean | null
+          has_vision_impairment: boolean | null
           id: string
           inactivation_date: string | null
           inactivation_reason: string | null
           join_date: string
+          lives_with: string | null
+          lives_with_other: string | null
+          memorization_amount: string | null
+          mother_alive: boolean | null
+          national_id: string | null
+          nationality: string | null
           notes: string | null
+          other_health_conditions: string | null
+          previously_enrolled: boolean | null
+          registration_date_hijri: string | null
+          residence_location: string | null
+          school_name: string | null
           status: Database["public"]["Enums"]["student_status"]
+          student_phone: string | null
           total_memorized_pages: number | null
           transfer_destination: string | null
           updated_at: string
           warning_level: number | null
         }
         Insert: {
+          accompanied_by?: string | null
           birth_date_gregorian?: string | null
           birth_date_hijri?: string | null
           created_at?: string
           current_level?: string | null
+          father_alive?: boolean | null
           full_name: string
+          grade?: string | null
           guardian_name?: string | null
+          guardian_national_id?: string | null
           guardian_phone?: string | null
+          guardian_phone_alt?: string | null
+          guardian_relation?: string | null
+          guardian_work?: string | null
           halaqa_id?: string | null
+          has_anemia?: boolean | null
+          has_asthma?: boolean | null
+          has_chest_sensitivity?: boolean | null
+          has_diabetes?: boolean | null
+          has_epilepsy?: boolean | null
+          has_frequent_urination?: boolean | null
+          has_hearing_impairment?: boolean | null
+          has_hypertension?: boolean | null
+          has_vision_impairment?: boolean | null
           id?: string
           inactivation_date?: string | null
           inactivation_reason?: string | null
           join_date?: string
+          lives_with?: string | null
+          lives_with_other?: string | null
+          memorization_amount?: string | null
+          mother_alive?: boolean | null
+          national_id?: string | null
+          nationality?: string | null
           notes?: string | null
+          other_health_conditions?: string | null
+          previously_enrolled?: boolean | null
+          registration_date_hijri?: string | null
+          residence_location?: string | null
+          school_name?: string | null
           status?: Database["public"]["Enums"]["student_status"]
+          student_phone?: string | null
           total_memorized_pages?: number | null
           transfer_destination?: string | null
           updated_at?: string
           warning_level?: number | null
         }
         Update: {
+          accompanied_by?: string | null
           birth_date_gregorian?: string | null
           birth_date_hijri?: string | null
           created_at?: string
           current_level?: string | null
+          father_alive?: boolean | null
           full_name?: string
+          grade?: string | null
           guardian_name?: string | null
+          guardian_national_id?: string | null
           guardian_phone?: string | null
+          guardian_phone_alt?: string | null
+          guardian_relation?: string | null
+          guardian_work?: string | null
           halaqa_id?: string | null
+          has_anemia?: boolean | null
+          has_asthma?: boolean | null
+          has_chest_sensitivity?: boolean | null
+          has_diabetes?: boolean | null
+          has_epilepsy?: boolean | null
+          has_frequent_urination?: boolean | null
+          has_hearing_impairment?: boolean | null
+          has_hypertension?: boolean | null
+          has_vision_impairment?: boolean | null
           id?: string
           inactivation_date?: string | null
           inactivation_reason?: string | null
           join_date?: string
+          lives_with?: string | null
+          lives_with_other?: string | null
+          memorization_amount?: string | null
+          mother_alive?: boolean | null
+          national_id?: string | null
+          nationality?: string | null
           notes?: string | null
+          other_health_conditions?: string | null
+          previously_enrolled?: boolean | null
+          registration_date_hijri?: string | null
+          residence_location?: string | null
+          school_name?: string | null
           status?: Database["public"]["Enums"]["student_status"]
+          student_phone?: string | null
           total_memorized_pages?: number | null
           transfer_destination?: string | null
           updated_at?: string
