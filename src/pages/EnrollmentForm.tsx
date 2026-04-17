@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -75,7 +75,7 @@ export default function EnrollmentForm() {
     if (!studentId) return;
     supabase.from("students").select("*").eq("id", studentId).single()
       .then(({ data, error }) => {
-        if (error) { toast.error("تعذّر جلب بيانات الطالب"); return; }
+        if (error) { toast.error("تعذّر جلب بيانات الطالب"); setLoading(false); return; }
         setStudent(data as StudentData);
         setLoading(false);
       });
@@ -121,8 +121,9 @@ export default function EnrollmentForm() {
       {/* ── Print CSS ── */}
       <style>{`
         @media print {
-          .no-print { display: none !important; }
-          .print-only { display: block !important; }
+          body * { visibility: hidden; }
+          .print-only, .print-only * { visibility: visible; }
+          .print-only { position: absolute; top: 0; right: 0; left: 0; }
           @page { size: A4 portrait; margin: 12mm; }
           body { font-family: 'Arial', sans-serif; font-size: 11px; direction: rtl; }
           table { border-collapse: collapse; width: 100%; }
@@ -260,11 +261,11 @@ export default function EnrollmentForm() {
                   const item = healthFields[row * 3 + col];
                   const val = !!student[item.field];
                   return (
-                    <>
-                      <td key={item.field + "l"} style={td}>{item.label}</td>
-                      <td key={item.field + "y"} style={{ ...td, textAlign: "center" }}>{val ? "●" : ""}</td>
-                      <td key={item.field + "n"} style={{ ...td, textAlign: "center" }}>{!val ? "●" : ""}</td>
-                    </>
+                    <React.Fragment key={item.field}>
+                      <td style={td}>{item.label}</td>
+                      <td style={{ ...td, textAlign: "center" }}>{val ? "●" : ""}</td>
+                      <td style={{ ...td, textAlign: "center" }}>{!val ? "●" : ""}</td>
+                    </React.Fragment>
                   );
                 })}
               </tr>
