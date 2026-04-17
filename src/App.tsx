@@ -77,6 +77,7 @@ import MadarijReport from "@/pages/MadarijReport";
 import StaffTasks from "@/pages/StaffTasks";
 import StaffTasksAnalytics from "@/pages/StaffTasksAnalytics";
 import ProgramsOverview from "@/pages/ProgramsOverview";
+import EnrollmentForm from "./pages/EnrollmentForm";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -187,6 +188,7 @@ const AppRoutes = () => {
       <Route path="/staff-tasks" element={<ProtectedRoute path="/staff-tasks"><StaffTasks /></ProtectedRoute>} />
       <Route path="/staff-tasks-analytics" element={<ProtectedRoute path="/staff-tasks-analytics"><StaffTasksAnalytics /></ProtectedRoute>} />
       <Route path="/programs-overview" element={<ProtectedRoute path="/programs-overview"><ProgramsOverview /></ProtectedRoute>} />
+      <Route path="/enrollment-form/:studentId" element={<ProtectedRoute path="/enrollment-form"><EnrollmentForm /></ProtectedRoute>} />
 
       <Route path="/notification-templates" element={<ProtectedRoute path="/notification-templates"><NotificationTemplates /></ProtectedRoute>} />
       <Route path="/notification-log" element={<ProtectedRoute path="/notification-log"><NotificationLog /></ProtectedRoute>} />
