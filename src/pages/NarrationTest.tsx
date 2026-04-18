@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import StudentNameLink from "@/components/StudentNameLink";
-import { formatFullDateHeader, formatDualDate, formatDateHijriOnly } from "@/lib/hijri";
+import { formatDualDate, formatDateHijriOnly } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, FileSpreadsheet, FileText, CalendarDays, Save, History, CheckCircle, XCircle, Pencil } from "lucide-react";
+import { Printer, FileSpreadsheet, FileText, CalendarDays, Save, History, CheckCircle, XCircle, Users, UserCheck, UserX, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -21,28 +22,44 @@ import * as XLSX from "xlsx-js-style";
 interface StudentRow {
   id: string;
   full_name: string;
-  attempt: string;
   hizb: string;
   errors: number;
   warnings: number;
 }
 
 const HIZB_OPTIONS = Array.from({ length: 60 }, (_, i) => String(i + 1));
-const ATTEMPT_OPTIONS = ["الأولى", "الثانية", "الثالثة"];
-const ATTEMPT_MAP: Record<string, number> = { "الأولى": 1, "الثانية": 2, "الثالثة": 3 };
 const ATTENDANCE_SCORE = 50;
 const PASS_THRESHOLD = 60;
+// New scoring: error = 5 points, warning = 1 point (out of 50 narration max)
+const ERROR_DEDUCTION = 5;
+const WARNING_DEDUCTION = 1;
+
+const calcNarrationScore = (errors: number, warnings: number) =>
+  Math.max(0, 50 - errors * ERROR_DEDUCTION - warnings * WARNING_DEDUCTION);
+
+const attemptLabel = (n: number) => (n === 1 ? "الأولى" : n === 2 ? "الثانية" : n >= 3 ? "الثالثة+" : "—");
+
+const attemptBadgeClass = (n: number) =>
+  n === 1
+    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+    : n === 2
+    ? "bg-amber-100 text-amber-800 border-amber-300"
+    : n >= 3
+    ? "bg-red-100 text-red-800 border-red-300"
+    : "";
+
+type ResultFilter = "all" | "passed" | "failed";
 
 const NarrationTest = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedHalaqaId, setSelectedHalaqaId] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [studentRows, setStudentRows] = useState<Record<string, StudentRow>>({});
-  const [editingAttempt, setEditingAttempt] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState("test");
+  const [activeTab, setActiveTab] = useState("select");
   const [historyDateFilter, setHistoryDateFilter] = useState("");
+  const [resultFilter, setResultFilter] = useState<ResultFilter>("all");
   const printRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
@@ -73,6 +90,44 @@ const NarrationTest = () => {
     enabled: !!selectedHalaqaId,
   });
 
+  const studentIds = useMemo(() => students.map((s: any) => s.id), [students]);
+
+  // Fetch ALL prior results for these students (used for: attempt counts, last-result classification, current hizb fallback)
+  const { data: priorResults = [] } = useQuery({
+    queryKey: ["narration_prior_results", selectedHalaqaId, studentIds.join(",")],
+    queryFn: async () => {
+      if (!studentIds.length) return [];
+      const { data, error } = await supabase
+        .from("narration_test_results")
+        .select("student_id, hizb_number, passed, attempt_number, test_date, created_at, narration_score, total_score")
+        .eq("test_type", "narration")
+        .in("student_id", studentIds)
+        .order("test_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedHalaqaId && studentIds.length > 0,
+  });
+
+  // Fetch active madarij enrollment to know each student's CURRENT hizb (the one they're working on)
+  const { data: enrollments = [] } = useQuery({
+    queryKey: ["madarij_active_enrollments", studentIds.join(",")],
+    queryFn: async () => {
+      if (!studentIds.length) return [];
+      const { data, error } = await supabase
+        .from("madarij_enrollments")
+        .select("student_id, hizb_number, status, updated_at")
+        .in("student_id", studentIds)
+        .eq("status", "active")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedHalaqaId && studentIds.length > 0,
+  });
+
+  // History (separate query for the history tab with date filter)
   const { data: historyData = [] } = useQuery({
     queryKey: ["narration_test_history", selectedHalaqaId, historyDateFilter],
     queryFn: async () => {
@@ -83,85 +138,100 @@ const NarrationTest = () => {
         .eq("test_type", "narration")
         .order("test_date", { ascending: false })
         .order("created_at", { ascending: false });
-      if (historyDateFilter) {
-        query = query.eq("test_date", historyDateFilter);
-      }
-      const { data, error } = await query.limit(200);
+      if (historyDateFilter) query = query.eq("test_date", historyDateFilter);
+      const { data, error } = await query.limit(300);
       if (error) throw error;
       return data;
     },
     enabled: !!selectedHalaqaId && activeTab === "history",
   });
 
-  // Fetch previous attempt counts for auto-detection
-  const { data: attemptCounts = {} } = useQuery({
-    queryKey: ["narration_attempt_counts", selectedHalaqaId, students.map((s: any) => s.id).join(",")],
-    queryFn: async () => {
-      if (!students.length) return {};
-      const studentIds = students.map((s: any) => s.id);
-      const { data, error } = await supabase
-        .from("narration_test_results" as any)
-        .select("student_id")
-        .eq("halaqa_id", selectedHalaqaId)
-        .eq("test_type", "narration")
-        .in("student_id", studentIds);
-      if (error) throw error;
-      const counts: Record<string, number> = {};
-      (data as any[])?.forEach((r: any) => {
-        counts[r.student_id] = (counts[r.student_id] || 0) + 1;
-      });
-      return counts;
-    },
-    enabled: !!selectedHalaqaId && students.length > 0,
-  });
+  // Build per-student summary: attempt count, last result, current hizb (from enrollment, fallback to last hizb)
+  const studentSummary = useMemo(() => {
+    const map: Record<string, {
+      attemptCount: number;
+      lastResult: { passed: boolean; date: string; hizb: number | null; score: number } | null;
+      currentHizb: string;
+    }> = {};
+    const enrollmentByStudent: Record<string, number | null> = {};
+    enrollments.forEach((e: any) => {
+      if (!(e.student_id in enrollmentByStudent)) {
+        enrollmentByStudent[e.student_id] = e.hizb_number ?? null;
+      }
+    });
 
-  const getAutoAttempt = (studentId: string): string => {
-    const count = (attemptCounts as Record<string, number>)[studentId] || 0;
-    if (count === 0) return "الأولى";
-    if (count === 1) return "الثانية";
-    return "الثالثة";
-  };
-
-  useMemo(() => {
-    const newRows: Record<string, StudentRow> = {};
     students.forEach((s: any) => {
-      newRows[s.id] = studentRows[s.id] || {
-        id: s.id, full_name: s.full_name, attempt: "", hizb: "", errors: 0, warnings: 0,
+      const prior = priorResults.filter((r: any) => r.student_id === s.id);
+      const last = prior[0];
+      const enrollHizb = enrollmentByStudent[s.id];
+      const currentHizb = enrollHizb ? String(enrollHizb) : last?.hizb_number ? String(last.hizb_number) : "";
+      map[s.id] = {
+        attemptCount: prior.length,
+        lastResult: last
+          ? { passed: last.passed, date: last.test_date, hizb: last.hizb_number, score: last.total_score }
+          : null,
+        currentHizb,
       };
     });
-    if (JSON.stringify(Object.keys(newRows)) !== JSON.stringify(Object.keys(studentRows))) {
-      setStudentRows(newRows);
-      setEditingAttempt({});
-      setSaved(false);
-    }
-  }, [students]);
+    return map;
+  }, [students, priorResults, enrollments]);
 
-  // Auto-set attempts when attemptCounts loads
-  useEffect(() => {
-    if (Object.keys(attemptCounts).length === 0 && students.length === 0) return;
-    setStudentRows((prev) => {
-      const updated = { ...prev };
-      let changed = false;
-      Object.keys(updated).forEach((id) => {
-        if (!updated[id].attempt) {
-          updated[id] = { ...updated[id], attempt: getAutoAttempt(id) };
-          changed = true;
-        }
-      });
-      return changed ? updated : prev;
+  // Categorize students
+  const categorized = useMemo(() => {
+    const notTested: any[] = [];
+    const passed: any[] = [];
+    const failed: any[] = [];
+    students.forEach((s: any) => {
+      const summary = studentSummary[s.id];
+      if (!summary?.lastResult) notTested.push(s);
+      else if (summary.lastResult.passed) passed.push(s);
+      else failed.push(s);
     });
-  }, [attemptCounts]);
+    return { notTested, passed, failed };
+  }, [students, studentSummary]);
+
+  // Sync student rows when selection changes
+  useEffect(() => {
+    setStudentRows((prev) => {
+      const updated: Record<string, StudentRow> = {};
+      selectedIds.forEach((id) => {
+        const student = students.find((s: any) => s.id === id);
+        if (!student) return;
+        updated[id] = prev[id] || {
+          id,
+          full_name: student.full_name,
+          hizb: studentSummary[id]?.currentHizb || "",
+          errors: 0,
+          warnings: 0,
+        };
+      });
+      return updated;
+    });
+  }, [selectedIds, students, studentSummary]);
+
+  const toggleStudent = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllNotTested = () => {
+    const allIds = categorized.notTested.map((s) => s.id);
+    const allSelected = allIds.every((id) => selectedIds.has(id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) allIds.forEach((id) => next.delete(id));
+      else allIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
 
   const updateRow = (id: string, field: keyof StudentRow, value: any) => {
     setStudentRows((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
-    setSaved(false);
   };
-
-  const calcNarrationScore = (errors: number, warnings: number) =>
-    Math.max(0, 50 - errors * 2 - warnings * 0.5);
-
-  const calcTotal = (errors: number, warnings: number) =>
-    calcNarrationScore(errors, warnings) + ATTENDANCE_SCORE;
 
   const halaqaName = halaqat.find((h: any) => h.id === selectedHalaqaId)?.name || "";
 
@@ -169,12 +239,21 @@ const NarrationTest = () => {
     Object.values(studentRows).map((row) => {
       const narrationScore = calcNarrationScore(row.errors, row.warnings);
       const total = narrationScore + ATTENDANCE_SCORE;
-      return { ...row, narrationScore, total, passed: total >= PASS_THRESHOLD };
+      const attemptNumber = (studentSummary[row.id]?.attemptCount || 0) + 1;
+      return { ...row, narrationScore, total, passed: total >= PASS_THRESHOLD, attemptNumber };
     });
 
   const handleSave = async () => {
     const rows = getTableData();
-    if (rows.length === 0) return;
+    if (rows.length === 0) {
+      toast.error("اختر طالباً واحداً على الأقل");
+      return;
+    }
+    const missingHizb = rows.filter((r) => !r.hizb);
+    if (missingHizb.length > 0) {
+      toast.error(`يجب تحديد الحزب لجميع الطلاب (${missingHizb.length} متبقي)`);
+      return;
+    }
     setSaving(true);
     try {
       const records = rows.map((r) => ({
@@ -182,8 +261,8 @@ const NarrationTest = () => {
         halaqa_id: selectedHalaqaId,
         test_type: "narration" as string,
         test_date: todayStr,
-        attempt_number: ATTEMPT_MAP[r.attempt] || 1,
-        hizb_number: r.hizb ? parseInt(r.hizb) : null,
+        attempt_number: r.attemptNumber,
+        hizb_number: parseInt(r.hizb),
         mistakes: r.errors,
         warnings: r.warnings,
         narration_score: Number(r.narrationScore.toFixed(1)),
@@ -193,9 +272,12 @@ const NarrationTest = () => {
       }));
       const { error } = await supabase.from("narration_test_results" as any).insert(records as any);
       if (error) throw error;
-      setSaved(true);
-      toast.success("تم حفظ النتائج بنجاح");
+      toast.success(`تم حفظ نتائج ${records.length} طالب`);
+      setSelectedIds(new Set());
+      setStudentRows({});
       queryClient.invalidateQueries({ queryKey: ["narration_test_history"] });
+      queryClient.invalidateQueries({ queryKey: ["narration_prior_results"] });
+      setActiveTab("results");
     } catch (err: any) {
       toast.error("فشل حفظ النتائج: " + err.message);
     } finally {
@@ -208,7 +290,7 @@ const NarrationTest = () => {
     doc.text(`ورقة اختبار السرد — ${halaqaName}`, 14, 15);
     doc.text(`${todayStr} | ${hijriArabic}`, 14, 23);
     const rows = getTableData().map((r, i) => [
-      String(i + 1), r.full_name, r.attempt || "—", r.hizb || "—",
+      String(i + 1), r.full_name, attemptLabel(r.attemptNumber), r.hizb || "—",
       String(r.errors), String(r.warnings), r.narrationScore.toFixed(1),
       r.total.toFixed(1), r.passed ? "ناجح" : "راسب",
     ]);
@@ -222,7 +304,7 @@ const NarrationTest = () => {
 
   const exportExcel = () => {
     const data = getTableData().map((r, i) => ({
-      "#": i + 1, "الاسم": r.full_name, "المرة": r.attempt || "—", "الحزب": r.hizb || "—",
+      "#": i + 1, "الاسم": r.full_name, "المرة": attemptLabel(r.attemptNumber), "الحزب": r.hizb || "—",
       "الأخطاء": r.errors, "التنبيهات": r.warnings,
       "درجة السرد": Number(r.narrationScore.toFixed(1)), "المجموع": Number(r.total.toFixed(1)),
       "النتيجة": r.passed ? "ناجح" : "راسب", "التاريخ الميلادي": todayStr, "التاريخ الهجري": hijriArabic,
@@ -236,15 +318,10 @@ const NarrationTest = () => {
   const exportHistoryExcel = () => {
     if (!historyData.length) return;
     const data = historyData.map((r: any, i: number) => ({
-      "#": i + 1,
-      "التاريخ": r.test_date,
-      "الاسم": r.students?.full_name || "—",
-      "الحزب": r.hizb_number || "—",
-      "المرة": r.attempt_number,
-      "الأخطاء": r.mistakes,
-      "التنبيهات": r.warnings,
-      "درجة السرد": r.narration_score,
-      "المجموع": r.total_score,
+      "#": i + 1, "التاريخ": r.test_date, "الاسم": r.students?.full_name || "—",
+      "الحزب": r.hizb_number || "—", "المرة": r.attempt_number,
+      "الأخطاء": r.mistakes, "التنبيهات": r.warnings,
+      "درجة السرد": r.narration_score, "المجموع": r.total_score,
       "النتيجة": r.passed ? "ناجح" : "راسب",
     }));
     const ws = XLSX.utils.json_to_sheet(data);
@@ -277,7 +354,11 @@ const NarrationTest = () => {
     win.print();
   };
 
-  const hasData = selectedHalaqaId && Object.keys(studentRows).length > 0;
+  const hasSelection = Object.keys(studentRows).length > 0;
+
+  // Filter results lists by resultFilter (only relevant for "results" tab)
+  const filteredPassed = resultFilter === "failed" ? [] : categorized.passed;
+  const filteredFailed = resultFilter === "passed" ? [] : categorized.failed;
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -290,33 +371,26 @@ const NarrationTest = () => {
             <span className="text-muted-foreground text-xs">، {gregorianArabic}</span>
           </div>
         </div>
-        {hasData && (
-          <div className="flex gap-2 flex-wrap">
-            <Button size="sm" onClick={handleSave} disabled={saving || saved}>
-              <Save className="w-4 h-4 ml-1" />
-              {saving ? "جارٍ الحفظ..." : saved ? "تم الحفظ ✓" : "حفظ النتائج"}
-            </Button>
-            <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
-            <Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="w-4 h-4 ml-1" />Excel</Button>
-            <Button variant="outline" size="sm" onClick={exportPDF}><FileText className="w-4 h-4 ml-1" />PDF</Button>
-          </div>
-        )}
       </div>
 
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">الفلاتر</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <div>
               <Label>الحلقة</Label>
-              <Select value={selectedHalaqaId} onValueChange={(v) => { setSelectedHalaqaId(v); setStudentRows({}); setSaved(false); }}>
+              <Select value={selectedHalaqaId} onValueChange={(v) => { setSelectedHalaqaId(v); setSelectedIds(new Set()); setStudentRows({}); }}>
                 <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
                 <SelectContent>{halaqat.map((h: any) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label>عدد الطلاب</Label>
-              <p className="text-lg font-semibold mt-1">{Object.keys(studentRows).length}</p>
+              <Label>إجمالي الطلاب</Label>
+              <p className="text-lg font-semibold mt-1">{students.length}</p>
+            </div>
+            <div>
+              <Label>المختار للاختبار</Label>
+              <p className="text-lg font-semibold mt-1 text-primary">{selectedIds.size}</p>
             </div>
           </div>
         </CardContent>
@@ -324,21 +398,91 @@ const NarrationTest = () => {
 
       {selectedHalaqaId && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="test"><FileText className="w-4 h-4 ml-1" />الاختبار</TabsTrigger>
-            <TabsTrigger value="history"><History className="w-4 h-4 ml-1" />السجل السابق</TabsTrigger>
+          <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+            <TabsTrigger value="select"><Users className="w-4 h-4 ml-1" />الطلاب ({categorized.notTested.length})</TabsTrigger>
+            <TabsTrigger value="test" disabled={!hasSelection}><ClipboardList className="w-4 h-4 ml-1" />الاختبار ({selectedIds.size})</TabsTrigger>
+            <TabsTrigger value="results"><UserCheck className="w-4 h-4 ml-1" />النتائج ({categorized.passed.length + categorized.failed.length})</TabsTrigger>
+            <TabsTrigger value="history"><History className="w-4 h-4 ml-1" />السجل</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="test">
-            {hasData ? (
+          {/* === SELECT TAB === */}
+          <TabsContent value="select" className="mt-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <CardTitle className="text-base">الطلاب الذين لم يُختبروا بعد</CardTitle>
+                  {categorized.notTested.length > 0 && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={toggleAllNotTested}>
+                        {categorized.notTested.every((s) => selectedIds.has(s.id)) ? "إلغاء تحديد الكل" : "تحديد الكل"}
+                      </Button>
+                      <Button size="sm" onClick={() => setActiveTab("test")} disabled={selectedIds.size === 0}>
+                        المتابعة للاختبار ({selectedIds.size})
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {categorized.notTested.length === 0 ? (
+                  <p className="text-center py-10 text-muted-foreground">جميع الطلاب تم اختبارهم — راجع تبويب النتائج</p>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {categorized.notTested.map((s: any) => {
+                      const summary = studentSummary[s.id];
+                      const isSelected = selectedIds.has(s.id);
+                      return (
+                        <div
+                          key={s.id}
+                          onClick={() => toggleStudent(s.id)}
+                          className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                            isSelected ? "bg-primary/10 border-primary" : "hover:bg-muted/50"
+                          }`}
+                        >
+                          <Checkbox checked={isSelected} onCheckedChange={() => toggleStudent(s.id)} />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{s.full_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              الحزب الحالي: <span className="font-semibold">{summary?.currentHizb || "—"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* === TEST TAB === */}
+          <TabsContent value="test" className="mt-4">
+            {hasSelection ? (
               <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <CardTitle className="text-base">إدخال نتائج الاختبار</CardTitle>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button size="sm" onClick={handleSave} disabled={saving}>
+                        <Save className="w-4 h-4 ml-1" />
+                        {saving ? "جارٍ الحفظ..." : "حفظ النتائج"}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 ml-1" />طباعة</Button>
+                      <Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="w-4 h-4 ml-1" />Excel</Button>
+                      <Button variant="outline" size="sm" onClick={exportPDF}><FileText className="w-4 h-4 ml-1" />PDF</Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    احتساب الدرجات: خطأ = {ERROR_DEDUCTION} درجات، تنبيه = {WARNING_DEDUCTION} درجة. (من 50 + 50 حضور = 100)
+                  </p>
+                </CardHeader>
                 <CardContent className="p-0" ref={printRef}>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="text-right">الاسم</TableHead>
-                          <TableHead className="text-center w-28">عرض المرة</TableHead>
+                          <TableHead className="text-center w-28">المرة</TableHead>
                           <TableHead className="text-center w-24">الحزب</TableHead>
                           <TableHead className="text-center w-20">الأخطاء</TableHead>
                           <TableHead className="text-center w-20">التنبيهات</TableHead>
@@ -350,32 +494,16 @@ const NarrationTest = () => {
                       <TableBody>
                         {Object.values(studentRows).map((row) => {
                           const narrationScore = calcNarrationScore(row.errors, row.warnings);
-                          const total = calcTotal(row.errors, row.warnings);
+                          const total = narrationScore + ATTENDANCE_SCORE;
                           const passed = total >= PASS_THRESHOLD;
+                          const attemptNumber = (studentSummary[row.id]?.attemptCount || 0) + 1;
                           return (
                             <TableRow key={row.id}>
                               <TableCell><StudentNameLink studentId={row.id} studentName={row.full_name} /></TableCell>
                               <TableCell className="text-center">
-                                {editingAttempt[row.id] ? (
-                                  <Select value={row.attempt} onValueChange={(v) => { updateRow(row.id, "attempt", v); setEditingAttempt((p) => ({ ...p, [row.id]: false })); }}>
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="اختر" /></SelectTrigger>
-                                    <SelectContent>{ATTEMPT_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                  </Select>
-                                ) : (
-                                  <div className="flex items-center justify-center gap-1">
-                                    <Badge variant="outline" className={
-                                      row.attempt === "الأولى" ? "bg-emerald-100 text-emerald-800 border-emerald-300" :
-                                      row.attempt === "الثانية" ? "bg-amber-100 text-amber-800 border-amber-300" :
-                                      row.attempt === "الثالثة" ? "bg-red-100 text-red-800 border-red-300" :
-                                      ""
-                                    }>
-                                      {row.attempt || "—"}
-                                    </Badge>
-                                    <button onClick={() => setEditingAttempt((p) => ({ ...p, [row.id]: true }))} className="text-muted-foreground hover:text-foreground transition-colors">
-                                      <Pencil className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                )}
+                                <Badge variant="outline" className={attemptBadgeClass(attemptNumber)}>
+                                  {attemptLabel(attemptNumber)}
+                                </Badge>
                               </TableCell>
                               <TableCell className="text-center">
                                 <Select value={row.hizb} onValueChange={(v) => updateRow(row.id, "hizb", v)}>
@@ -409,20 +537,135 @@ const NarrationTest = () => {
                 </CardContent>
               </Card>
             ) : (
-              Object.keys(studentRows).length === 0 && (
-                <Card><CardContent className="py-10 text-center text-muted-foreground">لا يوجد طلاب في هذه الحلقة</CardContent></Card>
-              )
+              <Card><CardContent className="py-10 text-center text-muted-foreground">اختر طلاباً من تبويب "الطلاب" للبدء</CardContent></Card>
             )}
           </TabsContent>
 
-          <TabsContent value="history">
+          {/* === RESULTS TAB === */}
+          <TabsContent value="results" className="mt-4 space-y-4">
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between flex-wrap gap-3">
-                  <CardTitle className="text-base">السجل السابق — اختبار السرد</CardTitle>
+                  <CardTitle className="text-base">نتائج آخر اختبار</CardTitle>
+                  <Select value={resultFilter} onValueChange={(v: ResultFilter) => setResultFilter(v)}>
+                    <SelectTrigger className="w-44 h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">الكل</SelectItem>
+                      <SelectItem value="passed">الناجحون فقط</SelectItem>
+                      <SelectItem value="failed">الراسبون فقط</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Passed */}
+            {filteredPassed.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2 text-emerald-700">
+                    <UserCheck className="w-5 h-5" /> الناجحون ({filteredPassed.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">الاسم</TableHead>
+                        <TableHead className="text-center">المرة</TableHead>
+                        <TableHead className="text-center">الحزب</TableHead>
+                        <TableHead className="text-center">المجموع</TableHead>
+                        <TableHead className="text-center">تاريخ الاختبار</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPassed.map((s: any) => {
+                        const last = studentSummary[s.id]?.lastResult;
+                        const attemptNumber = studentSummary[s.id]?.attemptCount || 0;
+                        return (
+                          <TableRow key={s.id}>
+                            <TableCell><StudentNameLink studentId={s.id} studentName={s.full_name} /></TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className={attemptBadgeClass(attemptNumber)}>
+                                {attemptLabel(attemptNumber)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">{last?.hizb || "—"}</TableCell>
+                            <TableCell className="text-center font-bold text-emerald-700">{last?.score}</TableCell>
+                            <TableCell className="text-center text-xs">{last && formatDateHijriOnly(last.date)}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Failed */}
+            {filteredFailed.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                    <UserX className="w-5 h-5" /> الراسبون ({filteredFailed.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">الاسم</TableHead>
+                        <TableHead className="text-center">المرة</TableHead>
+                        <TableHead className="text-center">الحزب</TableHead>
+                        <TableHead className="text-center">المجموع</TableHead>
+                        <TableHead className="text-center">تاريخ الاختبار</TableHead>
+                        <TableHead className="text-center">إجراء</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredFailed.map((s: any) => {
+                        const last = studentSummary[s.id]?.lastResult;
+                        const attemptNumber = studentSummary[s.id]?.attemptCount || 0;
+                        return (
+                          <TableRow key={s.id}>
+                            <TableCell><StudentNameLink studentId={s.id} studentName={s.full_name} /></TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className={attemptBadgeClass(attemptNumber)}>
+                                {attemptLabel(attemptNumber)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">{last?.hizb || "—"}</TableCell>
+                            <TableCell className="text-center font-bold text-destructive">{last?.score}</TableCell>
+                            <TableCell className="text-center text-xs">{last && formatDateHijriOnly(last.date)}</TableCell>
+                            <TableCell className="text-center">
+                              <Button size="sm" variant="outline" onClick={() => {
+                                setSelectedIds((prev) => new Set([...prev, s.id]));
+                                setActiveTab("test");
+                              }}>إعادة الاختبار</Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {filteredPassed.length === 0 && filteredFailed.length === 0 && (
+              <Card><CardContent className="py-10 text-center text-muted-foreground">لا توجد نتائج بعد</CardContent></Card>
+            )}
+          </TabsContent>
+
+          {/* === HISTORY TAB === */}
+          <TabsContent value="history" className="mt-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <CardTitle className="text-base">السجل الكامل — اختبار السرد</CardTitle>
                   <div className="flex gap-2 items-center">
                     <Input type="date" value={historyDateFilter} onChange={(e) => setHistoryDateFilter(e.target.value)}
-                      className="w-44 h-8 text-xs" placeholder="فلتر بالتاريخ" />
+                      className="w-44 h-8 text-xs" />
                     {historyDateFilter && (
                       <Button variant="ghost" size="sm" onClick={() => setHistoryDateFilter("")}>مسح</Button>
                     )}
@@ -454,10 +697,14 @@ const NarrationTest = () => {
                       ) : (
                         historyData.map((r: any) => (
                           <TableRow key={r.id}>
-                            <TableCell>{formatDateHijriOnly(r.test_date)}</TableCell>
+                            <TableCell className="text-xs">{formatDateHijriOnly(r.test_date)}</TableCell>
                             <TableCell>{r.students?.full_name || "—"}</TableCell>
                             <TableCell className="text-center">{r.hizb_number || "—"}</TableCell>
-                            <TableCell className="text-center">{r.attempt_number}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className={attemptBadgeClass(r.attempt_number)}>
+                                {attemptLabel(r.attempt_number)}
+                              </Badge>
+                            </TableCell>
                             <TableCell className="text-center">{r.mistakes}</TableCell>
                             <TableCell className="text-center">{r.warnings}</TableCell>
                             <TableCell className="text-center">{r.narration_score}</TableCell>
