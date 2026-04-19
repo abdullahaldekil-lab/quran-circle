@@ -30,29 +30,30 @@ const AcceptanceLetterTemplate = ({ studentName, guardianName, guardianPhone, ha
         <style>
           @page { size: A4; margin: 20mm; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 14px; line-height: 1.8; direction: rtl; color: #1a1a1a; }
+          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.9; direction: rtl; color: #1a1a1a; }
           .page { max-width: 700px; margin: 0 auto; }
-          .header { text-align: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 3px double #b8860b; }
-          .header img { width: 70px; height: 70px; border-radius: 12px; object-fit: contain; }
-          .header h1 { font-size: 20px; color: #1a365d; margin: 8px 0 2px; }
-          .header p { font-size: 12px; color: #666; }
-          .meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 12px; color: #555; }
-          .letter-body { margin: 24px 0; font-size: 15px; line-height: 2; }
-          .letter-body p { margin-bottom: 12px; }
+          .header { text-align: center; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 3px double #b8860b; }
+          .header img { width: 86px; height: 86px; border-radius: 12px; object-fit: contain; }
+          .header h1 { font-size: 22px; color: #1a365d; margin: 10px 0 3px; }
+          .header p { font-size: 13px; color: #666; }
+          .meta { display: flex; justify-content: space-between; margin-bottom: 22px; font-size: 13px; color: #555; border-bottom: 2px solid #e0d8c8; padding-bottom: 8px; }
+          .letter-body { margin: 24px 0; font-size: 16px; line-height: 2.1; }
+          .letter-body p { margin-bottom: 14px; }
           .highlight { color: #1a365d; font-weight: 700; }
-          .info-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-          .info-table td { padding: 8px 12px; border: 1px solid #ddd; font-size: 13px; }
-          .info-table td:first-child { background: #f0f4f8; font-weight: 600; color: #1a365d; width: 140px; }
-          .instructions { background: #fafaf8; border: 1px solid #e2e2d8; border-radius: 8px; padding: 14px 18px; margin: 20px 0; font-size: 12px; line-height: 2; }
-          .instructions h3 { font-size: 13px; color: #1a365d; margin-bottom: 6px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-          .instructions li { margin-right: 16px; }
-          .signature-area { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 16px; }
+          .info-table { width: 100%; border-collapse: collapse; margin: 18px 0; border: 2px solid #c8b870; }
+          .info-table td { padding: 10px 14px; border: 1px solid #ccc; font-size: 14px; }
+          .info-table td:first-child { background: #f0f4f8; font-weight: 600; color: #1a365d; width: 150px; }
+          .section-divider { border: none; border-top: 2px solid #e0d8c8; margin: 20px 0; }
+          .instructions { background: #fafaf8; border: 1px solid #c8b870; border-right: 4px solid #b8860b; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 13px; line-height: 2.1; }
+          .instructions h3 { font-size: 14px; color: #1a365d; margin-bottom: 10px; border-bottom: 1px solid #d0c8a0; padding-bottom: 6px; font-weight: 700; }
+          .instructions li { margin-right: 18px; margin-bottom: 4px; }
+          .signature-area { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 18px; border-top: 2px solid #e0d8c8; }
           .sig-box { text-align: center; width: 200px; }
-          .sig-line { border-bottom: 1px solid #333; height: 50px; margin-bottom: 4px; }
-          .sig-label { font-size: 11px; color: #666; }
-          .footer { text-align: center; margin-top: 30px; font-size: 10px; color: #999; border-top: 2px solid #b8860b; padding-top: 10px; }
+          .sig-line { border-bottom: 1px solid #333; height: 54px; margin-bottom: 6px; }
+          .sig-label { font-size: 13px; color: #555; font-weight: 600; }
+          .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #888; border-top: 2px solid #b8860b; padding-top: 10px; }
           .stamp-area { text-align: center; margin-top: 10px; }
-          .stamp-placeholder { display: inline-block; width: 80px; height: 80px; border: 2px dashed #b8860b; border-radius: 50%; line-height: 80px; font-size: 10px; color: #b8860b; }
+          .stamp-placeholder { display: inline-block; width: 90px; height: 90px; border: 2px dashed #b8860b; border-radius: 50%; line-height: 90px; font-size: 11px; color: #b8860b; }
         </style>
       </head>
       <body>
@@ -81,8 +82,8 @@ const AcceptanceLetterTemplate = ({ studentName, guardianName, guardianPhone, ha
           </div>
 
           <div className="meta">
-            <span>الرقم المرجعي: {refNumber}</span>
-            <span>التاريخ: {dateDisplay}</span>
+            <span>الرقم المرجعي: <strong>{refNumber}</strong></span>
+            <span>التاريخ: <strong>{dateDisplay}</strong></span>
           </div>
 
           <div className="letter-body">

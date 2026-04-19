@@ -42,54 +42,55 @@ const EnrollmentCombinedPrint = ({
         <style>
           @page { size: A4; margin: 15mm 18mm; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 12px; line-height: 1.7; direction: rtl; color: #1a1a1a; }
+          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 13px; line-height: 1.85; direction: rtl; color: #1a1a1a; }
 
           /* ─── Page break ─── */
           .page-break { page-break-after: always; break-after: page; }
 
           /* ─── Header ─── */
-          .header { text-align: center; padding-bottom: 12px; border-bottom: 3px double #b8860b; margin-bottom: 14px; }
-          .header-inner { display: flex; align-items: center; justify-content: center; gap: 14px; }
-          .header img { width: 64px; height: 64px; border-radius: 10px; object-fit: contain; }
-          .header-text h1 { font-size: 18px; color: #1a365d; font-weight: 700; }
-          .header-text p { font-size: 11px; color: #666; margin-top: 2px; }
-          .header-sub { font-size: 13px; font-weight: 700; color: #8b6914; margin-top: 6px; letter-spacing: 0.5px; }
+          .header { text-align: center; padding-bottom: 14px; border-bottom: 3px double #b8860b; margin-bottom: 16px; }
+          .header-inner { display: flex; align-items: center; justify-content: center; gap: 16px; }
+          .header img { width: 80px; height: 80px; border-radius: 10px; object-fit: contain; }
+          .header-text h1 { font-size: 20px; color: #1a365d; font-weight: 700; }
+          .header-text p { font-size: 12px; color: #666; margin-top: 3px; }
+          .header-sub { font-size: 14px; font-weight: 700; color: #8b6914; margin-top: 8px; letter-spacing: 0.5px; border-top: 1px solid #e8d8a0; padding-top: 6px; display: inline-block; }
 
           /* ─── Meta row ─── */
-          .meta-row { display: flex; justify-content: space-between; font-size: 11px; color: #555; margin-bottom: 14px; border-bottom: 1px solid #e8e8e8; padding-bottom: 6px; }
+          .meta-row { display: flex; justify-content: space-between; font-size: 12px; color: #555; margin-bottom: 16px; border-bottom: 2px solid #e0d8c8; padding-bottom: 8px; }
 
           /* ─── Acceptance letter ─── */
-          .letter-body { font-size: 13px; line-height: 2.1; margin: 10px 0 14px; }
-          .letter-body p { margin-bottom: 8px; }
+          .letter-body { font-size: 14px; line-height: 2.2; margin: 12px 0 16px; }
+          .letter-body p { margin-bottom: 10px; }
           .highlight { color: #1a365d; font-weight: 700; }
-          .info-table { width: 100%; border-collapse: collapse; margin: 10px 0 14px; }
-          .info-table td { padding: 7px 10px; border: 1px solid #d0d0c0; font-size: 12px; }
-          .info-table td:first-child { background: #f0f4f8; font-weight: 600; color: #1a365d; width: 135px; }
-          .instructions { background: #fafaf8; border: 1px solid #e2e2d0; border-radius: 6px; padding: 10px 14px; font-size: 11px; line-height: 1.9; }
-          .instructions h3 { font-size: 12px; color: #1a365d; font-weight: 700; margin-bottom: 5px; }
-          .instructions ol { padding-right: 18px; }
-          .instructions li { margin-bottom: 2px; }
+          .info-table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; border: 2px solid #c8b870; }
+          .info-table td { padding: 9px 12px; border: 1px solid #ccc; font-size: 13px; }
+          .info-table td:first-child { background: #f0f4f8; font-weight: 600; color: #1a365d; width: 145px; }
+          .instructions { background: #fafaf8; border: 1px solid #c8b870; border-right: 4px solid #b8860b; border-radius: 6px; padding: 12px 16px; font-size: 12px; line-height: 2; margin-top: 16px; }
+          .instructions h3 { font-size: 13px; color: #1a365d; font-weight: 700; margin-bottom: 8px; border-bottom: 1px solid #d0c8a0; padding-bottom: 5px; }
+          .instructions ol { padding-right: 20px; }
+          .instructions li { margin-bottom: 4px; }
 
           /* ─── Signature area ─── */
-          .signature-area { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 28px; padding-top: 14px; border-top: 1px solid #ccc; }
+          .signature-area { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; padding-top: 16px; border-top: 2px solid #e0d8c8; }
           .sig-box { text-align: center; width: 160px; }
-          .sig-line { border-bottom: 1px solid #333; height: 44px; margin-bottom: 5px; }
-          .sig-label { font-size: 11px; color: #555; font-weight: 600; }
-          .stamp-circle { width: 80px; height: 80px; border: 2px dashed #b8860b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 10px; color: #b8860b; text-align: center; padding: 8px; }
+          .sig-line { border-bottom: 1px solid #333; height: 48px; margin-bottom: 6px; }
+          .sig-label { font-size: 12px; color: #444; font-weight: 600; }
+          .stamp-circle { width: 90px; height: 90px; border: 2px dashed #b8860b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 11px; color: #b8860b; text-align: center; padding: 8px; }
 
           /* ─── Section (registration form) ─── */
-          .section { margin-bottom: 10px; }
-          .section-title { background: linear-gradient(90deg, #f0f4f8, #f8f8f2); padding: 5px 10px; font-weight: 700; font-size: 12px; border-right: 4px solid #b8860b; color: #1a365d; margin-bottom: 7px; }
-          .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; }
-          .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px 10px; }
-          .field { display: flex; gap: 4px; padding: 3px 0; border-bottom: 1px dotted #ddd; font-size: 11.5px; align-items: baseline; }
-          .field-label { font-weight: 600; white-space: nowrap; min-width: 90px; color: #444; flex-shrink: 0; }
+          .section { margin-bottom: 14px; border-bottom: 1px solid #e8e8e0; padding-bottom: 10px; }
+          .section:last-of-type { border-bottom: none; }
+          .section-title { background: linear-gradient(90deg, #eef2f8, #f8f8f2); padding: 6px 12px; font-weight: 700; font-size: 13px; border-right: 4px solid #b8860b; color: #1a365d; margin-bottom: 9px; border-radius: 0 4px 4px 0; }
+          .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+          .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px 12px; }
+          .field { display: flex; gap: 5px; padding: 4px 0; border-bottom: 1px dotted #d8d8d0; font-size: 12.5px; align-items: baseline; }
+          .field-label { font-weight: 600; white-space: nowrap; min-width: 95px; color: #444; flex-shrink: 0; }
           .field-value { flex: 1; color: #1a1a1a; }
           .full-span { grid-column: 1 / -1; }
-          .commitments { border: 1px solid #d8d8c8; border-radius: 6px; padding: 9px 12px; font-size: 11px; line-height: 1.85; background: #fafaf8; margin: 8px 0; }
+          .commitments { border: 1px solid #c8b870; border-right: 4px solid #b8860b; border-radius: 6px; padding: 12px 16px; font-size: 12px; line-height: 2; background: #fafaf8; margin: 10px 0; }
 
           /* ─── Footer ─── */
-          .footer { text-align: center; margin-top: 14px; font-size: 10px; color: #aaa; border-top: 1px solid #eee; padding-top: 7px; }
+          .footer { text-align: center; margin-top: 16px; font-size: 11px; color: #888; border-top: 2px solid #b8860b; padding-top: 8px; }
         </style>
       </head>
       <body>${content.innerHTML}</body>
