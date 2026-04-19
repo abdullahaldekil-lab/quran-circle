@@ -85,6 +85,10 @@ const EnrollmentRequests = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editHalaqa, setEditHalaqa] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editStudentName, setEditStudentName] = useState("");
+  const [editGuardianName, setEditGuardianName] = useState("");
+  const [editGuardianPhone, setEditGuardianPhone] = useState("");
+  const [editFormData, setEditFormData] = useState<Record<string, string>>({});
 
   const fetchData = async () => {
     setLoading(true);
@@ -223,18 +227,49 @@ const EnrollmentRequests = () => {
 
   const openEditDialog = (r: EnrollmentReq) => {
     setEditReq(r);
-    setEditHalaqa(r.requested_halaqa_id || "");
+    setEditHalaqa(r.assigned_halaqa_id || r.requested_halaqa_id || "");
     setEditNotes(r.notes || "");
+    setEditStudentName(r.student_full_name);
+    setEditGuardianName(r.guardian_full_name);
+    setEditGuardianPhone(r.guardian_phone);
+    setEditFormData({ ...(r.form_data || {}) });
     setEditOpen(true);
+  };
+
+  const updateFormField = (key: string, value: string) => {
+    setEditFormData((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleEditSave = async () => {
     if (!editReq) return;
     setProcessing(true);
-    await supabase.from("enrollment_requests").update({
-      requested_halaqa_id: editHalaqa || null,
+    const isApproved = editReq.status === "approved";
+    const updates: Record<string, unknown> = {
+      student_full_name: editStudentName.trim() || editReq.student_full_name,
+      guardian_full_name: editGuardianName.trim() || editReq.guardian_full_name,
+      guardian_phone: editGuardianPhone.trim() || editReq.guardian_phone,
       notes: editNotes || null,
-    }).eq("id", editReq.id);
+      form_data: editFormData,
+    };
+    if (isApproved) {
+      updates.assigned_halaqa_id = editHalaqa || null;
+    } else {
+      updates.requested_halaqa_id = editHalaqa || null;
+    }
+    const { error } = await supabase.from("enrollment_requests").update(updates).eq("id", editReq.id);
+    if (error) { toast.error(error.message); setProcessing(false); return; }
+
+    // If approved & linked to a student, sync student record
+    if (isApproved && editReq.converted_student_id) {
+      await supabase.from("students").update({
+        full_name: updates.student_full_name as string,
+        guardian_name: updates.guardian_full_name as string,
+        guardian_phone: updates.guardian_phone as string,
+        halaqa_id: editHalaqa || null,
+        notes: editNotes || null,
+      }).eq("id", editReq.converted_student_id);
+    }
+
     toast.success("تم تحديث الطلب");
     setEditOpen(false);
     setEditReq(null);
@@ -411,9 +446,14 @@ const EnrollmentRequests = () => {
                                 </Button>
                               )}
                               {r.status === "approved" && (
-                                <Button size="icon" variant="ghost" className="h-7 w-7" title="طباعة خطاب القبول" onClick={() => { setPrintReq(r); setShowPrint(true); }}>
-                                  <Printer className="w-3.5 h-3.5 text-primary" />
-                                </Button>
+                                <>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" title="تعديل البيانات قبل الطباعة" onClick={() => openEditDialog(r)}>
+                                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" title="طباعة خطاب القبول" onClick={() => { setPrintReq(r); setShowPrint(true); }}>
+                                    <Printer className="w-3.5 h-3.5 text-primary" />
+                                  </Button>
+                                </>
                               )}
                               {r.converted_student_id && (
                                 <Badge variant="secondary" className="text-xs">تم التحويل</Badge>
@@ -530,34 +570,78 @@ const EnrollmentRequests = () => {
 
       {/* Edit Request Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>تعديل طلب التسجيل</DialogTitle>
+            <DialogTitle>تعديل بيانات الطلب</DialogTitle>
           </DialogHeader>
           {editReq && (
             <div className="space-y-4">
-              <div>
-                <Label>اسم الطالب</Label>
-                <Input value={editReq.student_full_name} disabled className="bg-muted" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>اسم الطالب</Label>
+                  <Input value={editStudentName} onChange={(e) => setEditStudentName(e.target.value)} />
+                </div>
+                <div>
+                  <Label>{editReq.status === "approved" ? "الحلقة المعيّنة" : "الحلقة المطلوبة"}</Label>
+                  <Select value={editHalaqa} onValueChange={setEditHalaqa}>
+                    <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                    <SelectContent>
+                      {halaqat.map((h) => (
+                        <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>اسم ولي الأمر</Label>
+                  <Input value={editGuardianName} onChange={(e) => setEditGuardianName(e.target.value)} />
+                </div>
+                <div>
+                  <Label>رقم الجوال</Label>
+                  <Input dir="ltr" value={editGuardianPhone} onChange={(e) => setEditGuardianPhone(e.target.value)} />
+                </div>
               </div>
-              <div>
-                <Label>الحلقة المطلوبة</Label>
-                <Select value={editHalaqa} onValueChange={setEditHalaqa}>
-                  <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
-                  <SelectContent>
-                    {halaqat.map((h) => (
-                      <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+              <div className="border-t pt-3">
+                <p className="text-sm font-semibold mb-2 text-muted-foreground">بيانات الاستمارة (تظهر في الطباعة)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { k: "student_nationality", l: "الجنسية" },
+                    { k: "student_id_number", l: "رقم الهوية / الإقامة" },
+                    { k: "student_birth_date_hijri", l: "تاريخ الميلاد (هجري)" },
+                    { k: "student_birth_date_gregorian", l: "تاريخ الميلاد (ميلادي)" },
+                    { k: "student_age", l: "العمر" },
+                    { k: "student_grade", l: "الصف الدراسي" },
+                    { k: "student_school", l: "المدرسة" },
+                    { k: "living_with", l: "يعيش مع" },
+                    { k: "parents_status", l: "الحالة الاجتماعية للوالدين" },
+                    { k: "guardian_relationship", l: "صلة القرابة" },
+                    { k: "guardian_id_number", l: "رقم هوية ولي الأمر" },
+                    { k: "guardian_address", l: "عنوان السكن" },
+                    { k: "memorization_amount", l: "مقدار الحفظ الحالي" },
+                    { k: "previous_place", l: "مكان التسجيل السابق" },
+                  ].map((f) => (
+                    <div key={f.k}>
+                      <Label className="text-xs">{f.l}</Label>
+                      <Input
+                        value={editFormData[f.k] || ""}
+                        onChange={(e) => updateFormField(f.k, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
+
               <div>
                 <Label>ملاحظات</Label>
                 <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} />
               </div>
-              <Button onClick={handleEditSave} disabled={processing} className="w-full">
-                {processing ? "جارٍ الحفظ..." : "حفظ التعديلات"}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setEditOpen(false)}>إلغاء</Button>
+                <Button onClick={handleEditSave} disabled={processing} className="flex-1">
+                  {processing ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
