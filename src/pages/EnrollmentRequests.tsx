@@ -227,18 +227,49 @@ const EnrollmentRequests = () => {
 
   const openEditDialog = (r: EnrollmentReq) => {
     setEditReq(r);
-    setEditHalaqa(r.requested_halaqa_id || "");
+    setEditHalaqa(r.assigned_halaqa_id || r.requested_halaqa_id || "");
     setEditNotes(r.notes || "");
+    setEditStudentName(r.student_full_name);
+    setEditGuardianName(r.guardian_full_name);
+    setEditGuardianPhone(r.guardian_phone);
+    setEditFormData({ ...(r.form_data || {}) });
     setEditOpen(true);
+  };
+
+  const updateFormField = (key: string, value: string) => {
+    setEditFormData((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleEditSave = async () => {
     if (!editReq) return;
     setProcessing(true);
-    await supabase.from("enrollment_requests").update({
-      requested_halaqa_id: editHalaqa || null,
+    const isApproved = editReq.status === "approved";
+    const updates: Record<string, unknown> = {
+      student_full_name: editStudentName.trim() || editReq.student_full_name,
+      guardian_full_name: editGuardianName.trim() || editReq.guardian_full_name,
+      guardian_phone: editGuardianPhone.trim() || editReq.guardian_phone,
       notes: editNotes || null,
-    }).eq("id", editReq.id);
+      form_data: editFormData,
+    };
+    if (isApproved) {
+      updates.assigned_halaqa_id = editHalaqa || null;
+    } else {
+      updates.requested_halaqa_id = editHalaqa || null;
+    }
+    const { error } = await supabase.from("enrollment_requests").update(updates).eq("id", editReq.id);
+    if (error) { toast.error(error.message); setProcessing(false); return; }
+
+    // If approved & linked to a student, sync student record
+    if (isApproved && editReq.converted_student_id) {
+      await supabase.from("students").update({
+        full_name: updates.student_full_name as string,
+        guardian_name: updates.guardian_full_name as string,
+        guardian_phone: updates.guardian_phone as string,
+        halaqa_id: editHalaqa || null,
+        notes: editNotes || null,
+      }).eq("id", editReq.converted_student_id);
+    }
+
     toast.success("تم تحديث الطلب");
     setEditOpen(false);
     setEditReq(null);
