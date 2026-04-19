@@ -446,9 +446,14 @@ const EnrollmentRequests = () => {
                                 </Button>
                               )}
                               {r.status === "approved" && (
-                                <Button size="icon" variant="ghost" className="h-7 w-7" title="طباعة خطاب القبول" onClick={() => { setPrintReq(r); setShowPrint(true); }}>
-                                  <Printer className="w-3.5 h-3.5 text-primary" />
-                                </Button>
+                                <>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" title="تعديل البيانات قبل الطباعة" onClick={() => openEditDialog(r)}>
+                                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" title="طباعة خطاب القبول" onClick={() => { setPrintReq(r); setShowPrint(true); }}>
+                                    <Printer className="w-3.5 h-3.5 text-primary" />
+                                  </Button>
+                                </>
                               )}
                               {r.converted_student_id && (
                                 <Badge variant="secondary" className="text-xs">تم التحويل</Badge>
