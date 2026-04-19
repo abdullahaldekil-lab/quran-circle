@@ -28,32 +28,32 @@ const AcceptanceLetterTemplate = ({ studentName, guardianName, guardianPhone, ha
       <head>
         <title>خطاب قبول - ${studentName}</title>
         <style>
-          @page { size: A4; margin: 20mm; }
+          @page { size: A4; margin: 10mm 12mm; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.9; direction: rtl; color: #1a1a1a; }
-          .page { max-width: 700px; margin: 0 auto; }
-          .header { text-align: center; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 3px double #b8860b; }
-          .header img { width: 86px; height: 86px; border-radius: 12px; object-fit: contain; }
-          .header h1 { font-size: 22px; color: #1a365d; margin: 10px 0 3px; }
-          .header p { font-size: 13px; color: #666; }
-          .meta { display: flex; justify-content: space-between; margin-bottom: 22px; font-size: 13px; color: #555; border-bottom: 2px solid #e0d8c8; padding-bottom: 8px; }
-          .letter-body { margin: 24px 0; font-size: 16px; line-height: 2.1; }
-          .letter-body p { margin-bottom: 14px; }
-          .highlight { color: #1a365d; font-weight: 700; }
-          .info-table { width: 100%; border-collapse: collapse; margin: 18px 0; border: 2px solid #c8b870; }
-          .info-table td { padding: 10px 14px; border: 1px solid #ccc; font-size: 14px; }
-          .info-table td:first-child { background: #f0f4f8; font-weight: 600; color: #1a365d; width: 150px; }
-          .section-divider { border: none; border-top: 2px solid #e0d8c8; margin: 20px 0; }
-          .instructions { background: #fafaf8; border: 1px solid #c8b870; border-right: 4px solid #b8860b; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 13px; line-height: 2.1; }
-          .instructions h3 { font-size: 14px; color: #1a365d; margin-bottom: 10px; border-bottom: 1px solid #d0c8a0; padding-bottom: 6px; font-weight: 700; }
-          .instructions li { margin-right: 18px; margin-bottom: 4px; }
-          .signature-area { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 18px; border-top: 2px solid #e0d8c8; }
-          .sig-box { text-align: center; width: 200px; }
-          .sig-line { border-bottom: 1px solid #333; height: 54px; margin-bottom: 6px; }
-          .sig-label { font-size: 13px; color: #555; font-weight: 600; }
-          .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #888; border-top: 2px solid #b8860b; padding-top: 10px; }
-          .stamp-area { text-align: center; margin-top: 10px; }
-          .stamp-placeholder { display: inline-block; width: 90px; height: 90px; border: 2px dashed #b8860b; border-radius: 50%; line-height: 90px; font-size: 11px; color: #b8860b; }
+          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.6; direction: rtl; color: #000; }
+          .page { max-width: 100%; margin: 0 auto; page-break-inside: avoid; }
+          .header { text-align: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #000; }
+          .header img { width: 70px; height: 70px; border-radius: 10px; object-fit: contain; }
+          .header h1 { font-size: 20px; color: #000; margin: 6px 0 2px; }
+          .header p { font-size: 13px; color: #000; }
+          .meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; color: #000; border-bottom: 1.5px solid #000; padding-bottom: 5px; }
+          .letter-body { margin: 10px 0; font-size: 15px; line-height: 1.8; }
+          .letter-body p { margin-bottom: 6px; }
+          .highlight { color: #000; font-weight: 700; }
+          .info-table { width: 100%; border-collapse: collapse; margin: 8px 0; border: 1.5px solid #000; }
+          .info-table td { padding: 6px 12px; border: 1px solid #000; font-size: 14px; }
+          .info-table td:first-child { background: #f0f0f0; font-weight: 600; color: #000; width: 150px; }
+          .section-divider { border: none; border-top: 1.5px solid #000; margin: 10px 0; }
+          .instructions { border: 1.5px solid #000; border-right: 4px solid #000; padding: 8px 14px; margin: 10px 0; font-size: 13px; line-height: 1.7; }
+          .instructions h3 { font-size: 14px; color: #000; margin-bottom: 6px; border-bottom: 1px solid #000; padding-bottom: 4px; font-weight: 700; }
+          .instructions li { margin-right: 18px; margin-bottom: 2px; }
+          .signature-area { display: flex; justify-content: space-between; margin-top: 16px; padding-top: 10px; border-top: 1.5px solid #000; }
+          .sig-box { text-align: center; width: 180px; }
+          .sig-line { border-bottom: 1px solid #000; height: 35px; margin-bottom: 4px; }
+          .sig-label { font-size: 13px; color: #000; font-weight: 600; }
+          .footer { text-align: center; margin-top: 12px; font-size: 11px; color: #000; border-top: 1.5px solid #000; padding-top: 6px; }
+          .stamp-area { text-align: center; }
+          .stamp-placeholder { display: inline-block; width: 75px; height: 75px; border: 2px dashed #000; border-radius: 50%; line-height: 75px; font-size: 11px; color: #000; }
         </style>
       </head>
       <body>
