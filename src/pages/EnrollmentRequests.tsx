@@ -570,34 +570,78 @@ const EnrollmentRequests = () => {
 
       {/* Edit Request Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>تعديل طلب التسجيل</DialogTitle>
+            <DialogTitle>تعديل بيانات الطلب</DialogTitle>
           </DialogHeader>
           {editReq && (
             <div className="space-y-4">
-              <div>
-                <Label>اسم الطالب</Label>
-                <Input value={editReq.student_full_name} disabled className="bg-muted" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>اسم الطالب</Label>
+                  <Input value={editStudentName} onChange={(e) => setEditStudentName(e.target.value)} />
+                </div>
+                <div>
+                  <Label>{editReq.status === "approved" ? "الحلقة المعيّنة" : "الحلقة المطلوبة"}</Label>
+                  <Select value={editHalaqa} onValueChange={setEditHalaqa}>
+                    <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+                    <SelectContent>
+                      {halaqat.map((h) => (
+                        <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>اسم ولي الأمر</Label>
+                  <Input value={editGuardianName} onChange={(e) => setEditGuardianName(e.target.value)} />
+                </div>
+                <div>
+                  <Label>رقم الجوال</Label>
+                  <Input dir="ltr" value={editGuardianPhone} onChange={(e) => setEditGuardianPhone(e.target.value)} />
+                </div>
               </div>
-              <div>
-                <Label>الحلقة المطلوبة</Label>
-                <Select value={editHalaqa} onValueChange={setEditHalaqa}>
-                  <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
-                  <SelectContent>
-                    {halaqat.map((h) => (
-                      <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+              <div className="border-t pt-3">
+                <p className="text-sm font-semibold mb-2 text-muted-foreground">بيانات الاستمارة (تظهر في الطباعة)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { k: "student_nationality", l: "الجنسية" },
+                    { k: "student_id_number", l: "رقم الهوية / الإقامة" },
+                    { k: "student_birth_date_hijri", l: "تاريخ الميلاد (هجري)" },
+                    { k: "student_birth_date_gregorian", l: "تاريخ الميلاد (ميلادي)" },
+                    { k: "student_age", l: "العمر" },
+                    { k: "student_grade", l: "الصف الدراسي" },
+                    { k: "student_school", l: "المدرسة" },
+                    { k: "living_with", l: "يعيش مع" },
+                    { k: "parents_status", l: "الحالة الاجتماعية للوالدين" },
+                    { k: "guardian_relationship", l: "صلة القرابة" },
+                    { k: "guardian_id_number", l: "رقم هوية ولي الأمر" },
+                    { k: "guardian_address", l: "عنوان السكن" },
+                    { k: "memorization_amount", l: "مقدار الحفظ الحالي" },
+                    { k: "previous_place", l: "مكان التسجيل السابق" },
+                  ].map((f) => (
+                    <div key={f.k}>
+                      <Label className="text-xs">{f.l}</Label>
+                      <Input
+                        value={editFormData[f.k] || ""}
+                        onChange={(e) => updateFormField(f.k, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
+
               <div>
                 <Label>ملاحظات</Label>
                 <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} />
               </div>
-              <Button onClick={handleEditSave} disabled={processing} className="w-full">
-                {processing ? "جارٍ الحفظ..." : "حفظ التعديلات"}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setEditOpen(false)}>إلغاء</Button>
+                <Button onClick={handleEditSave} disabled={processing} className="flex-1">
+                  {processing ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
