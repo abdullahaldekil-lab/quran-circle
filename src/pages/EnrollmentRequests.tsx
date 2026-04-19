@@ -85,6 +85,10 @@ const EnrollmentRequests = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editHalaqa, setEditHalaqa] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editStudentName, setEditStudentName] = useState("");
+  const [editGuardianName, setEditGuardianName] = useState("");
+  const [editGuardianPhone, setEditGuardianPhone] = useState("");
+  const [editFormData, setEditFormData] = useState<Record<string, string>>({});
 
   const fetchData = async () => {
     setLoading(true);
