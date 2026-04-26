@@ -390,6 +390,7 @@ const UserManagement = () => {
                 <CreateStaffForm
                   onSubmit={(data) => createStaffMutation.mutate(data)}
                   loading={createStaffMutation.isPending}
+                  roleLabels={roleLabels}
                 />
               </DialogContent>
             </Dialog>
