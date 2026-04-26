@@ -772,6 +772,127 @@ const TalqeenHalaqat = () => {
       </Dialog>
     </div>
   );
+      {/* إدارة الجلسة Dialog */}
+      <Dialog open={!!manageSession} onOpenChange={(o) => { if (!o) closeManage(); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="w-5 h-5 text-primary" />
+              إدارة جلسة — {manageSession?.surah}
+              {manageSession?.from_ayah && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  (آية {manageSession.from_ayah}{manageSession.to_ayah ? ` - ${manageSession.to_ayah}` : ""})
+                </span>
+              )}
+              <span className="text-sm font-normal text-muted-foreground mr-2">• {manageSession?.session_date}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <Tabs value={manageTab} onValueChange={setManageTab} className="w-full">
+            <TabsList className="grid grid-cols-4 w-full">
+              <TabsTrigger value="execution"><CheckCircle2 className="w-4 h-4 ml-1" />التنفيذ</TabsTrigger>
+              <TabsTrigger value="attendance"><ListChecks className="w-4 h-4 ml-1" />الحضور</TabsTrigger>
+              <TabsTrigger value="homework"><BookMarked className="w-4 h-4 ml-1" />الواجب</TabsTrigger>
+              <TabsTrigger value="education"><GraduationCap className="w-4 h-4 ml-1" />البرنامج التربوي</TabsTrigger>
+            </TabsList>
+
+            {/* تبويب التنفيذ */}
+            <TabsContent value="execution" className="space-y-4 pt-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+                <div>
+                  <Label className="text-base">تأشير الجلسة كمنفّذة</Label>
+                  <p className="text-xs text-muted-foreground mt-1">عند التفعيل يتم تحديث حالة الجلسة إلى "مكتملة" تلقائياً.</p>
+                </div>
+                <Switch checked={execForm.executed} onCheckedChange={(v) => setExecForm({ ...execForm, executed: v })} />
+              </div>
+              <div className="space-y-2">
+                <Label>وقت التنفيذ</Label>
+                <Input type="datetime-local" value={execForm.executed_at} onChange={(e) => setExecForm({ ...execForm, executed_at: e.target.value })} disabled={!execForm.executed} />
+              </div>
+              <div className="space-y-2">
+                <Label>ملاحظات التنفيذ</Label>
+                <Textarea rows={3} value={execForm.execution_notes} onChange={(e) => setExecForm({ ...execForm, execution_notes: e.target.value })} placeholder="ملاحظات حول سير الجلسة..." />
+              </div>
+              <Button onClick={saveExecution} disabled={manageSaving} className="w-full">حفظ التنفيذ</Button>
+            </TabsContent>
+
+            {/* تبويب الحضور */}
+            <TabsContent value="attendance" className="space-y-3 pt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">عدد الطلاب: {attendanceRows.length}</p>
+                <Button variant="outline" size="sm" onClick={markAllPresent}>
+                  <CheckCircle2 className="w-4 h-4 ml-1" />
+                  تحديد الكل حاضر
+                </Button>
+              </div>
+              {attendanceRows.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8 text-sm">لا يوجد طلاب نشطون في هذه الحلقة</p>
+              ) : (
+                <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                  {attendanceRows.map((r) => (
+                    <div key={r.student_id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center p-3 rounded-lg border bg-background">
+                      <div className="md:col-span-3 font-medium text-sm">{r.full_name}</div>
+                      <div className="md:col-span-3">
+                        <Select value={r.status} onValueChange={(v) => updateAttendanceRow(r.student_id, { status: v })}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="present">حاضر</SelectItem>
+                            <SelectItem value="absent">غائب</SelectItem>
+                            <SelectItem value="late">متأخر</SelectItem>
+                            <SelectItem value="excused">مستأذن</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="md:col-span-3">
+                        <Select value={r.homework_status} onValueChange={(v) => updateAttendanceRow(r.student_id, { homework_status: v })}>
+                          <SelectTrigger className="h-9"><SelectValue placeholder="حالة الواجب" /></SelectTrigger>
+                          <SelectContent>
+                            {homeworkStatusOptions.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="md:col-span-3">
+                        <Input className="h-9" placeholder="ملاحظة" value={r.notes} onChange={(e) => updateAttendanceRow(r.student_id, { notes: e.target.value })} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button onClick={saveAttendance} disabled={manageSaving || attendanceRows.length === 0} className="w-full">حفظ الحضور</Button>
+            </TabsContent>
+
+            {/* تبويب الواجب */}
+            <TabsContent value="homework" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>وصف الواجب المنزلي</Label>
+                <Textarea rows={4} value={homeworkForm.homework} onChange={(e) => setHomeworkForm({ ...homeworkForm, homework: e.target.value })} placeholder="مثال: حفظ من آية 1 إلى آية 10 من سورة البقرة..." />
+              </div>
+              <div className="space-y-2">
+                <Label>تاريخ التسليم المتوقع</Label>
+                <Input type="date" value={homeworkForm.homework_due_date} onChange={(e) => setHomeworkForm({ ...homeworkForm, homework_due_date: e.target.value })} />
+              </div>
+              <Button onClick={saveHomework} disabled={manageSaving} className="w-full">حفظ الواجب</Button>
+            </TabsContent>
+
+            {/* تبويب البرنامج التربوي */}
+            <TabsContent value="education" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>عنوان البرنامج</Label>
+                <Input value={eduForm.educational_program_title} onChange={(e) => setEduForm({ ...eduForm, educational_program_title: e.target.value })} placeholder="مثال: حديث / خلق / فائدة..." />
+              </div>
+              <div className="space-y-2">
+                <Label>التفاصيل</Label>
+                <Textarea rows={6} value={eduForm.educational_program_details} onChange={(e) => setEduForm({ ...eduForm, educational_program_details: e.target.value })} placeholder="نص الحديث أو الفائدة أو الخلق المراد ترسيخه..." />
+              </div>
+              <Button onClick={saveEduProgram} disabled={manageSaving} className="w-full">حفظ البرنامج التربوي</Button>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 
 export default TalqeenHalaqat;
