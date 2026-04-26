@@ -118,6 +118,128 @@ const TalqeenHalaqat = () => {
     return <Badge className={m.cls}>{m.label}</Badge>;
   };
 
+  // ============== إدارة الجلسة (تنفيذ/حضور/واجب/برنامج تربوي) ==============
+  const [manageSession, setManageSession] = useState<any | null>(null);
+  const [manageTab, setManageTab] = useState("execution");
+  const [manageSaving, setManageSaving] = useState(false);
+  const [execForm, setExecForm] = useState({ executed: false, executed_at: "", execution_notes: "" });
+  const [homeworkForm, setHomeworkForm] = useState({ homework: "", homework_due_date: "" });
+  const [eduForm, setEduForm] = useState({ educational_program_title: "", educational_program_details: "" });
+  const [attendanceRows, setAttendanceRows] = useState<Array<{ student_id: string; full_name: string; status: string; homework_status: string; notes: string }>>([]);
+
+  const openManage = async (s: any) => {
+    setManageSession(s);
+    setManageTab("execution");
+    setExecForm({
+      executed: !!s.executed,
+      executed_at: s.executed_at ? new Date(s.executed_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+      execution_notes: s.execution_notes || "",
+    });
+    setHomeworkForm({
+      homework: s.homework || "",
+      homework_due_date: s.homework_due_date || "",
+    });
+    setEduForm({
+      educational_program_title: s.educational_program_title || "",
+      educational_program_details: s.educational_program_details || "",
+    });
+    const halaqaStudents = studentsByHalaqa[s.halaqa_id] || [];
+    const { data: existing } = await supabase
+      .from("talqeen_session_attendance")
+      .select("*")
+      .eq("session_id", s.id);
+    const existingMap = new Map((existing || []).map((r: any) => [r.student_id, r]));
+    setAttendanceRows(
+      halaqaStudents.map((st: any) => {
+        const ex = existingMap.get(st.id) as any;
+        return {
+          student_id: st.id,
+          full_name: st.full_name,
+          status: ex?.status || "present",
+          homework_status: ex?.homework_status || "not_submitted",
+          notes: ex?.notes || "",
+        };
+      })
+    );
+  };
+
+  const closeManage = () => { setManageSession(null); setAttendanceRows([]); };
+
+  const saveExecution = async () => {
+    if (!manageSession) return;
+    setManageSaving(true);
+    const update: any = {
+      executed: execForm.executed,
+      executed_at: execForm.executed ? (execForm.executed_at ? new Date(execForm.executed_at).toISOString() : new Date().toISOString()) : null,
+      execution_notes: execForm.execution_notes || null,
+    };
+    if (execForm.executed) update.status = "completed";
+    const { error } = await supabase.from("talqeen_sessions").update(update).eq("id", manageSession.id);
+    setManageSaving(false);
+    if (error) { toast.error("تعذر حفظ التنفيذ"); return; }
+    toast.success("تم حفظ التنفيذ");
+    if (planHalaqaId) fetchPlanSessions(planHalaqaId);
+    setManageSession({ ...manageSession, ...update });
+  };
+
+  const saveHomework = async () => {
+    if (!manageSession) return;
+    setManageSaving(true);
+    const { error } = await supabase.from("talqeen_sessions").update({
+      homework: homeworkForm.homework || null,
+      homework_due_date: homeworkForm.homework_due_date || null,
+    }).eq("id", manageSession.id);
+    setManageSaving(false);
+    if (error) { toast.error("تعذر حفظ الواجب"); return; }
+    toast.success("تم حفظ الواجب");
+    if (planHalaqaId) fetchPlanSessions(planHalaqaId);
+  };
+
+  const saveEduProgram = async () => {
+    if (!manageSession) return;
+    setManageSaving(true);
+    const { error } = await supabase.from("talqeen_sessions").update({
+      educational_program_title: eduForm.educational_program_title || null,
+      educational_program_details: eduForm.educational_program_details || null,
+    }).eq("id", manageSession.id);
+    setManageSaving(false);
+    if (error) { toast.error("تعذر حفظ البرنامج التربوي"); return; }
+    toast.success("تم حفظ البرنامج التربوي");
+    if (planHalaqaId) fetchPlanSessions(planHalaqaId);
+  };
+
+  const saveAttendance = async () => {
+    if (!manageSession || attendanceRows.length === 0) {
+      toast.error("لا يوجد طلاب للحفظ");
+      return;
+    }
+    setManageSaving(true);
+    const payload = attendanceRows.map((r) => ({
+      session_id: manageSession.id,
+      student_id: r.student_id,
+      status: r.status,
+      homework_status: r.homework_status,
+      notes: r.notes || null,
+    }));
+    const { error } = await supabase
+      .from("talqeen_session_attendance")
+      .upsert(payload, { onConflict: "session_id,student_id" });
+    setManageSaving(false);
+    if (error) { toast.error("تعذر حفظ الحضور"); return; }
+    toast.success("تم حفظ الحضور");
+  };
+
+  const markAllPresent = () => setAttendanceRows((prev) => prev.map((r) => ({ ...r, status: "present" })));
+
+  const updateAttendanceRow = (student_id: string, patch: Partial<{ status: string; homework_status: string; notes: string }>) =>
+    setAttendanceRows((prev) => prev.map((r) => (r.student_id === student_id ? { ...r, ...patch } : r)));
+
+  const homeworkStatusOptions = [
+    { value: "submitted", label: "سلّم" },
+    { value: "partial", label: "جزئي" },
+    { value: "not_submitted", label: "لم يسلم" },
+    { value: "exempt", label: "معفى" },
+  ];
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
