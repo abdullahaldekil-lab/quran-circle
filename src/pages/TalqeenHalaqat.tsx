@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { useRole } from "@/hooks/useRole";
 
 interface Teacher {
@@ -35,6 +36,86 @@ const TalqeenHalaqat = () => {
   const [editForm, setEditForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "" });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // خطة الحفظ
+  const [planHalaqaId, setPlanHalaqaId] = useState<string | null>(null);
+  const [planSessions, setPlanSessions] = useState<any[]>([]);
+  const [planForm, setPlanForm] = useState({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" });
+  const [planSaving, setPlanSaving] = useState(false);
+
+  const fetchPlanSessions = async (halaqaId: string) => {
+    const { data, error } = await supabase
+      .from("talqeen_sessions")
+      .select("*")
+      .eq("halaqa_id", halaqaId)
+      .order("session_date", { ascending: false });
+    if (error) { toast.error("تعذر جلب الخطة"); return; }
+    setPlanSessions(data || []);
+  };
+
+  const openPlan = async (halaqaId: string) => {
+    setPlanHalaqaId(halaqaId);
+    setPlanForm({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" });
+    await fetchPlanSessions(halaqaId);
+  };
+
+  const submitPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planHalaqaId || !planForm.surah || !planForm.session_date) {
+      toast.error("يرجى إدخال السورة والتاريخ");
+      return;
+    }
+    setPlanSaving(true);
+    const payload: any = {
+      halaqa_id: planHalaqaId,
+      session_date: planForm.session_date,
+      surah: planForm.surah,
+      from_ayah: planForm.from_ayah ? Number(planForm.from_ayah) : null,
+      to_ayah: planForm.to_ayah ? Number(planForm.to_ayah) : null,
+      status: planForm.status,
+      notes: planForm.notes || null,
+    };
+    let error;
+    if (planForm.id) {
+      ({ error } = await supabase.from("talqeen_sessions").update(payload).eq("id", planForm.id));
+    } else {
+      ({ error } = await supabase.from("talqeen_sessions").insert(payload));
+    }
+    setPlanSaving(false);
+    if (error) { toast.error("تعذر حفظ الجلسة"); return; }
+    toast.success(planForm.id ? "تم تحديث الجلسة" : "تمت إضافة الجلسة للخطة");
+    setPlanForm({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" });
+    fetchPlanSessions(planHalaqaId);
+  };
+
+  const editPlanSession = (s: any) => {
+    setPlanForm({
+      id: s.id,
+      session_date: s.session_date,
+      surah: s.surah,
+      from_ayah: s.from_ayah?.toString() || "",
+      to_ayah: s.to_ayah?.toString() || "",
+      status: s.status || "planned",
+      notes: s.notes || "",
+    });
+  };
+
+  const deletePlanSession = async (id: string) => {
+    const { error } = await supabase.from("talqeen_sessions").delete().eq("id", id);
+    if (error) { toast.error("تعذر الحذف"); return; }
+    toast.success("تم حذف الجلسة");
+    if (planHalaqaId) fetchPlanSessions(planHalaqaId);
+  };
+
+  const planStatusBadge = (s: string | null) => {
+    const map: Record<string, { label: string; cls: string }> = {
+      planned: { label: "مخططة", cls: "bg-blue-100 text-blue-700" },
+      in_progress: { label: "جارية", cls: "bg-amber-100 text-amber-700" },
+      completed: { label: "مكتملة", cls: "bg-green-100 text-green-700" },
+    };
+    const m = map[s || "planned"] || map.planned;
+    return <Badge className={m.cls}>{m.label}</Badge>;
+  };
+
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
@@ -340,10 +421,14 @@ const TalqeenHalaqat = () => {
                 </div>
                 {h.location && <p className="text-muted-foreground">المكان: {h.location}</p>}
                 {h.schedule && <p className="text-muted-foreground">الجدول: {h.schedule}</p>}
-                <div className="flex gap-2 mt-1">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => setStudentsDialogId(h.id)}>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => setStudentsDialogId(h.id)}>
                     <User className="w-3 h-3 ml-1" />
                     عرض الطلاب ({count})
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => openPlan(h.id)}>
+                    <ClipboardList className="w-3 h-3 ml-1" />
+                    خطة الحفظ
                   </Button>
                   {isManager && (
                     <>
@@ -462,6 +547,100 @@ const TalqeenHalaqat = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* خطة الحفظ Dialog */}
+      <Dialog open={!!planHalaqaId} onOpenChange={(o) => { if (!o) { setPlanHalaqaId(null); setPlanSessions([]); } }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-primary" />
+              خطة الحفظ — {halaqat.find((h) => h.id === planHalaqaId)?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={submitPlan} className="space-y-3 border rounded-lg p-4 bg-muted/30">
+            <div className="text-sm font-semibold">{planForm.id ? "تعديل جلسة" : "إضافة جلسة جديدة للخطة"}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>التاريخ</Label>
+                <Input type="date" value={planForm.session_date} onChange={(e) => setPlanForm({ ...planForm, session_date: e.target.value })} required />
+              </div>
+              <div className="space-y-1">
+                <Label>السورة</Label>
+                <Input value={planForm.surah} onChange={(e) => setPlanForm({ ...planForm, surah: e.target.value })} placeholder="مثال: البقرة" required />
+              </div>
+              <div className="space-y-1">
+                <Label>من آية</Label>
+                <Input type="number" min={1} value={planForm.from_ayah} onChange={(e) => setPlanForm({ ...planForm, from_ayah: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <Label>إلى آية</Label>
+                <Input type="number" min={1} value={planForm.to_ayah} onChange={(e) => setPlanForm({ ...planForm, to_ayah: e.target.value })} />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label>الحالة</Label>
+                <Select value={planForm.status} onValueChange={(v) => setPlanForm({ ...planForm, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="planned">مخططة</SelectItem>
+                    <SelectItem value="in_progress">جارية</SelectItem>
+                    <SelectItem value="completed">مكتملة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label>ملاحظات</Label>
+                <Textarea rows={2} value={planForm.notes} onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })} />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={planSaving} className="flex-1">
+                {planForm.id ? "حفظ التعديلات" : "إضافة للخطة"}
+              </Button>
+              {planForm.id && (
+                <Button type="button" variant="outline" onClick={() => setPlanForm({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" })}>
+                  إلغاء التعديل
+                </Button>
+              )}
+            </div>
+          </form>
+
+          <div className="space-y-2">
+            <h3 className="font-semibold flex items-center gap-2"><CalendarDays className="w-4 h-4" /> جلسات الخطة ({planSessions.length})</h3>
+            {planSessions.length === 0 ? (
+              <p className="text-center text-muted-foreground py-6 text-sm">لا توجد جلسات في الخطة بعد</p>
+            ) : (
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {planSessions.map((s) => (
+                  <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border bg-background">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{s.surah}</span>
+                        {s.from_ayah && (
+                          <span className="text-xs text-muted-foreground">
+                            (آية {s.from_ayah}{s.to_ayah ? ` - ${s.to_ayah}` : ""})
+                          </span>
+                        )}
+                        {planStatusBadge(s.status)}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {s.session_date}
+                        {s.notes && <span className="mr-2">• {s.notes}</span>}
+                      </div>
+                    </div>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => editPlanSession(s)}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deletePlanSession(s.id)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
