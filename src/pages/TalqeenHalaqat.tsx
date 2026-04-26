@@ -770,8 +770,7 @@ const TalqeenHalaqat = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+
       {/* إدارة الجلسة Dialog */}
       <Dialog open={!!manageSession} onOpenChange={(o) => { if (!o) closeManage(); }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
