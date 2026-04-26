@@ -123,13 +123,37 @@ const roleWritePermissions: Record<StaffRole, Resource[]> = {
   assistant_teacher: [
     "recitation", "attendance",
   ],
+  // مشرف التلقين — صلاحيات كتابة كاملة على قسم التلقين والطلاب والحلقات والحضور
+  custom_1775663809732: [
+    "students", "halaqat", "recitation", "attendance",
+    "bulk_import", "trips",
+  ],
 };
+
+// مسارات الوصول لمشرف التلقين (قسم التلقين بالكامل من تسجيل الطلاب حتى متابعة الجلسات والواجبات)
+const talqeenSupervisorRoutes = [
+  "/dashboard", "/profile",
+  "/talqeen-halaqat",
+  "/students", "/inactive-students", "/halaqat",
+  "/recitation", "/attendance", "/student-attendance-report",
+  "/bulk-import", "/pre-registration", "/enrollment-requests", "/enrollment-form",
+  "/preparation", "/academic-calendar",
+  "/staff-attendance-log", "/staff-tasks", "/staff-tasks-analytics",
+  "/notification-preferences", "/internal-requests",
+  "/programs-overview", "/halaqa-performance",
+  "/documents", "/rankings", "/trips", "/buses",
+];
 
 export const useRole = () => {
   const { profile } = useAuth();
   const role = (profile?.role as StaffRole) || "teacher";
 
-  const allowedRoutes = rolePermissions[role] || rolePermissions.teacher;
+  const allowedRoutes =
+    role === "custom_1775663809732"
+      ? talqeenSupervisorRoutes
+      : (rolePermissions[role] || rolePermissions.teacher);
+
+  
 
   const hasAccess = (path: string) => {
     return allowedRoutes.some(
@@ -143,7 +167,10 @@ export const useRole = () => {
   };
 
   const isManager = role === "manager";
-  const isSupervisor = role === "supervisor" || role === "assistant_supervisor";
+  const isSupervisor =
+    role === "supervisor" ||
+    role === "assistant_supervisor" ||
+    role === "custom_1775663809732"; // مشرف التلقين
   const isAdminStaff = role === "admin_staff" || role === "secretary";
   const isTeacher = role === "teacher" || role === "assistant_teacher";
 
