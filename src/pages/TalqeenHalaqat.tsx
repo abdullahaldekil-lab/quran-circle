@@ -790,7 +790,7 @@ const TalqeenHalaqat = () => {
                         {s.executed && <Badge className="bg-emerald-100 text-emerald-700">منفّذة</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {s.session_date}
+                        <InlineDualDate date={s.session_date} />
                         {s.notes && <span className="mr-2">• {s.notes}</span>}
                       </div>
                     </div>
