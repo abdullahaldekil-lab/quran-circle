@@ -204,8 +204,8 @@ const StudentAttendanceReport = () => {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <CardContent className="p-4 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-1 block">الحلقة</label>
               <Select value={filterHalaqaId} onValueChange={(v) => { setFilterHalaqaId(v); setFilterStudentId("all"); }}>
@@ -227,24 +227,62 @@ const StudentAttendanceReport = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">الشهر</label>
-              <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(Number(v))}>
+              <label className="text-sm font-medium mb-1 block">نوع الفترة</label>
+              <Select value={dateMode} onValueChange={(v) => setDateMode(v as "month" | "custom")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {MONTHS.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">السنة</label>
-              <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                  <SelectItem value="month">شهر محدد</SelectItem>
+                  <SelectItem value="custom">نطاق مخصص (من / إلى)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          {dateMode === "month" ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">الشهر</label>
+                <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(Number(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">السنة</label>
+                <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">من تاريخ</label>
+                <input
+                  type="date"
+                  value={customFrom}
+                  max={customTo}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">إلى تاريخ</label>
+                <input
+                  type="date"
+                  value={customTo}
+                  min={customFrom}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
