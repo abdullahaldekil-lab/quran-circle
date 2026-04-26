@@ -153,7 +153,7 @@ export const useRole = () => {
       ? talqeenSupervisorRoutes
       : (rolePermissions[role] || rolePermissions.teacher);
 
-  const allowedRoutes = rolePermissions[role] || rolePermissions.teacher;
+  
 
   const hasAccess = (path: string) => {
     return allowedRoutes.some(
