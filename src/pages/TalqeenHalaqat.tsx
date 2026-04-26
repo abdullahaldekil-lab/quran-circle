@@ -36,6 +36,86 @@ const TalqeenHalaqat = () => {
   const [editForm, setEditForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "" });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // خطة الحفظ
+  const [planHalaqaId, setPlanHalaqaId] = useState<string | null>(null);
+  const [planSessions, setPlanSessions] = useState<any[]>([]);
+  const [planForm, setPlanForm] = useState({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" });
+  const [planSaving, setPlanSaving] = useState(false);
+
+  const fetchPlanSessions = async (halaqaId: string) => {
+    const { data, error } = await supabase
+      .from("talqeen_sessions")
+      .select("*")
+      .eq("halaqa_id", halaqaId)
+      .order("session_date", { ascending: false });
+    if (error) { toast.error("تعذر جلب الخطة"); return; }
+    setPlanSessions(data || []);
+  };
+
+  const openPlan = async (halaqaId: string) => {
+    setPlanHalaqaId(halaqaId);
+    setPlanForm({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" });
+    await fetchPlanSessions(halaqaId);
+  };
+
+  const submitPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planHalaqaId || !planForm.surah || !planForm.session_date) {
+      toast.error("يرجى إدخال السورة والتاريخ");
+      return;
+    }
+    setPlanSaving(true);
+    const payload: any = {
+      halaqa_id: planHalaqaId,
+      session_date: planForm.session_date,
+      surah: planForm.surah,
+      from_ayah: planForm.from_ayah ? Number(planForm.from_ayah) : null,
+      to_ayah: planForm.to_ayah ? Number(planForm.to_ayah) : null,
+      status: planForm.status,
+      notes: planForm.notes || null,
+    };
+    let error;
+    if (planForm.id) {
+      ({ error } = await supabase.from("talqeen_sessions").update(payload).eq("id", planForm.id));
+    } else {
+      ({ error } = await supabase.from("talqeen_sessions").insert(payload));
+    }
+    setPlanSaving(false);
+    if (error) { toast.error("تعذر حفظ الجلسة"); return; }
+    toast.success(planForm.id ? "تم تحديث الجلسة" : "تمت إضافة الجلسة للخطة");
+    setPlanForm({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" });
+    fetchPlanSessions(planHalaqaId);
+  };
+
+  const editPlanSession = (s: any) => {
+    setPlanForm({
+      id: s.id,
+      session_date: s.session_date,
+      surah: s.surah,
+      from_ayah: s.from_ayah?.toString() || "",
+      to_ayah: s.to_ayah?.toString() || "",
+      status: s.status || "planned",
+      notes: s.notes || "",
+    });
+  };
+
+  const deletePlanSession = async (id: string) => {
+    const { error } = await supabase.from("talqeen_sessions").delete().eq("id", id);
+    if (error) { toast.error("تعذر الحذف"); return; }
+    toast.success("تم حذف الجلسة");
+    if (planHalaqaId) fetchPlanSessions(planHalaqaId);
+  };
+
+  const planStatusBadge = (s: string | null) => {
+    const map: Record<string, { label: string; cls: string }> = {
+      planned: { label: "مخططة", cls: "bg-blue-100 text-blue-700" },
+      in_progress: { label: "جارية", cls: "bg-amber-100 text-amber-700" },
+      completed: { label: "مكتملة", cls: "bg-green-100 text-green-700" },
+    };
+    const m = map[s || "planned"] || map.planned;
+    return <Badge className={m.cls}>{m.label}</Badge>;
+  };
+
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
