@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { DualDateDisplay, InlineDualDate } from "@/components/DualDateDisplay";
+import { InlineDualDate } from "@/components/DualDateDisplay";
 import { formatDualDateSmart } from "@/lib/hijri";
 import { cn } from "@/lib/utils";
 import { useRole } from "@/hooks/useRole";
