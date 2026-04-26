@@ -11,9 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays, Settings2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useRole } from "@/hooks/useRole";
+import TalqeenSessionDetailDialog from "@/components/TalqeenSessionDetailDialog";
 
 interface Teacher {
   id: string;
