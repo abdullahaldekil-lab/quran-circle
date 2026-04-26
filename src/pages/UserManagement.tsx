@@ -61,15 +61,8 @@ import {
   Trash2,
 } from "lucide-react";
 
-const roleLabels: Record<string, string> = {
-  manager: "مدير المجمع",
-  supervisor: "مشرف تعليمي",
-  assistant_supervisor: "مساعد مشرف",
-  secretary: "سكرتير",
-  admin_staff: "موظف إداري",
-  teacher: "معلم",
-  assistant_teacher: "معلم مساعد",
-};
+// roleLabels is now dynamic — fetched via useDynamicRoles() hook below
+
 
 const approvalLabels: Record<string, string> = {
   pending: "بانتظار الموافقة",
