@@ -321,18 +321,43 @@ const Recitation = () => {
                   <Slider value={[form.memorization_quality]} onValueChange={([v]) => setForm({ ...form, memorization_quality: v })} max={50} step={1} className="flex-1" />
                   <span className="text-sm font-bold text-green-700 w-12 text-left">{form.memorization_quality}/50</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-green-700 dark:text-green-300 w-20 shrink-0">الأخطاء</span>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setForm({ ...form, mistakes_count: Math.max(0, form.mistakes_count - 1) })}>
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                    <span className="text-lg font-bold text-destructive w-8 text-center">{form.mistakes_count}</span>
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setForm({ ...form, mistakes_count: Math.min(20, form.mistakes_count + 1) })}>
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-green-700 dark:text-green-300">تصنيف الأخطاء</span>
+                    <span className="text-xs text-muted-foreground">
+                      المجموع: <span className="font-bold text-destructive">{form.mistakes_count}</span> ({Math.max(0, 20 - form.mistakes_count)}/20 درجة)
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">({Math.max(0, 20 - form.mistakes_count)}/20 درجة)</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: "jali", label: "لحن جلي", color: "text-red-700" },
+                      { key: "khafi", label: "لحن خفي", color: "text-orange-700" },
+                      { key: "taraddod", label: "تردد", color: "text-amber-700" },
+                      { key: "nisyan", label: "نسيان آية", color: "text-rose-700" },
+                    ].map((cat) => {
+                      const val = (form.mistakes_breakdown as any)[cat.key] || 0;
+                      const update = (delta: number) => {
+                        const next = Math.max(0, Math.min(20, val + delta));
+                        const newBreakdown = { ...form.mistakes_breakdown, [cat.key]: next };
+                        const total = Object.values(newBreakdown).reduce((a: number, b: any) => a + Number(b || 0), 0);
+                        setForm({ ...form, mistakes_breakdown: newBreakdown, mistakes_count: Math.min(20, total) });
+                      };
+                      return (
+                        <div key={cat.key} className="flex items-center justify-between gap-2 bg-white dark:bg-background rounded-md px-2 py-1 border">
+                          <span className={`text-xs font-medium ${cat.color}`}>{cat.label}</span>
+                          <div className="flex items-center gap-1">
+                            <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => update(-1)}>
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <span className="text-sm font-bold w-6 text-center">{val}</span>
+                            <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => update(1)}>
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
