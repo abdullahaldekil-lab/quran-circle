@@ -650,6 +650,14 @@ const TalqeenHalaqat = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <TalqeenSessionDetailDialog
+        open={!!detailSessionId}
+        sessionId={detailSessionId}
+        halaqaId={planHalaqaId}
+        onClose={() => setDetailSessionId(null)}
+        onUpdated={() => { if (planHalaqaId) fetchPlanSessions(planHalaqaId); }}
+      />
     </div>
   );
 };
