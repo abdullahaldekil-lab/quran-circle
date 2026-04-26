@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { useDynamicRoles } from "@/hooks/useDynamicRoles";
 import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,15 +62,8 @@ import {
   Trash2,
 } from "lucide-react";
 
-const roleLabels: Record<string, string> = {
-  manager: "مدير المجمع",
-  supervisor: "مشرف تعليمي",
-  assistant_supervisor: "مساعد مشرف",
-  secretary: "سكرتير",
-  admin_staff: "موظف إداري",
-  teacher: "معلم",
-  assistant_teacher: "معلم مساعد",
-};
+// roleLabels is now dynamic — fetched via useDynamicRoles() hook below
+
 
 const approvalLabels: Record<string, string> = {
   pending: "بانتظار الموافقة",
@@ -89,6 +83,7 @@ const callEdgeFunction = async (action: string, payload: any) => {
 const UserManagement = () => {
   const { user } = useAuth();
   const { isManager } = useRole();
+  const { labels: roleLabels } = useDynamicRoles();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -395,6 +390,7 @@ const UserManagement = () => {
                 <CreateStaffForm
                   onSubmit={(data) => createStaffMutation.mutate(data)}
                   loading={createStaffMutation.isPending}
+                  roleLabels={roleLabels}
                 />
               </DialogContent>
             </Dialog>
@@ -979,7 +975,7 @@ const UserManagement = () => {
 
 // --- Sub-components ---
 
-const CreateStaffForm = ({ onSubmit, loading }: { onSubmit: (data: any) => void; loading: boolean }) => {
+const CreateStaffForm = ({ onSubmit, loading, roleLabels }: { onSubmit: (data: any) => void; loading: boolean; roleLabels: Record<string, string> }) => {
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", role: "teacher" });
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedHalaqaId, setSelectedHalaqaId] = useState("");
