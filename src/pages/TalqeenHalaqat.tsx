@@ -11,10 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays, Settings2, CheckCircle2, BookMarked, GraduationCap, ListChecks } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays, Settings2, CheckCircle2, BookMarked, GraduationCap, ListChecks, CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { DualDateDisplay, InlineDualDate } from "@/components/DualDateDisplay";
+import { formatDualDateSmart } from "@/lib/hijri";
+import { cn } from "@/lib/utils";
 import { useRole } from "@/hooks/useRole";
 
 interface Teacher {
