@@ -547,6 +547,100 @@ const TalqeenHalaqat = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* خطة الحفظ Dialog */}
+      <Dialog open={!!planHalaqaId} onOpenChange={(o) => { if (!o) { setPlanHalaqaId(null); setPlanSessions([]); } }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-primary" />
+              خطة الحفظ — {halaqat.find((h) => h.id === planHalaqaId)?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={submitPlan} className="space-y-3 border rounded-lg p-4 bg-muted/30">
+            <div className="text-sm font-semibold">{planForm.id ? "تعديل جلسة" : "إضافة جلسة جديدة للخطة"}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>التاريخ</Label>
+                <Input type="date" value={planForm.session_date} onChange={(e) => setPlanForm({ ...planForm, session_date: e.target.value })} required />
+              </div>
+              <div className="space-y-1">
+                <Label>السورة</Label>
+                <Input value={planForm.surah} onChange={(e) => setPlanForm({ ...planForm, surah: e.target.value })} placeholder="مثال: البقرة" required />
+              </div>
+              <div className="space-y-1">
+                <Label>من آية</Label>
+                <Input type="number" min={1} value={planForm.from_ayah} onChange={(e) => setPlanForm({ ...planForm, from_ayah: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <Label>إلى آية</Label>
+                <Input type="number" min={1} value={planForm.to_ayah} onChange={(e) => setPlanForm({ ...planForm, to_ayah: e.target.value })} />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label>الحالة</Label>
+                <Select value={planForm.status} onValueChange={(v) => setPlanForm({ ...planForm, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="planned">مخططة</SelectItem>
+                    <SelectItem value="in_progress">جارية</SelectItem>
+                    <SelectItem value="completed">مكتملة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label>ملاحظات</Label>
+                <Textarea rows={2} value={planForm.notes} onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })} />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={planSaving} className="flex-1">
+                {planForm.id ? "حفظ التعديلات" : "إضافة للخطة"}
+              </Button>
+              {planForm.id && (
+                <Button type="button" variant="outline" onClick={() => setPlanForm({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" })}>
+                  إلغاء التعديل
+                </Button>
+              )}
+            </div>
+          </form>
+
+          <div className="space-y-2">
+            <h3 className="font-semibold flex items-center gap-2"><CalendarDays className="w-4 h-4" /> جلسات الخطة ({planSessions.length})</h3>
+            {planSessions.length === 0 ? (
+              <p className="text-center text-muted-foreground py-6 text-sm">لا توجد جلسات في الخطة بعد</p>
+            ) : (
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {planSessions.map((s) => (
+                  <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border bg-background">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{s.surah}</span>
+                        {s.from_ayah && (
+                          <span className="text-xs text-muted-foreground">
+                            (آية {s.from_ayah}{s.to_ayah ? ` - ${s.to_ayah}` : ""})
+                          </span>
+                        )}
+                        {planStatusBadge(s.status)}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {s.session_date}
+                        {s.notes && <span className="mr-2">• {s.notes}</span>}
+                      </div>
+                    </div>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => editPlanSession(s)}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deletePlanSession(s.id)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
