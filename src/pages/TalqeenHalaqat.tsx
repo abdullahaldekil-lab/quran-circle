@@ -11,11 +11,52 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays, Settings2, CheckCircle2, BookMarked, GraduationCap, ListChecks } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays, Settings2, CheckCircle2, BookMarked, GraduationCap, ListChecks, CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { InlineDualDate } from "@/components/DualDateDisplay";
+import { formatDualDateSmart } from "@/lib/hijri";
+import { cn } from "@/lib/utils";
 import { useRole } from "@/hooks/useRole";
+
+// منتقي تاريخ بالتاريخ الهجري كأساس والميلادي كفرعي
+const DualDatePicker = ({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) => {
+  const dateObj = value ? new Date(value) : undefined;
+  const labels = value ? formatDualDateSmart(value) : null;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn("w-full justify-start text-right font-normal h-auto py-2", !value && "text-muted-foreground")}
+        >
+          <CalendarIcon className="ml-2 h-4 w-4 opacity-60 shrink-0" />
+          {labels ? (
+            <span className="flex flex-col items-start">
+              <span className="text-sm font-medium">{labels.hijri}</span>
+              <span className="text-xs text-muted-foreground">{labels.gregorian}</span>
+            </span>
+          ) : (
+            <span>اختر التاريخ{required ? " *" : ""}</span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={dateObj}
+          onSelect={(d) => { if (d) onChange(d.toISOString().split("T")[0]); }}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 interface Teacher {
   id: string;
@@ -687,7 +728,7 @@ const TalqeenHalaqat = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>التاريخ</Label>
-                <Input type="date" value={planForm.session_date} onChange={(e) => setPlanForm({ ...planForm, session_date: e.target.value })} required />
+                <DualDatePicker value={planForm.session_date} onChange={(v) => setPlanForm({ ...planForm, session_date: v })} required />
               </div>
               <div className="space-y-1">
                 <Label>السورة</Label>
@@ -749,7 +790,7 @@ const TalqeenHalaqat = () => {
                         {s.executed && <Badge className="bg-emerald-100 text-emerald-700">منفّذة</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {s.session_date}
+                        <InlineDualDate date={s.session_date} />
                         {s.notes && <span className="mr-2">• {s.notes}</span>}
                       </div>
                     </div>
@@ -783,7 +824,9 @@ const TalqeenHalaqat = () => {
                   (آية {manageSession.from_ayah}{manageSession.to_ayah ? ` - ${manageSession.to_ayah}` : ""})
                 </span>
               )}
-              <span className="text-sm font-normal text-muted-foreground mr-2">• {manageSession?.session_date}</span>
+              {manageSession?.session_date && (
+                <span className="text-sm font-normal text-muted-foreground mr-2 inline-flex items-center gap-1">• <InlineDualDate date={manageSession.session_date} /></span>
+              )}
             </DialogTitle>
           </DialogHeader>
 
@@ -870,7 +913,7 @@ const TalqeenHalaqat = () => {
               </div>
               <div className="space-y-2">
                 <Label>تاريخ التسليم المتوقع</Label>
-                <Input type="date" value={homeworkForm.homework_due_date} onChange={(e) => setHomeworkForm({ ...homeworkForm, homework_due_date: e.target.value })} />
+                <DualDatePicker value={homeworkForm.homework_due_date} onChange={(v) => setHomeworkForm({ ...homeworkForm, homework_due_date: v })} />
               </div>
               <Button onClick={saveHomework} disabled={manageSaving} className="w-full">حفظ الواجب</Button>
             </TabsContent>
