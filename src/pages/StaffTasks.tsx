@@ -271,6 +271,7 @@ const StaffTasks = () => {
           const nextDate = new Date(dueDateTime);
           if (form.recurrence === "daily") nextDate.setDate(nextDate.getDate() + i);
           else if (form.recurrence === "weekly") nextDate.setDate(nextDate.getDate() + i * 7);
+          else if (form.recurrence === "monthly") nextDate.setMonth(nextDate.getMonth() + i);
           copies.push({
             ...payload,
             due_date: format(nextDate, "yyyy-MM-dd"),
@@ -784,8 +785,9 @@ const StaffTasks = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">بدون تكرار</SelectItem>
-                  <SelectItem value="daily">يومي</SelectItem>
-                  <SelectItem value="weekly">أسبوعي</SelectItem>
+                  <SelectItem value="daily">يومي (4 نسخ)</SelectItem>
+                  <SelectItem value="weekly">أسبوعي (4 نسخ)</SelectItem>
+                  <SelectItem value="monthly">شهري (4 نسخ)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
