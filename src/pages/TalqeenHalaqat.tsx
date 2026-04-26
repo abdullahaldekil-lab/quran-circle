@@ -41,6 +41,7 @@ const TalqeenHalaqat = () => {
   const [planSessions, setPlanSessions] = useState<any[]>([]);
   const [planForm, setPlanForm] = useState({ id: "", session_date: new Date().toISOString().split("T")[0], surah: "", from_ayah: "", to_ayah: "", status: "planned", notes: "" });
   const [planSaving, setPlanSaving] = useState(false);
+  const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
 
   const fetchPlanSessions = async (halaqaId: string) => {
     const { data, error } = await supabase
