@@ -142,11 +142,16 @@ export default function ExcellenceReports() {
       const startDate = startGreg.toISOString().split("T")[0];
       const endDate = endGreg.toISOString().split("T")[0];
 
-      const { data: sessionsInMonth } = await supabase
+      let sessionsQuery = supabase
         .from("excellence_sessions")
-        .select("id, halaqa_id")
+        .select("id, halaqa_id, track_id")
         .gte("session_date", startDate)
         .lte("session_date", endDate);
+
+      if (monthlyTrackFilter !== "all") sessionsQuery = sessionsQuery.eq("track_id", monthlyTrackFilter);
+      if (monthlyHalaqaFilter !== "all") sessionsQuery = sessionsQuery.eq("halaqa_id", monthlyHalaqaFilter);
+
+      const { data: sessionsInMonth } = await sessionsQuery;
 
       const sessionIds = (sessionsInMonth || []).map((s) => s.id);
       if (sessionIds.length === 0) {
