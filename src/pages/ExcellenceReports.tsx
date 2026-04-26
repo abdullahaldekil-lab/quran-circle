@@ -48,6 +48,9 @@ export default function ExcellenceReports() {
   const [monthlySummary, setMonthlySummary] = useState<any>(null);
   const [publishingMonthly, setPublishingMonthly] = useState(false);
   const [monthlyLoading, setMonthlyLoading] = useState(false);
+  const [monthlyTrackFilter, setMonthlyTrackFilter] = useState<string>("all");
+  const [monthlyHalaqaFilter, setMonthlyHalaqaFilter] = useState<string>("all");
+  const [allHalaqat, setAllHalaqat] = useState<any[]>([]);
 
   // Track report
   const [excellenceTracks, setExcellenceTracks] = useState<any[]>([]);
@@ -64,13 +67,15 @@ export default function ExcellenceReports() {
   }, []);
 
   const fetchBase = async () => {
-    const [sessRes, tracksRes, distRes] = await Promise.all([
+    const [sessRes, tracksRes, distRes, halaqatRes] = await Promise.all([
       supabase.from("excellence_sessions").select("id, session_date, session_hijri_date, track_id, halaqa_id, halaqat(name), excellence_tracks:track_id(track_name)").order("session_date", { ascending: false }),
       supabase.from("excellence_tracks").select("id, track_name").eq("is_active", true).order("track_name"),
       supabase.from("distinguished_students").select("id, student_id, date_added, students:student_id(full_name), excellence_tracks:track_id(track_name)").order("date_added", { ascending: false }),
+      supabase.from("halaqat").select("id, name").eq("active", true).order("name"),
     ]);
     setSessions(sessRes.data || []);
     setExcellenceTracks(tracksRes.data || []);
+    setAllHalaqat(halaqatRes.data || []);
     setDistinguishedStudents((distRes.data || []).map((d: any) => ({
       ...d,
       student_name: d.students?.full_name || "—",
@@ -137,11 +142,16 @@ export default function ExcellenceReports() {
       const startDate = startGreg.toISOString().split("T")[0];
       const endDate = endGreg.toISOString().split("T")[0];
 
-      const { data: sessionsInMonth } = await supabase
+      let sessionsQuery = supabase
         .from("excellence_sessions")
-        .select("id, halaqa_id")
+        .select("id, halaqa_id, track_id")
         .gte("session_date", startDate)
         .lte("session_date", endDate);
+
+      if (monthlyTrackFilter !== "all") sessionsQuery = sessionsQuery.eq("track_id", monthlyTrackFilter);
+      if (monthlyHalaqaFilter !== "all") sessionsQuery = sessionsQuery.eq("halaqa_id", monthlyHalaqaFilter);
+
+      const { data: sessionsInMonth } = await sessionsQuery;
 
       const sessionIds = (sessionsInMonth || []).map((s) => s.id);
       if (sessionIds.length === 0) {
@@ -449,6 +459,26 @@ export default function ExcellenceReports() {
                       {Array.from({ length: 5 }, (_, i) => currentHijri.year - 2 + i).map((y) => (
                         <SelectItem key={y} value={String(y)}>{y} هـ</SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">المسار</label>
+                  <Select value={monthlyTrackFilter} onValueChange={setMonthlyTrackFilter}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع المسارات</SelectItem>
+                      {excellenceTracks.map((t) => <SelectItem key={t.id} value={t.id}>{t.track_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">الحلقة</label>
+                  <Select value={monthlyHalaqaFilter} onValueChange={setMonthlyHalaqaFilter}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع الحلقات</SelectItem>
+                      {allHalaqat.map((h) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

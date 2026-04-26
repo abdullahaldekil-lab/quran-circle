@@ -2530,6 +2530,7 @@ export type Database = {
           memorization_quality: number | null
           memorized_from: string | null
           memorized_to: string | null
+          mistakes_breakdown: Json | null
           mistakes_count: number | null
           notes: string | null
           record_date: string
@@ -2550,6 +2551,7 @@ export type Database = {
           memorization_quality?: number | null
           memorized_from?: string | null
           memorized_to?: string | null
+          mistakes_breakdown?: Json | null
           mistakes_count?: number | null
           notes?: string | null
           record_date?: string
@@ -2570,6 +2572,7 @@ export type Database = {
           memorization_quality?: number | null
           memorized_from?: string | null
           memorized_to?: string | null
+          mistakes_breakdown?: Json | null
           mistakes_count?: number | null
           notes?: string | null
           record_date?: string

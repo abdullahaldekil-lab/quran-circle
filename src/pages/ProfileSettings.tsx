@@ -355,6 +355,26 @@ const ProfileSettings = () => {
               </form>
             </CardContent>
           </Card>
+
+          {/* Onboarding restart card */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-base">الجولة التعريفية</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">يمكنك إعادة عرض الجولة التعريفية للتعرف على أقسام النظام مرة أخرى.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (user) localStorage.removeItem(`onboarding-completed-v1-${user.id}`);
+                  window.location.reload();
+                }}
+              >
+                إعادة الجولة
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ===== Tab 2: Login Info ===== */}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import GlobalSearch from "@/components/GlobalSearch";
+import OnboardingTour from "@/components/OnboardingTour";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
@@ -538,6 +539,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="p-4 lg:p-8">{children}</div>
       </main>
       <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+      <OnboardingTour />
     </div>
   );
 };
