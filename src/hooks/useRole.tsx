@@ -167,7 +167,10 @@ export const useRole = () => {
   };
 
   const isManager = role === "manager";
-  const isSupervisor = role === "supervisor" || role === "assistant_supervisor";
+  const isSupervisor =
+    role === "supervisor" ||
+    role === "assistant_supervisor" ||
+    role === "custom_1775663809732"; // مشرف التلقين
   const isAdminStaff = role === "admin_staff" || role === "secretary";
   const isTeacher = role === "teacher" || role === "assistant_teacher";
 
