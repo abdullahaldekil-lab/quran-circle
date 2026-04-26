@@ -911,7 +911,7 @@ const TalqeenHalaqat = () => {
               </div>
               <div className="space-y-2">
                 <Label>تاريخ التسليم المتوقع</Label>
-                <Input type="date" value={homeworkForm.homework_due_date} onChange={(e) => setHomeworkForm({ ...homeworkForm, homework_due_date: e.target.value })} />
+                <DualDatePicker value={homeworkForm.homework_due_date} onChange={(v) => setHomeworkForm({ ...homeworkForm, homework_due_date: v })} />
               </div>
               <Button onClick={saveHomework} disabled={manageSaving} className="w-full">حفظ الواجب</Button>
             </TabsContent>
