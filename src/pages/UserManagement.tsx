@@ -83,6 +83,7 @@ const callEdgeFunction = async (action: string, payload: any) => {
 const UserManagement = () => {
   const { user } = useAuth();
   const { isManager } = useRole();
+  const { labels: roleLabels } = useDynamicRoles();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
