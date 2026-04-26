@@ -746,12 +746,17 @@ const TalqeenHalaqat = () => {
                           </span>
                         )}
                         {planStatusBadge(s.status)}
+                        {s.executed && <Badge className="bg-emerald-100 text-emerald-700">منفّذة</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         {s.session_date}
                         {s.notes && <span className="mr-2">• {s.notes}</span>}
                       </div>
                     </div>
+                    <Button variant="default" size="sm" className="h-8" onClick={() => openManage(s)}>
+                      <Settings2 className="w-3 h-3 ml-1" />
+                      إدارة
+                    </Button>
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => editPlanSession(s)}>
                       <Pencil className="w-3 h-3" />
                     </Button>
