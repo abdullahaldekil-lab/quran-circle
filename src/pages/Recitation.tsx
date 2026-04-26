@@ -83,6 +83,7 @@ const Recitation = () => {
       memorization_quality: 40,
       tajweed_score: 25,
       mistakes_count: 0,
+      mistakes_breakdown: { jali: 0, khafi: 0, taraddod: 0, nisyan: 0 },
       notes: "",
     });
     setAudioUrl("");
