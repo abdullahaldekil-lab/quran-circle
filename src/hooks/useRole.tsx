@@ -123,7 +123,26 @@ const roleWritePermissions: Record<StaffRole, Resource[]> = {
   assistant_teacher: [
     "recitation", "attendance",
   ],
+  // مشرف التلقين — صلاحيات كاملة على قسم التلقين بداية من تسجيل الطلاب حتى متابعة الجلسات والواجبات والخطط
+  custom_1775663809732: [
+    "students", "halaqat", "talqeen-halaqat", "recitation", "attendance",
+    "bulk_import", "trips",
+  ],
 };
+
+// قائمة المسارات المخصصة لمشرف التلقين
+const talqeenSupervisorRoutes = [
+  "/dashboard", "/profile",
+  "/talqeen-halaqat",
+  "/students", "/inactive-students", "/halaqat",
+  "/recitation", "/attendance", "/student-attendance-report",
+  "/bulk-import", "/pre-registration", "/enrollment-requests", "/enrollment-form",
+  "/preparation", "/academic-calendar",
+  "/staff-attendance-log", "/staff-tasks", "/staff-tasks-analytics",
+  "/notification-preferences", "/internal-requests",
+  "/programs-overview", "/halaqa-performance",
+  "/documents",
+];
 
 export const useRole = () => {
   const { profile } = useAuth();
