@@ -36,10 +36,13 @@ const StudentAttendanceReport = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [filterHalaqaId, setFilterHalaqaId] = useState<string>("all");
   const [filterStudentId, setFilterStudentId] = useState<string>("all");
+  const [dateMode, setDateMode] = useState<"month" | "custom">("month");
+  const [customFrom, setCustomFrom] = useState<string>(format(startOfMonth(new Date()), "yyyy-MM-dd"));
+  const [customTo, setCustomTo] = useState<string>(format(endOfMonth(new Date()), "yyyy-MM-dd"));
 
   const dateObj = new Date(selectedYear, selectedMonth, 1);
-  const monthStart = format(startOfMonth(dateObj), "yyyy-MM-dd");
-  const monthEnd = format(endOfMonth(dateObj), "yyyy-MM-dd");
+  const monthStart = dateMode === "custom" ? customFrom : format(startOfMonth(dateObj), "yyyy-MM-dd");
+  const monthEnd = dateMode === "custom" ? customTo : format(endOfMonth(dateObj), "yyyy-MM-dd");
 
   const { data: halaqat = [] } = useQuery({
     queryKey: ["halaqat-list"],
