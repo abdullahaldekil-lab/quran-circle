@@ -115,6 +115,7 @@ const Recitation = () => {
       memorization_quality: form.memorization_quality,
       tajweed_score: form.tajweed_score,
       mistakes_count: form.mistakes_count,
+      mistakes_breakdown: form.mistakes_breakdown as any,
       total_score: totalScore,
       notes: form.notes || null,
       audio_url: audioUrl || null,
