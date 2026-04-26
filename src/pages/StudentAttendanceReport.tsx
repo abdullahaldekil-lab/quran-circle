@@ -93,11 +93,13 @@ const StudentAttendanceReport = () => {
   });
 
   const monthDays = useMemo(() => {
-    return eachDayOfInterval({ start: startOfMonth(dateObj), end: endOfMonth(dateObj) }).filter(d => {
+    const start = dateMode === "custom" ? new Date(customFrom) : startOfMonth(dateObj);
+    const end = dateMode === "custom" ? new Date(customTo) : endOfMonth(dateObj);
+    return eachDayOfInterval({ start, end }).filter(d => {
       const day = getDay(d);
       return day !== 5 && day !== 6; // exclude Fri/Sat
     });
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, dateMode, customFrom, customTo]);
 
   const attMap = useMemo(() => {
     const map: Record<string, Record<string, string>> = {};
