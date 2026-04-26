@@ -271,6 +271,7 @@ const StaffTasks = () => {
           const nextDate = new Date(dueDateTime);
           if (form.recurrence === "daily") nextDate.setDate(nextDate.getDate() + i);
           else if (form.recurrence === "weekly") nextDate.setDate(nextDate.getDate() + i * 7);
+          else if (form.recurrence === "monthly") nextDate.setMonth(nextDate.getMonth() + i);
           copies.push({
             ...payload,
             due_date: format(nextDate, "yyyy-MM-dd"),
