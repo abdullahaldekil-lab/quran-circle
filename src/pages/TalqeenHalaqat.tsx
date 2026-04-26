@@ -824,7 +824,9 @@ const TalqeenHalaqat = () => {
                   (آية {manageSession.from_ayah}{manageSession.to_ayah ? ` - ${manageSession.to_ayah}` : ""})
                 </span>
               )}
-              <span className="text-sm font-normal text-muted-foreground mr-2">• {manageSession?.session_date}</span>
+              {manageSession?.session_date && (
+                <span className="text-sm font-normal text-muted-foreground mr-2 inline-flex items-center gap-1">• <InlineDualDate date={manageSession.session_date} /></span>
+              )}
             </DialogTitle>
           </DialogHeader>
 
