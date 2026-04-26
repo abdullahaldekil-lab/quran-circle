@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays, Settings2, CheckCircle2, BookMarked, GraduationCap, ListChecks } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useRole } from "@/hooks/useRole";
 
 interface Teacher {
@@ -116,6 +118,128 @@ const TalqeenHalaqat = () => {
     return <Badge className={m.cls}>{m.label}</Badge>;
   };
 
+  // ============== إدارة الجلسة (تنفيذ/حضور/واجب/برنامج تربوي) ==============
+  const [manageSession, setManageSession] = useState<any | null>(null);
+  const [manageTab, setManageTab] = useState("execution");
+  const [manageSaving, setManageSaving] = useState(false);
+  const [execForm, setExecForm] = useState({ executed: false, executed_at: "", execution_notes: "" });
+  const [homeworkForm, setHomeworkForm] = useState({ homework: "", homework_due_date: "" });
+  const [eduForm, setEduForm] = useState({ educational_program_title: "", educational_program_details: "" });
+  const [attendanceRows, setAttendanceRows] = useState<Array<{ student_id: string; full_name: string; status: string; homework_status: string; notes: string }>>([]);
+
+  const openManage = async (s: any) => {
+    setManageSession(s);
+    setManageTab("execution");
+    setExecForm({
+      executed: !!s.executed,
+      executed_at: s.executed_at ? new Date(s.executed_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+      execution_notes: s.execution_notes || "",
+    });
+    setHomeworkForm({
+      homework: s.homework || "",
+      homework_due_date: s.homework_due_date || "",
+    });
+    setEduForm({
+      educational_program_title: s.educational_program_title || "",
+      educational_program_details: s.educational_program_details || "",
+    });
+    const halaqaStudents = studentsByHalaqa[s.halaqa_id] || [];
+    const { data: existing } = await supabase
+      .from("talqeen_session_attendance")
+      .select("*")
+      .eq("session_id", s.id);
+    const existingMap = new Map((existing || []).map((r: any) => [r.student_id, r]));
+    setAttendanceRows(
+      halaqaStudents.map((st: any) => {
+        const ex = existingMap.get(st.id) as any;
+        return {
+          student_id: st.id,
+          full_name: st.full_name,
+          status: ex?.status || "present",
+          homework_status: ex?.homework_status || "not_submitted",
+          notes: ex?.notes || "",
+        };
+      })
+    );
+  };
+
+  const closeManage = () => { setManageSession(null); setAttendanceRows([]); };
+
+  const saveExecution = async () => {
+    if (!manageSession) return;
+    setManageSaving(true);
+    const update: any = {
+      executed: execForm.executed,
+      executed_at: execForm.executed ? (execForm.executed_at ? new Date(execForm.executed_at).toISOString() : new Date().toISOString()) : null,
+      execution_notes: execForm.execution_notes || null,
+    };
+    if (execForm.executed) update.status = "completed";
+    const { error } = await supabase.from("talqeen_sessions").update(update).eq("id", manageSession.id);
+    setManageSaving(false);
+    if (error) { toast.error("تعذر حفظ التنفيذ"); return; }
+    toast.success("تم حفظ التنفيذ");
+    if (planHalaqaId) fetchPlanSessions(planHalaqaId);
+    setManageSession({ ...manageSession, ...update });
+  };
+
+  const saveHomework = async () => {
+    if (!manageSession) return;
+    setManageSaving(true);
+    const { error } = await supabase.from("talqeen_sessions").update({
+      homework: homeworkForm.homework || null,
+      homework_due_date: homeworkForm.homework_due_date || null,
+    }).eq("id", manageSession.id);
+    setManageSaving(false);
+    if (error) { toast.error("تعذر حفظ الواجب"); return; }
+    toast.success("تم حفظ الواجب");
+    if (planHalaqaId) fetchPlanSessions(planHalaqaId);
+  };
+
+  const saveEduProgram = async () => {
+    if (!manageSession) return;
+    setManageSaving(true);
+    const { error } = await supabase.from("talqeen_sessions").update({
+      educational_program_title: eduForm.educational_program_title || null,
+      educational_program_details: eduForm.educational_program_details || null,
+    }).eq("id", manageSession.id);
+    setManageSaving(false);
+    if (error) { toast.error("تعذر حفظ البرنامج التربوي"); return; }
+    toast.success("تم حفظ البرنامج التربوي");
+    if (planHalaqaId) fetchPlanSessions(planHalaqaId);
+  };
+
+  const saveAttendance = async () => {
+    if (!manageSession || attendanceRows.length === 0) {
+      toast.error("لا يوجد طلاب للحفظ");
+      return;
+    }
+    setManageSaving(true);
+    const payload = attendanceRows.map((r) => ({
+      session_id: manageSession.id,
+      student_id: r.student_id,
+      status: r.status,
+      homework_status: r.homework_status,
+      notes: r.notes || null,
+    }));
+    const { error } = await supabase
+      .from("talqeen_session_attendance")
+      .upsert(payload, { onConflict: "session_id,student_id" });
+    setManageSaving(false);
+    if (error) { toast.error("تعذر حفظ الحضور"); return; }
+    toast.success("تم حفظ الحضور");
+  };
+
+  const markAllPresent = () => setAttendanceRows((prev) => prev.map((r) => ({ ...r, status: "present" })));
+
+  const updateAttendanceRow = (student_id: string, patch: Partial<{ status: string; homework_status: string; notes: string }>) =>
+    setAttendanceRows((prev) => prev.map((r) => (r.student_id === student_id ? { ...r, ...patch } : r)));
+
+  const homeworkStatusOptions = [
+    { value: "submitted", label: "سلّم" },
+    { value: "partial", label: "جزئي" },
+    { value: "not_submitted", label: "لم يسلم" },
+    { value: "exempt", label: "معفى" },
+  ];
 
   const fetchData = async () => {
     const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
@@ -622,12 +746,17 @@ const TalqeenHalaqat = () => {
                           </span>
                         )}
                         {planStatusBadge(s.status)}
+                        {s.executed && <Badge className="bg-emerald-100 text-emerald-700">منفّذة</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         {s.session_date}
                         {s.notes && <span className="mr-2">• {s.notes}</span>}
                       </div>
                     </div>
+                    <Button variant="default" size="sm" className="h-8" onClick={() => openManage(s)}>
+                      <Settings2 className="w-3 h-3 ml-1" />
+                      إدارة
+                    </Button>
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => editPlanSession(s)}>
                       <Pencil className="w-3 h-3" />
                     </Button>
@@ -639,6 +768,126 @@ const TalqeenHalaqat = () => {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* إدارة الجلسة Dialog */}
+      <Dialog open={!!manageSession} onOpenChange={(o) => { if (!o) closeManage(); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="w-5 h-5 text-primary" />
+              إدارة جلسة — {manageSession?.surah}
+              {manageSession?.from_ayah && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  (آية {manageSession.from_ayah}{manageSession.to_ayah ? ` - ${manageSession.to_ayah}` : ""})
+                </span>
+              )}
+              <span className="text-sm font-normal text-muted-foreground mr-2">• {manageSession?.session_date}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <Tabs value={manageTab} onValueChange={setManageTab} className="w-full">
+            <TabsList className="grid grid-cols-4 w-full">
+              <TabsTrigger value="execution"><CheckCircle2 className="w-4 h-4 ml-1" />التنفيذ</TabsTrigger>
+              <TabsTrigger value="attendance"><ListChecks className="w-4 h-4 ml-1" />الحضور</TabsTrigger>
+              <TabsTrigger value="homework"><BookMarked className="w-4 h-4 ml-1" />الواجب</TabsTrigger>
+              <TabsTrigger value="education"><GraduationCap className="w-4 h-4 ml-1" />البرنامج التربوي</TabsTrigger>
+            </TabsList>
+
+            {/* تبويب التنفيذ */}
+            <TabsContent value="execution" className="space-y-4 pt-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+                <div>
+                  <Label className="text-base">تأشير الجلسة كمنفّذة</Label>
+                  <p className="text-xs text-muted-foreground mt-1">عند التفعيل يتم تحديث حالة الجلسة إلى "مكتملة" تلقائياً.</p>
+                </div>
+                <Switch checked={execForm.executed} onCheckedChange={(v) => setExecForm({ ...execForm, executed: v })} />
+              </div>
+              <div className="space-y-2">
+                <Label>وقت التنفيذ</Label>
+                <Input type="datetime-local" value={execForm.executed_at} onChange={(e) => setExecForm({ ...execForm, executed_at: e.target.value })} disabled={!execForm.executed} />
+              </div>
+              <div className="space-y-2">
+                <Label>ملاحظات التنفيذ</Label>
+                <Textarea rows={3} value={execForm.execution_notes} onChange={(e) => setExecForm({ ...execForm, execution_notes: e.target.value })} placeholder="ملاحظات حول سير الجلسة..." />
+              </div>
+              <Button onClick={saveExecution} disabled={manageSaving} className="w-full">حفظ التنفيذ</Button>
+            </TabsContent>
+
+            {/* تبويب الحضور */}
+            <TabsContent value="attendance" className="space-y-3 pt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">عدد الطلاب: {attendanceRows.length}</p>
+                <Button variant="outline" size="sm" onClick={markAllPresent}>
+                  <CheckCircle2 className="w-4 h-4 ml-1" />
+                  تحديد الكل حاضر
+                </Button>
+              </div>
+              {attendanceRows.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8 text-sm">لا يوجد طلاب نشطون في هذه الحلقة</p>
+              ) : (
+                <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                  {attendanceRows.map((r) => (
+                    <div key={r.student_id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center p-3 rounded-lg border bg-background">
+                      <div className="md:col-span-3 font-medium text-sm">{r.full_name}</div>
+                      <div className="md:col-span-3">
+                        <Select value={r.status} onValueChange={(v) => updateAttendanceRow(r.student_id, { status: v })}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="present">حاضر</SelectItem>
+                            <SelectItem value="absent">غائب</SelectItem>
+                            <SelectItem value="late">متأخر</SelectItem>
+                            <SelectItem value="excused">مستأذن</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="md:col-span-3">
+                        <Select value={r.homework_status} onValueChange={(v) => updateAttendanceRow(r.student_id, { homework_status: v })}>
+                          <SelectTrigger className="h-9"><SelectValue placeholder="حالة الواجب" /></SelectTrigger>
+                          <SelectContent>
+                            {homeworkStatusOptions.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="md:col-span-3">
+                        <Input className="h-9" placeholder="ملاحظة" value={r.notes} onChange={(e) => updateAttendanceRow(r.student_id, { notes: e.target.value })} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button onClick={saveAttendance} disabled={manageSaving || attendanceRows.length === 0} className="w-full">حفظ الحضور</Button>
+            </TabsContent>
+
+            {/* تبويب الواجب */}
+            <TabsContent value="homework" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>وصف الواجب المنزلي</Label>
+                <Textarea rows={4} value={homeworkForm.homework} onChange={(e) => setHomeworkForm({ ...homeworkForm, homework: e.target.value })} placeholder="مثال: حفظ من آية 1 إلى آية 10 من سورة البقرة..." />
+              </div>
+              <div className="space-y-2">
+                <Label>تاريخ التسليم المتوقع</Label>
+                <Input type="date" value={homeworkForm.homework_due_date} onChange={(e) => setHomeworkForm({ ...homeworkForm, homework_due_date: e.target.value })} />
+              </div>
+              <Button onClick={saveHomework} disabled={manageSaving} className="w-full">حفظ الواجب</Button>
+            </TabsContent>
+
+            {/* تبويب البرنامج التربوي */}
+            <TabsContent value="education" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>عنوان البرنامج</Label>
+                <Input value={eduForm.educational_program_title} onChange={(e) => setEduForm({ ...eduForm, educational_program_title: e.target.value })} placeholder="مثال: حديث / خلق / فائدة..." />
+              </div>
+              <div className="space-y-2">
+                <Label>التفاصيل</Label>
+                <Textarea rows={6} value={eduForm.educational_program_details} onChange={(e) => setEduForm({ ...eduForm, educational_program_details: e.target.value })} placeholder="نص الحديث أو الفائدة أو الخلق المراد ترسيخه..." />
+              </div>
+              <Button onClick={saveEduProgram} disabled={manageSaving} className="w-full">حفظ البرنامج التربوي</Button>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
