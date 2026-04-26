@@ -728,7 +728,7 @@ const TalqeenHalaqat = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>التاريخ</Label>
-                <Input type="date" value={planForm.session_date} onChange={(e) => setPlanForm({ ...planForm, session_date: e.target.value })} required />
+                <DualDatePicker value={planForm.session_date} onChange={(v) => setPlanForm({ ...planForm, session_date: v })} required />
               </div>
               <div className="space-y-1">
                 <Label>السورة</Label>
