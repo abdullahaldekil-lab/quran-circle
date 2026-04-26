@@ -785,8 +785,9 @@ const StaffTasks = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">بدون تكرار</SelectItem>
-                  <SelectItem value="daily">يومي</SelectItem>
-                  <SelectItem value="weekly">أسبوعي</SelectItem>
+                  <SelectItem value="daily">يومي (4 نسخ)</SelectItem>
+                  <SelectItem value="weekly">أسبوعي (4 نسخ)</SelectItem>
+                  <SelectItem value="monthly">شهري (4 نسخ)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
