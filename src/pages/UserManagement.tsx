@@ -975,7 +975,7 @@ const UserManagement = () => {
 
 // --- Sub-components ---
 
-const CreateStaffForm = ({ onSubmit, loading }: { onSubmit: (data: any) => void; loading: boolean }) => {
+const CreateStaffForm = ({ onSubmit, loading, roleLabels }: { onSubmit: (data: any) => void; loading: boolean; roleLabels: Record<string, string> }) => {
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", role: "teacher" });
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedHalaqaId, setSelectedHalaqaId] = useState("");
