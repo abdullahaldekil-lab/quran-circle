@@ -462,6 +462,26 @@ export default function ExcellenceReports() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">المسار</label>
+                  <Select value={monthlyTrackFilter} onValueChange={setMonthlyTrackFilter}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع المسارات</SelectItem>
+                      {excellenceTracks.map((t) => <SelectItem key={t.id} value={t.id}>{t.track_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">الحلقة</label>
+                  <Select value={monthlyHalaqaFilter} onValueChange={setMonthlyHalaqaFilter}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع الحلقات</SelectItem>
+                      {allHalaqat.map((h) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button onClick={loadMonthlyReport} disabled={monthlyLoading}>
                   {monthlyLoading ? "جارٍ التحميل..." : "عرض التقرير"}
                 </Button>
