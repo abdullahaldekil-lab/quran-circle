@@ -3833,66 +3833,11 @@ export type Database = {
           },
         ]
       }
-      talqeen_session_attendance: {
-        Row: {
-          created_at: string
-          homework_status: string
-          id: string
-          notes: string | null
-          session_id: string
-          status: string
-          student_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          homework_status?: string
-          id?: string
-          notes?: string | null
-          session_id: string
-          status?: string
-          student_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          homework_status?: string
-          id?: string
-          notes?: string | null
-          session_id?: string
-          status?: string
-          student_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "talqeen_session_attendance_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "talqeen_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "talqeen_session_attendance_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       talqeen_sessions: {
         Row: {
           created_at: string | null
-          educational_program_details: string | null
-          educational_program_title: string | null
-          executed: boolean
-          executed_at: string | null
-          execution_notes: string | null
           from_ayah: number | null
           halaqa_id: string
-          homework: string | null
-          homework_due_date: string | null
           id: string
           notes: string | null
           session_date: string
@@ -3902,15 +3847,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          educational_program_details?: string | null
-          educational_program_title?: string | null
-          executed?: boolean
-          executed_at?: string | null
-          execution_notes?: string | null
           from_ayah?: number | null
           halaqa_id: string
-          homework?: string | null
-          homework_due_date?: string | null
           id?: string
           notes?: string | null
           session_date?: string
@@ -3920,15 +3858,8 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          educational_program_details?: string | null
-          educational_program_title?: string | null
-          executed?: boolean
-          executed_at?: string | null
-          execution_notes?: string | null
           from_ayah?: number | null
           halaqa_id?: string
-          homework?: string | null
-          homework_due_date?: string | null
           id?: string
           notes?: string | null
           session_date?: string
