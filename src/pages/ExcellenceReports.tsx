@@ -67,13 +67,15 @@ export default function ExcellenceReports() {
   }, []);
 
   const fetchBase = async () => {
-    const [sessRes, tracksRes, distRes] = await Promise.all([
+    const [sessRes, tracksRes, distRes, halaqatRes] = await Promise.all([
       supabase.from("excellence_sessions").select("id, session_date, session_hijri_date, track_id, halaqa_id, halaqat(name), excellence_tracks:track_id(track_name)").order("session_date", { ascending: false }),
       supabase.from("excellence_tracks").select("id, track_name").eq("is_active", true).order("track_name"),
       supabase.from("distinguished_students").select("id, student_id, date_added, students:student_id(full_name), excellence_tracks:track_id(track_name)").order("date_added", { ascending: false }),
+      supabase.from("halaqat").select("id, name").eq("active", true).order("name"),
     ]);
     setSessions(sessRes.data || []);
     setExcellenceTracks(tracksRes.data || []);
+    setAllHalaqat(halaqatRes.data || []);
     setDistinguishedStudents((distRes.data || []).map((d: any) => ({
       ...d,
       student_name: d.students?.full_name || "—",
