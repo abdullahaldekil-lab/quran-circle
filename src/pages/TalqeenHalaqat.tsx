@@ -22,6 +22,42 @@ import { formatDualDateSmart } from "@/lib/hijri";
 import { cn } from "@/lib/utils";
 import { useRole } from "@/hooks/useRole";
 
+// منتقي تاريخ بالتاريخ الهجري كأساس والميلادي كفرعي
+const DualDatePicker = ({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) => {
+  const dateObj = value ? new Date(value) : undefined;
+  const labels = value ? formatDualDateSmart(value) : null;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn("w-full justify-start text-right font-normal h-auto py-2", !value && "text-muted-foreground")}
+        >
+          <CalendarIcon className="ml-2 h-4 w-4 opacity-60 shrink-0" />
+          {labels ? (
+            <span className="flex flex-col items-start">
+              <span className="text-sm font-medium">{labels.hijri}</span>
+              <span className="text-xs text-muted-foreground">{labels.gregorian}</span>
+            </span>
+          ) : (
+            <span>اختر التاريخ{required ? " *" : ""}</span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={dateObj}
+          onSelect={(d) => { if (d) onChange(d.toISOString().split("T")[0]); }}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 interface Teacher {
   id: string;
   full_name: string;
