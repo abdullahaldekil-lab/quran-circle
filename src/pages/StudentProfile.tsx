@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import StudentLevelProgress from "@/components/StudentLevelProgress";
 import MadarijStudentSection from "@/components/MadarijStudentSection";
 import AnnualPlanSummaryCard from "@/components/madarij/AnnualPlanSummaryCard";
+import TalqeenStudentTests from "@/components/talqeen/TalqeenStudentTests";
 import StudentStatusManager from "@/components/student/StudentStatusManager";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
 
