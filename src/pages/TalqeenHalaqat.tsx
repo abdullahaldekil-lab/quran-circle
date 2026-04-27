@@ -653,6 +653,12 @@ const TalqeenHalaqat = () => {
                 {h.level_track_id && (
                   <p className="text-muted-foreground">المسار: {levelTracks.find(t => t.id === h.level_track_id)?.name || "—"}</p>
                 )}
+                {h.talqeen_curriculum_id && (
+                  <p className="text-muted-foreground flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" />
+                    المنهج: {curricula.find(c => c.id === h.talqeen_curriculum_id)?.name || "—"}
+                  </p>
+                )}
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground flex items-center gap-1">
