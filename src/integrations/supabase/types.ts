@@ -4187,6 +4187,8 @@ export type Database = {
         Row: {
           attendance_max: number | null
           attendance_score: number | null
+          certificate_issued_at: string | null
+          certificate_number: string | null
           created_at: string
           created_by: string | null
           curriculum_id: string | null
@@ -4205,6 +4207,8 @@ export type Database = {
         Insert: {
           attendance_max?: number | null
           attendance_score?: number | null
+          certificate_issued_at?: string | null
+          certificate_number?: string | null
           created_at?: string
           created_by?: string | null
           curriculum_id?: string | null
@@ -4223,6 +4227,8 @@ export type Database = {
         Update: {
           attendance_max?: number | null
           attendance_score?: number | null
+          certificate_issued_at?: string | null
+          certificate_number?: string | null
           created_at?: string
           created_by?: string | null
           curriculum_id?: string | null
