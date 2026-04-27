@@ -24,6 +24,7 @@ import StudentLevelProgress from "@/components/StudentLevelProgress";
 import MadarijStudentSection from "@/components/MadarijStudentSection";
 import AnnualPlanSummaryCard from "@/components/madarij/AnnualPlanSummaryCard";
 import TalqeenStudentTests from "@/components/talqeen/TalqeenStudentTests";
+import TalqeenStudentDailyLog from "@/components/talqeen/TalqeenStudentDailyLog";
 import StudentStatusManager from "@/components/student/StudentStatusManager";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
 
@@ -349,94 +350,137 @@ const StudentProfile = () => {
         </Card>
       </div>
 
-      {/* Tabs: Records vs Audio (lazy-loaded) */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-        <TabsList className="grid grid-cols-5 w-full">
-          <TabsTrigger value="records">
-            <TrendingUp className="w-4 h-4 ml-1" />
-            التسميعات
-          </TabsTrigger>
-          <TabsTrigger value="audio">
-            <Mic className="w-4 h-4 ml-1" />
-            الصوتيات
-          </TabsTrigger>
-          <TabsTrigger value="narration">
-            <BarChart3 className="w-4 h-4 ml-1" />
-            السرد
-          </TabsTrigger>
-          <TabsTrigger value="attendance_tab">
-            <CheckSquare className="w-4 h-4 ml-1" />
-            الحضور
-          </TabsTrigger>
-          <TabsTrigger value="status_log">
-            <History className="w-4 h-4 ml-1" />
-            الحالات
-          </TabsTrigger>
-        </TabsList>
+      {/* Tabs: Talqeen students get a different set */}
+      {(() => {
+        const isTalqeenStudent = student.halaqat?.name?.includes("تلقين");
+        if (isTalqeenStudent) {
+          return (
+            <Tabs defaultValue="daily_lesson" dir="rtl">
+              <TabsList className="grid grid-cols-4 w-full">
+                <TabsTrigger value="daily_lesson">
+                  <BookOpen className="w-4 h-4 ml-1" />
+                  تنفيذ الدرس اليومي
+                </TabsTrigger>
+                <TabsTrigger value="daily_values">
+                  <TrendingUp className="w-4 h-4 ml-1" />
+                  تنفيذ القيم اليومية
+                </TabsTrigger>
+                <TabsTrigger value="attendance_tab">
+                  <CheckSquare className="w-4 h-4 ml-1" />
+                  الحضور والالتزام
+                </TabsTrigger>
+                <TabsTrigger value="tests_tab">
+                  <BarChart3 className="w-4 h-4 ml-1" />
+                  الاختبارات
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="daily_lesson">
+                <TalqeenStudentDailyLog halaqaId={student.halaqa_id || null} mode="lesson" />
+              </TabsContent>
+              <TabsContent value="daily_values">
+                <TalqeenStudentDailyLog halaqaId={student.halaqa_id || null} mode="values" />
+              </TabsContent>
+              <TabsContent value="attendance_tab">
+                <AttendanceTab studentId={id!} />
+              </TabsContent>
+              <TabsContent value="tests_tab">
+                <TalqeenStudentTests
+                  studentId={id!}
+                  curriculumId={student.halaqat?.talqeen_curriculum_id || null}
+                />
+              </TabsContent>
+            </Tabs>
+          );
+        }
+        return (
+          <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
+            <TabsList className="grid grid-cols-5 w-full">
+              <TabsTrigger value="records">
+                <TrendingUp className="w-4 h-4 ml-1" />
+                التسميعات
+              </TabsTrigger>
+              <TabsTrigger value="audio">
+                <Mic className="w-4 h-4 ml-1" />
+                الصوتيات
+              </TabsTrigger>
+              <TabsTrigger value="narration">
+                <BarChart3 className="w-4 h-4 ml-1" />
+                السرد
+              </TabsTrigger>
+              <TabsTrigger value="attendance_tab">
+                <CheckSquare className="w-4 h-4 ml-1" />
+                الحضور
+              </TabsTrigger>
+              <TabsTrigger value="status_log">
+                <History className="w-4 h-4 ml-1" />
+                الحالات
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="records">
-          <Card>
-            <CardContent className="pt-6">
-              {records.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">لا توجد سجلات</p>
-              ) : (
-                <div className="space-y-3">
-                  {records.map((r) => (
-                    <div key={r.id} className="flex items-center justify-between py-3 border-b last:border-0">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
-                          {r.memorized_from && r.memorized_to
-                            ? `${r.memorized_from} → ${r.memorized_to}`
-                            : "حفظ"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{formatDateSmart(r.record_date)}</p>
-                        {r.notes && <p className="text-xs text-muted-foreground mt-1">{r.notes}</p>}
-                      </div>
-                      <div className={`text-sm font-bold min-w-[2rem] text-left ${
-                        Number(r.total_score) >= 80 ? "text-success" : Number(r.total_score) >= 60 ? "text-warning" : "text-destructive"
-                      }`}>
-                        {r.total_score}
-                      </div>
+            <TabsContent value="records">
+              <Card>
+                <CardContent className="pt-6">
+                  {records.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">لا توجد سجلات</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {records.map((r) => (
+                        <div key={r.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              {r.memorized_from && r.memorized_to
+                                ? `${r.memorized_from} → ${r.memorized_to}`
+                                : "حفظ"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{formatDateSmart(r.record_date)}</p>
+                            {r.notes && <p className="text-xs text-muted-foreground mt-1">{r.notes}</p>}
+                          </div>
+                          <div className={`text-sm font-bold min-w-[2rem] text-left ${
+                            Number(r.total_score) >= 80 ? "text-success" : Number(r.total_score) >= 60 ? "text-warning" : "text-destructive"
+                          }`}>
+                            {r.total_score}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-              {/* Pagination */}
-              {recordsTotalPages > 1 && (
-                <div className="flex items-center justify-center gap-4 pt-4">
-                  <Button variant="outline" size="sm" disabled={recordsPage <= 0} onClick={() => setRecordsPage(recordsPage - 1)}>
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                    السابق
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {recordsPage + 1} / {recordsTotalPages}
-                  </span>
-                  <Button variant="outline" size="sm" disabled={recordsPage >= recordsTotalPages - 1} onClick={() => setRecordsPage(recordsPage + 1)}>
-                    التالي
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  )}
+                  {recordsTotalPages > 1 && (
+                    <div className="flex items-center justify-center gap-4 pt-4">
+                      <Button variant="outline" size="sm" disabled={recordsPage <= 0} onClick={() => setRecordsPage(recordsPage - 1)}>
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                        السابق
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        {recordsPage + 1} / {recordsTotalPages}
+                      </span>
+                      <Button variant="outline" size="sm" disabled={recordsPage >= recordsTotalPages - 1} onClick={() => setRecordsPage(recordsPage + 1)}>
+                        التالي
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-        <TabsContent value="audio">
-          <AudioTab studentId={id!} />
-        </TabsContent>
+            <TabsContent value="audio">
+              <AudioTab studentId={id!} />
+            </TabsContent>
 
-        <TabsContent value="narration">
-          <NarrationSummaryTab studentId={id!} />
-        </TabsContent>
+            <TabsContent value="narration">
+              <NarrationSummaryTab studentId={id!} />
+            </TabsContent>
 
-        <TabsContent value="attendance_tab">
-          <AttendanceTab studentId={id!} />
-        </TabsContent>
+            <TabsContent value="attendance_tab">
+              <AttendanceTab studentId={id!} />
+            </TabsContent>
 
-        <TabsContent value="status_log">
-          <StudentStatusLog studentId={id!} />
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="status_log">
+              <StudentStatusLog studentId={id!} />
+            </TabsContent>
+          </Tabs>
+        );
+      })()}
     </div>
 
       {/* Edit Student Dialog */}
