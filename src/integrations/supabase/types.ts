@@ -981,6 +981,7 @@ export type Database = {
           location: string | null
           name: string
           schedule: string | null
+          talqeen_curriculum_id: string | null
           teacher_id: string | null
         }
         Insert: {
@@ -993,6 +994,7 @@ export type Database = {
           location?: string | null
           name: string
           schedule?: string | null
+          talqeen_curriculum_id?: string | null
           teacher_id?: string | null
         }
         Update: {
@@ -1005,6 +1007,7 @@ export type Database = {
           location?: string | null
           name?: string
           schedule?: string | null
+          talqeen_curriculum_id?: string | null
           teacher_id?: string | null
         }
         Relationships: [
@@ -1020,6 +1023,13 @@ export type Database = {
             columns: ["level_track_id"]
             isOneToOne: false
             referencedRelation: "level_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_talqeen_curriculum_id_fkey"
+            columns: ["talqeen_curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
             referencedColumns: ["id"]
           },
           {
@@ -3833,6 +3843,136 @@ export type Database = {
           },
         ]
       }
+      talqeen_curricula: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          notes: string | null
+          total_weeks: number
+          updated_at: string
+          year_hijri: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          total_weeks?: number
+          updated_at?: string
+          year_hijri?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          total_weeks?: number
+          updated_at?: string
+          year_hijri?: string | null
+        }
+        Relationships: []
+      }
+      talqeen_curriculum_days: {
+        Row: {
+          created_at: string
+          day_name: string
+          day_order: number
+          educational: string | null
+          id: string
+          lesson: string | null
+          notes: string | null
+          quran_homework: string | null
+          reading_at_home: string | null
+          reading_in_class: string | null
+          week_id: string
+          written_homework: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_name: string
+          day_order: number
+          educational?: string | null
+          id?: string
+          lesson?: string | null
+          notes?: string | null
+          quran_homework?: string | null
+          reading_at_home?: string | null
+          reading_in_class?: string | null
+          week_id: string
+          written_homework?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_name?: string
+          day_order?: number
+          educational?: string | null
+          id?: string
+          lesson?: string | null
+          notes?: string | null
+          quran_homework?: string | null
+          reading_at_home?: string | null
+          reading_in_class?: string | null
+          week_id?: string
+          written_homework?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_curriculum_days_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curriculum_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talqeen_curriculum_weeks: {
+        Row: {
+          created_at: string
+          curriculum_id: string
+          id: string
+          lesson_topic: string | null
+          title: string | null
+          updated_at: string
+          week_number: number
+        }
+        Insert: {
+          created_at?: string
+          curriculum_id: string
+          id?: string
+          lesson_topic?: string | null
+          title?: string | null
+          updated_at?: string
+          week_number: number
+        }
+        Update: {
+          created_at?: string
+          curriculum_id?: string
+          id?: string
+          lesson_topic?: string | null
+          title?: string | null
+          updated_at?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_curriculum_weeks_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talqeen_session_attendance: {
         Row: {
           created_at: string
@@ -3942,6 +4082,64 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talqeen_student_curricula: {
+        Row: {
+          active: boolean
+          created_at: string
+          curriculum_id: string
+          halaqa_id: string | null
+          id: string
+          notes: string | null
+          start_date: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          curriculum_id: string
+          halaqa_id?: string | null
+          id?: string
+          notes?: string | null
+          start_date?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          curriculum_id?: string
+          halaqa_id?: string | null
+          id?: string
+          notes?: string | null
+          start_date?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_student_curricula_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_student_curricula_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_student_curricula_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
