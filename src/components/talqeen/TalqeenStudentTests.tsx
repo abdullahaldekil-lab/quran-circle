@@ -245,8 +245,8 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
     if (!verifyUrl) return;
     await navigator.clipboard.writeText(verifyUrl);
     toast.success("تم نسخ رابط التحقق");
-  };
 
+  const handlePrintCertificate = () => {
     if (!certRef.current) return;
     const printWindow = window.open("", "_blank", "width=900,height=700");
     if (!printWindow) return;
