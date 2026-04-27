@@ -380,6 +380,21 @@ const TalqeenHalaqat = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  // تحديث فوري لعدد الطلاب وسجل التغييرات عبر Realtime
+  useEffect(() => {
+    const ch = supabase
+      .channel("talqeen-halaqat-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "students" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "talqeen_curriculum_change_log" }, (payload: any) => {
+        if (logHalaqaId && payload?.new?.halaqa_id === logHalaqaId) {
+          openChangeLog(logHalaqaId);
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logHalaqaId]);
+
   const getAvailableTeachers = (currentTeacherId?: string) => {
     return teachers.filter((t) => {
       if (currentTeacherId && t.id === currentTeacherId) return true;
