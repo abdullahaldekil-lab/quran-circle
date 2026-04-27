@@ -3882,6 +3882,45 @@ export type Database = {
         }
         Relationships: []
       }
+      talqeen_curriculum_change_log: {
+        Row: {
+          affected_students_count: number
+          changed_by: string | null
+          created_at: string
+          halaqa_id: string
+          id: string
+          new_curriculum_id: string | null
+          old_curriculum_id: string | null
+          reverted: boolean
+          reverted_at: string | null
+          reverted_by: string | null
+        }
+        Insert: {
+          affected_students_count?: number
+          changed_by?: string | null
+          created_at?: string
+          halaqa_id: string
+          id?: string
+          new_curriculum_id?: string | null
+          old_curriculum_id?: string | null
+          reverted?: boolean
+          reverted_at?: string | null
+          reverted_by?: string | null
+        }
+        Update: {
+          affected_students_count?: number
+          changed_by?: string | null
+          created_at?: string
+          halaqa_id?: string
+          id?: string
+          new_curriculum_id?: string | null
+          old_curriculum_id?: string | null
+          reverted?: boolean
+          reverted_at?: string | null
+          reverted_by?: string | null
+        }
+        Relationships: []
+      }
       talqeen_curriculum_days: {
         Row: {
           created_at: string
