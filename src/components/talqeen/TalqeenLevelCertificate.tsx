@@ -12,6 +12,9 @@ interface Props {
   homeworkScore?: number | null;
   homeworkMax?: number | null;
   testDate: string;
+  certificateNumber?: string | null;
+  issuedAt?: string | null;
+  verifyUrl?: string;
 }
 
 export default function TalqeenLevelCertificate({
