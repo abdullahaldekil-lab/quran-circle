@@ -431,6 +431,10 @@ const TalqeenHalaqat = () => {
       }
     }
 
+    if (form.talqeen_curriculum_id) {
+      await syncStudentsToCurriculum(newHalaqa.id, form.talqeen_curriculum_id);
+    }
+
     toast.success("تم إضافة حلقة التلقين بنجاح.");
     setDialogOpen(false);
     setForm({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "", talqeen_curriculum_id: "" });
