@@ -128,6 +128,7 @@ export default function QuranNarration() {
         .from("halaqat")
         .select("id, name")
         .eq("active", true)
+        .is("talqeen_curriculum_id", null)
         .order("name");
       if (error) throw error;
       return data;
