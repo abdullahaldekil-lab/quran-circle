@@ -45,6 +45,7 @@ import MadarijEnrollment from "./pages/MadarijEnrollment";
 import PermissionsManagement from "./pages/PermissionsManagement";
 import QuranNarration from "./pages/QuranNarration";
 import TalqeenHalaqat from "./pages/TalqeenHalaqat";
+import TalqeenCurricula from "./pages/TalqeenCurricula";
 import NarrationSession from "./pages/NarrationSession";
 import NarrationReports from "./pages/NarrationReports";
 import StudentNarrationProgress from "./pages/StudentNarrationProgress";
