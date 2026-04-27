@@ -943,24 +943,48 @@ const TalqeenHalaqat = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* تأكيد تغيير المنهج */}
+      {/* تأكيد تغيير المنهج مع معاينة الطلاب المتأثرين */}
       <AlertDialog
         open={curriculumConfirm.open}
-        onOpenChange={(o) => !o && setCurriculumConfirm({ open: false, affectedCount: 0, oldName: "", newName: "", proceed: null })}
+        onOpenChange={(o) => !o && setCurriculumConfirm({ open: false, halaqaId: "", oldCurriculumId: null, newCurriculumId: null, affectedStudents: [], oldName: "", newName: "", proceed: null })}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>تأكيد تغيير منهج الحلقة</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" />
+              معاينة تغيير منهج الحلقة
+            </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <div className="space-y-2 text-right">
-                <div>
-                  سيتم تغيير المنهج من <span className="font-semibold">{curriculumConfirm.oldName}</span> إلى{" "}
-                  <span className="font-semibold">{curriculumConfirm.newName}</span>.
+              <div className="space-y-3 text-right">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="rounded-md border p-2 bg-muted/30">
+                    <div className="text-xs text-muted-foreground">المنهج الحالي</div>
+                    <div className="font-semibold">{curriculumConfirm.oldName}</div>
+                  </div>
+                  <div className="rounded-md border p-2 bg-primary/10">
+                    <div className="text-xs text-muted-foreground">المنهج الجديد</div>
+                    <div className="font-semibold text-primary">{curriculumConfirm.newName}</div>
+                  </div>
                 </div>
-                <div>
-                  سيتم إعادة ربط <span className="font-bold text-primary">{curriculumConfirm.affectedCount}</span> طالب نشط بالمنهج الجديد تلقائياً.
+                <div className="text-sm">
+                  عدد الطلاب الذين سيُعاد ربطهم تلقائياً:{" "}
+                  <span className="font-bold text-primary text-base">{curriculumConfirm.affectedStudents.length}</span>
                 </div>
-                <div className="text-xs text-muted-foreground">هل ترغب في المتابعة؟</div>
+                {curriculumConfirm.affectedStudents.length > 0 && (
+                  <div className="rounded-md border max-h-48 overflow-y-auto">
+                    <ul className="divide-y text-xs">
+                      {curriculumConfirm.affectedStudents.map((s: any) => (
+                        <li key={s.id} className="px-3 py-1.5 flex justify-between">
+                          <span>{s.full_name || s.name}</span>
+                          <span className="text-muted-foreground">{s.id?.toString().slice(0, 8)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="text-xs text-muted-foreground">
+                  ملاحظة: يمكن التراجع عن هذا التغيير لاحقاً من سجل تغييرات المنهج.
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -969,7 +993,7 @@ const TalqeenHalaqat = () => {
             <AlertDialogAction
               onClick={async () => {
                 const fn = curriculumConfirm.proceed;
-                setCurriculumConfirm({ open: false, affectedCount: 0, oldName: "", newName: "", proceed: null });
+                setCurriculumConfirm({ open: false, halaqaId: "", oldCurriculumId: null, newCurriculumId: null, affectedStudents: [], oldName: "", newName: "", proceed: null });
                 if (fn) await fn();
               }}
             >
@@ -978,6 +1002,62 @@ const TalqeenHalaqat = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* سجل تغييرات المنهج */}
+      <Dialog open={!!logHalaqaId} onOpenChange={(o) => { if (!o) { setLogHalaqaId(null); setChangeLog([]); } }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="w-5 h-5" />
+              سجل تغييرات المنهج — {halaqat.find(h => h.id === logHalaqaId)?.name || ""}
+            </DialogTitle>
+          </DialogHeader>
+          {loadingLog ? (
+            <div className="text-center py-8 text-muted-foreground">جارٍ التحميل...</div>
+          ) : changeLog.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">لا توجد تغييرات مسجلة بعد.</div>
+          ) : (
+            <ul className="divide-y border rounded-md">
+              {changeLog.map((entry) => {
+                const oldName = curricula.find(c => c.id === entry.old_curriculum_id)?.name || "بدون منهج";
+                const newName = curricula.find(c => c.id === entry.new_curriculum_id)?.name || "بدون منهج";
+                const dual = formatDualDate(entry.created_at);
+                return (
+                  <li key={entry.id} className="p-3 flex items-start justify-between gap-3">
+                    <div className="flex-1 space-y-1 text-sm">
+                      <div>
+                        من <span className="font-semibold">{oldName}</span> إلى{" "}
+                        <span className="font-semibold text-primary">{newName}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {dual.hijri} — {dual.gregorian}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        عدد الطلاب المتأثرين: {entry.affected_students_count}
+                      </div>
+                      {entry.reverted && (
+                        <div className="text-xs text-amber-600 font-medium">
+                          ↺ تم التراجع عن هذا التغيير
+                        </div>
+                      )}
+                    </div>
+                    {canChangeCurriculum && !entry.reverted && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => undoCurriculumChange(entry)}
+                      >
+                        <Undo2 className="w-3 h-3 ml-1" />
+                        تراجع
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* خطة الحفظ Dialog */}
       <Dialog open={!!planHalaqaId} onOpenChange={(o) => { if (!o) { setPlanHalaqaId(null); setPlanSessions([]); } }}>
