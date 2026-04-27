@@ -607,6 +607,18 @@ const TalqeenHalaqat = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>منهج التلقين (المستوى) *</Label>
+                  <Select value={form.talqeen_curriculum_id} onValueChange={(v) => setForm({ ...form, talqeen_curriculum_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="اختر المنهج" /></SelectTrigger>
+                    <SelectContent>
+                      {curricula.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">سيتم ربط جميع طلاب الحلقة تلقائياً بالمنهج المختار.</p>
+                </div>
                 <Button type="submit" className="w-full">إضافة</Button>
               </form>
             </DialogContent>
