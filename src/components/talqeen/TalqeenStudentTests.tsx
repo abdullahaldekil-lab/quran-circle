@@ -276,7 +276,7 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
         </CardTitle>
         <div className="flex gap-2">
           {promotionTest && (
-            <Button size="sm" variant="outline" onClick={() => setCertOpen(true)} className="border-green-600 text-green-700 hover:bg-green-50">
+            <Button size="sm" variant="outline" onClick={openCertificate} className="border-green-600 text-green-700 hover:bg-green-50">
               <Award className="w-4 h-4 ml-1" /> شهادة نهاية المستوى
             </Button>
           )}
