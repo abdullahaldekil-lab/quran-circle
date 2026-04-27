@@ -30,6 +30,8 @@ interface TalqeenTest {
   attendance_max: number | null;
   homework_score: number | null;
   homework_max: number | null;
+  certificate_number: string | null;
+  certificate_issued_at: string | null;
   created_at: string;
 }
 
