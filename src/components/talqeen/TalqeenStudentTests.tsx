@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Plus, Pencil, Trash2, Award, Printer } from "lucide-react";
+import { ClipboardCheck, Plus, Pencil, Trash2, Award, Printer, ShieldCheck, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { formatDateSmart } from "@/lib/hijri";
