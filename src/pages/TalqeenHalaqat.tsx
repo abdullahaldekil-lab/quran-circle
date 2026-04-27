@@ -70,13 +70,18 @@ const TalqeenHalaqat = () => {
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [levelTracks, setLevelTracks] = useState<any[]>([]);
+  const [curricula, setCurricula] = useState<any[]>([]);
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [studentsDialogId, setStudentsDialogId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "" });
+  const [form, setForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "", talqeen_curriculum_id: "" });
   const [editOpen, setEditOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "" });
+  const [editForm, setEditForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", capacity_max: 25, level_track_id: "", talqeen_curriculum_id: "" });
+  // عرض المنهج
+  const [curriculumViewHalaqaId, setCurriculumViewHalaqaId] = useState<string | null>(null);
+  const [curriculumWeeks, setCurriculumWeeks] = useState<any[]>([]);
+  const [curriculumDays, setCurriculumDays] = useState<any[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   // خطة الحفظ
@@ -283,17 +288,18 @@ const TalqeenHalaqat = () => {
   ];
 
   const fetchData = async () => {
-    const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
+    const [halaqatRes, teachersRes, studentsRes, tracksRes, curriculaRes] = await Promise.all([
       supabase.from("halaqat").select("*, profiles:teacher_id(full_name), assistant:assistant_teacher_id(full_name)").eq("active", true),
       supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
       supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
       supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
+      supabase.from("talqeen_curricula").select("*").eq("active", true).order("code"),
     ]);
-    // Filter to only talqeen halaqat (those with "تلقين" in the name)
     const allHalaqat = halaqatRes.data || [];
     setHalaqat(allHalaqat.filter((h: any) => h.name.includes("تلقين")));
     setTeachers((teachersRes.data as Teacher[]) || []);
     setLevelTracks(tracksRes.data || []);
+    setCurricula(curriculaRes.data || []);
 
     const grouped: Record<string, any[]> = {};
     (studentsRes.data || []).forEach((s: any) => {
@@ -303,6 +309,54 @@ const TalqeenHalaqat = () => {
       }
     });
     setStudentsByHalaqa(grouped);
+  };
+
+  // ربط طلاب الحلقة النشطين بمنهج التلقين تلقائياً
+  const syncStudentsToCurriculum = async (halaqaId: string, curriculumId: string | null) => {
+    if (!curriculumId) return;
+    const studs = (studentsByHalaqa[halaqaId] || []);
+    if (studs.length === 0) return;
+    // Deactivate other active curriculum links for these students
+    await supabase
+      .from("talqeen_student_curricula")
+      .update({ active: false })
+      .in("student_id", studs.map((s) => s.id))
+      .eq("active", true)
+      .neq("curriculum_id", curriculumId);
+    // Upsert new active links
+    const rows = studs.map((s) => ({
+      student_id: s.id,
+      curriculum_id: curriculumId,
+      halaqa_id: halaqaId,
+      start_date: new Date().toISOString().split("T")[0],
+      active: true,
+    }));
+    await supabase.from("talqeen_student_curricula").upsert(rows as any, { onConflict: "student_id,curriculum_id" } as any);
+  };
+
+  const openCurriculumView = async (halaqaId: string) => {
+    const h = halaqat.find((x) => x.id === halaqaId);
+    if (!h?.talqeen_curriculum_id) {
+      toast.error("لم يتم ربط منهج بهذه الحلقة بعد. عدّل الحلقة وحدّد المنهج.");
+      return;
+    }
+    setCurriculumViewHalaqaId(halaqaId);
+    const { data: weeks } = await supabase
+      .from("talqeen_curriculum_weeks")
+      .select("*")
+      .eq("curriculum_id", h.talqeen_curriculum_id)
+      .order("week_number");
+    setCurriculumWeeks(weeks || []);
+    if (weeks && weeks.length > 0) {
+      const { data: days } = await supabase
+        .from("talqeen_curriculum_days")
+        .select("*")
+        .in("week_id", weeks.map((w: any) => w.id))
+        .order("day_order");
+      setCurriculumDays(days || []);
+    } else {
+      setCurriculumDays([]);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -354,6 +408,7 @@ const TalqeenHalaqat = () => {
       location: form.location || null,
       schedule: form.schedule || null,
       level_track_id: form.level_track_id || null,
+      talqeen_curriculum_id: form.talqeen_curriculum_id || null,
     }).select("id").single();
 
     if (error || !newHalaqa) { toast.error("حدث خطأ"); return; }
@@ -376,9 +431,13 @@ const TalqeenHalaqat = () => {
       }
     }
 
+    if (form.talqeen_curriculum_id) {
+      await syncStudentsToCurriculum(newHalaqa.id, form.talqeen_curriculum_id);
+    }
+
     toast.success("تم إضافة حلقة التلقين بنجاح.");
     setDialogOpen(false);
-    setForm({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "" });
+    setForm({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "", talqeen_curriculum_id: "" });
     fetchData();
   };
 
@@ -398,6 +457,7 @@ const TalqeenHalaqat = () => {
       schedule: h.schedule || "",
       capacity_max: h.capacity_max || 25,
       level_track_id: h.level_track_id || "",
+      talqeen_curriculum_id: h.talqeen_curriculum_id || "",
     });
     setEditOpen(true);
   };
@@ -426,9 +486,15 @@ const TalqeenHalaqat = () => {
       schedule: editForm.schedule || null,
       capacity_max: editForm.capacity_max,
       level_track_id: editForm.level_track_id || null,
+      talqeen_curriculum_id: editForm.talqeen_curriculum_id || null,
     }).eq("id", editId);
 
     if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
+
+    if (editForm.talqeen_curriculum_id) {
+      await syncStudentsToCurriculum(editId, editForm.talqeen_curriculum_id);
+    }
+
     toast.success("تم تعديل الحلقة بنجاح.");
     setEditOpen(false);
     fetchData();
@@ -541,6 +607,18 @@ const TalqeenHalaqat = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>منهج التلقين (المستوى) *</Label>
+                  <Select value={form.talqeen_curriculum_id} onValueChange={(v) => setForm({ ...form, talqeen_curriculum_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="اختر المنهج" /></SelectTrigger>
+                    <SelectContent>
+                      {curricula.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">سيتم ربط جميع طلاب الحلقة تلقائياً بالمنهج المختار.</p>
+                </div>
                 <Button type="submit" className="w-full">إضافة</Button>
               </form>
             </DialogContent>
@@ -575,6 +653,12 @@ const TalqeenHalaqat = () => {
                 {h.level_track_id && (
                   <p className="text-muted-foreground">المسار: {levelTracks.find(t => t.id === h.level_track_id)?.name || "—"}</p>
                 )}
+                {h.talqeen_curriculum_id && (
+                  <p className="text-muted-foreground flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" />
+                    المنهج: {curricula.find(c => c.id === h.talqeen_curriculum_id)?.name || "—"}
+                  </p>
+                )}
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground flex items-center gap-1">
@@ -591,9 +675,13 @@ const TalqeenHalaqat = () => {
                     <User className="w-3 h-3 ml-1" />
                     عرض الطلاب ({count})
                   </Button>
+                  <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => openCurriculumView(h.id)}>
+                    <BookOpen className="w-3 h-3 ml-1" />
+                    منهج التلقين
+                  </Button>
                   <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => openPlan(h.id)}>
                     <ClipboardList className="w-3 h-3 ml-1" />
-                    خطة الحفظ
+                    جلسات الخطة
                   </Button>
                   {isManager && (
                     <>
@@ -693,6 +781,18 @@ const TalqeenHalaqat = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>منهج التلقين (المستوى)</Label>
+              <Select value={editForm.talqeen_curriculum_id} onValueChange={(v) => setEditForm({ ...editForm, talqeen_curriculum_id: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر المنهج" /></SelectTrigger>
+                <SelectContent>
+                  {curricula.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">سيُربط جميع طلاب الحلقة تلقائياً بالمنهج المختار.</p>
             </div>
             <Button type="submit" className="w-full">حفظ التعديلات</Button>
           </form>
@@ -931,6 +1031,60 @@ const TalqeenHalaqat = () => {
               <Button onClick={saveEduProgram} disabled={manageSaving} className="w-full">حفظ البرنامج التربوي</Button>
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* عرض منهج التلقين الخاص بالحلقة */}
+      <Dialog open={!!curriculumViewHalaqaId} onOpenChange={(o) => { if (!o) { setCurriculumViewHalaqaId(null); setCurriculumWeeks([]); setCurriculumDays([]); } }}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              منهج التلقين — {(() => {
+                const h = halaqat.find((x) => x.id === curriculumViewHalaqaId);
+                const c = curricula.find((cc) => cc.id === h?.talqeen_curriculum_id);
+                return c?.name || "—";
+              })()}
+            </DialogTitle>
+          </DialogHeader>
+          {curriculumWeeks.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8 text-sm">لا توجد أسابيع مسجلة لهذا المنهج بعد.</p>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                إجمالي الأسابيع: {curriculumWeeks.length} • طلاب الحلقة مرتبطون تلقائياً بهذا المنهج
+              </p>
+              {curriculumWeeks.map((w) => {
+                const days = curriculumDays.filter((d) => d.week_id === w.id);
+                return (
+                  <div key={w.id} className="border rounded-lg overflow-hidden">
+                    <div className="bg-primary/10 px-4 py-2 border-b">
+                      <div className="font-semibold text-sm">الأسبوع {w.week_number}{w.title ? ` — ${w.title}` : ""}</div>
+                      {w.lesson_topic && <div className="text-xs text-muted-foreground mt-0.5">{w.lesson_topic}</div>}
+                    </div>
+                    {days.length === 0 ? (
+                      <p className="text-xs text-muted-foreground p-3">لا توجد أيام</p>
+                    ) : (
+                      <div className="divide-y">
+                        {days.map((d) => (
+                          <div key={d.id} className="p-3 text-xs space-y-1">
+                            <div className="font-medium text-sm text-primary">{d.day_name}</div>
+                            {d.lesson && <div><span className="font-semibold">الدرس:</span> {d.lesson}</div>}
+                            {d.quran_homework && <div><span className="font-semibold">الواجب القرآني:</span> {d.quran_homework}</div>}
+                            {d.written_homework && <div><span className="font-semibold">الواجب الكتابي:</span> {d.written_homework}</div>}
+                            {d.educational && <div><span className="font-semibold">البرنامج التربوي:</span> {d.educational}</div>}
+                            {d.reading_in_class && <div><span className="font-semibold">قراءة في الفصل:</span> {d.reading_in_class}</div>}
+                            {d.reading_at_home && <div><span className="font-semibold">قراءة في البيت:</span> {d.reading_at_home}</div>}
+                            {d.notes && <div className="text-muted-foreground">ملاحظات: {d.notes}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
