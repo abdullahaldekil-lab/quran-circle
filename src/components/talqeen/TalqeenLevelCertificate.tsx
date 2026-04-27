@@ -28,6 +28,9 @@ export default function TalqeenLevelCertificate({
   homeworkScore,
   homeworkMax,
   testDate,
+  certificateNumber,
+  issuedAt,
+  verifyUrl,
 }: Props) {
   const ScoreBox = ({ label, score, max, color }: { label: string; score: number | null | undefined; max: number | null | undefined; color: string }) => (
     <div style={{ textAlign: "center", padding: "12px 18px", background: "#fff", borderRadius: "8px", border: `1px solid ${color}33`, minWidth: "120px" }}>
