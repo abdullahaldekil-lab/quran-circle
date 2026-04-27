@@ -427,11 +427,25 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
       <Dialog open={certOpen} onOpenChange={setCertOpen}>
         <DialogContent dir="rtl" className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="flex items-center justify-between flex-wrap gap-2">
               <span>شهادة نهاية المستوى</span>
-              <Button size="sm" onClick={handlePrintCertificate}>
-                <Printer className="w-4 h-4 ml-1" /> طباعة
-              </Button>
+              <div className="flex gap-2">
+                {promotionTest?.certificate_number && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={copyVerifyLink}>
+                      <LinkIcon className="w-4 h-4 ml-1" /> نسخ رابط التحقق
+                    </Button>
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={verifyUrl} target="_blank" rel="noreferrer">
+                        <ShieldCheck className="w-4 h-4 ml-1" /> تحقق
+                      </a>
+                    </Button>
+                  </>
+                )}
+                <Button size="sm" onClick={handlePrintCertificate}>
+                  <Printer className="w-4 h-4 ml-1" /> طباعة
+                </Button>
+              </div>
             </DialogTitle>
           </DialogHeader>
           {promotionTest && (
@@ -447,6 +461,9 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
                 homeworkScore={promotionTest.homework_score}
                 homeworkMax={promotionTest.homework_max}
                 testDate={promotionTest.test_date}
+                certificateNumber={promotionTest.certificate_number}
+                issuedAt={promotionTest.certificate_issued_at}
+                verifyUrl={verifyUrl}
               />
             </div>
           )}
