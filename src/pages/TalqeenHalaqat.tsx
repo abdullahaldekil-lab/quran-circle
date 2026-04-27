@@ -1033,6 +1033,60 @@ const TalqeenHalaqat = () => {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* عرض منهج التلقين الخاص بالحلقة */}
+      <Dialog open={!!curriculumViewHalaqaId} onOpenChange={(o) => { if (!o) { setCurriculumViewHalaqaId(null); setCurriculumWeeks([]); setCurriculumDays([]); } }}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              منهج التلقين — {(() => {
+                const h = halaqat.find((x) => x.id === curriculumViewHalaqaId);
+                const c = curricula.find((cc) => cc.id === h?.talqeen_curriculum_id);
+                return c?.name || "—";
+              })()}
+            </DialogTitle>
+          </DialogHeader>
+          {curriculumWeeks.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8 text-sm">لا توجد أسابيع مسجلة لهذا المنهج بعد.</p>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                إجمالي الأسابيع: {curriculumWeeks.length} • طلاب الحلقة مرتبطون تلقائياً بهذا المنهج
+              </p>
+              {curriculumWeeks.map((w) => {
+                const days = curriculumDays.filter((d) => d.week_id === w.id);
+                return (
+                  <div key={w.id} className="border rounded-lg overflow-hidden">
+                    <div className="bg-primary/10 px-4 py-2 border-b">
+                      <div className="font-semibold text-sm">الأسبوع {w.week_number}{w.title ? ` — ${w.title}` : ""}</div>
+                      {w.lesson_topic && <div className="text-xs text-muted-foreground mt-0.5">{w.lesson_topic}</div>}
+                    </div>
+                    {days.length === 0 ? (
+                      <p className="text-xs text-muted-foreground p-3">لا توجد أيام</p>
+                    ) : (
+                      <div className="divide-y">
+                        {days.map((d) => (
+                          <div key={d.id} className="p-3 text-xs space-y-1">
+                            <div className="font-medium text-sm text-primary">{d.day_name}</div>
+                            {d.lesson && <div><span className="font-semibold">الدرس:</span> {d.lesson}</div>}
+                            {d.quran_homework && <div><span className="font-semibold">الواجب القرآني:</span> {d.quran_homework}</div>}
+                            {d.written_homework && <div><span className="font-semibold">الواجب الكتابي:</span> {d.written_homework}</div>}
+                            {d.educational && <div><span className="font-semibold">البرنامج التربوي:</span> {d.educational}</div>}
+                            {d.reading_in_class && <div><span className="font-semibold">قراءة في الفصل:</span> {d.reading_in_class}</div>}
+                            {d.reading_at_home && <div><span className="font-semibold">قراءة في البيت:</span> {d.reading_at_home}</div>}
+                            {d.notes && <div className="text-muted-foreground">ملاحظات: {d.notes}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
