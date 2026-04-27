@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Plus, Pencil, Trash2 } from "lucide-react";
+import { ClipboardCheck, Plus, Pencil, Trash2, Award, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { formatDateSmart } from "@/lib/hijri";
+import TalqeenLevelCertificate from "./TalqeenLevelCertificate";
 
 type TestType = "internal_1" | "internal_2" | "promotion";
 
@@ -25,6 +26,10 @@ interface TalqeenTest {
   max_score: number | null;
   status: "pending" | "passed" | "failed";
   notes: string | null;
+  attendance_score: number | null;
+  attendance_max: number | null;
+  homework_score: number | null;
+  homework_max: number | null;
   created_at: string;
 }
 
@@ -42,18 +47,49 @@ const STATUS_LABELS = {
 
 interface Props {
   studentId: string;
+  studentName?: string;
   curriculumId?: string | null;
+  curriculumName?: string;
+  halaqaName?: string;
 }
 
-export default function TalqeenStudentTests({ studentId, curriculumId }: Props) {
+export default function TalqeenStudentTests({ studentId, studentName: studentNameProp, curriculumId, curriculumName: curriculumNameProp, halaqaName: halaqaNameProp }: Props) {
   const { isManager, isTalqeenSupervisor, isTeacher } = useRole();
   const canEdit = isManager || isTalqeenSupervisor || isTeacher;
   const canDelete = isManager || isTalqeenSupervisor;
 
   const [tests, setTests] = useState<TalqeenTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState<{ studentName: string; curriculumName: string; halaqaName?: string }>({
+    studentName: studentNameProp || "الطالب",
+    curriculumName: curriculumNameProp || "",
+    halaqaName: halaqaNameProp,
+  });
+
+  useEffect(() => {
+    (async () => {
+      const { data: s } = await supabase
+        .from("students")
+        .select("full_name, halaqat(name, talqeen_curriculum_id, talqeen_curricula:talqeen_curriculum_id(name))")
+        .eq("id", studentId)
+        .maybeSingle();
+      if (s) {
+        setMeta({
+          studentName: s.full_name || studentNameProp || "الطالب",
+          halaqaName: (s.halaqat as any)?.name,
+          curriculumName: (s.halaqat as any)?.talqeen_curricula?.name || curriculumNameProp || "",
+        });
+      }
+    })();
+  }, [studentId]);
+
+  const studentName = meta.studentName;
+  const curriculumName = meta.curriculumName;
+  const halaqaName = meta.halaqaName;
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [certOpen, setCertOpen] = useState(false);
+  const certRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
     test_type: "internal_1" as TestType,
     test_date: new Date().toISOString().slice(0, 10),
@@ -61,6 +97,10 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
     max_score: "100",
     status: "pending" as "pending" | "passed" | "failed",
     notes: "",
+    attendance_score: "",
+    attendance_max: "100",
+    homework_score: "",
+    homework_max: "100",
   });
 
   const fetchTests = async () => {
@@ -82,6 +122,8 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
     fetchTests();
   }, [studentId]);
 
+  const promotionTest = tests.find((t) => t.test_type === "promotion" && t.status === "passed");
+
   const resetForm = () => {
     setForm({
       test_type: "internal_1",
@@ -90,6 +132,10 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
       max_score: "100",
       status: "pending",
       notes: "",
+      attendance_score: "",
+      attendance_max: "100",
+      homework_score: "",
+      homework_max: "100",
     });
     setEditId(null);
   };
@@ -108,13 +154,18 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
       max_score: t.max_score?.toString() ?? "100",
       status: t.status,
       notes: t.notes ?? "",
+      attendance_score: t.attendance_score?.toString() ?? "",
+      attendance_max: t.attendance_max?.toString() ?? "100",
+      homework_score: t.homework_score?.toString() ?? "",
+      homework_max: t.homework_max?.toString() ?? "100",
     });
     setOpen(true);
   };
 
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    const payload = {
+    const isPromotion = form.test_type === "promotion";
+    const payload: any = {
       student_id: studentId,
       curriculum_id: curriculumId || null,
       test_type: form.test_type,
@@ -124,6 +175,10 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
       status: form.status,
       notes: form.notes || null,
       created_by: user?.id,
+      attendance_score: isPromotion && form.attendance_score ? Number(form.attendance_score) : null,
+      attendance_max: isPromotion ? Number(form.attendance_max) || 100 : null,
+      homework_score: isPromotion && form.homework_score ? Number(form.homework_score) : null,
+      homework_max: isPromotion ? Number(form.homework_max) || 100 : null,
     };
 
     let error;
@@ -154,6 +209,27 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
     fetchTests();
   };
 
+  const handlePrintCertificate = () => {
+    if (!certRef.current) return;
+    const printWindow = window.open("", "_blank", "width=900,height=700");
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl">
+        <head>
+          <title>شهادة نهاية المستوى - ${studentName}</title>
+          <style>
+            @media print { @page { size: A4; margin: 10mm; } }
+            body { margin: 0; padding: 20px; background: #fff; }
+          </style>
+        </head>
+        <body>${certRef.current.innerHTML}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => { printWindow.print(); }, 500);
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -161,11 +237,18 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
           <ClipboardCheck className="w-5 h-5 text-primary" />
           اختبارات التلقين
         </CardTitle>
-        {canEdit && (
-          <Button size="sm" onClick={openAdd}>
-            <Plus className="w-4 h-4 ml-1" /> إضافة اختبار
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {promotionTest && (
+            <Button size="sm" variant="outline" onClick={() => setCertOpen(true)} className="border-green-600 text-green-700 hover:bg-green-50">
+              <Award className="w-4 h-4 ml-1" /> شهادة نهاية المستوى
+            </Button>
+          )}
+          {canEdit && (
+            <Button size="sm" onClick={openAdd}>
+              <Plus className="w-4 h-4 ml-1" /> إضافة اختبار
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -191,6 +274,12 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
                           </span>
                         )}
                         <Badge variant={STATUS_LABELS[t.status].variant}>{STATUS_LABELS[t.status].label}</Badge>
+                        {tt === "promotion" && t.attendance_score !== null && (
+                          <span className="text-cyan-700">حضور: {t.attendance_score}/{t.attendance_max}</span>
+                        )}
+                        {tt === "promotion" && t.homework_score !== null && (
+                          <span className="text-purple-700">واجب: {t.homework_score}/{t.homework_max}</span>
+                        )}
                         {t.notes && <span>— {t.notes}</span>}
                       </div>
                     ) : (
@@ -217,7 +306,7 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
       </CardContent>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir="rtl" className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editId ? "تعديل اختبار" : "إضافة اختبار تلقين"}</DialogTitle>
           </DialogHeader>
@@ -252,7 +341,7 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>الدرجة</Label>
+                <Label>درجة الاختبار</Label>
                 <Input type="number" value={form.score} onChange={(e) => setForm({ ...form, score: e.target.value })} placeholder="مثال: 85" />
               </div>
               <div>
@@ -260,6 +349,31 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
                 <Input type="number" value={form.max_score} onChange={(e) => setForm({ ...form, max_score: e.target.value })} />
               </div>
             </div>
+
+            {form.test_type === "promotion" && (
+              <div className="border rounded-md p-3 bg-green-50/50 space-y-3">
+                <p className="text-xs font-medium text-green-800">درجات إضافية تُعرض على شهادة نهاية المستوى</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">درجة الحضور</Label>
+                    <Input type="number" value={form.attendance_score} onChange={(e) => setForm({ ...form, attendance_score: e.target.value })} placeholder="مثال: 95" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">حضور / من</Label>
+                    <Input type="number" value={form.attendance_max} onChange={(e) => setForm({ ...form, attendance_max: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">درجة الواجب</Label>
+                    <Input type="number" value={form.homework_score} onChange={(e) => setForm({ ...form, homework_score: e.target.value })} placeholder="مثال: 90" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">واجب / من</Label>
+                    <Input type="number" value={form.homework_max} onChange={(e) => setForm({ ...form, homework_max: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
               <Label>ملاحظات</Label>
               <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
@@ -269,6 +383,36 @@ export default function TalqeenStudentTests({ studentId, curriculumId }: Props) 
             <Button variant="outline" onClick={() => setOpen(false)}>إلغاء</Button>
             <Button onClick={handleSave}>{editId ? "تحديث" : "حفظ"}</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Certificate Dialog */}
+      <Dialog open={certOpen} onOpenChange={setCertOpen}>
+        <DialogContent dir="rtl" className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>شهادة نهاية المستوى</span>
+              <Button size="sm" onClick={handlePrintCertificate}>
+                <Printer className="w-4 h-4 ml-1" /> طباعة
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          {promotionTest && (
+            <div ref={certRef}>
+              <TalqeenLevelCertificate
+                studentName={studentName}
+                curriculumName={curriculumName || "—"}
+                halaqaName={halaqaName}
+                promotionScore={promotionTest.score ?? 0}
+                promotionMax={promotionTest.max_score ?? 100}
+                attendanceScore={promotionTest.attendance_score}
+                attendanceMax={promotionTest.attendance_max}
+                homeworkScore={promotionTest.homework_score}
+                homeworkMax={promotionTest.homework_max}
+                testDate={promotionTest.test_date}
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </Card>

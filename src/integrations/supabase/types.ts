@@ -4185,9 +4185,13 @@ export type Database = {
       }
       talqeen_student_tests: {
         Row: {
+          attendance_max: number | null
+          attendance_score: number | null
           created_at: string
           created_by: string | null
           curriculum_id: string | null
+          homework_max: number | null
+          homework_score: number | null
           id: string
           max_score: number | null
           notes: string | null
@@ -4199,9 +4203,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attendance_max?: number | null
+          attendance_score?: number | null
           created_at?: string
           created_by?: string | null
           curriculum_id?: string | null
+          homework_max?: number | null
+          homework_score?: number | null
           id?: string
           max_score?: number | null
           notes?: string | null
@@ -4213,9 +4221,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attendance_max?: number | null
+          attendance_score?: number | null
           created_at?: string
           created_by?: string | null
           curriculum_id?: string | null
+          homework_max?: number | null
+          homework_score?: number | null
           id?: string
           max_score?: number | null
           notes?: string | null
