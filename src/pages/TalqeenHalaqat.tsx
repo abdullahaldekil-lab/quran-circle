@@ -481,6 +481,22 @@ const TalqeenHalaqat = () => {
     setEditOpen(true);
   };
 
+  // كتابة سجل تغيير المنهج
+  const recordCurriculumChange = async (
+    halaqaId: string,
+    oldCurriculumId: string | null,
+    newCurriculumId: string | null,
+    affectedCount: number,
+  ) => {
+    await supabase.from("talqeen_curriculum_change_log").insert({
+      halaqa_id: halaqaId,
+      old_curriculum_id: oldCurriculumId,
+      new_curriculum_id: newCurriculumId,
+      affected_students_count: affectedCount,
+      changed_by: user?.id || null,
+    } as any);
+  };
+
   const performEditHalaqa = async () => {
     if (!editId) return;
     const currentHalaqa = halaqat.find((h) => h.id === editId);
@@ -488,6 +504,9 @@ const TalqeenHalaqat = () => {
     const newTeacherId = editForm.teacher_id || null;
     const oldAssistantId = currentHalaqa?.assistant_teacher_id || null;
     const newAssistantId = editForm.assistant_teacher_id || null;
+    const oldCurriculumId = currentHalaqa?.talqeen_curriculum_id || null;
+    const newCurriculumId = editForm.talqeen_curriculum_id || null;
+    const curriculumChanged = oldCurriculumId !== newCurriculumId;
 
     if (oldTeacherId !== newTeacherId) {
       const linked = await linkTeacherToHalaqa(newTeacherId, editId, oldTeacherId);
@@ -509,8 +528,13 @@ const TalqeenHalaqat = () => {
 
     if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
 
-    if (editForm.talqeen_curriculum_id) {
-      await syncStudentsToCurriculum(editId, editForm.talqeen_curriculum_id);
+    if (newCurriculumId) {
+      await syncStudentsToCurriculum(editId, newCurriculumId);
+    }
+
+    if (curriculumChanged) {
+      const affected = (studentsByHalaqa[editId] || []).filter((s: any) => s.status === "active").length;
+      await recordCurriculumChange(editId, oldCurriculumId, newCurriculumId, affected);
     }
 
     toast.success("تم تعديل الحلقة بنجاح.");
@@ -525,14 +549,21 @@ const TalqeenHalaqat = () => {
     const oldCurriculumId = currentHalaqa?.talqeen_curriculum_id || "";
     const newCurriculumId = editForm.talqeen_curriculum_id || "";
 
-    // إن تغيّر المنهج، اعرض تأكيد بعدد الطلاب المتأثرين
+    // إن تغيّر المنهج، اعرض تأكيد مع معاينة الطلاب المتأثرين
     if (oldCurriculumId !== newCurriculumId && newCurriculumId) {
-      const affected = (studentsByHalaqa[editId] || []).filter((s: any) => s.status === "active").length;
+      if (!canChangeCurriculum) {
+        toast.error("صلاحية تغيير المنهج مقصورة على المدير ومشرف التلقين.");
+        return;
+      }
+      const affected = (studentsByHalaqa[editId] || []).filter((s: any) => s.status === "active");
       const oldName = curricula.find((c) => c.id === oldCurriculumId)?.name || "بدون منهج";
       const newName = curricula.find((c) => c.id === newCurriculumId)?.name || "—";
       setCurriculumConfirm({
         open: true,
-        affectedCount: affected,
+        halaqaId: editId,
+        oldCurriculumId: oldCurriculumId || null,
+        newCurriculumId: newCurriculumId || null,
+        affectedStudents: affected,
         oldName,
         newName,
         proceed: performEditHalaqa,
@@ -542,6 +573,62 @@ const TalqeenHalaqat = () => {
 
     await performEditHalaqa();
   };
+
+  // فتح سجل تغييرات المنهج
+  const openChangeLog = async (halaqaId: string) => {
+    setLogHalaqaId(halaqaId);
+    setLoadingLog(true);
+    const { data } = await supabase
+      .from("talqeen_curriculum_change_log")
+      .select("*")
+      .eq("halaqa_id", halaqaId)
+      .order("created_at", { ascending: false });
+    setChangeLog(data || []);
+    setLoadingLog(false);
+  };
+
+  // تنفيذ التراجع عن آخر تغيير منهج
+  const undoCurriculumChange = async (logEntry: any) => {
+    if (!canChangeCurriculum) {
+      toast.error("صلاحية التراجع مقصورة على المدير ومشرف التلقين.");
+      return;
+    }
+    if (logEntry.reverted) {
+      toast.error("هذا التغيير تم التراجع عنه مسبقاً.");
+      return;
+    }
+    // إعادة المنهج القديم
+    const { error: upErr } = await supabase
+      .from("halaqat")
+      .update({ talqeen_curriculum_id: logEntry.old_curriculum_id || null })
+      .eq("id", logEntry.halaqa_id);
+    if (upErr) { toast.error("فشل التراجع"); return; }
+
+    // إعادة ربط الطلاب بالمنهج السابق إن وُجد
+    if (logEntry.old_curriculum_id) {
+      await syncStudentsToCurriculum(logEntry.halaqa_id, logEntry.old_curriculum_id);
+    } else {
+      // إلغاء تفعيل ارتباط الطلاب بالمنهج الجديد
+      const studs = (studentsByHalaqa[logEntry.halaqa_id] || []);
+      if (studs.length > 0 && logEntry.new_curriculum_id) {
+        await supabase
+          .from("talqeen_student_curricula")
+          .update({ active: false })
+          .in("student_id", studs.map((s) => s.id))
+          .eq("curriculum_id", logEntry.new_curriculum_id);
+      }
+    }
+
+    await supabase
+      .from("talqeen_curriculum_change_log")
+      .update({ reverted: true, reverted_at: new Date().toISOString(), reverted_by: user?.id || null })
+      .eq("id", logEntry.id);
+
+    toast.success("تم التراجع عن التغيير وإعادة الحالة السابقة.");
+    await openChangeLog(logEntry.halaqa_id);
+    fetchData();
+  };
+
 
   const handleDeleteHalaqa = async () => {
     if (!deleteId) return;
