@@ -69,7 +69,7 @@ const NarrationTest = () => {
   const { data: halaqat = [] } = useQuery({
     queryKey: ["halaqat_active"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("halaqat").select("id, name").eq("active", true).order("name");
+      const { data, error } = await supabase.from("halaqat").select("id, name").eq("active", true).is("talqeen_curriculum_id", null).order("name");
       if (error) throw error;
       return data;
     },
