@@ -162,6 +162,7 @@ const AppRoutes = () => {
       <Route path="/student-annual-plan/:studentId" element={<ProtectedRoute path="/madarij"><StudentAnnualPlan /></ProtectedRoute>} />
       <Route path="/permissions-management" element={<ProtectedRoute path="/permissions-management"><PermissionsManagement /></ProtectedRoute>} />
       <Route path="/talqeen-halaqat" element={<ProtectedRoute path="/halaqat"><TalqeenHalaqat /></ProtectedRoute>} />
+      <Route path="/talqeen-curricula" element={<ProtectedRoute path="/halaqat"><TalqeenCurricula /></ProtectedRoute>} />
       <Route path="/quran-narration" element={<ProtectedRoute path="/quran-narration"><QuranNarration /></ProtectedRoute>} />
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
