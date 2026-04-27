@@ -92,6 +92,7 @@ const navGroups: NavGroup[] = [
       { to: "/students", icon: Users, label: "الطلاب" },
       { to: "/inactive-students", icon: UserX, label: "طلاب غير نشطين" },
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
+      { to: "/talqeen-curricula", icon: ScrollText, label: "مناهج التلقين" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
