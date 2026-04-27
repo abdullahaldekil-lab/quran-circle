@@ -46,8 +46,8 @@ interface Props {
 }
 
 export default function TalqeenStudentTests({ studentId, curriculumId }: Props) {
-  const { isManager, isTalqeenSupervisor, isTeacher, isAssistantTeacher } = useRole();
-  const canEdit = isManager || isTalqeenSupervisor || isTeacher || isAssistantTeacher;
+  const { isManager, isTalqeenSupervisor, isTeacher } = useRole();
+  const canEdit = isManager || isTalqeenSupervisor || isTeacher;
   const canDelete = isManager || isTalqeenSupervisor;
 
   const [tests, setTests] = useState<TalqeenTest[]>([]);
