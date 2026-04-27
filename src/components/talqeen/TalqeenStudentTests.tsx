@@ -53,13 +53,39 @@ interface Props {
   halaqaName?: string;
 }
 
-export default function TalqeenStudentTests({ studentId, studentName = "الطالب", curriculumId, curriculumName = "", halaqaName }: Props) {
+export default function TalqeenStudentTests({ studentId, studentName: studentNameProp, curriculumId, curriculumName: curriculumNameProp, halaqaName: halaqaNameProp }: Props) {
   const { isManager, isTalqeenSupervisor, isTeacher } = useRole();
   const canEdit = isManager || isTalqeenSupervisor || isTeacher;
   const canDelete = isManager || isTalqeenSupervisor;
 
   const [tests, setTests] = useState<TalqeenTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState<{ studentName: string; curriculumName: string; halaqaName?: string }>({
+    studentName: studentNameProp || "الطالب",
+    curriculumName: curriculumNameProp || "",
+    halaqaName: halaqaNameProp,
+  });
+
+  useEffect(() => {
+    (async () => {
+      const { data: s } = await supabase
+        .from("students")
+        .select("full_name, halaqat(name, talqeen_curriculum_id, talqeen_curricula:talqeen_curriculum_id(name))")
+        .eq("id", studentId)
+        .maybeSingle();
+      if (s) {
+        setMeta({
+          studentName: s.full_name || studentNameProp || "الطالب",
+          halaqaName: (s.halaqat as any)?.name,
+          curriculumName: (s.halaqat as any)?.talqeen_curricula?.name || curriculumNameProp || "",
+        });
+      }
+    })();
+  }, [studentId]);
+
+  const studentName = meta.studentName;
+  const curriculumName = meta.curriculumName;
+  const halaqaName = meta.halaqaName;
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [certOpen, setCertOpen] = useState(false);
