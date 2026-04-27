@@ -845,6 +845,42 @@ const TalqeenHalaqat = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* تأكيد تغيير المنهج */}
+      <AlertDialog
+        open={curriculumConfirm.open}
+        onOpenChange={(o) => !o && setCurriculumConfirm({ open: false, affectedCount: 0, oldName: "", newName: "", proceed: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد تغيير منهج الحلقة</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-right">
+                <div>
+                  سيتم تغيير المنهج من <span className="font-semibold">{curriculumConfirm.oldName}</span> إلى{" "}
+                  <span className="font-semibold">{curriculumConfirm.newName}</span>.
+                </div>
+                <div>
+                  سيتم إعادة ربط <span className="font-bold text-primary">{curriculumConfirm.affectedCount}</span> طالب نشط بالمنهج الجديد تلقائياً.
+                </div>
+                <div className="text-xs text-muted-foreground">هل ترغب في المتابعة؟</div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const fn = curriculumConfirm.proceed;
+                setCurriculumConfirm({ open: false, affectedCount: 0, oldName: "", newName: "", proceed: null });
+                if (fn) await fn();
+              }}
+            >
+              تأكيد ومتابعة
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* خطة الحفظ Dialog */}
       <Dialog open={!!planHalaqaId} onOpenChange={(o) => { if (!o) { setPlanHalaqaId(null); setPlanSessions([]); } }}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
