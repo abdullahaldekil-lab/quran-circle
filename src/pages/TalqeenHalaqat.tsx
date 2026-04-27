@@ -470,8 +470,7 @@ const TalqeenHalaqat = () => {
     setEditOpen(true);
   };
 
-  const handleEditHalaqa = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const performEditHalaqa = async () => {
     if (!editId) return;
     const currentHalaqa = halaqat.find((h) => h.id === editId);
     const oldTeacherId = currentHalaqa?.teacher_id || null;
@@ -506,6 +505,31 @@ const TalqeenHalaqat = () => {
     toast.success("تم تعديل الحلقة بنجاح.");
     setEditOpen(false);
     fetchData();
+  };
+
+  const handleEditHalaqa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editId) return;
+    const currentHalaqa = halaqat.find((h) => h.id === editId);
+    const oldCurriculumId = currentHalaqa?.talqeen_curriculum_id || "";
+    const newCurriculumId = editForm.talqeen_curriculum_id || "";
+
+    // إن تغيّر المنهج، اعرض تأكيد بعدد الطلاب المتأثرين
+    if (oldCurriculumId !== newCurriculumId && newCurriculumId) {
+      const affected = (studentsByHalaqa[editId] || []).filter((s: any) => s.status === "active").length;
+      const oldName = curricula.find((c) => c.id === oldCurriculumId)?.name || "بدون منهج";
+      const newName = curricula.find((c) => c.id === newCurriculumId)?.name || "—";
+      setCurriculumConfirm({
+        open: true,
+        affectedCount: affected,
+        oldName,
+        newName,
+        proceed: performEditHalaqa,
+      });
+      return;
+    }
+
+    await performEditHalaqa();
   };
 
   const handleDeleteHalaqa = async () => {
