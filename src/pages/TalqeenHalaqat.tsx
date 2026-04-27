@@ -68,7 +68,9 @@ interface Teacher {
 }
 
 const TalqeenHalaqat = () => {
-  const { isManager } = useRole();
+  const { isManager, isTalqeenSupervisor } = useRole();
+  const { user } = useAuth();
+  const canChangeCurriculum = isManager || isTalqeenSupervisor;
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [levelTracks, setLevelTracks] = useState<any[]>([]);
