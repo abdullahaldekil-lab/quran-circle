@@ -211,7 +211,42 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
     fetchTests();
   };
 
-  const handlePrintCertificate = () => {
+  // Issue certificate number on first open if missing
+  const openCertificate = async () => {
+    if (!promotionTest) return;
+    if (!promotionTest.certificate_number) {
+      // Generate: TLQ-YYYY-NNNN (sequential by counting issued certs)
+      const year = new Date().getFullYear();
+      const { count } = await supabase
+        .from("talqeen_student_tests")
+        .select("*", { count: "exact", head: true })
+        .not("certificate_number", "is", null);
+      const seq = String((count ?? 0) + 1).padStart(4, "0");
+      const number = `TLQ-${year}-${seq}`;
+      const issuedAt = new Date().toISOString();
+      const { error } = await supabase
+        .from("talqeen_student_tests")
+        .update({ certificate_number: number, certificate_issued_at: issuedAt })
+        .eq("id", promotionTest.id);
+      if (error) {
+        toast.error("تعذر إصدار رقم الشهادة");
+        return;
+      }
+      await fetchTests();
+    }
+    setCertOpen(true);
+  };
+
+  const verifyUrl = promotionTest?.certificate_number
+    ? `${window.location.origin}/verify-certificate/${promotionTest.certificate_number}`
+    : "";
+
+  const copyVerifyLink = async () => {
+    if (!verifyUrl) return;
+    await navigator.clipboard.writeText(verifyUrl);
+    toast.success("تم نسخ رابط التحقق");
+  };
+
     if (!certRef.current) return;
     const printWindow = window.open("", "_blank", "width=900,height=700");
     if (!printWindow) return;
