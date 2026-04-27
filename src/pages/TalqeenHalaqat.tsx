@@ -920,7 +920,11 @@ const TalqeenHalaqat = () => {
             </div>
             <div className="space-y-2">
               <Label>منهج التلقين (المستوى)</Label>
-              <Select value={editForm.talqeen_curriculum_id} onValueChange={(v) => setEditForm({ ...editForm, talqeen_curriculum_id: v })}>
+              <Select
+                value={editForm.talqeen_curriculum_id}
+                onValueChange={(v) => setEditForm({ ...editForm, talqeen_curriculum_id: v })}
+                disabled={!canChangeCurriculum}
+              >
                 <SelectTrigger><SelectValue placeholder="اختر المنهج" /></SelectTrigger>
                 <SelectContent>
                   {curricula.map((c) => (
@@ -928,7 +932,11 @@ const TalqeenHalaqat = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">سيُربط جميع طلاب الحلقة تلقائياً بالمنهج المختار.</p>
+              <p className="text-xs text-muted-foreground">
+                {canChangeCurriculum
+                  ? "سيُعرض تأكيد بالطلاب المتأثرين قبل إعادة الربط، ويمكن التراجع لاحقاً."
+                  : "تغيير المنهج مقصور على المدير ومشرف التلقين."}
+              </p>
             </div>
             <Button type="submit" className="w-full">حفظ التعديلات</Button>
           </form>
