@@ -54,7 +54,7 @@ const StudentProfile = () => {
 
     const fetchData = async () => {
       const [studentRes, attendanceRes] = await Promise.all([
-        supabase.from("students").select("*, halaqat(name)").eq("id", id).maybeSingle(),
+        supabase.from("students").select("*, halaqat(name, talqeen_curriculum_id)").eq("id", id).maybeSingle(),
         supabase.from("attendance").select("status").eq("student_id", id),
       ]);
 
