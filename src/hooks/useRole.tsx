@@ -133,7 +133,7 @@ const roleWritePermissions: Record<StaffRole, Resource[]> = {
 // مسارات الوصول لمشرف التلقين (قسم التلقين بالكامل من تسجيل الطلاب حتى متابعة الجلسات والواجبات)
 const talqeenSupervisorRoutes = [
   "/dashboard", "/profile",
-  "/talqeen-halaqat",
+  "/talqeen-halaqat", "/talqeen-curricula",
   "/students", "/inactive-students", "/halaqat",
   "/recitation", "/attendance", "/student-attendance-report",
   "/bulk-import", "/pre-registration", "/enrollment-requests", "/enrollment-form",
