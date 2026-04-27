@@ -74,7 +74,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
   ],
   teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
-    "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij",
+    "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
     "/staff-attendance-log",
