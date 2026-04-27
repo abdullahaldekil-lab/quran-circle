@@ -1,0 +1,2 @@
+ALTER TABLE public.talqeen_curriculum_change_log REPLICA IDENTITY FULL;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.talqeen_curriculum_change_log;
