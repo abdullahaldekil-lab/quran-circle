@@ -457,6 +457,7 @@ const TalqeenHalaqat = () => {
       schedule: h.schedule || "",
       capacity_max: h.capacity_max || 25,
       level_track_id: h.level_track_id || "",
+      talqeen_curriculum_id: h.talqeen_curriculum_id || "",
     });
     setEditOpen(true);
   };
