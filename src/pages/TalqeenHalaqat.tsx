@@ -675,9 +675,13 @@ const TalqeenHalaqat = () => {
                     <User className="w-3 h-3 ml-1" />
                     عرض الطلاب ({count})
                   </Button>
+                  <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => openCurriculumView(h.id)}>
+                    <BookOpen className="w-3 h-3 ml-1" />
+                    منهج التلقين
+                  </Button>
                   <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => openPlan(h.id)}>
                     <ClipboardList className="w-3 h-3 ml-1" />
-                    خطة الحفظ
+                    جلسات الخطة
                   </Button>
                   {isManager && (
                     <>
