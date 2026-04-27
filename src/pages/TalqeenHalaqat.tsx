@@ -408,6 +408,7 @@ const TalqeenHalaqat = () => {
       location: form.location || null,
       schedule: form.schedule || null,
       level_track_id: form.level_track_id || null,
+      talqeen_curriculum_id: form.talqeen_curriculum_id || null,
     }).select("id").single();
 
     if (error || !newHalaqa) { toast.error("حدث خطأ"); return; }
@@ -432,7 +433,7 @@ const TalqeenHalaqat = () => {
 
     toast.success("تم إضافة حلقة التلقين بنجاح.");
     setDialogOpen(false);
-    setForm({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "" });
+    setForm({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "", talqeen_curriculum_id: "" });
     fetchData();
   };
 
