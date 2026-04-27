@@ -288,17 +288,18 @@ const TalqeenHalaqat = () => {
   ];
 
   const fetchData = async () => {
-    const [halaqatRes, teachersRes, studentsRes, tracksRes] = await Promise.all([
+    const [halaqatRes, teachersRes, studentsRes, tracksRes, curriculaRes] = await Promise.all([
       supabase.from("halaqat").select("*, profiles:teacher_id(full_name), assistant:assistant_teacher_id(full_name)").eq("active", true),
       supabase.from("profiles").select("id, full_name, assigned_halaqa_id, assigned_assistant_halaqa_id").in("role", ["teacher", "assistant_teacher"]),
       supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active"),
       supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
+      supabase.from("talqeen_curricula").select("*").eq("active", true).order("code"),
     ]);
-    // Filter to only talqeen halaqat (those with "تلقين" in the name)
     const allHalaqat = halaqatRes.data || [];
     setHalaqat(allHalaqat.filter((h: any) => h.name.includes("تلقين")));
     setTeachers((teachersRes.data as Teacher[]) || []);
     setLevelTracks(tracksRes.data || []);
+    setCurricula(curriculaRes.data || []);
 
     const grouped: Record<string, any[]> = {};
     (studentsRes.data || []).forEach((s: any) => {
@@ -308,6 +309,54 @@ const TalqeenHalaqat = () => {
       }
     });
     setStudentsByHalaqa(grouped);
+  };
+
+  // ربط طلاب الحلقة النشطين بمنهج التلقين تلقائياً
+  const syncStudentsToCurriculum = async (halaqaId: string, curriculumId: string | null) => {
+    if (!curriculumId) return;
+    const studs = (studentsByHalaqa[halaqaId] || []);
+    if (studs.length === 0) return;
+    // Deactivate other active curriculum links for these students
+    await supabase
+      .from("talqeen_student_curricula")
+      .update({ active: false })
+      .in("student_id", studs.map((s) => s.id))
+      .eq("active", true)
+      .neq("curriculum_id", curriculumId);
+    // Upsert new active links
+    const rows = studs.map((s) => ({
+      student_id: s.id,
+      curriculum_id: curriculumId,
+      halaqa_id: halaqaId,
+      start_date: new Date().toISOString().split("T")[0],
+      active: true,
+    }));
+    await supabase.from("talqeen_student_curricula").upsert(rows as any, { onConflict: "student_id,curriculum_id" } as any);
+  };
+
+  const openCurriculumView = async (halaqaId: string) => {
+    const h = halaqat.find((x) => x.id === halaqaId);
+    if (!h?.talqeen_curriculum_id) {
+      toast.error("لم يتم ربط منهج بهذه الحلقة بعد. عدّل الحلقة وحدّد المنهج.");
+      return;
+    }
+    setCurriculumViewHalaqaId(halaqaId);
+    const { data: weeks } = await supabase
+      .from("talqeen_curriculum_weeks")
+      .select("*")
+      .eq("curriculum_id", h.talqeen_curriculum_id)
+      .order("week_number");
+    setCurriculumWeeks(weeks || []);
+    if (weeks && weeks.length > 0) {
+      const { data: days } = await supabase
+        .from("talqeen_curriculum_days")
+        .select("*")
+        .in("week_id", weeks.map((w: any) => w.id))
+        .order("day_order");
+      setCurriculumDays(days || []);
+    } else {
+      setCurriculumDays([]);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
