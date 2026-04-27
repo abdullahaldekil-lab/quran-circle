@@ -280,34 +280,50 @@ const StudentProfile = () => {
         </CardContent>
       </Card>
 
-      {/* Student Level Progress (Memorization Track) */}
-      <StudentLevelProgress studentId={id!} isManager={isManager} />
+      {/* Talqeen students: only show talqeen tests; others see memorization track / madarij / progress */}
+      {(() => {
+        const isTalqeenStudent = student.halaqat?.name?.includes("تلقين");
+        if (isTalqeenStudent) {
+          return (
+            <TalqeenStudentTests
+              studentId={id!}
+              curriculumId={student.halaqat?.talqeen_curriculum_id || null}
+            />
+          );
+        }
+        return (
+          <>
+            {/* Student Level Progress (Memorization Track) */}
+            <StudentLevelProgress studentId={id!} isManager={isManager} />
 
-      {/* Madarij Section */}
-      <MadarijStudentSection studentId={id!} isManager={isManager} />
+            {/* Madarij Section */}
+            <MadarijStudentSection studentId={id!} isManager={isManager} />
 
-      {/* Annual Plan Summary */}
-      <AnnualPlanSummaryCard studentId={id!} />
+            {/* Annual Plan Summary */}
+            <AnnualPlanSummaryCard studentId={id!} />
 
-      {/* Progress */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-primary" />
-            تقدم الحفظ
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>{student.total_memorized_pages || 0} صفحة</span>
-              <span className="text-muted-foreground">من 604 صفحة</span>
-            </div>
-            <Progress value={progressPercent} className="h-3" />
-            <p className="text-xs text-muted-foreground text-center">{progressPercent}% مكتمل</p>
-          </div>
-        </CardContent>
-      </Card>
+            {/* Progress */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  تقدم الحفظ
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>{student.total_memorized_pages || 0} صفحة</span>
+                    <span className="text-muted-foreground">من 604 صفحة</span>
+                  </div>
+                  <Progress value={progressPercent} className="h-3" />
+                  <p className="text-xs text-muted-foreground text-center">{progressPercent}% مكتمل</p>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        );
+      })()}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-3">
