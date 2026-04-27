@@ -106,6 +106,22 @@ export default function TalqeenLevelCertificate({
           <p>توقيع مدير المجمع: ___________________</p>
         </div>
       </div>
+
+      {/* Verification footer */}
+      {certificateNumber && (
+        <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px dashed #15803d", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "#374151", flexWrap: "wrap", gap: "12px" }}>
+          <div>
+            <p style={{ margin: 0 }}><strong>رقم الشهادة:</strong> <span style={{ fontFamily: "monospace", color: "#14532d" }}>{certificateNumber}</span></p>
+            {issuedAt && <p style={{ margin: "4px 0 0" }}><strong>تاريخ الإصدار:</strong> {formatDateSmart(issuedAt)}</p>}
+          </div>
+          {verifyUrl && (
+            <div style={{ textAlign: "left" }}>
+              <p style={{ margin: 0, color: "#15803d", fontWeight: "bold" }}>للتحقق من صحة الشهادة:</p>
+              <p style={{ margin: "2px 0 0", fontFamily: "monospace", fontSize: "10px", direction: "ltr" }}>{verifyUrl}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
