@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Plus, Pencil, Trash2, Award, Printer } from "lucide-react";
+import { ClipboardCheck, Plus, Pencil, Trash2, Award, Printer, ShieldCheck, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { formatDateSmart } from "@/lib/hijri";
@@ -30,6 +30,8 @@ interface TalqeenTest {
   attendance_max: number | null;
   homework_score: number | null;
   homework_max: number | null;
+  certificate_number: string | null;
+  certificate_issued_at: string | null;
   created_at: string;
 }
 
@@ -209,6 +211,41 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
     fetchTests();
   };
 
+  // Issue certificate number on first open if missing
+  const openCertificate = async () => {
+    if (!promotionTest) return;
+    if (!promotionTest.certificate_number) {
+      // Generate: TLQ-YYYY-NNNN (sequential by counting issued certs)
+      const year = new Date().getFullYear();
+      const { count } = await supabase
+        .from("talqeen_student_tests")
+        .select("*", { count: "exact", head: true })
+        .not("certificate_number", "is", null);
+      const seq = String((count ?? 0) + 1).padStart(4, "0");
+      const number = `TLQ-${year}-${seq}`;
+      const issuedAt = new Date().toISOString();
+      const { error } = await supabase
+        .from("talqeen_student_tests")
+        .update({ certificate_number: number, certificate_issued_at: issuedAt })
+        .eq("id", promotionTest.id);
+      if (error) {
+        toast.error("تعذر إصدار رقم الشهادة");
+        return;
+      }
+      await fetchTests();
+    }
+    setCertOpen(true);
+  };
+
+  const verifyUrl = promotionTest?.certificate_number
+    ? `${window.location.origin}/verify-certificate/${promotionTest.certificate_number}`
+    : "";
+
+  const copyVerifyLink = async () => {
+    if (!verifyUrl) return;
+    await navigator.clipboard.writeText(verifyUrl);
+    toast.success("تم نسخ رابط التحقق");
+
   const handlePrintCertificate = () => {
     if (!certRef.current) return;
     const printWindow = window.open("", "_blank", "width=900,height=700");
@@ -239,7 +276,7 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
         </CardTitle>
         <div className="flex gap-2">
           {promotionTest && (
-            <Button size="sm" variant="outline" onClick={() => setCertOpen(true)} className="border-green-600 text-green-700 hover:bg-green-50">
+            <Button size="sm" variant="outline" onClick={openCertificate} className="border-green-600 text-green-700 hover:bg-green-50">
               <Award className="w-4 h-4 ml-1" /> شهادة نهاية المستوى
             </Button>
           )}
@@ -390,11 +427,25 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
       <Dialog open={certOpen} onOpenChange={setCertOpen}>
         <DialogContent dir="rtl" className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="flex items-center justify-between flex-wrap gap-2">
               <span>شهادة نهاية المستوى</span>
-              <Button size="sm" onClick={handlePrintCertificate}>
-                <Printer className="w-4 h-4 ml-1" /> طباعة
-              </Button>
+              <div className="flex gap-2">
+                {promotionTest?.certificate_number && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={copyVerifyLink}>
+                      <LinkIcon className="w-4 h-4 ml-1" /> نسخ رابط التحقق
+                    </Button>
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={verifyUrl} target="_blank" rel="noreferrer">
+                        <ShieldCheck className="w-4 h-4 ml-1" /> تحقق
+                      </a>
+                    </Button>
+                  </>
+                )}
+                <Button size="sm" onClick={handlePrintCertificate}>
+                  <Printer className="w-4 h-4 ml-1" /> طباعة
+                </Button>
+              </div>
             </DialogTitle>
           </DialogHeader>
           {promotionTest && (
@@ -410,6 +461,9 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
                 homeworkScore={promotionTest.homework_score}
                 homeworkMax={promotionTest.homework_max}
                 testDate={promotionTest.test_date}
+                certificateNumber={promotionTest.certificate_number}
+                issuedAt={promotionTest.certificate_issued_at}
+                verifyUrl={verifyUrl}
               />
             </div>
           )}
