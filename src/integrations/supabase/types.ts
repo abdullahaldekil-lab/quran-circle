@@ -4183,6 +4183,66 @@ export type Database = {
           },
         ]
       }
+      talqeen_student_tests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          curriculum_id: string | null
+          id: string
+          max_score: number | null
+          notes: string | null
+          score: number | null
+          status: string
+          student_id: string
+          test_date: string
+          test_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          curriculum_id?: string | null
+          id?: string
+          max_score?: number | null
+          notes?: string | null
+          score?: number | null
+          status?: string
+          student_id: string
+          test_date?: string
+          test_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          curriculum_id?: string | null
+          id?: string
+          max_score?: number | null
+          notes?: string | null
+          score?: number | null
+          status?: string
+          student_id?: string
+          test_date?: string
+          test_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_student_tests_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_student_tests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       temporary_access_overrides: {
         Row: {
           created_at: string
