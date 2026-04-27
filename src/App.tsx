@@ -128,6 +128,8 @@ const AppRoutes = () => {
       <Route path="/guardian" element={<GuardianDashboard />} />
       <Route path="/guardian/child/:id" element={<GuardianChildProfile />} />
       <Route path="/enroll" element={<Enroll />} />
+      <Route path="/verify-certificate" element={<VerifyCertificate />} />
+      <Route path="/verify-certificate/:number" element={<VerifyCertificate />} />
 
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />
