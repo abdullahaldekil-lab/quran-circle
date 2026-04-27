@@ -486,9 +486,15 @@ const TalqeenHalaqat = () => {
       schedule: editForm.schedule || null,
       capacity_max: editForm.capacity_max,
       level_track_id: editForm.level_track_id || null,
+      talqeen_curriculum_id: editForm.talqeen_curriculum_id || null,
     }).eq("id", editId);
 
     if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
+
+    if (editForm.talqeen_curriculum_id) {
+      await syncStudentsToCurriculum(editId, editForm.talqeen_curriculum_id);
+    }
+
     toast.success("تم تعديل الحلقة بنجاح.");
     setEditOpen(false);
     fetchData();
