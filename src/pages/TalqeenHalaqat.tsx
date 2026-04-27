@@ -84,6 +84,14 @@ const TalqeenHalaqat = () => {
   const [curriculumDays, setCurriculumDays] = useState<any[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // تأكيد تغيير المنهج
+  const [curriculumConfirm, setCurriculumConfirm] = useState<{
+    open: boolean;
+    affectedCount: number;
+    oldName: string;
+    newName: string;
+    proceed: null | (() => Promise<void>);
+  }>({ open: false, affectedCount: 0, oldName: "", newName: "", proceed: null });
   // خطة الحفظ
   const [planHalaqaId, setPlanHalaqaId] = useState<string | null>(null);
   const [planSessions, setPlanSessions] = useState<any[]>([]);
@@ -462,8 +470,7 @@ const TalqeenHalaqat = () => {
     setEditOpen(true);
   };
 
-  const handleEditHalaqa = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const performEditHalaqa = async () => {
     if (!editId) return;
     const currentHalaqa = halaqat.find((h) => h.id === editId);
     const oldTeacherId = currentHalaqa?.teacher_id || null;
@@ -498,6 +505,31 @@ const TalqeenHalaqat = () => {
     toast.success("تم تعديل الحلقة بنجاح.");
     setEditOpen(false);
     fetchData();
+  };
+
+  const handleEditHalaqa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editId) return;
+    const currentHalaqa = halaqat.find((h) => h.id === editId);
+    const oldCurriculumId = currentHalaqa?.talqeen_curriculum_id || "";
+    const newCurriculumId = editForm.talqeen_curriculum_id || "";
+
+    // إن تغيّر المنهج، اعرض تأكيد بعدد الطلاب المتأثرين
+    if (oldCurriculumId !== newCurriculumId && newCurriculumId) {
+      const affected = (studentsByHalaqa[editId] || []).filter((s: any) => s.status === "active").length;
+      const oldName = curricula.find((c) => c.id === oldCurriculumId)?.name || "بدون منهج";
+      const newName = curricula.find((c) => c.id === newCurriculumId)?.name || "—";
+      setCurriculumConfirm({
+        open: true,
+        affectedCount: affected,
+        oldName,
+        newName,
+        proceed: performEditHalaqa,
+      });
+      return;
+    }
+
+    await performEditHalaqa();
   };
 
   const handleDeleteHalaqa = async () => {
@@ -809,6 +841,42 @@ const TalqeenHalaqat = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteHalaqa} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* تأكيد تغيير المنهج */}
+      <AlertDialog
+        open={curriculumConfirm.open}
+        onOpenChange={(o) => !o && setCurriculumConfirm({ open: false, affectedCount: 0, oldName: "", newName: "", proceed: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد تغيير منهج الحلقة</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-right">
+                <div>
+                  سيتم تغيير المنهج من <span className="font-semibold">{curriculumConfirm.oldName}</span> إلى{" "}
+                  <span className="font-semibold">{curriculumConfirm.newName}</span>.
+                </div>
+                <div>
+                  سيتم إعادة ربط <span className="font-bold text-primary">{curriculumConfirm.affectedCount}</span> طالب نشط بالمنهج الجديد تلقائياً.
+                </div>
+                <div className="text-xs text-muted-foreground">هل ترغب في المتابعة؟</div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const fn = curriculumConfirm.proceed;
+                setCurriculumConfirm({ open: false, affectedCount: 0, oldName: "", newName: "", proceed: null });
+                if (fn) await fn();
+              }}
+            >
+              تأكيد ومتابعة
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
