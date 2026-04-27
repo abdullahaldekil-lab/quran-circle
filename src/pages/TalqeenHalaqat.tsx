@@ -813,6 +813,12 @@ const TalqeenHalaqat = () => {
                     <ClipboardList className="w-3 h-3 ml-1" />
                     جلسات الخطة
                   </Button>
+                  {canChangeCurriculum && (
+                    <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => openChangeLog(h.id)}>
+                      <History className="w-3 h-3 ml-1" />
+                      سجل المنهج
+                    </Button>
+                  )}
                   {isManager && (
                     <>
                       <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
