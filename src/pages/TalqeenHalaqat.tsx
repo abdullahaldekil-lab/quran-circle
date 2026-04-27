@@ -21,6 +21,8 @@ import { InlineDualDate } from "@/components/DualDateDisplay";
 import { formatDualDateSmart } from "@/lib/hijri";
 import { cn } from "@/lib/utils";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/hooks/useAuth";
+import { formatDualDateTime } from "@/lib/hijri";
 
 // منتقي تاريخ بالتاريخ الهجري كأساس والميلادي كفرعي
 const DualDatePicker = ({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) => {
