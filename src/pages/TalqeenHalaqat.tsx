@@ -84,6 +84,14 @@ const TalqeenHalaqat = () => {
   const [curriculumDays, setCurriculumDays] = useState<any[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // تأكيد تغيير المنهج
+  const [curriculumConfirm, setCurriculumConfirm] = useState<{
+    open: boolean;
+    affectedCount: number;
+    oldName: string;
+    newName: string;
+    proceed: null | (() => Promise<void>);
+  }>({ open: false, affectedCount: 0, oldName: "", newName: "", proceed: null });
   // خطة الحفظ
   const [planHalaqaId, setPlanHalaqaId] = useState<string | null>(null);
   const [planSessions, setPlanSessions] = useState<any[]>([]);
