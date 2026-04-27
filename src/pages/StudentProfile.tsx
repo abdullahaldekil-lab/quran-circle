@@ -125,7 +125,7 @@ const StudentProfile = () => {
     toast.success("تم تعديل بيانات الطالب");
     setEditOpen(false);
     // Refresh student data
-    const { data } = await supabase.from("students").select("*, halaqat(name)").eq("id", id!).maybeSingle();
+    const { data } = await supabase.from("students").select("*, halaqat(name, talqeen_curriculum_id)").eq("id", id!).maybeSingle();
     setStudent(data);
   };
 
@@ -271,7 +271,7 @@ const StudentProfile = () => {
               student={student}
               isManager={isManager}
               onStatusChanged={async () => {
-                const { data } = await supabase.from("students").select("*, halaqat(name)").eq("id", id!).maybeSingle();
+                const { data } = await supabase.from("students").select("*, halaqat(name, talqeen_curriculum_id)").eq("id", id!).maybeSingle();
                 setStudent(data);
               }}
             />
