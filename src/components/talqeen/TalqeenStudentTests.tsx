@@ -248,23 +248,42 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
 
   const handlePrintCertificate = () => {
     if (!certRef.current) return;
-    const printWindow = window.open("", "_blank", "width=900,height=700");
+    const printWindow = window.open("", "_blank", "width=900,height=1100");
     if (!printWindow) return;
+    // Copy stylesheets from current document so fonts/colors render identically
+    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map((el) => el.outerHTML)
+      .join("\n");
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html dir="rtl">
+      <html dir="rtl" lang="ar">
         <head>
+          <meta charset="utf-8" />
           <title>شهادة نهاية المستوى - ${studentName}</title>
+          ${styles}
           <style>
-            @media print { @page { size: A4; margin: 10mm; } }
-            body { margin: 0; padding: 20px; background: #fff; }
+            @page { size: A4 portrait; margin: 0; }
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background: #fff !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .talqeen-cert-page { box-shadow: none !important; margin: 0 auto !important; }
           </style>
         </head>
         <body>${certRef.current.innerHTML}</body>
       </html>
     `);
     printWindow.document.close();
-    setTimeout(() => { printWindow.print(); }, 500);
+    // Wait for images/fonts to load before printing
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 400);
+    };
   };
 
   return (
