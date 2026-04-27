@@ -79,6 +79,7 @@ import StaffTasks from "@/pages/StaffTasks";
 import StaffTasksAnalytics from "@/pages/StaffTasksAnalytics";
 import ProgramsOverview from "@/pages/ProgramsOverview";
 import EnrollmentForm from "./pages/EnrollmentForm";
+import VerifyCertificate from "./pages/VerifyCertificate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
