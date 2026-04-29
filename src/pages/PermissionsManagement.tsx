@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Search, Shield, Users, Lock, UserCog, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Shield, Users, Lock, UserCog, RefreshCw, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { syncPermissionsRegistry } from "@/lib/permissionsSync";
+import { categoryLabels as registryCategoryLabels } from "@/lib/permissionsRegistry";
 
 interface Role {
   id: string;
@@ -41,28 +43,8 @@ interface Profile {
   updated_at?: string | null;
 }
 
-const categoryLabels: Record<string, string> = {
-  halaqat: "الحلقات",
-  students: "الطلاب",
-  attendance: "الحضور",
-  recitation: "التسميع",
-  levels: "المستويات",
-  madarij: "برنامج مدارج",
-  rewards: "المكافآت والترتيب",
-  operations: "العمليات والخدمات",
-  finance: "المالية والتخطيط",
-  admin: "الإدارة",
-  enrollment: "القبول والتسجيل",
-  settings: "الإعدادات",
-  excellence: "التميز",
-  narration: "السرد",
-  quizzes: "الاختبارات",
-  staff: "شؤون الموظفين",
-  notifications: "الإشعارات",
-  health: "الصحة",
-  guardians: "أولياء الأمور",
-  programs: "البرامج",
-};
+// تسميات فئات الصلاحيات تأتي الآن من السجل المركزي
+const categoryLabels: Record<string, string> = registryCategoryLabels;
 
 const roleLabels: Record<string, string> = {
   manager: "مدير المجمع",
@@ -126,11 +108,48 @@ const PermissionsManagement = () => {
   const [roleChangeSaving, setRoleChangeSaving] = useState(false);
   const [roleAuditLog, setRoleAuditLog] = useState<AuditLogEntry[]>([]);
 
+  // Registry sync
+  const [syncing, setSyncing] = useState(false);
+
   const isManager = authProfile?.role === "manager";
+
+  // مزامنة سجل الصلاحيات (Registry → DB) عند فتح الصفحة كمدير
+  const runRegistrySync = async (showToast = false) => {
+    if (!isManager) return;
+    setSyncing(true);
+    try {
+      const res = await syncPermissionsRegistry();
+      if (res.errors.length > 0) {
+        toast({
+          title: "تعذّر إكمال بعض خطوات المزامنة",
+          description: res.errors.join(" • "),
+          variant: "destructive",
+        });
+      } else if (res.added.length > 0 || res.updated.length > 0 || res.linked > 0) {
+        toast({
+          title: "تمت مزامنة الصلاحيات",
+          description: `تم إضافة ${res.added.length} صلاحية جديدة، تحديث ${res.updated.length}، وربط ${res.linked} توزيع للأدوار.`,
+        });
+        await fetchData();
+      } else if (showToast) {
+        toast({ title: "كل الصلاحيات محدّثة", description: "لا توجد موديولات جديدة بحاجة للمزامنة." });
+      }
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // مزامنة تلقائية بعد توفر دور المدير
+  useEffect(() => {
+    if (isManager) {
+      runRegistrySync(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isManager]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -449,12 +468,26 @@ const PermissionsManagement = () => {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center gap-3">
-        <Shield className="w-8 h-8 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">إدارة الصلاحيات</h1>
-          <p className="text-muted-foreground text-sm">التحكم في أدوار وصلاحيات المستخدمين</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Shield className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">إدارة الصلاحيات</h1>
+            <p className="text-muted-foreground text-sm">التحكم في أدوار وصلاحيات المستخدمين</p>
+          </div>
         </div>
+        {isManager && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => runRegistrySync(true)}
+            disabled={syncing}
+            className="gap-2"
+          >
+            <Sparkles className={`w-4 h-4 ${syncing ? "animate-pulse" : ""}`} />
+            {syncing ? "جاري المزامنة..." : "مزامنة الصلاحيات"}
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="roles" className="space-y-4" onValueChange={handleTabChange}>
