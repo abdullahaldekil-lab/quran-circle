@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Search, Shield, Users, Lock, UserCog, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Shield, Users, Lock, UserCog, RefreshCw, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { syncPermissionsRegistry } from "@/lib/permissionsSync";
+import { categoryLabels as registryCategoryLabels } from "@/lib/permissionsRegistry";
 
 interface Role {
   id: string;
