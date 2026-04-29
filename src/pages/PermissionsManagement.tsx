@@ -108,11 +108,48 @@ const PermissionsManagement = () => {
   const [roleChangeSaving, setRoleChangeSaving] = useState(false);
   const [roleAuditLog, setRoleAuditLog] = useState<AuditLogEntry[]>([]);
 
+  // Registry sync
+  const [syncing, setSyncing] = useState(false);
+
   const isManager = authProfile?.role === "manager";
+
+  // مزامنة سجل الصلاحيات (Registry → DB) عند فتح الصفحة كمدير
+  const runRegistrySync = async (showToast = false) => {
+    if (!isManager) return;
+    setSyncing(true);
+    try {
+      const res = await syncPermissionsRegistry();
+      if (res.errors.length > 0) {
+        toast({
+          title: "تعذّر إكمال بعض خطوات المزامنة",
+          description: res.errors.join(" • "),
+          variant: "destructive",
+        });
+      } else if (res.added.length > 0 || res.updated.length > 0 || res.linked > 0) {
+        toast({
+          title: "تمت مزامنة الصلاحيات",
+          description: `تم إضافة ${res.added.length} صلاحية جديدة، تحديث ${res.updated.length}، وربط ${res.linked} توزيع للأدوار.`,
+        });
+        await fetchData();
+      } else if (showToast) {
+        toast({ title: "كل الصلاحيات محدّثة", description: "لا توجد موديولات جديدة بحاجة للمزامنة." });
+      }
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // مزامنة تلقائية بعد توفر دور المدير
+  useEffect(() => {
+    if (isManager) {
+      runRegistrySync(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isManager]);
 
   const fetchData = async () => {
     setLoading(true);
