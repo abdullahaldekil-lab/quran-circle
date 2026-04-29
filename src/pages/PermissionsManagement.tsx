@@ -468,12 +468,26 @@ const PermissionsManagement = () => {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center gap-3">
-        <Shield className="w-8 h-8 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">إدارة الصلاحيات</h1>
-          <p className="text-muted-foreground text-sm">التحكم في أدوار وصلاحيات المستخدمين</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Shield className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">إدارة الصلاحيات</h1>
+            <p className="text-muted-foreground text-sm">التحكم في أدوار وصلاحيات المستخدمين</p>
+          </div>
         </div>
+        {isManager && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => runRegistrySync(true)}
+            disabled={syncing}
+            className="gap-2"
+          >
+            <Sparkles className={`w-4 h-4 ${syncing ? "animate-pulse" : ""}`} />
+            {syncing ? "جاري المزامنة..." : "مزامنة الصلاحيات"}
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="roles" className="space-y-4" onValueChange={handleTabChange}>
