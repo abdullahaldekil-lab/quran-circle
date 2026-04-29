@@ -43,28 +43,8 @@ interface Profile {
   updated_at?: string | null;
 }
 
-const categoryLabels: Record<string, string> = {
-  halaqat: "الحلقات",
-  students: "الطلاب",
-  attendance: "الحضور",
-  recitation: "التسميع",
-  levels: "المستويات",
-  madarij: "برنامج مدارج",
-  rewards: "المكافآت والترتيب",
-  operations: "العمليات والخدمات",
-  finance: "المالية والتخطيط",
-  admin: "الإدارة",
-  enrollment: "القبول والتسجيل",
-  settings: "الإعدادات",
-  excellence: "التميز",
-  narration: "السرد",
-  quizzes: "الاختبارات",
-  staff: "شؤون الموظفين",
-  notifications: "الإشعارات",
-  health: "الصحة",
-  guardians: "أولياء الأمور",
-  programs: "البرامج",
-};
+// تسميات فئات الصلاحيات تأتي الآن من السجل المركزي
+const categoryLabels: Record<string, string> = registryCategoryLabels;
 
 const roleLabels: Record<string, string> = {
   manager: "مدير المجمع",
