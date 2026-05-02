@@ -119,21 +119,38 @@ const PermissionsManagement = () => {
     setSyncing(true);
     try {
       const res = await syncPermissionsRegistry();
+      const hasChanges = res.added.length > 0 || res.updated.length > 0 || res.linked > 0;
+
       if (res.errors.length > 0) {
         toast({
           title: "تعذّر إكمال بعض خطوات المزامنة",
           description: res.errors.join(" • "),
           variant: "destructive",
         });
-      } else if (res.added.length > 0 || res.updated.length > 0 || res.linked > 0) {
+      }
+
+      if (hasChanges) {
+        const parts: string[] = [];
+        if (res.added.length > 0) parts.push(`➕ إضافة: ${res.added.length}`);
+        if (res.updated.length > 0) parts.push(`✏️ تحديث: ${res.updated.length}`);
+        if (res.linked > 0) parts.push(`🔗 ربط بالأدوار: ${res.linked}`);
         toast({
-          title: "تمت مزامنة الصلاحيات",
-          description: `تم إضافة ${res.added.length} صلاحية جديدة، تحديث ${res.updated.length}، وربط ${res.linked} توزيع للأدوار.`,
+          title: "تمت مزامنة الصلاحيات بنجاح",
+          description: parts.join(" • "),
         });
         await fetchData();
-      } else if (showToast) {
-        toast({ title: "كل الصلاحيات محدّثة", description: "لا توجد موديولات جديدة بحاجة للمزامنة." });
+      } else if (showToast && res.errors.length === 0) {
+        toast({
+          title: "كل الصلاحيات محدّثة ✅",
+          description: "لا توجد موديولات جديدة بحاجة للمزامنة.",
+        });
       }
+    } catch (e: any) {
+      toast({
+        title: "فشلت المزامنة",
+        description: e?.message || "حدث خطأ غير متوقع",
+        variant: "destructive",
+      });
     } finally {
       setSyncing(false);
     }
