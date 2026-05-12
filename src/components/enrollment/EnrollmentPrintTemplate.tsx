@@ -55,6 +55,19 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
     win.print();
   };
 
+  // توحيد تنسيق رقم الجوال السعودي: 05XXXXXXXX
+  const formatPhone = (raw?: string): string => {
+    if (!raw) return "لا يوجد";
+    let digits = String(raw).replace(/\D/g, "");
+    if (!digits) return "لا يوجد";
+    if (digits.startsWith("00966")) digits = digits.slice(5);
+    else if (digits.startsWith("966")) digits = digits.slice(3);
+    if (digits.length === 9 && digits.startsWith("5")) digits = "0" + digits;
+    digits = digits.replace(/^0+(?=\d)/, (m) => (digits.startsWith("05") ? "0" : ""));
+    if (!/^05\d{8}$/.test(digits)) return raw.trim() || "لا يوجد";
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  };
+
   const Field = ({ label, value }: { label: string; value: string }) => (
     <div className="field">
       <span className="field-label">{label}:</span>
