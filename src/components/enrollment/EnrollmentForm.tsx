@@ -250,6 +250,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
         student_id_number: studentIdClean,
         guardian_id_number: guardianIdClean,
         guardian_alt_phone: altPhoneClean,
+        student_phone: studentPhoneClean,
         student_age,
         student_grade,
       },
