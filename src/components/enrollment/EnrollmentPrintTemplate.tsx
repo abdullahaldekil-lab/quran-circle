@@ -63,7 +63,7 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
     if (digits.startsWith("00966")) digits = digits.slice(5);
     else if (digits.startsWith("966")) digits = digits.slice(3);
     if (digits.length === 9 && digits.startsWith("5")) digits = "0" + digits;
-    digits = digits.replace(/^0+(?=\d)/, (m) => (digits.startsWith("05") ? "0" : ""));
+    while (digits.length > 10 && digits.startsWith("0")) digits = digits.slice(1);
     if (!/^05\d{8}$/.test(digits)) return raw.trim() || "لا يوجد";
     return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
   };
