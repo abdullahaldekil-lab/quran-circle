@@ -55,6 +55,19 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
     win.print();
   };
 
+  // توحيد تنسيق رقم الجوال السعودي: 05XXXXXXXX
+  const formatPhone = (raw?: string): string => {
+    if (!raw) return "لا يوجد";
+    let digits = String(raw).replace(/\D/g, "");
+    if (!digits) return "لا يوجد";
+    if (digits.startsWith("00966")) digits = digits.slice(5);
+    else if (digits.startsWith("966")) digits = digits.slice(3);
+    if (digits.length === 9 && digits.startsWith("5")) digits = "0" + digits;
+    while (digits.length > 10 && digits.startsWith("0")) digits = digits.slice(1);
+    if (!/^05\d{8}$/.test(digits)) return raw.trim() || "لا يوجد";
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  };
+
   const Field = ({ label, value }: { label: string; value: string }) => (
     <div className="field">
       <span className="field-label">{label}:</span>
@@ -88,7 +101,7 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
             <Field label="تاريخ الميلاد هجري" value={data.student_birth_date_hijri ? formatHijriStringArabic(data.student_birth_date_hijri) : ""} />
             <Field label="المدرسة" value={data.student_school} />
             <Field label="الصف الدراسي" value={data.student_grade} />
-            <Field label="جوال الطالب" value={data.student_no_phone === "نعم" ? "لا يوجد" : data.student_phone} />
+            <Field label="جوال الطالب" value={data.student_no_phone === "نعم" ? "لا يوجد" : formatPhone(data.student_phone)} />
           </div>
         </div>
 
@@ -108,8 +121,8 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
             <Field label="صلة القرابة" value={data.guardian_relationship} />
             <Field label="رقم الهوية" value={data.guardian_id_number} />
             <Field label="عمل ولي الأمر" value={data.guardian_job} />
-            <Field label="رقم الجوال" value={data.guardian_phone} />
-            <Field label="جوال للتواصل (آخر)" value={data.guardian_alt_phone} />
+            <Field label="رقم الجوال" value={formatPhone(data.guardian_phone)} />
+            <Field label="جوال للتواصل (آخر)" value={formatPhone(data.guardian_alt_phone)} />
             <div className="full-width">
               <Field label="عنوان السكن" value={data.guardian_address} />
             </div>

@@ -150,15 +150,31 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
       return;
     }
 
-    const phoneClean = form.guardian_phone.replace(/\s/g, "");
-    if (phoneClean.length < 9) {
-      toast.error("رقم الجوال غير صحيح");
+    const normalizePhone = (raw: string): string => {
+      let d = raw.replace(/\D/g, "");
+      if (d.startsWith("00966")) d = d.slice(5);
+      else if (d.startsWith("966")) d = d.slice(3);
+      if (d.length === 9 && d.startsWith("5")) d = "0" + d;
+      while (d.length > 10 && d.startsWith("0")) d = d.slice(1);
+      return d;
+    };
+    const phoneClean = normalizePhone(form.guardian_phone);
+    if (!/^05\d{8}$/.test(phoneClean)) {
+      toast.error("رقم الجوال غير صحيح. يجب أن يكون 05XXXXXXXX");
       return;
     }
-    const altPhoneClean = form.guardian_alt_phone.replace(/\s/g, "");
-    if (altPhoneClean.length < 9) {
-      toast.error("رقم جوال التواصل الآخر غير صحيح");
+    const altPhoneClean = normalizePhone(form.guardian_alt_phone);
+    if (!/^05\d{8}$/.test(altPhoneClean)) {
+      toast.error("رقم جوال التواصل الآخر غير صحيح. يجب أن يكون 05XXXXXXXX");
       return;
+    }
+    let studentPhoneClean = "";
+    if (form.student_no_phone === "لا") {
+      studentPhoneClean = normalizePhone(form.student_phone);
+      if (!/^05\d{8}$/.test(studentPhoneClean)) {
+        toast.error("رقم جوال الطالب غير صحيح. يجب أن يكون 05XXXXXXXX");
+        return;
+      }
     }
 
     if (form.has_chronic_diseases === "نعم" && !form.chronic_diseases_details.trim()) {
@@ -234,6 +250,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
         student_id_number: studentIdClean,
         guardian_id_number: guardianIdClean,
         guardian_alt_phone: altPhoneClean,
+        student_phone: studentPhoneClean,
         student_age,
         student_grade,
       },
