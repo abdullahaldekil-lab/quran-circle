@@ -85,7 +85,7 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
             <Field label="اسم الطالب رباعي" value={data.student_full_name} />
             <Field label="الجنسية" value={data.student_nationality} />
             <Field label="رقم الهوية / الإقامة" value={data.student_id_number} />
-            <Field label="تاريخ الميلاد هجري" value={data.student_birth_date_hijri ? formatHijriStringArabic(data.student_birth_date_hijri) : (data.student_birth_date_gregorian ? formatDateHijriOnly(data.student_birth_date_gregorian) : "")} />
+            <Field label="تاريخ الميلاد هجري" value={data.student_birth_date_hijri ? formatHijriStringArabic(data.student_birth_date_hijri) : ""} />
             <Field label="المدرسة" value={data.student_school} />
             <Field label="الصف الدراسي" value={data.student_grade} />
           </div>
