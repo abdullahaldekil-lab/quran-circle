@@ -88,14 +88,16 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
             <Field label="تاريخ الميلاد هجري" value={data.student_birth_date_hijri ? formatHijriStringArabic(data.student_birth_date_hijri) : ""} />
             <Field label="المدرسة" value={data.student_school} />
             <Field label="الصف الدراسي" value={data.student_grade} />
+            <Field label="جوال الطالب" value={data.student_no_phone === "نعم" ? "لا يوجد" : data.student_phone} />
           </div>
         </div>
 
         <div className="section">
           <div className="section-title">البيانات الاجتماعية</div>
           <div className="grid">
-            <Field label="يعيش مع" value={data.living_with} />
+            <Field label="يعيش مع" value={data.living_with === "أخرى" ? `أخرى - ${data.living_with_other}` : data.living_with} />
             <Field label="حالة الوالدين" value={data.parents_status} />
+            <Field label="من يحضر الطالب" value={data.brought_by} />
           </div>
         </div>
 
@@ -105,7 +107,9 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
             <Field label="اسم ولي الأمر" value={data.guardian_full_name} />
             <Field label="صلة القرابة" value={data.guardian_relationship} />
             <Field label="رقم الهوية" value={data.guardian_id_number} />
+            <Field label="عمل ولي الأمر" value={data.guardian_job} />
             <Field label="رقم الجوال" value={data.guardian_phone} />
+            <Field label="جوال للتواصل (آخر)" value={data.guardian_alt_phone} />
             <div className="full-width">
               <Field label="عنوان السكن" value={data.guardian_address} />
             </div>
