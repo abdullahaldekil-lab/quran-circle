@@ -101,7 +101,7 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
             <Field label="تاريخ الميلاد هجري" value={data.student_birth_date_hijri ? formatHijriStringArabic(data.student_birth_date_hijri) : ""} />
             <Field label="المدرسة" value={data.student_school} />
             <Field label="الصف الدراسي" value={data.student_grade} />
-            <Field label="جوال الطالب" value={data.student_no_phone === "نعم" ? "لا يوجد" : data.student_phone} />
+            <Field label="جوال الطالب" value={data.student_no_phone === "نعم" ? "لا يوجد" : formatPhone(data.student_phone)} />
           </div>
         </div>
 
