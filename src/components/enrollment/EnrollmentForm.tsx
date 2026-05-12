@@ -18,17 +18,22 @@ export interface EnrollmentFormData {
   student_full_name: string;
   student_nationality: string;
   student_birth_date_hijri: string;
-  student_birth_date_gregorian: string;
   student_id_number: string;
+  student_phone: string;
+  student_no_phone: string;
   student_school: string;
   student_grade: string;
   student_age: string;
   living_with: string;
+  living_with_other: string;
+  brought_by: string;
   parents_status: string;
   guardian_full_name: string;
   guardian_relationship: string;
   guardian_id_number: string;
   guardian_phone: string;
+  guardian_alt_phone: string;
+  guardian_job: string;
   guardian_address: string;
   has_chronic_diseases: string;
   chronic_diseases_details: string;
@@ -46,17 +51,22 @@ const initialFormData: EnrollmentFormData = {
   student_full_name: "",
   student_nationality: "سعودي",
   student_birth_date_hijri: "",
-  student_birth_date_gregorian: "",
   student_id_number: "",
+  student_phone: "",
+  student_no_phone: "لا",
   student_school: "",
   student_grade: "",
   student_age: "",
   living_with: "والديه",
+  living_with_other: "",
+  brought_by: "",
   parents_status: "مستقرة",
   guardian_full_name: "",
   guardian_relationship: "أب",
   guardian_id_number: "",
   guardian_phone: "",
+  guardian_alt_phone: "",
+  guardian_job: "",
   guardian_address: "",
   has_chronic_diseases: "لا",
   chronic_diseases_details: "",
@@ -71,6 +81,7 @@ const initialFormData: EnrollmentFormData = {
 };
 
 const SCHOOL_GRADES = [
+  "قبل التعليم",
   "الأول الابتدائي", "الثاني الابتدائي", "الثالث الابتدائي",
   "الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي",
   "الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط",
@@ -91,14 +102,91 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
   };
 
   const handleSubmit = async () => {
-    if (!form.student_full_name.trim() || !form.guardian_full_name.trim() || !form.guardian_phone.trim()) {
-      toast.error("اسم الطالب واسم ولي الأمر ورقم الجوال مطلوبة");
+    // Required fields validation
+    const required: { key: keyof EnrollmentFormData; label: string }[] = [
+      { key: "student_full_name", label: "اسم الطالب" },
+      { key: "student_nationality", label: "الجنسية" },
+      { key: "student_birth_date_hijri", label: "تاريخ الميلاد الهجري" },
+      { key: "student_id_number", label: "رقم الهوية" },
+      { key: "student_school", label: "المدرسة" },
+      { key: "student_grade", label: "المرحلة الدراسية" },
+      { key: "student_age", label: "العمر" },
+      { key: "brought_by", label: "من يحضر الطالب" },
+      { key: "guardian_full_name", label: "اسم ولي الأمر" },
+      { key: "guardian_id_number", label: "رقم هوية ولي الأمر" },
+      { key: "guardian_phone", label: "رقم جوال ولي الأمر" },
+      { key: "guardian_alt_phone", label: "رقم جوال للتواصل (آخر)" },
+      { key: "guardian_job", label: "عمل ولي الأمر" },
+      { key: "guardian_address", label: "عنوان السكن" },
+      { key: "memorization_amount", label: "مقدار الحفظ الحالي" },
+    ];
+
+    for (const f of required) {
+      if (!String(form[f.key] || "").trim()) {
+        toast.error(`الحقل مطلوب: ${f.label}`);
+        return;
+      }
+    }
+
+    if (form.living_with === "أخرى" && !form.living_with_other.trim()) {
+      toast.error("يرجى توضيح مع من يعيش الطالب");
+      return;
+    }
+
+    if (form.student_no_phone === "لا" && !form.student_phone.trim()) {
+      toast.error("يرجى إدخال رقم جوال الطالب أو اختيار (لا يوجد)");
+      return;
+    }
+
+    // ID number validation: exactly 10 digits
+    const studentIdClean = form.student_id_number.replace(/\D/g, "");
+    if (studentIdClean.length !== 10) {
+      toast.error("رقم هوية الطالب يجب أن يكون 10 أرقام");
+      return;
+    }
+    const guardianIdClean = form.guardian_id_number.replace(/\D/g, "");
+    if (guardianIdClean.length !== 10) {
+      toast.error("رقم هوية ولي الأمر يجب أن يكون 10 أرقام");
       return;
     }
 
     const phoneClean = form.guardian_phone.replace(/\s/g, "");
     if (phoneClean.length < 9) {
-      toast.error("رقم الهاتف غير صحيح");
+      toast.error("رقم الجوال غير صحيح");
+      return;
+    }
+    const altPhoneClean = form.guardian_alt_phone.replace(/\s/g, "");
+    if (altPhoneClean.length < 9) {
+      toast.error("رقم جوال التواصل الآخر غير صحيح");
+      return;
+    }
+
+    if (form.has_chronic_diseases === "نعم" && !form.chronic_diseases_details.trim()) {
+      toast.error("يرجى توضيح الأمراض المزمنة");
+      return;
+    }
+    if (form.has_medications === "نعم" && !form.medications_details.trim()) {
+      toast.error("يرجى توضيح الأدوية المستخدمة");
+      return;
+    }
+    if (form.has_allergies === "نعم" && !form.allergies_details.trim()) {
+      toast.error("يرجى توضيح الحساسية");
+      return;
+    }
+    if (form.previous_enrollment === "نعم" && !form.previous_place.trim()) {
+      toast.error("يرجى توضيح اسم الحلقة السابقة");
+      return;
+    }
+
+    // One-time response check by student ID number
+    const { data: existingById } = await anonClient
+      .from("enrollment_requests")
+      .select("id, status, form_data")
+      .eq("student_full_name", form.student_full_name.trim());
+
+    const dupById = existingById?.find((r: any) => r.form_data?.student_id_number === studentIdClean);
+    if (dupById) {
+      toast.error("تم تقديم طلب مسبقاً بهذا الرقم. لا يمكن إرسال أكثر من طلب واحد لنفس رقم الهوية.");
       return;
     }
 
@@ -114,7 +202,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
     );
 
     if (activeDuplicate) {
-      toast.error("يوجد طلب مسجل مسبقاً لهذا الطالب بنفس رقم الجوال. يمكنك الاستعلام عن حالته.");
+      toast.error("يوجد طلب مسجل مسبقاً لهذا الطالب بنفس رقم الجوال.");
       return;
     }
 
@@ -133,19 +221,19 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
 
     setSubmitting(true);
 
-    const { student_full_name, guardian_full_name, guardian_phone, notes, student_birth_date_gregorian, student_age, student_grade, ...extraFields } = form;
-
-    const birthYear = student_birth_date_gregorian ? parseInt(student_birth_date_gregorian.split("-")[0] || student_birth_date_gregorian.split("/")[0]) : null;
+    const { student_full_name, guardian_full_name, guardian_phone, notes, student_age, student_grade, ...extraFields } = form;
 
     const { error } = await anonClient.from("enrollment_requests").insert({
       student_full_name: student_full_name.trim(),
       guardian_full_name: guardian_full_name.trim(),
       guardian_phone: phoneClean,
-      student_birth_year: birthYear && !isNaN(birthYear) ? birthYear : null,
+      student_birth_year: null,
       notes: notes.trim() || null,
       form_data: {
         ...extraFields,
-        student_birth_date_gregorian,
+        student_id_number: studentIdClean,
+        guardian_id_number: guardianIdClean,
+        guardian_alt_phone: altPhoneClean,
         student_age,
         student_grade,
       },
@@ -179,12 +267,19 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>الجنسية</Label>
+              <Label>الجنسية *</Label>
               <Input value={form.student_nationality} onChange={(e) => set("student_nationality", e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>رقم الهوية / الإقامة</Label>
-              <Input value={form.student_id_number} onChange={(e) => set("student_id_number", e.target.value)} dir="ltr" className="text-right" />
+              <Label>رقم الهوية / الإقامة * (10 أرقام)</Label>
+              <Input
+                value={form.student_id_number}
+                onChange={(e) => set("student_id_number", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                dir="ltr"
+                className="text-right"
+                inputMode="numeric"
+                maxLength={10}
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -193,17 +288,13 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
               <Input value={form.student_birth_date_hijri} onChange={(e) => set("student_birth_date_hijri", e.target.value)} placeholder="مثال: 1437/05/15" dir="ltr" className="text-right" />
             </div>
             <div className="space-y-1">
-              <Label>تاريخ الميلاد ميلادي</Label>
-              <Input value={form.student_birth_date_gregorian} onChange={(e) => set("student_birth_date_gregorian", e.target.value)} placeholder="مثال: 2015/08/20" dir="ltr" className="text-right" />
+              <Label>العمر *</Label>
+              <Input value={form.student_age} onChange={(e) => set("student_age", e.target.value)} placeholder="مثال: 10 سنوات" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>العمر</Label>
-              <Input value={form.student_age} onChange={(e) => set("student_age", e.target.value)} placeholder="مثال: 10 سنوات" />
-            </div>
-            <div className="space-y-1">
-              <Label>المرحلة الدراسية</Label>
+              <Label>المرحلة الدراسية *</Label>
               <Select value={form.student_grade} onValueChange={(v) => set("student_grade", v)}>
                 <SelectTrigger><SelectValue placeholder="اختر المرحلة" /></SelectTrigger>
                 <SelectContent>
@@ -213,10 +304,35 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1">
+              <Label>المدرسة *</Label>
+              <Input value={form.student_school} onChange={(e) => set("student_school", e.target.value)} />
+            </div>
           </div>
-          <div className="space-y-1">
-            <Label>المدرسة</Label>
-            <Input value={form.student_school} onChange={(e) => set("student_school", e.target.value)} />
+
+          {/* Student Phone */}
+          <div className="space-y-2 border-t pt-3">
+            <Label>هل لدى الطالب رقم جوال؟ *</Label>
+            <RadioGroup value={form.student_no_phone} onValueChange={(v) => set("student_no_phone", v)} className="flex gap-4">
+              <div className="flex items-center gap-1.5">
+                <RadioGroupItem value="لا" id="stp-yes" />
+                <Label htmlFor="stp-yes" className="font-normal cursor-pointer">نعم لديه رقم</Label>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <RadioGroupItem value="نعم" id="stp-no" />
+                <Label htmlFor="stp-no" className="font-normal cursor-pointer">لا يوجد</Label>
+              </div>
+            </RadioGroup>
+            {form.student_no_phone === "لا" && (
+              <Input
+                value={form.student_phone}
+                onChange={(e) => set("student_phone", e.target.value)}
+                placeholder="05xxxxxxxx"
+                dir="ltr"
+                className="text-right"
+                type="tel"
+              />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -231,7 +347,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1">
-            <Label>من يعيش معه الطالب</Label>
+            <Label>من يعيش معه الطالب *</Label>
             <RadioGroup value={form.living_with} onValueChange={(v) => set("living_with", v)} className="flex flex-wrap gap-4">
               {["والديه", "الأب", "الأم", "أخرى"].map((opt) => (
                 <div key={opt} className="flex items-center gap-1.5">
@@ -240,17 +356,33 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
                 </div>
               ))}
             </RadioGroup>
+            {form.living_with === "أخرى" && (
+              <Input
+                value={form.living_with_other}
+                onChange={(e) => set("living_with_other", e.target.value)}
+                placeholder="يرجى التوضيح..."
+                className="mt-2"
+              />
+            )}
           </div>
           <div className="space-y-1">
-            <Label>الحالة الاجتماعية للوالدين</Label>
+            <Label>الحالة الاجتماعية للوالدين *</Label>
             <RadioGroup value={form.parents_status} onValueChange={(v) => set("parents_status", v)} className="flex flex-wrap gap-4">
-              {["مستقرة", "منفصلين", "متوفى الأب", "متوفاة الأم"].map((opt) => (
+              {["مستقرة", "منفصلين", "متوفى الأب", "متوفاة الأم", "متوفى الوالدين"].map((opt) => (
                 <div key={opt} className="flex items-center gap-1.5">
                   <RadioGroupItem value={opt} id={`parents-${opt}`} />
                   <Label htmlFor={`parents-${opt}`} className="font-normal cursor-pointer">{opt}</Label>
                 </div>
               ))}
             </RadioGroup>
+          </div>
+          <div className="space-y-1">
+            <Label>من يحضر الطالب للمجمع *</Label>
+            <Input
+              value={form.brought_by}
+              onChange={(e) => set("brought_by", e.target.value)}
+              placeholder="مثال: الأب / الأم / السائق / يأتي بنفسه"
+            />
           </div>
         </CardContent>
       </Card>
@@ -270,7 +402,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>صلة القرابة</Label>
+              <Label>صلة القرابة *</Label>
               <Select value={form.guardian_relationship} onValueChange={(v) => set("guardian_relationship", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -281,8 +413,15 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>رقم هوية ولي الأمر</Label>
-              <Input value={form.guardian_id_number} onChange={(e) => set("guardian_id_number", e.target.value)} dir="ltr" className="text-right" />
+              <Label>رقم هوية ولي الأمر * (10 أرقام)</Label>
+              <Input
+                value={form.guardian_id_number}
+                onChange={(e) => set("guardian_id_number", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                dir="ltr"
+                className="text-right"
+                inputMode="numeric"
+                maxLength={10}
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -291,7 +430,17 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
               <Input value={form.guardian_phone} onChange={(e) => set("guardian_phone", e.target.value)} placeholder="05xxxxxxxx" dir="ltr" className="text-right" type="tel" />
             </div>
             <div className="space-y-1">
-              <Label>عنوان السكن</Label>
+              <Label>رقم جوال للتواصل (آخر) *</Label>
+              <Input value={form.guardian_alt_phone} onChange={(e) => set("guardian_alt_phone", e.target.value)} placeholder="05xxxxxxxx" dir="ltr" className="text-right" type="tel" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>عمل ولي الأمر *</Label>
+              <Input value={form.guardian_job} onChange={(e) => set("guardian_job", e.target.value)} placeholder="مثال: معلم / موظف / متقاعد" />
+            </div>
+            <div className="space-y-1">
+              <Label>عنوان السكن *</Label>
               <Input value={form.guardian_address} onChange={(e) => set("guardian_address", e.target.value)} />
             </div>
           </div>
@@ -308,9 +457,9 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
         </CardHeader>
         <CardContent className="space-y-3">
           {[
-            { key: "has_chronic_diseases" as const, detail: "chronic_diseases_details" as const, label: "هل يعاني الطالب من أمراض مزمنة؟" },
-            { key: "has_medications" as const, detail: "medications_details" as const, label: "هل يستخدم أدوية بشكل مستمر؟" },
-            { key: "has_allergies" as const, detail: "allergies_details" as const, label: "هل يعاني من حساسية؟" },
+            { key: "has_chronic_diseases" as const, detail: "chronic_diseases_details" as const, label: "هل يعاني الطالب من أمراض مزمنة؟ *" },
+            { key: "has_medications" as const, detail: "medications_details" as const, label: "هل يستخدم أدوية بشكل مستمر؟ *" },
+            { key: "has_allergies" as const, detail: "allergies_details" as const, label: "هل يعاني من حساسية؟ *" },
           ].map(({ key, detail, label }) => (
             <div key={key} className="space-y-2">
               <div className="flex items-center gap-4">
@@ -339,7 +488,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
         <CardContent className="space-y-3">
           <div className="space-y-2">
             <div className="flex items-center gap-4">
-              <Label className="flex-1">هل سبق التسجيل في حلقة تحفيظ؟</Label>
+              <Label className="flex-1">هل سبق التسجيل في حلقة تحفيظ؟ *</Label>
               <RadioGroup value={form.previous_enrollment} onValueChange={(v) => set("previous_enrollment", v)} className="flex gap-3">
                 <div className="flex items-center gap-1"><RadioGroupItem value="نعم" id="prev-yes" /><Label htmlFor="prev-yes" className="font-normal cursor-pointer">نعم</Label></div>
                 <div className="flex items-center gap-1"><RadioGroupItem value="لا" id="prev-no" /><Label htmlFor="prev-no" className="font-normal cursor-pointer">لا</Label></div>
@@ -350,8 +499,8 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
             )}
           </div>
           <div className="space-y-1">
-            <Label>مقدار الحفظ الحالي</Label>
-            <Input value={form.memorization_amount} onChange={(e) => set("memorization_amount", e.target.value)} placeholder="مثال: 5 أجزاء" />
+            <Label>مقدار الحفظ الحالي *</Label>
+            <Input value={form.memorization_amount} onChange={(e) => set("memorization_amount", e.target.value)} placeholder="مثال: 5 أجزاء / لا يوجد" />
           </div>
           <div className="space-y-1">
             <Label>ملاحظات (اختياري)</Label>
