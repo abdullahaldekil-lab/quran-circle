@@ -121,8 +121,8 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
             <Field label="صلة القرابة" value={data.guardian_relationship} />
             <Field label="رقم الهوية" value={data.guardian_id_number} />
             <Field label="عمل ولي الأمر" value={data.guardian_job} />
-            <Field label="رقم الجوال" value={data.guardian_phone} />
-            <Field label="جوال للتواصل (آخر)" value={data.guardian_alt_phone} />
+            <Field label="رقم الجوال" value={formatPhone(data.guardian_phone)} />
+            <Field label="جوال للتواصل (آخر)" value={formatPhone(data.guardian_alt_phone)} />
             <div className="full-width">
               <Field label="عنوان السكن" value={data.guardian_address} />
             </div>
