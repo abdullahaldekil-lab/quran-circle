@@ -79,16 +79,16 @@ const EnrollmentCombinedPrint = ({
           .stamp-circle { width: 70px; height: 70px; border: 2px dashed #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 10px; color: #000; text-align: center; padding: 6px; }
 
           /* ─── Section (registration form) ─── */
-          .section { margin-bottom: 6px; border-bottom: 1.5px solid #000; padding-bottom: 5px; }
+          .section { margin-bottom: 6px; border-bottom: 1.5px solid #B8860B; padding-bottom: 5px; }
           .section:last-of-type { border-bottom: none; }
-          .section-title { background: #f0f0f0; padding: 3px 10px; font-weight: 700; font-size: 12.5px; border-right: 4px solid #000; color: #000; margin-bottom: 4px; }
+          .section-title { background: #FFF8E1; padding: 3px 10px; font-weight: 700; font-size: 12.5px; border-right: 4px solid #B8860B; color: #000; margin-bottom: 4px; }
           .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 14px; }
           .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px 10px; }
-          .field { display: flex; gap: 4px; padding: 2px 0; border-bottom: 1px dotted #555; font-size: 12px; align-items: baseline; }
+          .field { display: flex; gap: 4px; padding: 2px 0; border-bottom: 1px dotted #B8860B; font-size: 12px; align-items: baseline; }
           .field-label { font-weight: 600; white-space: nowrap; min-width: 90px; color: #000; flex-shrink: 0; }
           .field-value { flex: 1; color: #000; }
           .full-span { grid-column: 1 / -1; }
-          .commitments { border: 1.5px solid #000; border-right: 4px solid #000; padding: 6px 12px; font-size: 11.5px; line-height: 1.5; margin: 6px 0; }
+          .commitments { border: 1.5px solid #B8860B; border-right: 4px solid #B8860B; padding: 6px 12px; font-size: 11.5px; line-height: 1.5; margin: 6px 0; }
 
           /* ─── Footer ─── */
           .footer { text-align: center; margin-top: 8px; font-size: 10px; color: #000; border-top: 1.5px solid #000; padding-top: 4px; }
@@ -299,7 +299,7 @@ const EnrollmentCombinedPrint = ({
             </div>
           </div>
 
-          <div className="footer">
+          <div className="footer" style={{ borderTopColor: "#B8860B" }}>
             مجمع حويلان لتحفيظ القرآن الكريم — جميع الحقوق محفوظة
           </div>
         </div>
