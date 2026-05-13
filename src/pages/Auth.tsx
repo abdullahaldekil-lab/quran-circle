@@ -70,7 +70,7 @@ const Auth = () => {
       </Helmet>
       <main className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <img src={huwaylanLogo} alt="شعار مجمع حويلان لتحفيظ القرآن الكريم" className="w-20 h-20 object-contain mx-auto mb-4" />
+          <img src={huwaylanLogo} alt="شعار مجمع حويلان لتحفيظ القرآن الكريم" width={80} height={80} fetchPriority="high" decoding="async" className="w-20 h-20 object-contain mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-foreground">مجمع حويلان لتحفيظ القرآن الكريم</h1>
           <p className="text-muted-foreground mt-2">منصة إدارة الحلقات والطلاب وأولياء الأمور</p>
         </div>
