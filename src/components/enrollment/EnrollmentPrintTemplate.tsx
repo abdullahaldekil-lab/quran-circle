@@ -87,7 +87,7 @@ const EnrollmentPrintTemplate = ({ data }: Props) => {
       {/* Hidden print content */}
       <div ref={printRef} style={{ position: "absolute", left: "-9999px", top: 0 }}>
         <div className="header">
-          <img src={huwaylanLogo} alt="logo" />
+          <img src={huwaylanLogo} alt="شعار مجمع حويلان لتحفيظ القرآن الكريم" />
           <h1>مجمع حويلان لتحفيظ القرآن الكريم</h1>
           <p>استمارة تسجيل طالب جديد</p>
         </div>

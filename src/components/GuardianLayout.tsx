@@ -28,7 +28,7 @@ const GuardianLayout = ({ children, guardianName }: GuardianLayoutProps) => {
       <header className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={huwaylanLogo} alt="مجمع حويلان" className="w-9 h-9 rounded-lg object-contain" />
+            <img src={huwaylanLogo} alt="شعار مجمع حويلان لتحفيظ القرآن الكريم" className="w-9 h-9 rounded-lg object-contain" />
             <div>
               <span className="font-bold text-foreground text-sm">بوابة ولي الأمر</span>
               {guardianName && (
@@ -41,6 +41,8 @@ const GuardianLayout = ({ children, guardianName }: GuardianLayoutProps) => {
             size="icon"
             onClick={() => setMenuOpen(!menuOpen)}
             className="h-9 w-9"
+            aria-label={menuOpen ? "إغلاق القائمة" : "فتح القائمة"}
+            aria-expanded={menuOpen}
           >
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
