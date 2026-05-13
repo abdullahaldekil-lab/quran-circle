@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://quran-circle.enter.com.sa/sitemap.xml
