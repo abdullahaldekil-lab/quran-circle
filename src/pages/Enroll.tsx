@@ -57,7 +57,7 @@ const Enroll = () => {
       <main className="max-w-lg mx-auto p-4 py-8 space-y-5">
         {/* Header */}
         <div className="text-center space-y-3 pb-4 border-b-2 border-secondary/60">
-          <img src={huwaylanLogo} alt="شعار مجمع حويلان لتحفيظ القرآن الكريم" className="w-16 h-16 rounded-2xl mx-auto object-contain ring-2 ring-secondary/40 ring-offset-2 ring-offset-background" />
+          <img src={huwaylanLogo} alt="شعار مجمع حويلان لتحفيظ القرآن الكريم" width={64} height={64} fetchPriority="high" decoding="async" className="w-16 h-16 rounded-2xl mx-auto object-contain ring-2 ring-secondary/40 ring-offset-2 ring-offset-background" />
           <h1 className="text-xl font-bold text-secondary">استمارة التسجيل في مجمع حويلان لتحفيظ القرآن الكريم</h1>
           <p className="text-muted-foreground text-sm">قدّم طلب الالتحاق وتابع حالته</p>
         </div>
