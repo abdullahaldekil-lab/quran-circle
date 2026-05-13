@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,11 +60,19 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md animate-fade-in">
+      <Helmet>
+        <title>تسجيل الدخول — مجمع حويلان لتحفيظ القرآن</title>
+        <meta name="description" content="تسجيل دخول العاملين والمعلمين في منصة مجمع حويلان لإدارة حلقات تحفيظ القرآن الكريم." />
+        <link rel="canonical" href="https://quran-circle.enter.com.sa/auth" />
+        <meta property="og:title" content="تسجيل الدخول — مجمع حويلان" />
+        <meta property="og:description" content="بوابة دخول العاملين في مجمع حويلان لتحفيظ القرآن الكريم." />
+        <meta property="og:url" content="https://quran-circle.enter.com.sa/auth" />
+      </Helmet>
+      <main className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <img src={huwaylanLogo} alt="مجمع حويلان" className="w-20 h-20 object-contain mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-foreground">مجمع حويلان</h1>
-          <p className="text-muted-foreground mt-2">لإدارة حلقات تحفيظ القرآن الكريم</p>
+          <img src={huwaylanLogo} alt="شعار مجمع حويلان لتحفيظ القرآن الكريم" className="w-20 h-20 object-contain mx-auto mb-4" />
+          <h1 className="text-3xl font-bold text-foreground">مجمع حويلان لتحفيظ القرآن الكريم</h1>
+          <p className="text-muted-foreground mt-2">منصة إدارة الحلقات والطلاب وأولياء الأمور</p>
         </div>
 
         <Card>
@@ -136,7 +145,7 @@ const Auth = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 };

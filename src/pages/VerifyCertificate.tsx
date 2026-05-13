@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,10 +44,19 @@ export default function VerifyCertificate() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-8 px-4" dir="rtl">
-      <div className="max-w-2xl mx-auto">
+      <Helmet>
+        <title>التحقق من صحة الشهادة — مجمع حويلان</title>
+        <meta name="description" content="تحقق من صحة شهادات نهاية المستوى الصادرة من مجمع حويلان لتحفيظ القرآن الكريم باستخدام رقم الشهادة." />
+        <link rel="canonical" href="https://quran-circle.enter.com.sa/verify-certificate" />
+        <meta property="og:title" content="التحقق من صحة الشهادة — مجمع حويلان" />
+        <meta property="og:description" content="تحقق من صحة شهادات نهاية المستوى الصادرة من مجمع حويلان لتحفيظ القرآن الكريم." />
+        <meta property="og:url" content="https://quran-circle.enter.com.sa/verify-certificate" />
+      </Helmet>
+      <main className="max-w-2xl mx-auto">
         <Link to="/dashboard" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4">
           <ArrowLeft className="w-4 h-4 ml-1" /> العودة
         </Link>
+        <h1 className="sr-only">التحقق من صحة الشهادة</h1>
 
         <Card>
           <CardHeader>
@@ -104,7 +114,7 @@ export default function VerifyCertificate() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }

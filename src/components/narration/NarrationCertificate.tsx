@@ -47,7 +47,7 @@ export default function NarrationCertificate({
 
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: "30px" }}>
-        <img src={huwaylanLogo} alt="شعار" style={{ width: "70px", height: "70px", objectFit: "contain", margin: "0 auto 10px" }} />
+        <img src={huwaylanLogo} alt="شعار مجمع حويلان لتحفيظ القرآن الكريم" style={{ width: "70px", height: "70px", objectFit: "contain", margin: "0 auto 10px" }} />
         <h1 style={{ fontSize: "22px", fontWeight: "bold", color: "#1e3a5f", margin: "0 0 4px" }}>مجمع حويلان لتحفيظ القرآن الكريم</h1>
         <h2 style={{ fontSize: "18px", fontWeight: "bold", color: "#2563eb", margin: "0 0 4px" }}>شهادة يوم السرد القرآني</h2>
         <div style={{ width: "100px", height: "3px", background: "#2563eb", margin: "8px auto" }} />

@@ -418,6 +418,8 @@ const Students = () => {
                     disabled={eliteToggling === student.id}
                     className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors"
                     title={isElite ? "إزالة من مسار التميّز" : "إضافة لمسار التميّز"}
+                    aria-label={isElite ? `إزالة ${student.full_name} من مسار التميّز` : `إضافة ${student.full_name} لمسار التميّز`}
+                    aria-pressed={isElite}
                   >
                     <Star
                       className={`w-5 h-5 transition-colors ${isElite ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40 hover:text-amber-400"}`}
