@@ -299,7 +299,7 @@ const EnrollmentCombinedPrint = ({
             </div>
           </div>
 
-          <div className="footer">
+          <div className="footer" style={{ borderTopColor: "#B8860B" }}>
             مجمع حويلان لتحفيظ القرآن الكريم — جميع الحقوق محفوظة
           </div>
         </div>
