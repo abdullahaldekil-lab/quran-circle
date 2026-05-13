@@ -73,7 +73,7 @@ const AcceptanceLetterTemplate = ({ studentName, guardianName, guardianPhone, ha
       </Button>
 
       {/* Hidden print content */}
-      <div ref={printRef} style={{ /* position: "absolute", left: "-9999px", top: 0 */ }}>
+      <div ref={printRef} style={{ position: "absolute", left: "-9999px", top: 0 }}>
         <div className="page">
           <div className="header">
             <img src={huwaylanLogo} alt="logo" />
