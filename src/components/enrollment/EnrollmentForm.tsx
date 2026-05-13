@@ -512,7 +512,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
               </RadioGroup>
             </div>
             {form.previous_enrollment === "نعم" && (
-              <Input value={form.previous_place} onChange={(e) => set("previous_place", e.target.value)} placeholder="اسم الحلقة / المسجد السابق" />
+              <Input value={form.previous_place} onChange={(e) => set("previous_place", e.target.value)} placeholder="اسم الحلقة / المجمع السابق" />
             )}
           </div>
           <div className="space-y-1">
