@@ -40,9 +40,9 @@ const Enroll = () => {
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background" dir="rtl">
       <div className="max-w-lg mx-auto p-4 py-8 space-y-5">
         {/* Header */}
-        <div className="text-center space-y-3">
-          <img src={huwaylanLogo} alt="مجمع حويلان" className="w-16 h-16 rounded-2xl mx-auto object-contain" />
-          <h1 className="text-xl font-bold">مجمع حويلان لتحفيظ القرآن الكريم</h1>
+        <div className="text-center space-y-3 pb-4 border-b-2 border-secondary/60">
+          <img src={huwaylanLogo} alt="مجمع حويلان" className="w-16 h-16 rounded-2xl mx-auto object-contain ring-2 ring-secondary/40 ring-offset-2 ring-offset-background" />
+          <h1 className="text-xl font-bold text-secondary">مجمع حويلان لتحفيظ القرآن الكريم</h1>
           <p className="text-muted-foreground text-sm">استمارة تسجيل طالب جديد</p>
         </div>
 

@@ -126,25 +126,16 @@ const AcceptanceLetterTemplate = ({ studentName, guardianName, guardianPhone, ha
             <h3>تعليمات مهمة:</h3>
             <ol>
               <li>الالتزام بمواعيد الحلقة المحددة وعدم التأخر.</li>
-              <li>إحضار المصحف الشريف والأدوات المطلوبة.</li>
+              <li>إحضار كتاب التلقين والأدوات المطلوبة كل يوم.</li>
               <li>الالتزام بالسلوك الحسن واحترام المعلمين والزملاء.</li>
               <li>التواصل المستمر مع معلم الحلقة ومتابعة تقدم الطالب.</li>
               <li>إبلاغ الإدارة في حال الغياب مسبقاً.</li>
+              <li>متابعة سير الطالب يومياً في المنزل.</li>
             </ol>
           </div>
 
-          <div className="signature-area">
-            <div className="sig-box">
-              <div className="sig-line"></div>
-              <div className="sig-label">توقيع ولي الأمر</div>
-            </div>
-            <div className="stamp-area">
-              <div className="stamp-placeholder">ختم المجمع</div>
-            </div>
-            <div className="sig-box">
-              <div className="sig-line"></div>
-              <div className="sig-label">مدير المجمع</div>
-            </div>
+          <div className="stamp-area" style={{ textAlign: "center", marginTop: "16px", paddingTop: "10px", borderTop: "1.5px solid #000" }}>
+            <div className="stamp-placeholder">ختم المجمع</div>
           </div>
 
           <div className="footer">
