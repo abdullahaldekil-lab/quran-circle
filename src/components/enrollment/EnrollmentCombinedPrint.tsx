@@ -163,26 +163,16 @@ const EnrollmentCombinedPrint = ({
             <h3>تعليمات مهمة يُرجى الالتزام بها:</h3>
             <ol>
               <li>الالتزام بمواعيد الحلقة المحددة وعدم التأخر.</li>
-              <li>إحضار المصحف الشريف والأدوات المطلوبة في كل جلسة.</li>
+              <li>إحضار كتاب التلقين والأدوات المطلوبة كل يوم.</li>
               <li>الالتزام بالسلوك الحسن واحترام المعلمين والزملاء.</li>
-              <li>التواصل المستمر مع معلم الحلقة ومتابعة تقدم الطالب يومياً.</li>
+              <li>التواصل المستمر مع معلم الحلقة ومتابعة تقدم الطالب.</li>
               <li>إبلاغ إدارة المجمع مسبقاً في حال الغياب أو التأخر.</li>
-              <li>المراجعة اليومية وتلاوة ما تم حفظه أمام ولي الأمر.</li>
+              <li>متابعة سير الطالب يومياً في المنزل.</li>
             </ol>
           </div>
 
-          <div className="signature-area">
-            <div className="sig-box">
-              <div className="sig-line" />
-              <div className="sig-label">توقيع ولي الأمر</div>
-            </div>
-            <div>
-              <div className="stamp-circle">ختم<br />المجمع</div>
-            </div>
-            <div className="sig-box">
-              <div className="sig-line" />
-              <div className="sig-label">مدير المجمع</div>
-            </div>
+          <div style={{ textAlign: "center", marginTop: "16px", paddingTop: "10px", borderTop: "1.5px solid #000" }}>
+            <div className="stamp-circle" style={{ margin: "0 auto" }}>ختم<br />المجمع</div>
           </div>
 
           <div className="footer">
