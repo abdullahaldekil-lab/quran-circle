@@ -114,7 +114,7 @@ export default function VerifyCertificate() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }
