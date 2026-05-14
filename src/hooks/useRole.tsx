@@ -34,6 +34,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/send-notification", "/bulk-email",
     "/permissions-management", "/internal-requests",
     "/programs-overview", "/halaqa-performance", "/enrollment-form",
+    "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/teacher-evaluations",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
@@ -63,6 +64,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-attendance-report",
     "/notification-preferences", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
     "/enrollment-form",
+    "/admin/guardian-messages", "/admin/guardian-excuses",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
