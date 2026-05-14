@@ -34,7 +34,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/send-notification", "/bulk-email",
     "/permissions-management", "/internal-requests",
     "/programs-overview", "/halaqa-performance", "/enrollment-form",
-    "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/teacher-evaluations",
+    "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/teacher-evaluations", "/admin/guardian-approvals",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
