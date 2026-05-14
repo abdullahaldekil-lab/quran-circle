@@ -979,6 +979,66 @@ export type Database = {
           },
         ]
       }
+      guardian_link_requests: {
+        Row: {
+          created_at: string
+          guardian_id: string
+          id: string
+          matched_student_id: string | null
+          rejection_reason: string | null
+          relationship: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          student_name_hint: string | null
+          student_national_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guardian_id: string
+          id?: string
+          matched_student_id?: string | null
+          rejection_reason?: string | null
+          relationship?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_name_hint?: string | null
+          student_national_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guardian_id?: string
+          id?: string
+          matched_student_id?: string | null
+          rejection_reason?: string | null
+          relationship?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_name_hint?: string | null
+          student_national_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_link_requests_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardian_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guardian_link_requests_matched_student_id_fkey"
+            columns: ["matched_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guardian_messages: {
         Row: {
           body: string
