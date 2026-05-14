@@ -64,7 +64,7 @@ const KpiDashboard = () => {
       halaqatRes, studentsRes, recitationsRes, attendanceRes,
       goalsRes, objectivesRes, tasksRes, rewardsRes, transactionsRes,
     ] = await Promise.all([
-      supabase.from("halaqat").select("id, name").eq("active", true),
+      supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true),
       supabase.from("students").select("*").eq("status", "active"),
       supabase.from("recitation_records").select("*").gte("record_date", monthStart).lte("record_date", today),
       supabase.from("attendance").select("*").gte("attendance_date", monthStart).lte("attendance_date", today),
@@ -75,7 +75,10 @@ const KpiDashboard = () => {
       isManager ? supabase.from("financial_transactions").select("*") : Promise.resolve({ data: [] }),
     ]);
 
-    setHalaqat(halaqatRes.data || []);
+    const { filterTahfeezOnly } = await import("@/lib/halaqaType");
+    const tahfeezHalaqat = filterTahfeezOnly((halaqatRes.data as any[]) || []);
+    const tahfeezIds = new Set(tahfeezHalaqat.map((h: any) => h.id));
+    setHalaqat(tahfeezHalaqat);
     setStudents(studentsRes.data || []);
     setRecitations(recitationsRes.data || []);
     setAttendance(attendanceRes.data || []);
