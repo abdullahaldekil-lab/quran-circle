@@ -1,47 +1,71 @@
-## الهدف
-فصل كامل بين طلاب حلقات **التحفيظ** وطلاب حلقات **التلقين** في جميع شاشات التحفيظ، بحيث لا تظهر بيانات حلقات/طلاب التلقين داخل شاشات التسميع والسرد والمراجعة والترتيب وغيرها.
+## خطة تطوير بوابة ولي الأمر
 
-## معيار التمييز (موحَّد)
-الحلقة تُعتبر **تلقين** إذا تحقق أحد الشرطين:
-- `halaqat.talqeen_curriculum_id IS NOT NULL`، أو
-- اسم الحلقة يحتوي على كلمة "تلقين" (للحلقات القديمة قبل ربط المنهج).
+إضافة 8 مهام جديدة على بوابة ولي الأمر بشكل تدريجي ومتكامل مع النظام الحالي.
 
-سيتم إنشاء دالة مساعدة موحَّدة `isTalqeenHalaqa(h)` و `filterTahfeezOnly(list)` في ملف `src/lib/halaqaType.ts` لاستخدامها في كل المكونات (مصدر واحد للحقيقة بدلاً من فلترة يدوية متناثرة).
+### المرحلة 1 — إضافات بدون تغييرات قاعدة بيانات (سريعة)
 
-## الشاشات التي ستُحدَّث (إظهار حلقات/طلاب التحفيظ فقط)
-1. **التسميع** — `src/pages/Recitation.tsx` (قائمة الحلقات في الأعلى)
-2. **السرد القرآني** — `src/pages/QuranNarration.tsx` (مفلتر جزئيًا حاليًا — توحيد المنطق)
-3. **جلسة السرد** — `src/pages/NarrationSession.tsx`
-4. **اختبار السرد** — `src/pages/NarrationTest.tsx` و `src/pages/ReviewTest.tsx`
-5. **إحصائيات السرد** — `src/pages/NarrationStats.tsx`
-6. **تقارير السرد** — `src/pages/NarrationReports.tsx`
-7. **الترتيب الشهري** — `src/pages/Rankings.tsx`
-8. **التميز** + التقارير + الجلسة — `src/pages/Excellence*.tsx`
-9. **خطة الطالب السنوية** — `src/pages/StudentAnnualPlan.tsx`
-10. **لوحة KPI** و**تحليلات الحلقات** — `src/pages/KpiDashboard.tsx` + `src/components/dashboard/HalaqatAnalytics.tsx` (قسم التحفيظ فقط)
-11. **شاشة الحلقات** — `src/pages/Halaqat.tsx` (استبدال الفلتر الحالي القائم على الاسم بالدالة الموحَّدة)
-12. **استيراد CSV / تسجيل الطلاب** — `src/pages/BulkImport.tsx`, `PreRegistration.tsx`, `EnrollmentRequests.tsx` (عند اختيار "حلقة تحفيظ")
+1. **مركز الإشعارات داخل البوابة**
+   - زر جرس في `GuardianLayout` يعرض إشعارات ولي الأمر (غياب، إنذار، رحلة، شارة جديدة)
+   - يستفيد من جدول `notifications` الموجود (filter على guardian user_id)
+   - Realtime subscription لظهور فوري
 
-## الشاشات التي لن تتأثر
-- `TalqeenHalaqat.tsx`، `TalqeenCurricula.tsx`، وكل ما يخص التلقين يبقى كما هو.
-- شاشات عامة مثل **الحضور، إدارة الطلاب، ولي الأمر، المالية** ستظل تعرض كل الحلقات (لأنها مشتركة) — *إلا إذا طلبت فصلها أيضًا*.
+2. **تقرير الحضور الشهري القابل للطباعة**
+   - تبويب جديد "تقرير شهري" في `GuardianChildProfile`
+   - شبكة شهرية (هجري/ميلادي) مع رموز الحالات
+   - زر طباعة وزر تصدير PDF (بنفس نمط `StudentAttendanceReport`)
 
-## التفاصيل التقنية
-```ts
-// src/lib/halaqaType.ts
-export const isTalqeenHalaqa = (h: any) =>
-  !!h?.talqeen_curriculum_id || (h?.name || "").includes("تلقين");
+3. **المستحقات المالية وسجل المدفوعات**
+   - تبويب "المالية" يعرض من جدول `student_finances` / `financial_transactions` الموجود
+   - الرسوم المستحقة والمدفوعة والمتبقية
+   - قائمة الإيصالات مع تواريخ
 
-export const filterTahfeezOnly = <T extends { talqeen_curriculum_id?: any; name?: string }>(list: T[]) =>
-  list.filter((h) => !isTalqeenHalaqa(h));
-```
-سيتم استبدال:
-- `setHalaqat(list.filter(h => !h.name.includes("تلقين")))` → `setHalaqat(filterTahfeezOnly(list))`
-- في الاستعلامات التي تجلب الطلاب لأغراض التحفيظ: جلب الحلقات أولاً وفلترتها، ثم استخدام `halaqa_id IN (...)` لجلب الطلاب — لتجنّب ظهور طلاب التلقين في قوائم التسميع/السرد/الترتيب.
+4. **متابعة الباص**
+   - تبويب "الباص" يعرض اسم الباص ورقم السائق ومسار الذهاب/العودة من جدول `buses` و`bus_students`
+   - حالة الباص الحالية إن توفرت
 
-## نقاط تحتاج تأكيدك
-1. هل تريد تطبيق الفصل على **جميع** الشاشات المذكورة دفعة واحدة، أم البدء بالتسميع والسرد فقط؟
-2. شاشة **الحضور** و**الترتيب**: هل تريد فصل التحفيظ عن التلقين فيهما أيضًا (كل قسم مستقل)، أم تركهما مشتركة؟
-3. **المكافآت/الشارات/التميز**: هل تُحتسب للجميع أم لطلاب التحفيظ فقط؟
+5. **إعدادات الحساب**
+   - صفحة `/guardian/settings` لتحديث الاسم والجوال وتغيير كلمة المرور
+   - زر تسجيل الخروج موجود مسبقاً
 
-بعد تأكيدك سأبدأ بالتنفيذ مباشرة دون أي تعديل في قاعدة البيانات (التغييرات في الواجهة فقط).
+### المرحلة 2 — تحتاج جداول جديدة
+
+6. **التواصل مع المعلم/الإدارة**
+   - جدول `guardian_messages` (sender_id, recipient_role, student_id, subject, body, status, replied_at)
+   - صفحة `/guardian/messages` صندوق وارد + إرسال جديد
+   - شاشة مقابلة في لوحة الإدارة لمتابعة الرسائل والرد
+
+7. **الاستئذان المسبق**
+   - جدول `student_excuse_requests` (student_id, guardian_id, date_from, date_to, reason, status: pending/approved/rejected, reviewed_by)
+   - عند الموافقة → تسجيل تلقائي كـ `excused` في جدول `attendance` للأيام المحددة
+   - شاشة موافقة في الإدارة
+
+8. **تقييم المعلم**
+   - جدول `teacher_evaluations` (guardian_id, teacher_id, student_id, term, ratings JSONB, comment, created_at)
+   - استبيان دوري (5 محاور: التعامل، الأداء، التواصل، الالتزام، التطوير) من 1-5
+   - تقرير مجمع للإدارة فقط (سرّية المقيّم)
+
+### Technical Details
+
+**ملفات جديدة (مرحلة 1):**
+- `src/components/GuardianNotificationBell.tsx`
+- `src/pages/guardian/GuardianAttendanceReport.tsx` (أو tab داخل الملف الشخصي)
+- `src/pages/guardian/GuardianFinance.tsx`
+- `src/pages/guardian/GuardianBus.tsx`
+- `src/pages/guardian/GuardianSettings.tsx`
+- إضافة روابط في `GuardianLayout` (قائمة منسدلة موسعة)
+
+**ملفات جديدة (مرحلة 2):**
+- `src/pages/guardian/GuardianMessages.tsx` + `src/pages/admin/GuardianMessagesAdmin.tsx`
+- `src/pages/guardian/GuardianExcuses.tsx` + شاشة موافقة في الإدارة
+- `src/pages/guardian/GuardianEvaluation.tsx` + تقرير في `KpiDashboard` أو صفحة منفصلة
+
+**Migrations مطلوبة (مرحلة 2):**
+- `guardian_messages` + RLS (ولي الأمر يرى/يرسل رسائله فقط، الإدارة ترى الكل)
+- `student_excuse_requests` + RLS + trigger يدخل في `attendance` عند الموافقة
+- `teacher_evaluations` + RLS (المُقيّم يكتب فقط، الإدارة فقط تقرأ التجميع)
+
+**التنقل:**
+توسيع القائمة المنسدلة في `GuardianLayout` لتشمل: الرئيسية، الرسائل، الاستئذان، التقييم، الإعدادات، تسجيل الخروج.
+
+### تسلسل التنفيذ المقترح
+أبدأ بالمرحلة 1 كاملة (لا تتطلب موافقة على migrations)، ثم أنتقل للمرحلة 2 جدول بجدول.

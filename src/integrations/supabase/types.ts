@@ -979,6 +979,73 @@ export type Database = {
           },
         ]
       }
+      guardian_messages: {
+        Row: {
+          body: string
+          created_at: string
+          guardian_id: string
+          id: string
+          recipient_role: string
+          replied_at: string | null
+          replied_by: string | null
+          reply: string | null
+          status: string
+          student_id: string | null
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          guardian_id: string
+          id?: string
+          recipient_role?: string
+          replied_at?: string | null
+          replied_by?: string | null
+          reply?: string | null
+          status?: string
+          student_id?: string | null
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          guardian_id?: string
+          id?: string
+          recipient_role?: string
+          replied_at?: string | null
+          replied_by?: string | null
+          reply?: string | null
+          status?: string
+          student_id?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_messages_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardian_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guardian_messages_replied_by_fkey"
+            columns: ["replied_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guardian_messages_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guardian_profiles: {
         Row: {
           approval_status: string
@@ -3570,6 +3637,73 @@ export type Database = {
           },
         ]
       }
+      student_excuse_requests: {
+        Row: {
+          created_at: string
+          date_from: string
+          date_to: string
+          guardian_id: string
+          id: string
+          reason: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_from: string
+          date_to: string
+          guardian_id: string
+          id?: string
+          reason: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_from?: string
+          date_to?: string
+          guardian_id?: string
+          id?: string
+          reason?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_excuse_requests_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardian_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_excuse_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_excuse_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_levels: {
         Row: {
           branch_id: string | null
@@ -4495,6 +4629,73 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teacher_evaluations: {
+        Row: {
+          comment: string | null
+          created_at: string
+          guardian_id: string
+          id: string
+          rating_commitment: number
+          rating_communication: number
+          rating_development: number
+          rating_performance: number
+          rating_treatment: number
+          student_id: string | null
+          teacher_id: string
+          term: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          guardian_id: string
+          id?: string
+          rating_commitment: number
+          rating_communication: number
+          rating_development: number
+          rating_performance: number
+          rating_treatment: number
+          student_id?: string | null
+          teacher_id: string
+          term?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          guardian_id?: string
+          id?: string
+          rating_commitment?: number
+          rating_communication?: number
+          rating_development?: number
+          rating_performance?: number
+          rating_treatment?: number
+          student_id?: string | null
+          teacher_id?: string
+          term?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_evaluations_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardian_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_evaluations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_evaluations_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
