@@ -22,7 +22,7 @@ export type StaffRole =
 // Route-level access per role
 const rolePermissions: Record<StaffRole, string[]> = {
   manager: [
-    "/dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
+    "/dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
     "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij", "/madarij-report", "/talqeen-curricula",
@@ -37,7 +37,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/teacher-evaluations", "/admin/guardian-approvals",
   ],
   supervisor: [
-    "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
@@ -48,7 +48,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/admin/guardian-approvals",
   ],
   assistant_supervisor: [
-    "/dashboard", "/halaqat", "/talqeen-halaqat", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
@@ -59,7 +59,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/admin/guardian-approvals",
   ],
   secretary: [
-    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
@@ -69,7 +69,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/guardian-approvals",
   ],
   admin_staff: [
-    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log",
@@ -77,7 +77,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/notification-preferences", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
   ],
   teacher: [
-    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/attendance",
     "/rankings", "/trips", "/profile", "/buses", "/preparation", "/academic-calendar", "/madarij", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
@@ -87,7 +87,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/enrollment-form",
   ],
   assistant_teacher: [
-    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/recitation", "/attendance",
+    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/attendance",
     "/rankings", "/profile", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance-log",
@@ -137,7 +137,7 @@ const roleWritePermissions: Record<StaffRole, Resource[]> = {
 // مسارات الوصول لمشرف التلقين (قسم التلقين بالكامل من تسجيل الطلاب حتى متابعة الجلسات والواجبات)
 const talqeenSupervisorRoutes = [
   "/dashboard", "/profile",
-  "/talqeen-halaqat", "/talqeen-curricula",
+  "/talqeen-halaqat", "/talqeen-programs", "/talqeen-curricula",
   "/students", "/inactive-students", "/halaqat",
   "/recitation", "/attendance", "/student-attendance-report",
   "/bulk-import", "/pre-registration", "/enrollment-requests", "/enrollment-form",
