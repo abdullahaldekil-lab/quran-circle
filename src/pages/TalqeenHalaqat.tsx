@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDualDate } from "@/lib/hijri";
+import ContentViewer, { lessonTypeIcon, lessonTypeLabel } from "@/components/talqeen/ContentViewer";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // منتقي تاريخ بالتاريخ الهجري كأساس والميلادي كفرعي
 const DualDatePicker = ({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) => {
@@ -192,6 +194,62 @@ const TalqeenHalaqat = () => {
   const [eduForm, setEduForm] = useState({ educational_program_title: "", educational_program_details: "" });
   const [attendanceRows, setAttendanceRows] = useState<Array<{ student_id: string; full_name: string; status: string; homework_status: string; notes: string }>>([]);
 
+  // ========== Halaqa Program (talqeen_program_assignments) ==========
+  const [hpAssignment, setHpAssignment] = useState<any | null>(null);
+  const [hpChapters, setHpChapters] = useState<any[]>([]);
+  const [hpLessonsByChapter, setHpLessonsByChapter] = useState<Record<string, any[]>>({});
+  const [hpProgress, setHpProgress] = useState<Record<string, any>>({}); // lesson_id -> progress row
+  const [hpViewerLesson, setHpViewerLesson] = useState<any | null>(null);
+
+  const loadHalaqaProgram = async (halaqaId: string) => {
+    setHpAssignment(null); setHpChapters([]); setHpLessonsByChapter({}); setHpProgress({});
+    const { data: a } = await (supabase as any)
+      .from("talqeen_program_assignments")
+      .select("*, talqeen_curricula(name)")
+      .eq("halaqa_id", halaqaId).eq("is_active", true)
+      .order("assigned_at", { ascending: false }).limit(1).maybeSingle();
+    if (!a) return;
+    setHpAssignment(a);
+    const { data: chs } = await (supabase as any)
+      .from("talqeen_chapters").select("*").eq("curriculum_id", a.curriculum_id)
+      .order("sort_order").order("chapter_number");
+    setHpChapters(chs || []);
+    const ids = (chs || []).map((c: any) => c.id);
+    if (ids.length) {
+      const { data: les } = await (supabase as any)
+        .from("talqeen_lessons").select("*").in("chapter_id", ids).order("lesson_number");
+      const grouped: Record<string, any[]> = {};
+      (les || []).forEach((l: any) => { (grouped[l.chapter_id] = grouped[l.chapter_id] || []).push(l); });
+      setHpLessonsByChapter(grouped);
+    }
+    const { data: prog } = await (supabase as any)
+      .from("talqeen_program_progress").select("*").eq("assignment_id", a.id);
+    const map: Record<string, any> = {};
+    (prog || []).forEach((p: any) => { map[p.lesson_id] = p; });
+    setHpProgress(map);
+  };
+
+  const toggleLessonProgress = async (lesson: any, done: boolean) => {
+    if (!hpAssignment) return;
+    const existing = hpProgress[lesson.id];
+    const status = done ? "completed" : "pending";
+    const completed_at = done ? new Date().toISOString() : null;
+    if (existing) {
+      const { error } = await (supabase as any).from("talqeen_program_progress")
+        .update({ status, completed_at }).eq("id", existing.id);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { data, error } = await (supabase as any).from("talqeen_program_progress").insert({
+        assignment_id: hpAssignment.id, lesson_id: lesson.id, halaqa_id: hpAssignment.halaqa_id,
+        status, completed_at,
+      }).select().single();
+      if (error) { toast.error(error.message); return; }
+      setHpProgress((m) => ({ ...m, [lesson.id]: data }));
+      return;
+    }
+    setHpProgress((m) => ({ ...m, [lesson.id]: { ...m[lesson.id], status, completed_at } }));
+  };
+
   const openManage = async (s: any) => {
     setManageSession(s);
     setManageTab("execution");
@@ -226,6 +284,7 @@ const TalqeenHalaqat = () => {
         };
       })
     );
+    if (s.halaqa_id) loadHalaqaProgram(s.halaqa_id);
   };
 
   const closeManage = () => { setManageSession(null); setAttendanceRows([]); };
@@ -1206,11 +1265,12 @@ const TalqeenHalaqat = () => {
           </DialogHeader>
 
           <Tabs value={manageTab} onValueChange={setManageTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full">
+            <TabsList className="grid grid-cols-5 w-full">
               <TabsTrigger value="execution"><CheckCircle2 className="w-4 h-4 ml-1" />التنفيذ</TabsTrigger>
               <TabsTrigger value="attendance"><ListChecks className="w-4 h-4 ml-1" />الحضور</TabsTrigger>
               <TabsTrigger value="homework"><BookMarked className="w-4 h-4 ml-1" />الواجب</TabsTrigger>
               <TabsTrigger value="education"><GraduationCap className="w-4 h-4 ml-1" />البرنامج التربوي</TabsTrigger>
+              <TabsTrigger value="program"><BookOpen className="w-4 h-4 ml-1" />برنامج الحلقة</TabsTrigger>
             </TabsList>
 
             {/* تبويب التنفيذ */}
@@ -1305,6 +1365,61 @@ const TalqeenHalaqat = () => {
               </div>
               <Button onClick={saveEduProgram} disabled={manageSaving} className="w-full">حفظ البرنامج التربوي</Button>
             </TabsContent>
+
+            {/* تبويب برنامج الحلقة */}
+            <TabsContent value="program" className="space-y-3 pt-4">
+              {!hpAssignment ? (
+                <p className="text-sm text-muted-foreground text-center py-8">لا يوجد برنامج تلقين مُسنَد لهذه الحلقة بعد.</p>
+              ) : (
+                <>
+                  {(() => {
+                    const allLessons = Object.values(hpLessonsByChapter).flat();
+                    const total = allLessons.length;
+                    const done = allLessons.filter((l: any) => hpProgress[l.id]?.status === "completed").length;
+                    const pct = total ? Math.round((done / total) * 100) : 0;
+                    return (
+                      <div className="p-3 rounded-lg border bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-semibold">{hpAssignment.talqeen_curricula?.name}</span>
+                          <Badge variant="outline">{done} / {total}</Badge>
+                        </div>
+                        <Progress value={pct} />
+                      </div>
+                    );
+                  })()}
+
+                  <div className="space-y-2 max-h-[55vh] overflow-y-auto">
+                    {hpChapters.map((ch) => (
+                      <div key={ch.id} className="border rounded">
+                        <div className="px-3 py-2 bg-muted/40 text-sm font-medium flex items-center gap-2">
+                          <Badge variant="outline">باب {ch.chapter_number}</Badge>
+                          {ch.title}
+                        </div>
+                        <div className="divide-y">
+                          {(hpLessonsByChapter[ch.id] || []).length === 0 && (
+                            <p className="text-xs text-muted-foreground p-2">لا توجد دروس</p>
+                          )}
+                          {(hpLessonsByChapter[ch.id] || []).map((l: any) => {
+                            const done = hpProgress[l.id]?.status === "completed";
+                            return (
+                              <div key={l.id} className="flex items-center gap-2 p-2 text-sm">
+                                <Checkbox checked={done} onCheckedChange={(v) => toggleLessonProgress(l, !!v)} />
+                                {lessonTypeIcon(l.lesson_type)}
+                                <span className="flex-1">{l.lesson_number}. {l.title}</span>
+                                <Badge variant="outline" className="text-[10px]">{lessonTypeLabel(l.lesson_type)}</Badge>
+                                <Button size="sm" variant="ghost" onClick={() => setHpViewerLesson(l)}>
+                                  <Eye className="w-3 h-3 ml-1" />عرض
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </TabsContent>
           </Tabs>
         </DialogContent>
       </Dialog>
@@ -1362,6 +1477,8 @@ const TalqeenHalaqat = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ContentViewer lesson={hpViewerLesson} open={!!hpViewerLesson} onOpenChange={(o) => { if (!o) setHpViewerLesson(null); }} />
     </div>
   );
 };

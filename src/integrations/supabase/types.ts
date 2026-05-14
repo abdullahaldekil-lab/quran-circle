@@ -1115,7 +1115,6 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
-          rejection_reason: string | null
           updated_at: string
         }
         Insert: {
@@ -1126,7 +1125,6 @@ export type Database = {
           full_name: string
           id: string
           phone?: string | null
-          rejection_reason?: string | null
           updated_at?: string
         }
         Update: {
@@ -1137,7 +1135,6 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
-          rejection_reason?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -4250,6 +4247,47 @@ export type Database = {
           },
         ]
       }
+      talqeen_chapters: {
+        Row: {
+          chapter_number: number
+          created_at: string | null
+          curriculum_id: string | null
+          description: string | null
+          grade_group: string
+          id: string
+          sort_order: number | null
+          title: string
+        }
+        Insert: {
+          chapter_number: number
+          created_at?: string | null
+          curriculum_id?: string | null
+          description?: string | null
+          grade_group: string
+          id?: string
+          sort_order?: number | null
+          title: string
+        }
+        Update: {
+          chapter_number?: number
+          created_at?: string | null
+          curriculum_id?: string | null
+          description?: string | null
+          grade_group?: string
+          id?: string
+          sort_order?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_chapters_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       talqeen_curricula: {
         Row: {
           active: boolean
@@ -4415,6 +4453,202 @@ export type Database = {
             columns: ["curriculum_id"]
             isOneToOne: false
             referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talqeen_lessons: {
+        Row: {
+          audio_url: string | null
+          chapter_id: string | null
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          estimated_duration_minutes: number | null
+          id: string
+          is_active: boolean | null
+          lesson_number: number
+          lesson_type: string | null
+          notes: string | null
+          pdf_storage_path: string | null
+          pdf_url: string | null
+          title: string
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          chapter_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          lesson_number: number
+          lesson_type?: string | null
+          notes?: string | null
+          pdf_storage_path?: string | null
+          pdf_url?: string | null
+          title: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          chapter_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          lesson_number?: number
+          lesson_type?: string | null
+          notes?: string | null
+          pdf_storage_path?: string | null
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_lessons_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talqeen_program_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          curriculum_id: string | null
+          halaqa_id: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          start_date: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          curriculum_id?: string | null
+          halaqa_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          start_date?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          curriculum_id?: string | null
+          halaqa_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_program_assignments_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_program_assignments_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_program_assignments_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_program_assignments_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talqeen_program_progress: {
+        Row: {
+          assignment_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          halaqa_id: string | null
+          id: string
+          lesson_id: string | null
+          status: string | null
+          teacher_notes: string | null
+        }
+        Insert: {
+          assignment_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          halaqa_id?: string | null
+          id?: string
+          lesson_id?: string | null
+          status?: string | null
+          teacher_notes?: string | null
+        }
+        Update: {
+          assignment_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          halaqa_id?: string | null
+          id?: string
+          lesson_id?: string | null
+          status?: string | null
+          teacher_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talqeen_program_progress_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_program_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_program_progress_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_program_progress_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_program_progress_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_program_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_lessons"
             referencedColumns: ["id"]
           },
         ]

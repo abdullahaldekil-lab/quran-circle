@@ -46,6 +46,7 @@ import PermissionsManagement from "./pages/PermissionsManagement";
 import QuranNarration from "./pages/QuranNarration";
 import TalqeenHalaqat from "./pages/TalqeenHalaqat";
 import TalqeenCurricula from "./pages/TalqeenCurricula";
+import TalqeenPrograms from "./pages/TalqeenPrograms";
 import NarrationSession from "./pages/NarrationSession";
 import NarrationReports from "./pages/NarrationReports";
 import StudentNarrationProgress from "./pages/StudentNarrationProgress";
@@ -180,6 +181,7 @@ const AppRoutes = () => {
       <Route path="/permissions-management" element={<ProtectedRoute path="/permissions-management"><PermissionsManagement /></ProtectedRoute>} />
       <Route path="/talqeen-halaqat" element={<ProtectedRoute path="/halaqat"><TalqeenHalaqat /></ProtectedRoute>} />
       <Route path="/talqeen-curricula" element={<ProtectedRoute path="/halaqat"><TalqeenCurricula /></ProtectedRoute>} />
+      <Route path="/talqeen-programs" element={<ProtectedRoute path="/talqeen-programs"><TalqeenPrograms /></ProtectedRoute>} />
       <Route path="/quran-narration" element={<ProtectedRoute path="/quran-narration"><QuranNarration /></ProtectedRoute>} />
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
