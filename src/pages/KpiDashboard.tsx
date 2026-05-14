@@ -64,7 +64,7 @@ const KpiDashboard = () => {
       halaqatRes, studentsRes, recitationsRes, attendanceRes,
       goalsRes, objectivesRes, tasksRes, rewardsRes, transactionsRes,
     ] = await Promise.all([
-      supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true),
+      (supabase as any).from("halaqat_tahfeez").select("id, name, talqeen_curriculum_id").eq("active", true),
       supabase.from("students").select("*").eq("status", "active"),
       supabase.from("recitation_records").select("*").gte("record_date", monthStart).lte("record_date", today),
       supabase.from("attendance").select("*").gte("attendance_date", monthStart).lte("attendance_date", today),

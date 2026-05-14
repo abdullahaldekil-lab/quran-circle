@@ -45,8 +45,8 @@ const Recitation = () => {
   // Load halaqat and auto-select teacher's halaqa
   useEffect(() => {
     if (!user || accessLoading) return;
-    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
-      const list = filterHalaqat(filterTahfeezOnly(data || []));
+    (supabase as any).from("halaqat_tahfeez").select("*").eq("active", true).then(({ data }: any) => {
+      const list = filterHalaqat((data as any[]) || []);
       setHalaqat(list);
       const myHalaqa = list.find(
         (h) => h.teacher_id === user.id || h.assistant_teacher_id === user.id

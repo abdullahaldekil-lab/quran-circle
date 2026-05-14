@@ -81,6 +81,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "attendance_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "attendance_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -371,6 +385,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "enrollment_requests_assigned_halaqa_id_fkey"
+            columns: ["assigned_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_requests_assigned_halaqa_id_fkey"
+            columns: ["assigned_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "enrollment_requests_converted_student_id_fkey"
             columns: ["converted_student_id"]
             isOneToOne: false
@@ -382,6 +410,20 @@ export type Database = {
             columns: ["requested_halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_requests_requested_halaqa_id_fkey"
+            columns: ["requested_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_requests_requested_halaqa_id_fkey"
+            columns: ["requested_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
           {
@@ -461,6 +503,20 @@ export type Database = {
             referencedRelation: "halaqat"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "excellence_elite_students_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_elite_students_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
         ]
       }
       excellence_monthly_report: {
@@ -515,6 +571,20 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_monthly_report_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_monthly_report_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
         ]
@@ -618,6 +688,20 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_sessions_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excellence_sessions_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
           {
@@ -1904,6 +1988,20 @@ export type Database = {
             referencedRelation: "halaqat"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "narration_goals_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narration_goals_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
         ]
       }
       narration_ranges: {
@@ -2064,6 +2162,20 @@ export type Database = {
             referencedRelation: "halaqat"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "narration_sessions_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narration_sessions_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
         ]
       }
       narration_settings: {
@@ -2178,6 +2290,20 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narration_test_results_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "narration_test_results_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
           {
@@ -2474,10 +2600,38 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profiles_assigned_assistant_halaqa_id_fkey"
+            columns: ["assigned_assistant_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_assigned_assistant_halaqa_id_fkey"
+            columns: ["assigned_assistant_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_assigned_halaqa_id_fkey"
             columns: ["assigned_halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_assigned_halaqa_id_fkey"
+            columns: ["assigned_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_assigned_halaqa_id_fkey"
+            columns: ["assigned_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
         ]
@@ -2599,6 +2753,20 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recitation_records_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recitation_records_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
           {
@@ -3286,6 +3454,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "student_annual_plans_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_annual_plans_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "student_annual_plans_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -3623,6 +3805,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "student_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "student_quizzes_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -3839,6 +4035,20 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
         ]
@@ -4123,6 +4333,20 @@ export type Database = {
             referencedRelation: "halaqat"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "talqeen_sessions_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_sessions_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
         ]
       }
       talqeen_student_curricula: {
@@ -4172,6 +4396,20 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_student_curricula_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talqeen_student_curricula_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
           {
@@ -4308,6 +4546,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "temporary_access_overrides_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temporary_access_overrides_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "temporary_access_overrides_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -4383,6 +4635,20 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_halaqat_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_halaqat_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
             referencedColumns: ["id"]
           },
           {
@@ -4510,6 +4776,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "trips_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "trips_supervising_teacher_id_fkey"
             columns: ["supervising_teacher_id"]
             isOneToOne: false
@@ -4597,7 +4877,148 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      halaqat_tahfeez: {
+        Row: {
+          active: boolean | null
+          assistant_teacher_id: string | null
+          capacity_max: number | null
+          created_at: string | null
+          id: string | null
+          level_track_id: string | null
+          location: string | null
+          name: string | null
+          schedule: string | null
+          talqeen_curriculum_id: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          assistant_teacher_id?: string | null
+          capacity_max?: number | null
+          created_at?: string | null
+          id?: string | null
+          level_track_id?: string | null
+          location?: string | null
+          name?: string | null
+          schedule?: string | null
+          talqeen_curriculum_id?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          assistant_teacher_id?: string | null
+          capacity_max?: number | null
+          created_at?: string | null
+          id?: string | null
+          level_track_id?: string | null
+          location?: string | null
+          name?: string | null
+          schedule?: string | null
+          talqeen_curriculum_id?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "halaqat_assistant_teacher_id_fkey"
+            columns: ["assistant_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_level_track_id_fkey"
+            columns: ["level_track_id"]
+            isOneToOne: false
+            referencedRelation: "level_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_talqeen_curriculum_id_fkey"
+            columns: ["talqeen_curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      halaqat_talqeen_only: {
+        Row: {
+          active: boolean | null
+          assistant_teacher_id: string | null
+          capacity_max: number | null
+          created_at: string | null
+          id: string | null
+          level_track_id: string | null
+          location: string | null
+          name: string | null
+          schedule: string | null
+          talqeen_curriculum_id: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          assistant_teacher_id?: string | null
+          capacity_max?: number | null
+          created_at?: string | null
+          id?: string | null
+          level_track_id?: string | null
+          location?: string | null
+          name?: string | null
+          schedule?: string | null
+          talqeen_curriculum_id?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          assistant_teacher_id?: string | null
+          capacity_max?: number | null
+          created_at?: string | null
+          id?: string | null
+          level_track_id?: string | null
+          location?: string | null
+          name?: string | null
+          schedule?: string | null
+          talqeen_curriculum_id?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "halaqat_assistant_teacher_id_fkey"
+            columns: ["assistant_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_level_track_id_fkey"
+            columns: ["level_track_id"]
+            isOneToOne: false
+            referencedRelation: "level_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_talqeen_curriculum_id_fkey"
+            columns: ["talqeen_curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "halaqat_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_enrollment_status: {

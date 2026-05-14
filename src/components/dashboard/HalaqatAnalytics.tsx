@@ -29,7 +29,7 @@ const HalaqatAnalytics = () => {
     const fetchData = async () => {
       try {
         // Get halaqat
-        let hQuery = supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true);
+        let hQuery: any = (supabase as any).from("halaqat_tahfeez").select("id, name, talqeen_curriculum_id").eq("active", true);
         if (allowedHalaqatIds !== null && allowedHalaqatIds.length > 0) {
           hQuery = hQuery.in("id", allowedHalaqatIds);
         }

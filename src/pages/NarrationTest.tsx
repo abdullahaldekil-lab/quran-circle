@@ -69,7 +69,7 @@ const NarrationTest = () => {
   const { data: halaqat = [] } = useQuery({
     queryKey: ["halaqat_active"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true).order("name");
+      const { data, error } = await (supabase as any).from("halaqat_tahfeez").select("id, name, talqeen_curriculum_id").eq("active", true).order("name");
       const { filterTahfeezOnly } = await import("@/lib/halaqaType");
       const filtered = filterTahfeezOnly((data as any[]) || []);
       if (error) throw error;
