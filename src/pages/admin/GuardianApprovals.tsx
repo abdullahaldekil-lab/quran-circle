@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,28 +10,40 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CheckCircle2, XCircle, UserCheck, Link2 } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
+
+type GuardianProfile = Database["public"]["Tables"]["guardian_profiles"]["Row"];
+type LinkRequest = Database["public"]["Tables"]["guardian_link_requests"]["Row"] & {
+  guardian_profiles: Pick<GuardianProfile, "full_name" | "phone"> | null;
+};
 
 const GuardianApprovals = () => {
-  const [guardians, setGuardians] = useState<any[]>([]);
-  const [requests, setRequests] = useState<any[]>([]);
+  const [guardians, setGuardians] = useState<GuardianProfile[]>([]);
+  const [requests, setRequests] = useState<LinkRequest[]>([]);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectKind, setRejectKind] = useState<"guardian" | "request">("guardian");
   const [reason, setReason] = useState("");
 
-  const load = async () => {
-    const [{ data: gs }, { data: rs }] = await Promise.all([
+  const load = useCallback(async () => {
+    const [{ data: gs, error: e1 }, { data: rs, error: e2 }] = await Promise.all([
       supabase.from("guardian_profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("guardian_link_requests").select("*, guardian_profiles(full_name, phone)").order("created_at", { ascending: false }),
     ]);
-    setGuardians(gs || []);
-    setRequests(rs || []);
-  };
-  useEffect(() => { load(); }, []);
+    if (e1) toast.error("خطأ في تحميل الحسابات");
+    if (e2) toast.error("خطأ في تحميل طلبات الربط");
+    setGuardians((gs as GuardianProfile[]) || []);
+    setRequests((rs as LinkRequest[]) || []);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const approveGuardian = async (id: string) => {
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return toast.error("يجب تسجيل الدخول");
     const { error } = await supabase.from("guardian_profiles").update({
-      approval_status: "approved", approved_by: session?.user.id, approved_at: new Date().toISOString(),
+      approval_status: "approved",
+      approved_by: session.user.id,
+      approved_at: new Date().toISOString(),
     }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("تم اعتماد الحساب");
@@ -40,16 +52,21 @@ const GuardianApprovals = () => {
 
   const rejectGuardian = async () => {
     if (!rejectId) return;
-    const { error } = await supabase.from("guardian_profiles").update({ approval_status: "rejected" }).eq("id", rejectId);
+    const { error } = await supabase.from("guardian_profiles").update({
+      approval_status: "rejected",
+      rejection_reason: reason.trim() || null,
+    }).eq("id", rejectId);
     if (error) return toast.error(error.message);
-    toast.success("تم الرفض");
+    toast.success("تم رفض الحساب");
     setRejectId(null); setReason(""); load();
   };
 
   const approveRequest = async (id: string) => {
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return toast.error("يجب تسجيل الدخول");
     const { error } = await supabase.from("guardian_link_requests").update({
-      status: "approved", reviewed_by: session?.user.id,
+      status: "approved",
+      reviewed_by: session.user.id,
     }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("تم ربط الطالب");
@@ -59,8 +76,11 @@ const GuardianApprovals = () => {
   const rejectRequest = async () => {
     if (!rejectId) return;
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return toast.error("يجب تسجيل الدخول");
     const { error } = await supabase.from("guardian_link_requests").update({
-      status: "rejected", rejection_reason: reason || "غير مطابق", reviewed_by: session?.user.id,
+      status: "rejected",
+      rejection_reason: reason.trim() || "غير مطابق",
+      reviewed_by: session.user.id,
     }).eq("id", rejectId);
     if (error) return toast.error(error.message);
     toast.success("تم رفض الطلب");
@@ -101,6 +121,9 @@ const GuardianApprovals = () => {
                     <div>
                       <p className="font-medium">{g.full_name}</p>
                       <p className="text-xs text-muted-foreground" dir="ltr">{g.phone || "—"}</p>
+                      {g.rejection_reason && (
+                        <p className="text-xs text-destructive mt-1">سبب الرفض: {g.rejection_reason}</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {sBadge(g.approval_status)}
@@ -161,7 +184,7 @@ const GuardianApprovals = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>سبب الرفض</DialogTitle></DialogHeader>
             <Label>السبب</Label>
-            <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="اكتب سبب الرفض" />
+            <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="اكتب سبب الرفض (اختياري)" />
             <DialogFooter>
               <Button variant="outline" onClick={() => setRejectId(null)}>إلغاء</Button>
               <Button variant="destructive" onClick={rejectKind === "guardian" ? rejectGuardian : rejectRequest}>
