@@ -59,6 +59,9 @@ const GuardianDashboard = () => {
     );
   }
 
+  const isPending = guardian?.approval_status === "pending";
+  const isRejected = guardian?.approval_status === "rejected";
+
   return (
     <GuardianLayout guardianName={guardian?.full_name}>
       <div className="space-y-6 animate-fade-in">
@@ -67,12 +70,42 @@ const GuardianDashboard = () => {
           <p className="text-sm text-muted-foreground mt-1">تابع تقدم أبنائك في حفظ القرآن الكريم</p>
         </div>
 
-        {children.length === 0 ? (
+        {isPending && (
+          <Card className="border-amber-500/40 bg-amber-50 dark:bg-amber-950/20">
+            <CardContent className="p-4 flex items-start gap-3">
+              <Clock className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div>
+                <p className="font-semibold text-sm">حسابك قيد المراجعة</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  سيتم تفعيل حسابك بعد اعتماد المشرف أو السكرتير. لن تظهر بيانات الأبناء قبل الاعتماد.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isRejected && (
+          <Card className="border-destructive/40 bg-destructive/10">
+            <CardContent className="p-4">
+              <p className="font-semibold text-sm text-destructive">تم رفض الحساب</p>
+              <p className="text-xs text-muted-foreground mt-1">يرجى التواصل مع إدارة المجمع.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {!isPending && !isRejected && (
+          <Button onClick={() => navigate("/guardian/link-request")} className="w-full" variant="outline">
+            <Plus className="w-4 h-4 ml-2" />
+            إضافة ابن برقم الهوية
+          </Button>
+        )}
+
+        {!isPending && !isRejected && (children.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <User className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">لم يتم ربط أي طالب بحسابك بعد</p>
-              <p className="text-xs text-muted-foreground mt-1">تواصل مع إدارة المجمع لربط أبنائك</p>
+              <p className="text-xs text-muted-foreground mt-1">استخدم زر "إضافة ابن" أعلاه لإرسال طلب الربط</p>
             </CardContent>
           </Card>
         ) : (
@@ -80,11 +113,8 @@ const GuardianDashboard = () => {
             {children.map((child) => {
               const progress = Math.min(100, Math.round(((child.total_memorized_pages || 0) / 604) * 100));
               return (
-                <Card
-                  key={child.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => navigate(`/guardian/child/${child.id}`)}
-                >
+                <Card key={child.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => navigate(`/guardian/child/${child.id}`)}>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -116,7 +146,7 @@ const GuardianDashboard = () => {
               );
             })}
           </div>
-        )}
+        ))}
       </div>
     </GuardianLayout>
   );
