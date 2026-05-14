@@ -284,6 +284,7 @@ const TalqeenHalaqat = () => {
         };
       })
     );
+    if (s.halaqa_id) loadHalaqaProgram(s.halaqa_id);
   };
 
   const closeManage = () => { setManageSession(null); setAttendanceRows([]); };
