@@ -87,6 +87,8 @@ import GuardianEvaluation from "./pages/guardian/GuardianEvaluation";
 import GuardianMessagesAdmin from "./pages/admin/GuardianMessagesAdmin";
 import GuardianExcusesAdmin from "./pages/admin/GuardianExcusesAdmin";
 import TeacherEvaluationsReport from "./pages/admin/TeacherEvaluationsReport";
+import GuardianApprovals from "./pages/admin/GuardianApprovals";
+import GuardianLinkRequest from "./pages/guardian/GuardianLinkRequest";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -139,6 +141,7 @@ const AppRoutes = () => {
       <Route path="/guardian/excuses" element={<GuardianExcuses />} />
       <Route path="/guardian/evaluation" element={<GuardianEvaluation />} />
       <Route path="/guardian/settings" element={<GuardianSettings />} />
+      <Route path="/guardian/link-request" element={<GuardianLinkRequest />} />
       <Route path="/enroll" element={<Enroll />} />
       <Route path="/verify-certificate" element={<VerifyCertificate />} />
       <Route path="/verify-certificate/:number" element={<VerifyCertificate />} />
@@ -215,6 +218,7 @@ const AppRoutes = () => {
       <Route path="/admin/guardian-messages" element={<ProtectedRoute path="/admin/guardian-messages"><GuardianMessagesAdmin /></ProtectedRoute>} />
       <Route path="/admin/guardian-excuses" element={<ProtectedRoute path="/admin/guardian-excuses"><GuardianExcusesAdmin /></ProtectedRoute>} />
       <Route path="/admin/teacher-evaluations" element={<ProtectedRoute path="/admin/teacher-evaluations"><TeacherEvaluationsReport /></ProtectedRoute>} />
+      <Route path="/admin/guardian-approvals" element={<ProtectedRoute path="/admin/guardian-approvals"><GuardianApprovals /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
