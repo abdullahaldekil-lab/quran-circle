@@ -1365,6 +1365,61 @@ const TalqeenHalaqat = () => {
               </div>
               <Button onClick={saveEduProgram} disabled={manageSaving} className="w-full">حفظ البرنامج التربوي</Button>
             </TabsContent>
+
+            {/* تبويب برنامج الحلقة */}
+            <TabsContent value="program" className="space-y-3 pt-4">
+              {!hpAssignment ? (
+                <p className="text-sm text-muted-foreground text-center py-8">لا يوجد برنامج تلقين مُسنَد لهذه الحلقة بعد.</p>
+              ) : (
+                <>
+                  {(() => {
+                    const allLessons = Object.values(hpLessonsByChapter).flat();
+                    const total = allLessons.length;
+                    const done = allLessons.filter((l: any) => hpProgress[l.id]?.status === "completed").length;
+                    const pct = total ? Math.round((done / total) * 100) : 0;
+                    return (
+                      <div className="p-3 rounded-lg border bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-semibold">{hpAssignment.talqeen_curricula?.name}</span>
+                          <Badge variant="outline">{done} / {total}</Badge>
+                        </div>
+                        <Progress value={pct} />
+                      </div>
+                    );
+                  })()}
+
+                  <div className="space-y-2 max-h-[55vh] overflow-y-auto">
+                    {hpChapters.map((ch) => (
+                      <div key={ch.id} className="border rounded">
+                        <div className="px-3 py-2 bg-muted/40 text-sm font-medium flex items-center gap-2">
+                          <Badge variant="outline">باب {ch.chapter_number}</Badge>
+                          {ch.title}
+                        </div>
+                        <div className="divide-y">
+                          {(hpLessonsByChapter[ch.id] || []).length === 0 && (
+                            <p className="text-xs text-muted-foreground p-2">لا توجد دروس</p>
+                          )}
+                          {(hpLessonsByChapter[ch.id] || []).map((l: any) => {
+                            const done = hpProgress[l.id]?.status === "completed";
+                            return (
+                              <div key={l.id} className="flex items-center gap-2 p-2 text-sm">
+                                <Checkbox checked={done} onCheckedChange={(v) => toggleLessonProgress(l, !!v)} />
+                                {lessonTypeIcon(l.lesson_type)}
+                                <span className="flex-1">{l.lesson_number}. {l.title}</span>
+                                <Badge variant="outline" className="text-[10px]">{lessonTypeLabel(l.lesson_type)}</Badge>
+                                <Button size="sm" variant="ghost" onClick={() => setHpViewerLesson(l)}>
+                                  <Eye className="w-3 h-3 ml-1" />عرض
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </TabsContent>
           </Tabs>
         </DialogContent>
       </Dialog>
