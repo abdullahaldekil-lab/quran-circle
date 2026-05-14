@@ -40,7 +40,7 @@ const Rankings = () => {
   const [showCount, setShowCount] = useState(INITIAL_SHOW);
 
   useEffect(() => {
-    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => setHalaqat(filterTahfeezOnly(data || [])));
+    (supabase as any).from("halaqat_tahfeez").select("*").eq("active", true).then(({ data }: any) => setHalaqat(data || []));
   }, []);
 
   useEffect(() => {
