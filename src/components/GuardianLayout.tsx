@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, LogOut, Menu, X, MessageSquare, CalendarOff,
-  Star, Settings,
+  Star, Settings, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
@@ -16,6 +16,7 @@ interface GuardianLayoutProps {
 
 const navItems = [
   { to: "/guardian", label: "الرئيسية", icon: LayoutDashboard },
+  { to: "/guardian/link-request", label: "إضافة ابن", icon: UserPlus },
   { to: "/guardian/messages", label: "الرسائل", icon: MessageSquare },
   { to: "/guardian/excuses", label: "الاستئذان المسبق", icon: CalendarOff },
   { to: "/guardian/evaluation", label: "تقييم المعلم", icon: Star },
