@@ -126,12 +126,12 @@ export default function QuranNarration() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("halaqat")
-        .select("id, name")
+        .select("id, name, talqeen_curriculum_id")
         .eq("active", true)
-        .is("talqeen_curriculum_id", null)
         .order("name");
       if (error) throw error;
-      return data;
+      const { filterTahfeezOnly } = await import("@/lib/halaqaType");
+      return filterTahfeezOnly(data as any[]);
     },
   });
 

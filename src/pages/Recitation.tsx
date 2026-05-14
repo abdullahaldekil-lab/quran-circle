@@ -17,6 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import StudentNameLink from "@/components/StudentNameLink";
 import { formatDateHijriOnly } from "@/lib/hijri";
 import StudentAnnualPlanCard from "@/components/recitation/StudentAnnualPlanCard";
+import { filterTahfeezOnly } from "@/lib/halaqaType";
 
 const Recitation = () => {
   const { user } = useAuth();
@@ -45,7 +46,7 @@ const Recitation = () => {
   useEffect(() => {
     if (!user || accessLoading) return;
     supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => {
-      const list = filterHalaqat(data || []);
+      const list = filterHalaqat(filterTahfeezOnly(data || []));
       setHalaqat(list);
       const myHalaqa = list.find(
         (h) => h.teacher_id === user.id || h.assistant_teacher_id === user.id

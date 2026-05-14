@@ -20,9 +20,10 @@ const NarrationStats = () => {
   const { data: halaqat = [] } = useQuery({
     queryKey: ["halaqat_active_stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("halaqat").select("id, name").eq("active", true).order("name");
+      const { data, error } = await supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true).order("name");
       if (error) throw error;
-      return data;
+      const { filterTahfeezOnly } = await import("@/lib/halaqaType");
+      return filterTahfeezOnly((data as any[]) || []);
     },
   });
 

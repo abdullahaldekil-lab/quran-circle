@@ -1,74 +1,47 @@
+## الهدف
+فصل كامل بين طلاب حلقات **التحفيظ** وطلاب حلقات **التلقين** في جميع شاشات التحفيظ، بحيث لا تظهر بيانات حلقات/طلاب التلقين داخل شاشات التسميع والسرد والمراجعة والترتيب وغيرها.
 
-The user uploaded a CSV showing the current paper-based system used at the complex (مجمع) for narration/review tests. Let me analyze its structure:
+## معيار التمييز (موحَّد)
+الحلقة تُعتبر **تلقين** إذا تحقق أحد الشرطين:
+- `halaqat.talqeen_curriculum_id IS NOT NULL`، أو
+- اسم الحلقة يحتوي على كلمة "تلقين" (للحلقات القديمة قبل ربط المنهج).
 
-**Structure observed:**
-- Halaqa name (الحلقة): أبي سعيد الخدري
-- Student selected (الطالب): مالك الفريدي
-- Two test types: اختبار (Test) and المراجعة (Review)
-- 5 segments/sections (مقاطع 1-5) — student scores per segment
-- Total (المجموع): 87
-- Date: Gregorian (ميلادي) + Hijri (هجري)
-- Right column: full student roster of the halaqa (~26 students)
+سيتم إنشاء دالة مساعدة موحَّدة `isTalqeenHalaqa(h)` و `filterTahfeezOnly(list)` في ملف `src/lib/halaqaType.ts` لاستخدامها في كل المكونات (مصدر واحد للحقيقة بدلاً من فلترة يدوية متناثرة).
 
-**Key insight:** Their current paper system uses a **5-segment scoring model** for both اختبار السرد and اختبار المراجعة, where each segment gets a score and they sum to a total. This is DIFFERENT from our current `NarrationTest.tsx` which uses errors×5 + warnings×1 deducted from 50.
+## الشاشات التي ستُحدَّث (إظهار حلقات/طلاب التحفيظ فقط)
+1. **التسميع** — `src/pages/Recitation.tsx` (قائمة الحلقات في الأعلى)
+2. **السرد القرآني** — `src/pages/QuranNarration.tsx` (مفلتر جزئيًا حاليًا — توحيد المنطق)
+3. **جلسة السرد** — `src/pages/NarrationSession.tsx`
+4. **اختبار السرد** — `src/pages/NarrationTest.tsx` و `src/pages/ReviewTest.tsx`
+5. **إحصائيات السرد** — `src/pages/NarrationStats.tsx`
+6. **تقارير السرد** — `src/pages/NarrationReports.tsx`
+7. **الترتيب الشهري** — `src/pages/Rankings.tsx`
+8. **التميز** + التقارير + الجلسة — `src/pages/Excellence*.tsx`
+9. **خطة الطالب السنوية** — `src/pages/StudentAnnualPlan.tsx`
+10. **لوحة KPI** و**تحليلات الحلقات** — `src/pages/KpiDashboard.tsx` + `src/components/dashboard/HalaqatAnalytics.tsx` (قسم التحفيظ فقط)
+11. **شاشة الحلقات** — `src/pages/Halaqat.tsx` (استبدال الفلتر الحالي القائم على الاسم بالدالة الموحَّدة)
+12. **استيراد CSV / تسجيل الطلاب** — `src/pages/BulkImport.tsx`, `PreRegistration.tsx`, `EnrollmentRequests.tsx` (عند اختيار "حلقة تحفيظ")
 
-I already explored `NarrationTest.tsx` (uses errors/warnings model). Now I need a plan to add the **5-segment scoring** model alongside, without affecting the existing module.
+## الشاشات التي لن تتأثر
+- `TalqeenHalaqat.tsx`، `TalqeenCurricula.tsx`، وكل ما يخص التلقين يبقى كما هو.
+- شاشات عامة مثل **الحضور، إدارة الطلاب، ولي الأمر، المالية** ستظل تعرض كل الحلقات (لأنها مشتركة) — *إلا إذا طلبت فصلها أيضًا*.
 
-Approach: Add a new "اختبار المراجعة" page (`/review-test`) that mirrors the CSV layout exactly — halaqa selector, full student roster on the side, 5-segment score entry, dual-date stamping, persisted to existing `narration_test_results` table using a `test_type='review'` discriminator + `sections` JSONB field. This keeps the current narration test untouched.
+## التفاصيل التقنية
+```ts
+// src/lib/halaqaType.ts
+export const isTalqeenHalaqa = (h: any) =>
+  !!h?.talqeen_curriculum_id || (h?.name || "").includes("تلقين");
 
-<lov-plan>
+export const filterTahfeezOnly = <T extends { talqeen_curriculum_id?: any; name?: string }>(list: T[]) =>
+  list.filter((h) => !isTalqeenHalaqa(h));
+```
+سيتم استبدال:
+- `setHalaqat(list.filter(h => !h.name.includes("تلقين")))` → `setHalaqat(filterTahfeezOnly(list))`
+- في الاستعلامات التي تجلب الطلاب لأغراض التحفيظ: جلب الحلقات أولاً وفلترتها، ثم استخدام `halaqa_id IN (...)` لجلب الطلاب — لتجنّب ظهور طلاب التلقين في قوائم التسميع/السرد/الترتيب.
 
-## الخطة: بناء وحدة "اختبار المراجعة" بنظام المقاطع الخمسة
+## نقاط تحتاج تأكيدك
+1. هل تريد تطبيق الفصل على **جميع** الشاشات المذكورة دفعة واحدة، أم البدء بالتسميع والسرد فقط؟
+2. شاشة **الحضور** و**الترتيب**: هل تريد فصل التحفيظ عن التلقين فيهما أيضًا (كل قسم مستقل)، أم تركهما مشتركة؟
+3. **المكافآت/الشارات/التميز**: هل تُحتسب للجميع أم لطلاب التحفيظ فقط؟
 
-### الفكرة العامة
-إضافة صفحة جديدة `/review-test` مطابقة تماماً لتصميم الجدول الورقي الحالي في المجمع (5 مقاطع لكل طالب)، **بدون أي تعديل** على وحدة `NarrationTest` الحالية أو أي موديول آخر.
-
-### المكونات
-
-**1. صفحة جديدة: `src/pages/ReviewTest.tsx`**
-- اختيار الحلقة (Dropdown)
-- عرض كامل قائمة طلاب الحلقة على الجانب (مثل العمود الأيمن في CSV)
-- جدول إدخال يحتوي لكل طالب:
-  - الاسم
-  - عرض المرة (الأولى/الثانية/الثالثة) — تلقائي مع تعديل يدوي
-  - 5 خانات للمقاطع (مقطع 1، 2، 3، 4، 5)
-  - **المجموع التلقائي** = مجموع المقاطع الخمسة
-  - النتيجة: ناجح (≥60) / راسب — مع لون (أخضر/برتقالي/أحمر حسب المحاولة)
-- تذييل بالتاريخ المزدوج (هجري + ميلادي) كما في النموذج الورقي
-
-**2. الحفظ والتوثيق**
-- استخدام جدول `narration_test_results` الموجود مع:
-  - `test_type = 'review'` (مميّز عن `narration`)
-  - `sections` (JSONB جديد) لتخزين درجات المقاطع: `{seg1, seg2, seg3, seg4, seg5}`
-  - `total_score` = مجموع المقاطع
-  - `passed` = (total ≥ 60)
-  - `attempt_number` تلقائي
-- إذا كانت `sections` غير موجودة → migration بسيط لإضافتها (آمن وغير مدمر)
-
-**3. التصدير والطباعة**
-- زر **طباعة** بنفس تنسيق الجدول الورقي الحالي
-- تصدير **Excel** و **PDF**
-- زر **حفظ النتائج** في قاعدة البيانات
-
-**4. تكامل مع الملف الشخصي للطالب**
-- النتائج تظهر تلقائياً في تبويب "الاختبارات" بملف الطالب وبوابة ولي الأمر (موجود مسبقاً عبر `narration_test_results`)
-- لا حاجة لأي تعديل في الموديولات الأخرى
-
-**5. تبويب "السجل السابق"**
-- داخل نفس الصفحة: تبويب يعرض تاريخ اختبارات المراجعة لكل حلقة مع إمكانية الفلترة بالتاريخ والطالب
-
-### الملفات
-
-| ملف | إجراء |
-|---|---|
-| `src/pages/ReviewTest.tsx` | **جديد** |
-| `src/App.tsx` | إضافة Route `/review-test` فقط |
-| `src/components/AppLayout.tsx` | إضافة رابط في القائمة الجانبية |
-| Migration | إضافة عمود `sections JSONB` إلى `narration_test_results` (إن لم يكن موجوداً) |
-
-### الضمانات
-- ✅ لا مساس بـ `NarrationTest.tsx` ولا بأي وحدة قائمة
-- ✅ نفس قاعدة البيانات (لا تكرار) — تمييز عبر `test_type`
-- ✅ نتائج موثقة وقابلة للوصول من ملف الطالب وبوابة ولي الأمر
-- ✅ مطابق 100% للجدول الورقي المستخدم حالياً في المجمع
-
+بعد تأكيدك سأبدأ بالتنفيذ مباشرة دون أي تعديل في قاعدة البيانات (التغييرات في الواجهة فقط).

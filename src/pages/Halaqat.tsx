@@ -47,9 +47,10 @@ const Halaqat = () => {
     const tracksRes = await supabase.from("level_tracks").select("*").eq("active", true).order("sort_order");
     const reserveRes: any = await (supabase as any).from("profiles").select("id, full_name, role").eq("is_reserve", true).eq("active", true);
     
-    // Filter out talqeen halaqat (those with "تلقين" in the name)
+    // Filter out talqeen halaqat using unified helper
     const allHalaqat = halaqatRes.data || [];
-    setHalaqat(allHalaqat.filter((h: any) => !h.name.includes("تلقين")));
+    const { filterTahfeezOnly } = await import("@/lib/halaqaType");
+    setHalaqat(filterTahfeezOnly(allHalaqat));
     setTeachers((teachersRes.data as Teacher[]) || []);
     setReserveTeachers(reserveRes.data || []);
     setLevelTracks(tracksRes.data || []);

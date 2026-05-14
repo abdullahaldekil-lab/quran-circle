@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Trophy, TrendingUp, CheckCircle, Medal, Award, Star } from "lucide-react";
+import { filterTahfeezOnly } from "@/lib/halaqaType";
 
 const TOTAL_PAGES = 604;
 const INITIAL_SHOW = 20;
@@ -39,7 +40,7 @@ const Rankings = () => {
   const [showCount, setShowCount] = useState(INITIAL_SHOW);
 
   useEffect(() => {
-    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => setHalaqat(data || []));
+    supabase.from("halaqat").select("*").eq("active", true).then(({ data }) => setHalaqat(filterTahfeezOnly(data || [])));
   }, []);
 
   useEffect(() => {
@@ -50,10 +51,15 @@ const Rankings = () => {
   const fetchRankings = async () => {
     setLoading(true);
 
+    // Limit to Tahfeez halaqat only (exclude Talqeen)
+    const { data: tahfeezH } = await supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true);
+    const tahfeezIds = filterTahfeezOnly(tahfeezH || []).map((h: any) => h.id);
+
     let studentsQuery = supabase
       .from("students")
       .select("id, full_name, halaqa_id, join_date, total_memorized_pages, halaqat(name)")
-      .eq("status", "active");
+      .eq("status", "active")
+      .in("halaqa_id", tahfeezIds.length > 0 ? tahfeezIds : ["00000000-0000-0000-0000-000000000000"]);
 
     if (filterHalaqa !== "all") {
       studentsQuery = studentsQuery.eq("halaqa_id", filterHalaqa);

@@ -52,10 +52,11 @@ export default function NarrationReports() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("narration_sessions" as any)
-        .select("id, session_date, title, halaqa_id, halaqat(name)")
+        .select("id, session_date, title, halaqa_id, halaqat(name, talqeen_curriculum_id)")
         .order("session_date", { ascending: false });
       if (error) throw error;
-      return data as any[];
+      const { isTalqeenHalaqa } = await import("@/lib/halaqaType");
+      return (data as any[]).filter((s) => !isTalqeenHalaqa(s.halaqat));
     },
   });
 
@@ -81,9 +82,10 @@ export default function NarrationReports() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("narration_attempts" as any)
-        .select("session_id, student_id, total_hizb_count, grade, status, students(full_name, halaqa_id, halaqat(name))");
+        .select("session_id, student_id, total_hizb_count, grade, status, students(full_name, halaqa_id, halaqat(name, talqeen_curriculum_id))");
       if (error) throw error;
-      return data as any[];
+      const { isTalqeenHalaqa } = await import("@/lib/halaqaType");
+      return (data as any[]).filter((a) => !isTalqeenHalaqa(a.students?.halaqat));
     },
   });
 
