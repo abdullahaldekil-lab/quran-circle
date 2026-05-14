@@ -121,8 +121,8 @@ const GuardianApprovals = () => {
                     <div>
                       <p className="font-medium">{g.full_name}</p>
                       <p className="text-xs text-muted-foreground" dir="ltr">{g.phone || "—"}</p>
-                      {g.rejection_reason && (
-                        <p className="text-xs text-destructive mt-1">سبب الرفض: {g.rejection_reason}</p>
+                      {(g as any).rejection_reason && (
+                        <p className="text-xs text-destructive mt-1">سبب الرفض: {(g as any).rejection_reason}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
