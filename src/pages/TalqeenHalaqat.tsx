@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDualDate } from "@/lib/hijri";
+import ContentViewer, { lessonTypeIcon, lessonTypeLabel } from "@/components/talqeen/ContentViewer";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // منتقي تاريخ بالتاريخ الهجري كأساس والميلادي كفرعي
 const DualDatePicker = ({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) => {
