@@ -11,8 +11,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ArrowRight, User, Calendar, TrendingUp, Play, BookOpen,
   CheckCircle2, XCircle, Clock, AlertTriangle, Award, MapPin,
-  FileText, Target,
+  FileText, Target, Bus, Wallet,
 } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { gregorianToHijri, formatDateHijriOnly } from "@/lib/hijri";
 
@@ -29,6 +30,8 @@ const GuardianChildProfile = () => {
   const [planProgress, setPlanProgress] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [narrationTests, setNarrationTests] = useState<any[]>([]);
+  const [busAssignment, setBusAssignment] = useState<any>(null);
+  const [monthAttendance, setMonthAttendance] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,6 +71,25 @@ const GuardianChildProfile = () => {
       setBadges(badgesRes.data || []);
       setQuizzes(quizzesRes.data || []);
       setNarrationTests(narrationRes.data || []);
+
+      // Bus assignment
+      const { data: busAssign } = await supabase
+        .from("student_bus_assignments")
+        .select("*, buses(bus_name, driver_name, driver_phone)")
+        .eq("student_id", id)
+        .eq("active", true)
+        .maybeSingle();
+      setBusAssignment(busAssign);
+
+      // Current month attendance grid
+      const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
+      const monthEnd = format(endOfMonth(new Date()), "yyyy-MM-dd");
+      const { data: monthAtt } = await supabase
+        .from("attendance").select("attendance_date, status")
+        .eq("student_id", id)
+        .gte("attendance_date", monthStart)
+        .lte("attendance_date", monthEnd);
+      setMonthAttendance(monthAtt || []);
 
       if (studentRes.data?.halaqa_id) {
         const { data: tripsData } = await supabase
@@ -267,9 +289,11 @@ const GuardianChildProfile = () => {
           <TabsList className="w-full flex flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="recitations" className="text-xs flex-1 min-w-[60px]">التسميع</TabsTrigger>
             <TabsTrigger value="attendance" className="text-xs flex-1 min-w-[60px]">الحضور</TabsTrigger>
+            <TabsTrigger value="month-report" className="text-xs flex-1 min-w-[60px]">تقرير الشهر</TabsTrigger>
             <TabsTrigger value="badges" className="text-xs flex-1 min-w-[60px]">الشارات</TabsTrigger>
             <TabsTrigger value="trips" className="text-xs flex-1 min-w-[60px]">الرحلات</TabsTrigger>
-            
+            <TabsTrigger value="bus" className="text-xs flex-1 min-w-[60px]">الباص</TabsTrigger>
+            <TabsTrigger value="finance" className="text-xs flex-1 min-w-[60px]">المالية</TabsTrigger>
             <TabsTrigger value="tests" className="text-xs flex-1 min-w-[60px]">الاختبارات</TabsTrigger>
             <TabsTrigger value="annual-plan" className="text-xs flex-1 min-w-[60px]">الخطة السنوية</TabsTrigger>
           </TabsList>
