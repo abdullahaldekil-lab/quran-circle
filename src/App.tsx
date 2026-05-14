@@ -80,6 +80,13 @@ import StaffTasksAnalytics from "@/pages/StaffTasksAnalytics";
 import ProgramsOverview from "@/pages/ProgramsOverview";
 import EnrollmentForm from "./pages/EnrollmentForm";
 import VerifyCertificate from "./pages/VerifyCertificate";
+import GuardianMessages from "./pages/guardian/GuardianMessages";
+import GuardianExcuses from "./pages/guardian/GuardianExcuses";
+import GuardianSettings from "./pages/guardian/GuardianSettings";
+import GuardianEvaluation from "./pages/guardian/GuardianEvaluation";
+import GuardianMessagesAdmin from "./pages/admin/GuardianMessagesAdmin";
+import GuardianExcusesAdmin from "./pages/admin/GuardianExcusesAdmin";
+import TeacherEvaluationsReport from "./pages/admin/TeacherEvaluationsReport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -128,6 +135,10 @@ const AppRoutes = () => {
       <Route path="/guardian-auth" element={<GuardianAuth />} />
       <Route path="/guardian" element={<GuardianDashboard />} />
       <Route path="/guardian/child/:id" element={<GuardianChildProfile />} />
+      <Route path="/guardian/messages" element={<GuardianMessages />} />
+      <Route path="/guardian/excuses" element={<GuardianExcuses />} />
+      <Route path="/guardian/evaluation" element={<GuardianEvaluation />} />
+      <Route path="/guardian/settings" element={<GuardianSettings />} />
       <Route path="/enroll" element={<Enroll />} />
       <Route path="/verify-certificate" element={<VerifyCertificate />} />
       <Route path="/verify-certificate/:number" element={<VerifyCertificate />} />
@@ -200,6 +211,10 @@ const AppRoutes = () => {
       <Route path="/notification-preferences" element={<ProtectedRoute path="/notification-preferences"><NotificationPreferences /></ProtectedRoute>} />
       <Route path="/send-notification" element={<ProtectedRoute path="/send-notification"><SendNotification /></ProtectedRoute>} />
       <Route path="/bulk-email" element={<ProtectedRoute path="/bulk-email"><BulkEmail /></ProtectedRoute>} />
+
+      <Route path="/admin/guardian-messages" element={<ProtectedRoute path="/admin/guardian-messages"><GuardianMessagesAdmin /></ProtectedRoute>} />
+      <Route path="/admin/guardian-excuses" element={<ProtectedRoute path="/admin/guardian-excuses"><GuardianExcusesAdmin /></ProtectedRoute>} />
+      <Route path="/admin/teacher-evaluations" element={<ProtectedRoute path="/admin/teacher-evaluations"><TeacherEvaluationsReport /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
