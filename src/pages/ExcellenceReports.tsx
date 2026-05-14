@@ -71,7 +71,7 @@ export default function ExcellenceReports() {
       supabase.from("excellence_sessions").select("id, session_date, session_hijri_date, track_id, halaqa_id, halaqat(name), excellence_tracks:track_id(track_name)").order("session_date", { ascending: false }),
       supabase.from("excellence_tracks").select("id, track_name").eq("is_active", true).order("track_name"),
       supabase.from("distinguished_students").select("id, student_id, date_added, students:student_id(full_name), excellence_tracks:track_id(track_name)").order("date_added", { ascending: false }),
-      supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true).order("name"),
+      (supabase as any).from("halaqat_tahfeez").select("id, name, talqeen_curriculum_id").eq("active", true).order("name"),
     ]);
     const { filterTahfeezOnly } = await import("@/lib/halaqaType");
     setSessions(sessRes.data || []);

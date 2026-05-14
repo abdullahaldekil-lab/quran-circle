@@ -80,7 +80,7 @@ const PreRegistration = () => {
 
   useEffect(() => {
     fetchRecords();
-    supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true).then(async ({ data }) => {
+    (supabase as any).from("halaqat_tahfeez").select("id, name, talqeen_curriculum_id").eq("active", true).then(async ({ data }: any) => {
       const { filterTahfeezOnly } = await import("@/lib/halaqaType");
       setHalaqat(filterTahfeezOnly((data as any[]) || []));
     });

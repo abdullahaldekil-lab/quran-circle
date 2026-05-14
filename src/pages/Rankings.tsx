@@ -52,7 +52,7 @@ const Rankings = () => {
     setLoading(true);
 
     // Limit to Tahfeez halaqat only (exclude Talqeen)
-    const { data: tahfeezH } = await supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true);
+    const { data: tahfeezH } = await (supabase as any).from("halaqat_tahfeez").select("id, name, talqeen_curriculum_id").eq("active", true);
     const tahfeezIds = filterTahfeezOnly(tahfeezH || []).map((h: any) => h.id);
 
     let studentsQuery = supabase

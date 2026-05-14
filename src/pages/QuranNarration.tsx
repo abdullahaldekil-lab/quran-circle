@@ -125,7 +125,7 @@ export default function QuranNarration() {
     queryKey: ["halaqat-active"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("halaqat")
+        .from("halaqat_tahfeez" as any)
         .select("id, name, talqeen_curriculum_id")
         .eq("active", true)
         .order("name");

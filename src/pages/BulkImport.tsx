@@ -27,7 +27,7 @@ const BulkImport = () => {
   useEffect(() => {
     const fetchData = async () => {
       const [halaqatRes, levelsRes] = await Promise.all([
-        supabase.from("halaqat").select("*").eq("active", true).order("name"),
+        (supabase as any).from("halaqat_tahfeez").select("*").eq("active", true).order("name"),
         supabase.from("memorization_levels").select("*").eq("active", true).order("sort_order"),
       ]);
       const { filterTahfeezOnly } = await import("@/lib/halaqaType");
