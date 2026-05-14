@@ -1477,6 +1477,8 @@ const TalqeenHalaqat = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ContentViewer lesson={hpViewerLesson} open={!!hpViewerLesson} onOpenChange={(o) => { if (!o) setHpViewerLesson(null); }} />
     </div>
   );
 };
