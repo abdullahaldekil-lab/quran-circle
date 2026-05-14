@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import GuardianLayout from "@/components/GuardianLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Clock, CheckCircle2, XCircle } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
+
+type LinkRequest = Database["public"]["Tables"]["guardian_link_requests"]["Row"];
 
 const GuardianLinkRequest = () => {
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<LinkRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [nationalId, setNationalId] = useState("");
@@ -19,21 +22,27 @@ const GuardianLinkRequest = () => {
   const [relationship, setRelationship] = useState("أب");
   const [guardianName, setGuardianName] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-    const { data: gp } = await supabase.from("guardian_profiles").select("full_name").eq("id", session.user.id).maybeSingle();
+    const { data: gp, error: e1 } = await supabase
+      .from("guardian_profiles")
+      .select("full_name")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    if (e1) toast.error("خطأ في تحميل بيانات الحساب");
     setGuardianName(gp?.full_name || "");
-    const { data } = await supabase
+    const { data, error: e2 } = await supabase
       .from("guardian_link_requests")
       .select("*")
       .eq("guardian_id", session.user.id)
       .order("created_at", { ascending: false });
-    setRequests(data || []);
+    if (e2) toast.error("خطأ في تحميل الطلبات");
+    setRequests((data as LinkRequest[]) || []);
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,14 +52,27 @@ const GuardianLinkRequest = () => {
     }
     setSubmitting(true);
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("يجب تسجيل الدخول أولاً");
+      setSubmitting(false);
+      return;
+    }
     const { error } = await supabase.from("guardian_link_requests").insert({
-      guardian_id: session!.user.id,
+      guardian_id: session.user.id,
       student_national_id: nationalId.trim(),
       student_name_hint: nameHint.trim() || null,
       relationship,
     });
     setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      // duplicate pending request
+      if (error.code === "23505") {
+        toast.error("يوجد طلب معلق بالفعل لهذا الرقم");
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
     toast.success("تم إرسال الطلب وسيتم مراجعته");
     setNationalId(""); setNameHint("");
     load();
