@@ -1265,11 +1265,12 @@ const TalqeenHalaqat = () => {
           </DialogHeader>
 
           <Tabs value={manageTab} onValueChange={setManageTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full">
+            <TabsList className="grid grid-cols-5 w-full">
               <TabsTrigger value="execution"><CheckCircle2 className="w-4 h-4 ml-1" />التنفيذ</TabsTrigger>
               <TabsTrigger value="attendance"><ListChecks className="w-4 h-4 ml-1" />الحضور</TabsTrigger>
               <TabsTrigger value="homework"><BookMarked className="w-4 h-4 ml-1" />الواجب</TabsTrigger>
               <TabsTrigger value="education"><GraduationCap className="w-4 h-4 ml-1" />البرنامج التربوي</TabsTrigger>
+              <TabsTrigger value="program"><BookOpen className="w-4 h-4 ml-1" />برنامج الحلقة</TabsTrigger>
             </TabsList>
 
             {/* تبويب التنفيذ */}
