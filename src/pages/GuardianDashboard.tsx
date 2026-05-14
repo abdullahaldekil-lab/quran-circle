@@ -6,7 +6,8 @@ import GuardianLayout from "@/components/GuardianLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { User, BookOpen, ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { User, BookOpen, ChevronLeft, Clock, Plus } from "lucide-react";
 
 const GuardianDashboard = () => {
   const navigate = useNavigate();
