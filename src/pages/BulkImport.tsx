@@ -30,7 +30,8 @@ const BulkImport = () => {
         supabase.from("halaqat").select("*").eq("active", true).order("name"),
         supabase.from("memorization_levels").select("*").eq("active", true).order("sort_order"),
       ]);
-      setHalaqat(halaqatRes.data || []);
+      const { filterTahfeezOnly } = await import("@/lib/halaqaType");
+      setHalaqat(filterTahfeezOnly(halaqatRes.data || []));
       setLevels(levelsRes.data || []);
       if (levelsRes.data && levelsRes.data.length > 0) {
         setSelectedLevel(levelsRes.data[0].name);

@@ -79,9 +79,9 @@ const KpiDashboard = () => {
     const tahfeezHalaqat = filterTahfeezOnly((halaqatRes.data as any[]) || []);
     const tahfeezIds = new Set(tahfeezHalaqat.map((h: any) => h.id));
     setHalaqat(tahfeezHalaqat);
-    setStudents(studentsRes.data || []);
-    setRecitations(recitationsRes.data || []);
-    setAttendance(attendanceRes.data || []);
+    setStudents((studentsRes.data || []).filter((s: any) => !s.halaqa_id || tahfeezIds.has(s.halaqa_id)));
+    setRecitations((recitationsRes.data || []).filter((r: any) => !r.halaqa_id || tahfeezIds.has(r.halaqa_id)));
+    setAttendance((attendanceRes.data || []).filter((a: any) => !a.halaqa_id || tahfeezIds.has(a.halaqa_id)));
     setGoals(goalsRes.data || []);
     setObjectives(objectivesRes.data || []);
     setTasks(tasksRes.data || []);

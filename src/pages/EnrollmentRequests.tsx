@@ -94,10 +94,11 @@ const EnrollmentRequests = () => {
     setLoading(true);
     const [reqRes, halaqatRes] = await Promise.all([
       supabase.from("enrollment_requests").select("*, form_data").order("created_at", { ascending: false }),
-      supabase.from("halaqat").select("id, name, capacity_max").eq("active", true),
+      supabase.from("halaqat").select("id, name, capacity_max, talqeen_curriculum_id").eq("active", true),
     ]);
 
-    const halaqatData = halaqatRes.data || [];
+    const { filterTahfeezOnly } = await import("@/lib/halaqaType");
+    const halaqatData = filterTahfeezOnly((halaqatRes.data as any[]) || []);
 
     // Get student counts per halaqa
     const halaqatWithCounts: HalaqaInfo[] = [];

@@ -29,11 +29,13 @@ const HalaqatAnalytics = () => {
     const fetchData = async () => {
       try {
         // Get halaqat
-        let hQuery = supabase.from("halaqat").select("id, name").eq("active", true);
+        let hQuery = supabase.from("halaqat").select("id, name, talqeen_curriculum_id").eq("active", true);
         if (allowedHalaqatIds !== null && allowedHalaqatIds.length > 0) {
           hQuery = hQuery.in("id", allowedHalaqatIds);
         }
-        const { data: halaqat } = await hQuery;
+        const { data: rawHalaqat } = await hQuery;
+        const { filterTahfeezOnly } = await import("@/lib/halaqaType");
+        const halaqat = filterTahfeezOnly((rawHalaqat as any[]) || []);
         if (!halaqat?.length) { setLoading(false); return; }
 
         const ids = halaqat.map((h) => h.id);
