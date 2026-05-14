@@ -422,6 +422,114 @@ const GuardianChildProfile = () => {
             </Card>
           </TabsContent>
 
+          {/* Monthly Attendance Report */}
+          <TabsContent value="month-report">
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">تقرير الشهر الحالي</CardTitle>
+                <Button variant="outline" size="sm" onClick={() => window.print()}>طباعة</Button>
+              </CardHeader>
+              <CardContent className="p-3">
+                {(() => {
+                  const days = eachDayOfInterval({ start: startOfMonth(new Date()), end: endOfMonth(new Date()) })
+                    .filter(d => { const dw = getDay(d); return dw !== 5 && dw !== 6; });
+                  const map: Record<string, string> = {};
+                  monthAttendance.forEach((a: any) => { map[a.attendance_date] = a.status; });
+                  const counts = { present: 0, absent: 0, late: 0, excused: 0 };
+                  days.forEach(d => {
+                    const s = map[format(d, "yyyy-MM-dd")];
+                    if (s && s in counts) (counts as any)[s]++;
+                  });
+                  return (
+                    <>
+                      <div className="grid grid-cols-4 gap-2 mb-3">
+                        <div className="bg-success/10 p-2 rounded text-center">
+                          <p className="text-lg font-bold text-success">{counts.present}</p>
+                          <p className="text-[10px]">حاضر</p>
+                        </div>
+                        <div className="bg-destructive/10 p-2 rounded text-center">
+                          <p className="text-lg font-bold text-destructive">{counts.absent}</p>
+                          <p className="text-[10px]">غائب</p>
+                        </div>
+                        <div className="bg-warning/10 p-2 rounded text-center">
+                          <p className="text-lg font-bold text-warning">{counts.late}</p>
+                          <p className="text-[10px]">متأخر</p>
+                        </div>
+                        <div className="bg-muted p-2 rounded text-center">
+                          <p className="text-lg font-bold">{counts.excused}</p>
+                          <p className="text-[10px]">مستأذن</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-7 gap-1 text-center">
+                        {days.map(d => {
+                          const s = map[format(d, "yyyy-MM-dd")];
+                          const cls = s === "present" ? "bg-success/20 text-success"
+                            : s === "absent" ? "bg-destructive/20 text-destructive"
+                            : s === "late" ? "bg-warning/20 text-warning"
+                            : s === "excused" ? "bg-muted text-muted-foreground"
+                            : "bg-card border";
+                          return (
+                            <div key={d.toISOString()} className={`text-[10px] p-1 rounded ${cls}`}>
+                              {format(d, "d")}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Bus Tab */}
+          <TabsContent value="bus">
+            <Card>
+              <CardContent className="p-4">
+                {!busAssignment ? (
+                  <div className="text-center py-6">
+                    <Bus className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">لم يتم تسجيل الطالب في باص</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Bus className="w-8 h-8 text-primary" />
+                      <div>
+                        <p className="font-bold">{busAssignment.buses?.bus_name}</p>
+                        <p className="text-xs text-muted-foreground">الباص المخصص</p>
+                      </div>
+                    </div>
+                    {busAssignment.buses?.driver_name && (
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <p className="text-xs text-muted-foreground">السائق</p>
+                        <p className="font-medium">{busAssignment.buses.driver_name}</p>
+                        {busAssignment.buses.driver_phone && (
+                          <a href={`tel:${busAssignment.buses.driver_phone}`} dir="ltr" className="text-sm text-primary mt-1 block">
+                            {busAssignment.buses.driver_phone}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                    {busAssignment.guardian_phone_override && (
+                      <p className="text-xs text-muted-foreground">رقم التواصل البديل: <span dir="ltr">{busAssignment.guardian_phone_override}</span></p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Finance Tab */}
+          <TabsContent value="finance">
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Wallet className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm font-medium">لا توجد مستحقات مالية حالياً</p>
+                <p className="text-xs text-muted-foreground mt-1">سيتم عرض الرسوم والمدفوعات هنا فور تفعيل النظام المالي للطلاب</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Tests Tab */}
           <TabsContent value="tests">
