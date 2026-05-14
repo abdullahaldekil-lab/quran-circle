@@ -46,7 +46,7 @@ const Recitation = () => {
   useEffect(() => {
     if (!user || accessLoading) return;
     (supabase as any).from("halaqat_tahfeez").select("*").eq("active", true).then(({ data }: any) => {
-      const list = filterHalaqat(filterTahfeezOnly(data || []));
+      const list = filterHalaqat((data as any[]) || []);
       setHalaqat(list);
       const myHalaqa = list.find(
         (h) => h.teacher_id === user.id || h.assistant_teacher_id === user.id
