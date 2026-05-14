@@ -194,6 +194,62 @@ const TalqeenHalaqat = () => {
   const [eduForm, setEduForm] = useState({ educational_program_title: "", educational_program_details: "" });
   const [attendanceRows, setAttendanceRows] = useState<Array<{ student_id: string; full_name: string; status: string; homework_status: string; notes: string }>>([]);
 
+  // ========== Halaqa Program (talqeen_program_assignments) ==========
+  const [hpAssignment, setHpAssignment] = useState<any | null>(null);
+  const [hpChapters, setHpChapters] = useState<any[]>([]);
+  const [hpLessonsByChapter, setHpLessonsByChapter] = useState<Record<string, any[]>>({});
+  const [hpProgress, setHpProgress] = useState<Record<string, any>>({}); // lesson_id -> progress row
+  const [hpViewerLesson, setHpViewerLesson] = useState<any | null>(null);
+
+  const loadHalaqaProgram = async (halaqaId: string) => {
+    setHpAssignment(null); setHpChapters([]); setHpLessonsByChapter({}); setHpProgress({});
+    const { data: a } = await (supabase as any)
+      .from("talqeen_program_assignments")
+      .select("*, talqeen_curricula(name)")
+      .eq("halaqa_id", halaqaId).eq("is_active", true)
+      .order("assigned_at", { ascending: false }).limit(1).maybeSingle();
+    if (!a) return;
+    setHpAssignment(a);
+    const { data: chs } = await (supabase as any)
+      .from("talqeen_chapters").select("*").eq("curriculum_id", a.curriculum_id)
+      .order("sort_order").order("chapter_number");
+    setHpChapters(chs || []);
+    const ids = (chs || []).map((c: any) => c.id);
+    if (ids.length) {
+      const { data: les } = await (supabase as any)
+        .from("talqeen_lessons").select("*").in("chapter_id", ids).order("lesson_number");
+      const grouped: Record<string, any[]> = {};
+      (les || []).forEach((l: any) => { (grouped[l.chapter_id] = grouped[l.chapter_id] || []).push(l); });
+      setHpLessonsByChapter(grouped);
+    }
+    const { data: prog } = await (supabase as any)
+      .from("talqeen_program_progress").select("*").eq("assignment_id", a.id);
+    const map: Record<string, any> = {};
+    (prog || []).forEach((p: any) => { map[p.lesson_id] = p; });
+    setHpProgress(map);
+  };
+
+  const toggleLessonProgress = async (lesson: any, done: boolean) => {
+    if (!hpAssignment) return;
+    const existing = hpProgress[lesson.id];
+    const status = done ? "completed" : "pending";
+    const completed_at = done ? new Date().toISOString() : null;
+    if (existing) {
+      const { error } = await (supabase as any).from("talqeen_program_progress")
+        .update({ status, completed_at }).eq("id", existing.id);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { data, error } = await (supabase as any).from("talqeen_program_progress").insert({
+        assignment_id: hpAssignment.id, lesson_id: lesson.id, halaqa_id: hpAssignment.halaqa_id,
+        status, completed_at,
+      }).select().single();
+      if (error) { toast.error(error.message); return; }
+      setHpProgress((m) => ({ ...m, [lesson.id]: data }));
+      return;
+    }
+    setHpProgress((m) => ({ ...m, [lesson.id]: { ...m[lesson.id], status, completed_at } }));
+  };
+
   const openManage = async (s: any) => {
     setManageSession(s);
     setManageTab("execution");
