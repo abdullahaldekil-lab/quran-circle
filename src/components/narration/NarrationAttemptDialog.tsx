@@ -131,6 +131,8 @@ export default function NarrationAttemptDialog({
       setGrade(existing.grade);
       setManualEntry(existing.manual_entry);
       setNotes(existing.notes || "");
+      setSegmentLabel((existing as any).segment_label || "");
+      setIsPartial((existing as any).is_partial || false);
     } else {
       setNarrationType("regular");
       setRanges([{ section: "regular", from_hizb: 1, to_hizb: 1, hizb_count: 1 }]);
@@ -140,6 +142,8 @@ export default function NarrationAttemptDialog({
       setGrade(settings.max_grade);
       setManualEntry(false);
       setNotes("");
+      setSegmentLabel("");
+      setIsPartial(false);
     }
   }, [existing, open, settings.max_grade]);
 
