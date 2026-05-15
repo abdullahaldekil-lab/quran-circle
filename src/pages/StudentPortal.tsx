@@ -35,6 +35,11 @@ export default function StudentPortal() {
   const [programs, setPrograms] = useState<any[]>([]);
   const [narration, setNarration] = useState<any[]>([]);
 
+  const [externalUrl, setExternalUrl] = useState("");
+  const [externalName, setExternalName] = useState("");
+  const [showExternal, setShowExternal] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
+
   const handleSearch = async (rawCode?: string) => {
     const codeToUse = (rawCode ?? inputCode).trim().toUpperCase();
     if (!codeToUse) return;
