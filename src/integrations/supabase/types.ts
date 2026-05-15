@@ -4168,6 +4168,7 @@ export type Database = {
           residence_location: string | null
           school_name: string | null
           status: Database["public"]["Enums"]["student_status"]
+          student_code: string | null
           student_phone: string | null
           total_memorized_pages: number | null
           transfer_destination: string | null
@@ -4216,6 +4217,7 @@ export type Database = {
           residence_location?: string | null
           school_name?: string | null
           status?: Database["public"]["Enums"]["student_status"]
+          student_code?: string | null
           student_phone?: string | null
           total_memorized_pages?: number | null
           transfer_destination?: string | null
@@ -4264,6 +4266,7 @@ export type Database = {
           residence_location?: string | null
           school_name?: string | null
           status?: Database["public"]["Enums"]["student_status"]
+          student_code?: string | null
           student_phone?: string | null
           total_memorized_pages?: number | null
           transfer_destination?: string | null
