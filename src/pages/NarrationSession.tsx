@@ -735,6 +735,7 @@ export default function NarrationSession() {
             manual_entry: editingStudent.manual_entry,
             notes: editingStudent.notes,
           } : null}
+          studentPlanInfo={studentPlanInfo}
           onSave={(data) => saveStudentAttempt(editingStudent.student_id, data)}
           saving={savingAttempt}
         />
