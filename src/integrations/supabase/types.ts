@@ -5720,6 +5720,7 @@ export type Database = {
         }[]
       }
       get_staff_role: { Args: { _user_id: string }; Returns: string }
+      get_student_portal_data: { Args: { _code: string }; Returns: Json }
       has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
