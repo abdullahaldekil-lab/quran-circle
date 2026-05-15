@@ -83,6 +83,8 @@ export default function NarrationAttemptDialog({
   const [grade, setGrade] = useState(settings.max_grade);
   const [manualEntry, setManualEntry] = useState(false);
   const [notes, setNotes] = useState("");
+  const [segmentLabel, setSegmentLabel] = useState("");
+  const [isPartial, setIsPartial] = useState(false);
 
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(0);
