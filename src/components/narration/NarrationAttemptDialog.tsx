@@ -67,6 +67,7 @@ export default function NarrationAttemptDialog({
   student,
   settings,
   existing,
+  studentPlanInfo,
   onSave,
   saving,
 }: Props) {
