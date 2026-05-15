@@ -338,7 +338,7 @@ export default function NarrationSession() {
         toast({ title: `خطأ في الحذف: ${error.message}`, variant: "destructive" });
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] }); queryClient.invalidateQueries({ queryKey: ["narration-results-multi", sessionId] });
     }
     setRows((prev) => prev.filter((r) => r.student_id !== studentId));
     setDeleteStudentId(null);
@@ -417,7 +417,7 @@ export default function NarrationSession() {
       const { error: resultError } = await supabase.from("narration_results" as any).upsert(resultPayload, { onConflict: "session_id,student_id,reviewer_id" });
       if (resultError) throw resultError;
 
-      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] }); queryClient.invalidateQueries({ queryKey: ["narration-results-multi", sessionId] });
       setEditingStudent(null);
       toast({ title: "تم حفظ النتيجة بنجاح ✓" });
 
@@ -546,7 +546,7 @@ export default function NarrationSession() {
         if (resultError) throw resultError;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] }); queryClient.invalidateQueries({ queryKey: ["narration-results-multi", sessionId] });
       setBulkNarrationOpen(false);
       setSelectedStudents(new Set());
       toast({ title: `تم حفظ النتائج لـ ${studentIds.length} طالب ✓` });
