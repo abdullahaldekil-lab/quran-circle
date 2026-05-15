@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   BookOpen, Loader2, Calendar, MapPin, Award, ScrollText,
-  CheckSquare, GraduationCap, ClipboardList, Home,
+  CheckSquare, GraduationCap, ClipboardList, Home, X, ExternalLink,
 } from "lucide-react";
 
 const statusLabel: Record<string, { label: string; cls: string }> = {
