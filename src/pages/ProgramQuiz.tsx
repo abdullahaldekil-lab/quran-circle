@@ -43,8 +43,8 @@ export default function ProgramQuiz() {
   useEffect(() => {
     (async () => {
       const [c, h] = await Promise.all([
-        supabase.from("talqeen_curricula").select("id, name, description").eq("is_active", true),
-        supabase.from("halaqat").select("id, name").eq("active", true).order("name"),
+        (supabase as any).from("talqeen_curricula").select("id, name, description").eq("is_active", true),
+        (supabase as any).from("halaqat").select("id, name").eq("active", true).order("name"),
       ]);
       setCurricula(c.data || []);
       setHalaqat(h.data || []);
