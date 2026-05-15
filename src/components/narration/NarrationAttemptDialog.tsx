@@ -31,6 +31,12 @@ interface StudentInfo {
   student_name: string;
 }
 
+interface StudentPlanInfo {
+  totalHizb: number;
+  fromHizb: string;
+  toHizb: string;
+}
+
 interface ExistingAttempt {
   id: string;
   narration_type: "regular" | "multi";
@@ -50,6 +56,7 @@ interface Props {
   student: StudentInfo;
   settings: NarrationSettingsFull;
   existing?: ExistingAttempt | null;
+  studentPlanInfo?: StudentPlanInfo | null;
   onSave: (data: NarrationAttemptData) => void;
   saving?: boolean;
 }
@@ -60,6 +67,7 @@ export default function NarrationAttemptDialog({
   student,
   settings,
   existing,
+  studentPlanInfo,
   onSave,
   saving,
 }: Props) {
@@ -213,6 +221,35 @@ export default function NarrationAttemptDialog({
         </div>
 
         <div className="space-y-4 pt-2">
+          {/* Plan Info Card */}
+          {studentPlanInfo && (
+            <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-200">
+              <div>
+                <p className="text-sm font-semibold text-green-800">
+                  الأحزاب المجتازة: {studentPlanInfo.totalHizb} حزب
+                </p>
+                <p className="text-xs text-green-700 mt-0.5">
+                  من: {studentPlanInfo.fromHizb} — إلى: {studentPlanInfo.toHizb}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="bg-green-700 hover:bg-green-800 text-white"
+                onClick={() => {
+                  const fromNum = parseInt(studentPlanInfo.fromHizb, 10);
+                  const toNum = parseInt(studentPlanInfo.toHizb, 10);
+                  if (!isNaN(fromNum) && !isNaN(toNum) && fromNum >= 1 && toNum <= 60) {
+                    if (narrationType === "regular") {
+                      setRanges([{ section: "regular", from_hizb: fromNum, to_hizb: toNum, hizb_count: toNum - fromNum + 1 }]);
+                    }
+                  }
+                }}
+              >
+                تطبيق
+              </Button>
+            </div>
+          )}
+
           {/* Narration Type */}
           <NarrationTypeSelector value={narrationType} onChange={handleTypeChange} />
 
