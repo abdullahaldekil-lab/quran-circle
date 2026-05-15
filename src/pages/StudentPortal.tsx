@@ -218,7 +218,7 @@ export default function StudentPortal() {
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-bold flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-blue-700" />
-                    الشهر الحالي: {currentMonthProgress.hijri_month_name || `شهر ${currentMonthProgress.hijri_month}`}
+                    الشهر الحالي: {currentMonthProgress.hijri_month_name || `شهر ${currentMonthProgress.month_number || currentMonthProgress.hijri_month || ''}`}
                   </p>
                   {monthTarget > 0 && (
                     <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-300">
