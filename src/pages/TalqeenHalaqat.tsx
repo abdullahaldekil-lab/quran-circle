@@ -81,6 +81,7 @@ const TalqeenHalaqat = () => {
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [studentsDialogId, setStudentsDialogId] = useState<string | null>(null);
+  const [dayRecHalaqaId, setDayRecHalaqaId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "", talqeen_curriculum_id: "" });
   const [editOpen, setEditOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
