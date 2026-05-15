@@ -355,7 +355,7 @@ export default function NarrationReports() {
                       grade: s.final_score,
                       status: s.status,
                       total_hizb_count: s.total_hizb_count,
-                      students: { full_name: s.student_name, halaqat: { name: s.halaqa_name } },
+                      mistakes_count: 0, lahn_count: 0, warnings_count: 0, students: { full_name: s.student_name, halaqat: { name: s.halaqa_name } },
                     })),
                   })}>
                     <FileSpreadsheet className="w-4 h-4 ml-2" />
@@ -371,7 +371,7 @@ export default function NarrationReports() {
                       grade: s.final_score,
                       status: s.status,
                       total_hizb_count: s.total_hizb_count,
-                      students: { full_name: s.student_name, halaqat: { name: s.halaqa_name } },
+                      mistakes_count: 0, lahn_count: 0, warnings_count: 0, students: { full_name: s.student_name, halaqat: { name: s.halaqa_name } },
                     })),
                   })}>
                     <FileText className="w-4 h-4 ml-2" />
