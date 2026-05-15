@@ -31,6 +31,12 @@ interface StudentInfo {
   student_name: string;
 }
 
+interface StudentPlanInfo {
+  totalHizb: number;
+  fromHizb: string;
+  toHizb: string;
+}
+
 interface ExistingAttempt {
   id: string;
   narration_type: "regular" | "multi";
@@ -50,6 +56,7 @@ interface Props {
   student: StudentInfo;
   settings: NarrationSettingsFull;
   existing?: ExistingAttempt | null;
+  studentPlanInfo?: StudentPlanInfo | null;
   onSave: (data: NarrationAttemptData) => void;
   saving?: boolean;
 }
