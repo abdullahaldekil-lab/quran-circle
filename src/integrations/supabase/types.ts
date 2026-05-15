@@ -2810,6 +2810,126 @@ export type Database = {
           },
         ]
       }
+      program_quiz_results: {
+        Row: {
+          answers: Json | null
+          id: string
+          program_score: number | null
+          quiz_id: string | null
+          student_id: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          answers?: Json | null
+          id?: string
+          program_score?: number | null
+          quiz_id?: string | null
+          student_id?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          answers?: Json | null
+          id?: string
+          program_score?: number | null
+          quiz_id?: string | null
+          student_id?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_quiz_results_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "program_quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_quiz_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_quizzes: {
+        Row: {
+          created_at: string | null
+          curriculum_id: string | null
+          generated_by: string | null
+          halaqa_id: string | null
+          id: string
+          lesson_id: string | null
+          questions: Json
+          quiz_type: string | null
+          scores_separate: boolean | null
+          status: string | null
+          week_number: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          curriculum_id?: string | null
+          generated_by?: string | null
+          halaqa_id?: string | null
+          id?: string
+          lesson_id?: string | null
+          questions?: Json
+          quiz_type?: string | null
+          scores_separate?: boolean | null
+          status?: string | null
+          week_number?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          curriculum_id?: string | null
+          generated_by?: string | null
+          halaqa_id?: string | null
+          id?: string
+          lesson_id?: string | null
+          questions?: Json
+          quiz_type?: string | null
+          scores_separate?: boolean | null
+          status?: string | null
+          week_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_quizzes_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_curricula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "talqeen_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_questions: {
         Row: {
           created_at: string
