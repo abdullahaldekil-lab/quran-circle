@@ -166,6 +166,7 @@ export default function NarrationAttemptDialog({
       status,
       manual_entry: manualEntry,
       notes,
+      recitation_duration_seconds: timerSeconds > 0 ? timerSeconds : undefined,
     };
 
     if (!manualEntry) {
