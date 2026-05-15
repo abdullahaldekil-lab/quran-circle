@@ -681,7 +681,7 @@ const Attendance = () => {
                   disabled={!canEdit}
                   className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${statusColors[displayStatus]} ${!canEdit ? "opacity-70 cursor-default" : ""}`}
                 >
-                  <StudentNameLink studentId={student.id} studentName={student.full_name} className="text-sm" />
+                  <span className="text-sm font-medium">{student.full_name}</span>
                   <div className="flex items-center gap-2 text-xs font-medium">
                     {markedTime && !isAdmin && (
                       <span className="text-[11px] opacity-75">{formatMarkedTime(markedTime)}</span>
