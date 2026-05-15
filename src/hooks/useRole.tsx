@@ -37,6 +37,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/permissions-management", "/internal-requests",
     "/programs-overview", "/halaqa-performance", "/enrollment-form",
     "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/teacher-evaluations", "/admin/guardian-approvals",
+    "/student-portal",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/kpi-dashboard",
@@ -48,6 +49,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/notification-preferences", "/internal-requests",
     "/programs-overview", "/halaqa-performance", "/enrollment-form",
     "/admin/guardian-approvals",
+    "/student-portal",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/kpi-dashboard",
@@ -69,6 +71,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/notification-preferences", "/notification-log", "/whatsapp-log", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
     "/enrollment-form", "/programs-overview",
     "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/guardian-approvals",
+    "/student-portal",
   ],
   admin_staff: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance",
