@@ -90,6 +90,7 @@ import GuardianExcusesAdmin from "./pages/admin/GuardianExcusesAdmin";
 import TeacherEvaluationsReport from "./pages/admin/TeacherEvaluationsReport";
 import GuardianApprovals from "./pages/admin/GuardianApprovals";
 import GuardianLinkRequest from "./pages/guardian/GuardianLinkRequest";
+import ExternalReviewer from "./pages/ExternalReviewer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
