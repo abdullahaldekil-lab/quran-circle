@@ -369,6 +369,7 @@ const Preparation = () => {
                 </div>
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
       )}
