@@ -688,7 +688,14 @@ export default function NarrationSession() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => (
+                {rows.map((row) => {
+                  const reviews = resultsByStudent.get(row.student_id) || [];
+                  const colCount = (canWrite ? 11 : 9);
+                  const avgScore = reviews.length > 0
+                    ? (reviews.reduce((s, r) => s + (Number(r.grade) || 0), 0) / reviews.length).toFixed(1)
+                    : null;
+                  return (
+                  <>
                   <TableRow
                     key={row.student_id}
                     className={`${row.status === "absent" ? "opacity-50" : ""} ${selectedStudents.has(row.student_id) ? "bg-primary/5" : ""}`}
@@ -748,7 +755,34 @@ export default function NarrationSession() {
                       </TableCell>
                     )}
                   </TableRow>
-                ))}
+                  {reviews.length > 1 && (
+                    <TableRow key={row.student_id + "-multi"} className="bg-muted/20">
+                      <TableCell colSpan={colCount} className="p-2">
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {reviews.length} تقييمات من مسمعين مختلفين
+                          </div>
+                          {reviews.map((r, i) => (
+                            <div key={r.id} className="px-3 py-1.5 border-t text-xs flex justify-between items-center">
+                              <span className="text-muted-foreground">
+                                {r.segment_label || `المسمع ${i + 1}`} — {r.reviewer_name || "مسمع خارجي"}
+                                {r.is_partial && <Badge className="mr-2 text-[10px]" variant="secondary">جزئي</Badge>}
+                              </span>
+                              <span className="font-bold text-primary">{r.grade}/100</span>
+                            </div>
+                          ))}
+                          <div className="px-3 py-1.5 bg-green-50 border-t text-xs flex justify-between font-semibold">
+                            <span>متوسط الدرجة الكلي</span>
+                            <span className="text-green-700">{avgScore}/100</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
