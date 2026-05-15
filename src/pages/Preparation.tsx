@@ -8,7 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Clock, Settings, Sun, Moon, Sunrise, Sunset, CloudSun } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useRole } from "@/hooks/useRole";
+
+/** Calculate preparation start = asr - 5 minutes */
+export const calcPreparationStart = (asr: string) => {
+  if (!asr) return "";
+  const [h, m] = asr.split(":").map(Number);
+  const totalMins = h * 60 + m - 5;
+  const hh = Math.floor(totalMins / 60);
+  const mm = totalMins % 60;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+};
 
 const PRAYER_LABELS: Record<string, { label: string; icon: React.ElementType }> = {
   fajr: { label: "الفجر", icon: Sunrise },
