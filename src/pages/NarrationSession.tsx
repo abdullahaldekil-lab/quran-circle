@@ -486,7 +486,7 @@ export default function NarrationSession() {
           if (rangeError) throw rangeError;
         }
 
-        // Upsert into narration_results with recitation duration
+        // Upsert into narration_results with recitation duration + reviewer info
         const resultPayload = {
           session_id: sessionId!,
           student_id: studentId,
@@ -501,8 +501,11 @@ export default function NarrationSession() {
           manual_entry: data.manual_entry,
           notes: data.notes || null,
           recitation_duration_seconds: data.recitation_duration_seconds ?? null,
+          reviewer_id: reviewerId,
+          is_partial: data.is_partial ?? false,
+          segment_label: data.segment_label ?? null,
         };
-        const { error: resultError } = await supabase.from("narration_results" as any).upsert(resultPayload, { onConflict: "session_id,student_id" });
+        const { error: resultError } = await supabase.from("narration_results" as any).upsert(resultPayload, { onConflict: "session_id,student_id,reviewer_id" });
         if (resultError) throw resultError;
       }
 
