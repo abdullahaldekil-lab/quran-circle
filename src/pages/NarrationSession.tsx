@@ -399,6 +399,23 @@ export default function NarrationSession() {
 
   const handlePrint = () => { window.print(); };
 
+  // Generate external reviewer link
+  const generateExternalLink = async () => {
+    if (!sessionId || !profile) return;
+    const { data, error } = await (supabase as any)
+      .from('narration_external_tokens')
+      .insert({ session_id: sessionId, created_by: profile.id })
+      .select('token')
+      .single();
+    if (error || !data) {
+      toast({ title: 'فشل إنشاء الرابط', variant: 'destructive' });
+      return;
+    }
+    const link = `${window.location.origin}/external-reviewer/${data.token}`;
+    await navigator.clipboard.writeText(link);
+    toast({ title: '✅ تم نسخ الرابط', description: 'صالح لمدة 48 ساعة' });
+  };
+
   // Multi-select helpers
   const toggleStudent = (studentId: string) => {
     setSelectedStudents(prev => {
