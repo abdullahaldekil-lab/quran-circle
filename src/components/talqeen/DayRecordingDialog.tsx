@@ -150,16 +150,27 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
 
       // Mark today's lesson as completed in program progress
       if (todayLesson && assignment) {
-        await (supabase as any).from("talqeen_program_progress").upsert(
-          {
+        const { data: existing } = await (supabase as any)
+          .from("talqeen_program_progress")
+          .select("id")
+          .eq("assignment_id", assignment.id)
+          .eq("lesson_id", todayLesson.id)
+          .maybeSingle();
+
+        if (existing) {
+          await (supabase as any)
+            .from("talqeen_program_progress")
+            .update({ status: "completed", completed_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        } else {
+          await (supabase as any).from("talqeen_program_progress").insert({
             assignment_id: assignment.id,
             halaqa_id: halaqaId,
             lesson_id: todayLesson.id,
             status: "completed",
             completed_at: new Date().toISOString(),
-          },
-          { onConflict: "assignment_id,lesson_id" }
-        );
+          });
+        }
       }
 
       toast.success("✅ تم حفظ يوم الحلقة بنجاح");
