@@ -154,8 +154,27 @@ const KpiDashboard = () => {
         status: avgTajweed >= 85 ? "on_track" : avgTajweed >= 70 ? "at_risk" : "delayed",
         icon: Star,
       },
+      {
+        label: "اختبارات البرامج (الشهر)",
+        value: programQuizzes.length,
+        target: "—",
+        status: programQuizzes.length > 0 ? "on_track" : "at_risk",
+        icon: Activity,
+      },
+      {
+        label: "متوسط درجة البرامج",
+        value: programResults.length
+          ? (programResults.reduce((s, r) => s + (Number(r.program_score) || 0), 0) / programResults.length).toFixed(1)
+          : "—",
+        target: "≥ 80",
+        status: programResults.length === 0
+          ? "at_risk"
+          : (programResults.reduce((s, r) => s + (Number(r.program_score) || 0), 0) / programResults.length) >= 80
+            ? "on_track" : "at_risk",
+        icon: TrendingUp,
+      },
     ];
-  }, [filtered]);
+  }, [filtered, programQuizzes, programResults]);
 
   // --- Attendance KPIs ---
   const attendanceKpis = useMemo((): KpiCard[] => {
