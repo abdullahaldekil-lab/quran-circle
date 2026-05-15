@@ -70,6 +70,11 @@ export default function NarrationSession() {
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [bulkNarrationOpen, setBulkNarrationOpen] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [studentPlanInfo, setStudentPlanInfo] = useState<{
+    totalHizb: number;
+    fromHizb: string;
+    toHizb: string;
+  } | null>(null);
 
   const isManager = role === "manager";
   const canWrite = isManager || role === "teacher" || role === "assistant_teacher";
