@@ -255,6 +255,34 @@ export default function NarrationAttemptDialog({
             </div>
           )}
 
+          {/* Reviewer Settings — multi-reviewer support */}
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-4 h-4 text-amber-700" />
+              <p className="text-sm font-semibold text-amber-800">إعدادات المسمع</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">المقطع / الجزء</Label>
+                <Input
+                  placeholder="مثال: الربع الأول"
+                  value={segmentLabel}
+                  onChange={(e) => setSegmentLabel(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">هذا تقييم جزئي؟</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Switch checked={isPartial} onCheckedChange={setIsPartial} />
+                  <span className="text-xs text-muted-foreground">
+                    {isPartial ? "نعم — سيُكمل مسمع آخر" : "لا — تقييم كامل"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Narration Type */}
           <NarrationTypeSelector value={narrationType} onChange={handleTypeChange} />
 
