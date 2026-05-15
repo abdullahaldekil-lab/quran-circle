@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import NarrationTypeSelector from "./NarrationTypeSelector";
 import RegularNarrationForm from "./RegularNarrationForm";
