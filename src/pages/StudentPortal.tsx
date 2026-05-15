@@ -374,13 +374,15 @@ export default function StudentPortal() {
             {narration.length === 0 && (
               <Card className="p-6 text-center text-sm text-muted-foreground">لا توجد جلسات سرد</Card>
             )}
-            {narration.map((n, i) => (
+            {narration.map((n, i) => {
+              const isPassed = n.status === "passed" || n.passed === true;
+              return (
               <Card key={i} className="p-4 flex items-center justify-between gap-3">
                 <div className="space-y-1">
                   <p className="text-sm font-bold">{n.test_date}</p>
                   <div className="flex items-center gap-2">
-                    <Badge className={n.status === "passed" ? "bg-green-700" : "bg-red-600"}>
-                      {n.status === "passed" ? "ناجح" : "راسب"}
+                    <Badge className={isPassed ? "bg-green-700" : "bg-red-600"}>
+                      {isPassed ? "ناجح" : "راسب"}
                     </Badge>
                     <span className="text-sm">الدرجة: <strong>{n.total_score}</strong></span>
                   </div>
@@ -396,7 +398,7 @@ export default function StudentPortal() {
                   </Button>
                 )}
               </Card>
-            ))}
+            );})}
           </TabsContent>
 
           {/* البرامج */}
