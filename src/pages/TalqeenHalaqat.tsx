@@ -24,6 +24,7 @@ import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDualDate } from "@/lib/hijri";
 import ContentViewer, { lessonTypeIcon, lessonTypeLabel } from "@/components/talqeen/ContentViewer";
+import DayRecordingDialog from "@/components/talqeen/DayRecordingDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
 // منتقي تاريخ بالتاريخ الهجري كأساس والميلادي كفرعي
