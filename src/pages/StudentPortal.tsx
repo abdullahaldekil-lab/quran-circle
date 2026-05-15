@@ -45,59 +45,28 @@ export default function StudentPortal() {
     if (!codeToUse) return;
     setLoading(true); setError("");
     try {
-      const { data: s } = await supabase
-        .from("students")
-        .select("*, halaqat(name, schedule, location)")
-        .eq("student_code", codeToUse)
-        .eq("status", "active")
-        .maybeSingle();
+      const { data, error: rpcError } = await supabase.rpc("get_student_portal_data" as any, {
+        _code: codeToUse,
+      });
 
-      if (!s) {
+      if (rpcError || !data) {
         setError("الكود غير صحيح أو الطالب غير نشط");
         setStudent(null);
         setLoading(false);
         return;
       }
-      setStudent(s);
-      setHalaqa((s as any).halaqat);
 
-      const { data: planData } = await supabase
-        .from("student_annual_plans")
-        .select("*, student_plan_progress(*)")
-        .eq("student_id", s.id)
-        .eq("status", "active")
-        .maybeSingle();
-      setPlan(planData);
-      setProgress((planData as any)?.student_plan_progress || []);
-
-      const monthAgo = new Date();
-      monthAgo.setDate(monthAgo.getDate() - 30);
-      const { data: att } = await supabase
-        .from("attendance")
-        .select("attendance_date, status")
-        .eq("student_id", s.id)
-        .gte("attendance_date", monthAgo.toISOString().split("T")[0])
-        .order("attendance_date", { ascending: false });
-      setAttendance(att || []);
-
-      const { data: narr } = await supabase
-        .from("narration_test_results")
-        .select("test_date, total_score, status, certificate_number")
-        .eq("student_id", s.id)
-        .order("test_date", { ascending: false })
-        .limit(5);
-      setNarration(narr || []);
-
-      if (s.halaqa_id) {
-        const { data: progs } = await supabase
-          .from("talqeen_program_assignments")
-          .select("*, talqeen_curricula(name, description)")
-          .eq("halaqa_id", s.halaqa_id)
-          .eq("is_active", true);
-        setPrograms(progs || []);
-      } else {
-        setPrograms([]);
-      }
+      const d = data as any;
+      setStudent(d.student);
+      setHalaqa(d.halaqa);
+      setPlan(d.plan);
+      setProgress(d.plan?.progress || []);
+      setAttendance(d.attendance || []);
+      setNarration(d.narration || []);
+      setPrograms((d.programs || []).map((p: any) => ({
+        ...p,
+        talqeen_curricula: { name: p.curriculum_name, description: p.curriculum_description },
+      })));
     } catch (e: any) {
       setError("حدث خطأ أثناء جلب البيانات");
     } finally {
