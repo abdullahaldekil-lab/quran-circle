@@ -130,6 +130,16 @@ export default function StudentPortal() {
 
   const lastNarration = narration[0];
 
+  // Current Hijri month progress (latest entry by hijri_month)
+  const currentMonthProgress = [...progress].sort((a, b) =>
+    (b.hijri_month || 0) - (a.hijri_month || 0)
+  )[0];
+  const monthTarget = Number(currentMonthProgress?.target_memorization || 0);
+  const monthMemorized = Number(currentMonthProgress?.actual_memorization || 0);
+  const monthReviewed = Number(currentMonthProgress?.actual_review || 0);
+  const monthLinked = Number(currentMonthProgress?.actual_linking || 0);
+  const monthPercent = monthTarget ? Math.min(100, Math.round((monthMemorized / monthTarget) * 100)) : 0;
+
   if (!student) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex flex-col items-center justify-center p-6" dir="rtl">
