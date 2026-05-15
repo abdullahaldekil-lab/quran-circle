@@ -405,6 +405,59 @@ export default function StudentPortal() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* نافذة عرض روابط خارجية */}
+        {showExternal && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-background" dir="rtl">
+            <div className="flex items-center justify-between p-3 border-b bg-card">
+              <button
+                onClick={() => setShowExternal(false)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" /> إغلاق
+              </button>
+              <span className="text-sm font-medium">{externalName}</span>
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                فتح خارجياً <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+            <iframe
+              src={externalUrl}
+              className="flex-1 w-full border-0"
+              title={externalName}
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+              loading="lazy"
+              onError={() => setIframeError(true)}
+            />
+            {iframeError && (
+              <div className="p-6 border-t bg-muted/30 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">لا يمكن عرض الموقع داخل التطبيق بسبب سياسات الأمان</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(externalUrl, "_blank")}
+                >
+                  <ExternalLink className="w-4 h-4 ml-1" />
+                  فتح في تبويب جديد
+                </Button>
+              </div>
+            )}
+            <div className="p-4 border-t bg-muted/30 text-center">
+              <p className="text-xs text-muted-foreground">
+                إذا لم يظهر المحتوى
+                <a href={externalUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-primary mx-1 underline">
+                  اضغط هنا للفتح مباشرة
+                </a>
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
