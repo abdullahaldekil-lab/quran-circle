@@ -158,6 +158,43 @@ export default function NarrationSession() {
   });
 
   // جلب المحاولات الموجودة مع النطاقات
+  // Multi-reviewer: fetch all narration_results for this session
+  const { data: allResultsBySession = [] } = useQuery<any[]>({
+    queryKey: ["narration-results-multi", sessionId],
+    queryFn: async () => {
+      if (!sessionId) return [];
+      const { data, error } = await supabase
+        .from("narration_results" as any)
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const results = (data as any[]) || [];
+      // Map reviewer names from profiles
+      const reviewerIds = Array.from(new Set(results.map((r) => r.reviewer_id).filter(Boolean)));
+      let nameMap = new Map<string, string>();
+      if (reviewerIds.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", reviewerIds);
+        nameMap = new Map((profs || []).map((p: any) => [p.id, p.full_name]));
+      }
+      return results.map((r) => ({ ...r, reviewer_name: r.reviewer_id ? nameMap.get(r.reviewer_id) : (r.reviewer_name_manual || null) }));
+    },
+    enabled: !!sessionId,
+  });
+
+  const resultsByStudent = (() => {
+    const m = new Map<string, any[]>();
+    for (const r of allResultsBySession) {
+      const list = m.get(r.student_id) || [];
+      list.push(r);
+      m.set(r.student_id, list);
+    }
+    return m;
+  })();
+
   const { data: existingAttempts = [] } = useQuery({
     queryKey: ["narration-attempts", sessionId],
     queryFn: async () => {
