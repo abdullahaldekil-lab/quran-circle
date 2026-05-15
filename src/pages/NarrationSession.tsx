@@ -780,7 +780,7 @@ export default function NarrationSession() {
                       </TableCell>
                     </TableRow>
                   )}
-                  </>
+                  </React.Fragment>
                   );
                 })}
               </TableBody>
