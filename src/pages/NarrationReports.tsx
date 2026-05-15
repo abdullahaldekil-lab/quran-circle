@@ -349,7 +349,14 @@ export default function NarrationReports() {
                     sessionDate: formatDateSmart(selectedSessionData?.session_date),
                     sessionTitle: selectedSessionData?.title || "",
                     halaqaName: selectedSessionData?.halaqat?.name || "",
-                    attempts,
+                    attempts: ranked.map((s: any) => ({
+                      id: s.student_id,
+                      student_id: s.student_id,
+                      grade: s.final_score,
+                      status: s.status,
+                      total_hizb_count: s.total_hizb_count,
+                      students: { full_name: s.student_name, halaqat: { name: s.halaqa_name } },
+                    })),
                   })}>
                     <FileSpreadsheet className="w-4 h-4 ml-2" />
                     تصدير Excel
@@ -358,24 +365,29 @@ export default function NarrationReports() {
                     sessionDate: formatDateSmart(selectedSessionData?.session_date),
                     sessionTitle: selectedSessionData?.title || "",
                     halaqaName: selectedSessionData?.halaqat?.name || "",
-                    attempts,
+                    attempts: ranked.map((s: any) => ({
+                      id: s.student_id,
+                      student_id: s.student_id,
+                      grade: s.final_score,
+                      status: s.status,
+                      total_hizb_count: s.total_hizb_count,
+                      students: { full_name: s.student_name, halaqat: { name: s.halaqa_name } },
+                    })),
                   })}>
                     <FileText className="w-4 h-4 ml-2" />
                     تصدير PDF
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => {
-                    const rankedCerts = [...presented]
-                      .sort((a: any, b: any) => Number(b.grade) - Number(a.grade))
-                      .map((a: any, i: number) => ({
-                        studentName: a.students?.full_name || "—",
-                        halaqaName: a.students?.halaqat?.name || selectedSessionData?.halaqat?.name || "—",
-                        totalHizb: Number(a.total_hizb_count),
-                        grade: Number(a.grade),
-                        maxGrade: settings?.max_grade || 100,
-                        status: a.status as "pass" | "fail",
-                        halaqaRank: i + 1,
-                        sessionDate: selectedSessionData?.session_date || "",
-                      }));
+                    const rankedCerts = ranked.map((s: any, i: number) => ({
+                      studentName: s.student_name,
+                      halaqaName: s.halaqa_name || selectedSessionData?.halaqat?.name || "—",
+                      totalHizb: Number(s.total_hizb_count),
+                      grade: Number(s.final_score),
+                      maxGrade: settings?.max_grade || 100,
+                      status: s.status as "pass" | "fail",
+                      halaqaRank: i + 1,
+                      sessionDate: selectedSessionData?.session_date || "",
+                    }));
                     exportBulkCertificatesPdf(rankedCerts, formatDateSmart(selectedSessionData?.session_date));
                   }}>
                     <Printer className="w-4 h-4 ml-2" />
