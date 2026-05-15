@@ -91,6 +91,7 @@ import TeacherEvaluationsReport from "./pages/admin/TeacherEvaluationsReport";
 import GuardianApprovals from "./pages/admin/GuardianApprovals";
 import GuardianLinkRequest from "./pages/guardian/GuardianLinkRequest";
 import ExternalReviewer from "./pages/ExternalReviewer";
+import StudentPortal from "./pages/StudentPortal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -148,6 +149,8 @@ const AppRoutes = () => {
       <Route path="/verify-certificate" element={<VerifyCertificate />} />
       <Route path="/verify-certificate/:number" element={<VerifyCertificate />} />
       <Route path="/external-reviewer/:token" element={<ExternalReviewer />} />
+      <Route path="/student-portal" element={<StudentPortal />} />
+      <Route path="/student-portal/:code" element={<StudentPortal />} />
 
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />

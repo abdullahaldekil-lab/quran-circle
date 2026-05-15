@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare, Printer } from "lucide-react";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare, Printer, Copy, QrCode } from "lucide-react";
 import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian, formatDateSmart, toHijri, toMiladi, HIJRI_MONTHS, getWeekdayArabic, formatDateHijriOnly } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
@@ -240,6 +240,32 @@ const StudentProfile = () => {
               <p className="text-sm text-muted-foreground">{student.halaqat?.name || "بدون حلقة"}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge variant="secondary">{student.current_level}</Badge>
+                {student.student_code && (
+                  <>
+                    <Badge variant="outline" className="font-mono tracking-wider">
+                      <QrCode className="w-3 h-3 ml-1" />{student.student_code}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        navigator.clipboard.writeText(student.student_code);
+                        toast.success("تم نسخ الكود");
+                      }}
+                    >
+                      <Copy className="w-3 h-3 ml-1" />نسخ
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-green-700"
+                      onClick={() => navigate(`/student-portal/${student.student_code}`)}
+                    >
+                      فتح بوابة الطالب
+                    </Button>
+                  </>
+                )}
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   منذ {formatDateSmart(student.join_date)}

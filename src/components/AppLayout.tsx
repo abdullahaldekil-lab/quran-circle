@@ -40,6 +40,7 @@ import {
   Mail,
   Star,
   UserX,
+  QrCode,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,7 @@ const navGroups: NavGroup[] = [
       { to: "/trips", icon: BusIcon, label: "الرحلات" },
       { to: "/buses", icon: BusIcon, label: "الباصات" },
       { to: "/documents", icon: FolderOpen, label: "المستندات" },
+      { to: "/student-portal", icon: QrCode, label: "بوابة الطالب" },
     ],
   },
   {
