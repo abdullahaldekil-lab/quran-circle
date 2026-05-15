@@ -2677,25 +2677,31 @@ export type Database = {
       }
       preparation_config: {
         Row: {
+          auto_sync_asr: boolean | null
           base_prayer: string
           duration_minutes: number
           id: string
+          late_tolerance_minutes: number | null
           offset_minutes: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          auto_sync_asr?: boolean | null
           base_prayer?: string
           duration_minutes?: number
           id?: string
+          late_tolerance_minutes?: number | null
           offset_minutes?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          auto_sync_asr?: boolean | null
           base_prayer?: string
           duration_minutes?: number
           id?: string
+          late_tolerance_minutes?: number | null
           offset_minutes?: number
           updated_at?: string
           updated_by?: string | null
