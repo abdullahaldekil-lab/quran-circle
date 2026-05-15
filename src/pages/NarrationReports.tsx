@@ -60,23 +60,73 @@ export default function NarrationReports() {
     },
   });
 
-  // Fetch attempts for selected session
-  const { data: attempts = [] } = useQuery({
-    queryKey: ["narration-attempts-report", selectedSession],
+  // Fetch all narration_results for selected session (supports multi-reviewer)
+  const { data: sessionSummaries = [] } = useQuery<any[]>({
+    queryKey: ["narration-results-report", selectedSession],
     queryFn: async () => {
       if (!selectedSession) return [];
       const { data, error } = await supabase
-        .from("narration_attempts" as any)
-        .select("*, students(full_name, halaqa_id, halaqat(name))")
+        .from("narration_results" as any)
+        .select("*, students:student_id(full_name, halaqa_id, halaqat(name))")
         .eq("session_id", selectedSession)
-        .order("grade", { ascending: false });
+        .order("student_id", { ascending: true })
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as any[];
+      const rawResults = (data as any[]) || [];
+
+      // Map reviewer names from profiles (no direct FK to auth.users)
+      const reviewerIds = Array.from(new Set(rawResults.map((r) => r.reviewer_id).filter(Boolean)));
+      const nameMap = new Map<string, string>();
+      if (reviewerIds.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", reviewerIds);
+        (profs || []).forEach((p: any) => nameMap.set(p.id, p.full_name));
+      }
+
+      // Group by student
+      const grouped = new Map<string, any>();
+      for (const r of rawResults) {
+        const sid = r.student_id;
+        if (!grouped.has(sid)) {
+          grouped.set(sid, {
+            student_id: sid,
+            student_name: r.students?.full_name || "—",
+            halaqa_id: r.students?.halaqa_id,
+            halaqa_name: r.students?.halaqat?.name || "—",
+            results: [],
+          });
+        }
+        grouped.get(sid).results.push({
+          ...r,
+          reviewer_name: r.reviewer_id ? nameMap.get(r.reviewer_id) : (r.reviewer_name_manual || null),
+        });
+      }
+
+      // Compute final summary per student
+      const summaries = Array.from(grouped.values()).map((g) => {
+        const allComplete = g.results.every((r: any) => !r.is_partial);
+        const avgScore = g.results.reduce((s: number, r: any) => s + Number(r.grade || 0), 0) / g.results.length;
+        const totalHizb = Math.max(0, ...g.results.map((r: any) => Number(r.total_hizbat || 0)));
+        const anyAbsent = g.results.some((r: any) => r.status === "absent");
+        const anyFail = g.results.some((r: any) => r.status === "fail");
+        const status = anyAbsent ? "absent" : !allComplete ? "pending" : anyFail ? "fail" : "pass";
+        return {
+          ...g,
+          final_score: Math.round(avgScore * 10) / 10,
+          all_complete: allComplete,
+          reviewer_count: g.results.length,
+          total_hizb_count: totalHizb,
+          status,
+          qualifies_for_cert: allComplete && avgScore >= 90 && status === "pass",
+        };
+      });
+
+      summaries.sort((a, b) => b.final_score - a.final_score);
+      return summaries;
     },
     enabled: !!selectedSession,
   });
 
-  // Fetch all attempts for overall stats
+  // Fetch all attempts for overall stats (kept on narration_attempts for cross-session aggregates)
   const { data: allAttempts = [] } = useQuery({
     queryKey: ["narration-attempts-all-reports"],
     queryFn: async () => {
@@ -105,18 +155,17 @@ export default function NarrationReports() {
 
   const selectedSessionData = sessions.find((s: any) => s.id === selectedSession);
 
-  // Session stats
-  const presented = attempts.filter((a: any) => a.status !== "absent" && a.status !== "pending");
-  const passed = attempts.filter((a: any) => a.status === "pass");
-  const failed = attempts.filter((a: any) => a.status === "fail");
-  const totalHizb = presented.reduce((s: number, a: any) => s + Number(a.total_hizb_count || 0), 0);
-  const passedHizb = passed.reduce((s: number, a: any) => s + Number(a.total_hizb_count || 0), 0);
+  // Session stats — derived from per-student summaries (multi-reviewer aware)
+  const presented = sessionSummaries.filter((s: any) => s.status !== "absent" && s.status !== "pending");
+  const passed = sessionSummaries.filter((s: any) => s.status === "pass");
+  const totalHizb = presented.reduce((acc: number, s: any) => acc + Number(s.total_hizb_count || 0), 0);
+  const passedHizb = passed.reduce((acc: number, s: any) => acc + Number(s.total_hizb_count || 0), 0);
   const avgGrade = presented.length > 0
-    ? (presented.reduce((s: number, a: any) => s + Number(a.grade || 0), 0) / presented.length).toFixed(1)
+    ? (presented.reduce((acc: number, s: any) => acc + Number(s.final_score || 0), 0) / presented.length).toFixed(1)
     : "—";
 
-  // Rankings
-  const ranked = [...presented].sort((a: any, b: any) => Number(b.grade) - Number(a.grade));
+  // Rankings (already sorted by final_score from the query)
+  const ranked = presented;
 
   // Overall halaqat stats
   const halaqatMap = new Map<string, { name: string; attempts: any[] }>();
@@ -300,7 +349,14 @@ export default function NarrationReports() {
                     sessionDate: formatDateSmart(selectedSessionData?.session_date),
                     sessionTitle: selectedSessionData?.title || "",
                     halaqaName: selectedSessionData?.halaqat?.name || "",
-                    attempts,
+                    attempts: ranked.map((s: any) => ({
+                      id: s.student_id,
+                      student_id: s.student_id,
+                      grade: s.final_score,
+                      status: s.status,
+                      total_hizb_count: s.total_hizb_count,
+                      mistakes_count: 0, lahn_count: 0, warnings_count: 0, students: { full_name: s.student_name, halaqat: { name: s.halaqa_name } },
+                    })),
                   })}>
                     <FileSpreadsheet className="w-4 h-4 ml-2" />
                     تصدير Excel
@@ -309,24 +365,29 @@ export default function NarrationReports() {
                     sessionDate: formatDateSmart(selectedSessionData?.session_date),
                     sessionTitle: selectedSessionData?.title || "",
                     halaqaName: selectedSessionData?.halaqat?.name || "",
-                    attempts,
+                    attempts: ranked.map((s: any) => ({
+                      id: s.student_id,
+                      student_id: s.student_id,
+                      grade: s.final_score,
+                      status: s.status,
+                      total_hizb_count: s.total_hizb_count,
+                      mistakes_count: 0, lahn_count: 0, warnings_count: 0, students: { full_name: s.student_name, halaqat: { name: s.halaqa_name } },
+                    })),
                   })}>
                     <FileText className="w-4 h-4 ml-2" />
                     تصدير PDF
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => {
-                    const rankedCerts = [...presented]
-                      .sort((a: any, b: any) => Number(b.grade) - Number(a.grade))
-                      .map((a: any, i: number) => ({
-                        studentName: a.students?.full_name || "—",
-                        halaqaName: a.students?.halaqat?.name || selectedSessionData?.halaqat?.name || "—",
-                        totalHizb: Number(a.total_hizb_count),
-                        grade: Number(a.grade),
-                        maxGrade: settings?.max_grade || 100,
-                        status: a.status as "pass" | "fail",
-                        halaqaRank: i + 1,
-                        sessionDate: selectedSessionData?.session_date || "",
-                      }));
+                    const rankedCerts = ranked.map((s: any, i: number) => ({
+                      studentName: s.student_name,
+                      halaqaName: s.halaqa_name || selectedSessionData?.halaqat?.name || "—",
+                      totalHizb: Number(s.total_hizb_count),
+                      grade: Number(s.final_score),
+                      maxGrade: settings?.max_grade || 100,
+                      status: s.status as "pass" | "fail",
+                      halaqaRank: i + 1,
+                      sessionDate: selectedSessionData?.session_date || "",
+                    }));
                     exportBulkCertificatesPdf(rankedCerts, formatDateSmart(selectedSessionData?.session_date));
                   }}>
                     <Printer className="w-4 h-4 ml-2" />
@@ -364,32 +425,39 @@ export default function NarrationReports() {
                         <TableHead className="text-right">الحلقة</TableHead>
                         <TableHead className="text-center">الأحزاب</TableHead>
                         <TableHead className="text-center">الدرجة</TableHead>
+                        <TableHead className="text-center">المسمعون</TableHead>
                         <TableHead className="text-center">الحالة</TableHead>
                         <TableHead className="text-center">شهادة</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {ranked.map((a: any, i: number) => {
-                        const isCertEligible = Number(a.grade) >= 90 && a.status === "pass";
-                        return (
-                        <TableRow key={a.id}>
+                      {ranked.map((row: any, i: number) => (
+                        <TableRow key={row.student_id}>
                           <TableCell className="text-center font-bold text-muted-foreground">{i + 1}</TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <StudentNameLink studentId={a.student_id} studentName={a.students?.full_name || "—"} />
-                              {isCertEligible && (
-                                <Badge variant="default" className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/20">
+                              <StudentNameLink studentId={row.student_id} studentName={row.student_name} />
+                              {row.qualifies_for_cert && (
+                                <Badge className="bg-amber-100 text-amber-800 text-[10px] border-amber-300">
                                   🏅 مؤهل للشهادة
                                 </Badge>
                               )}
+                              {!row.all_complete && (
+                                <Badge variant="secondary" className="text-[10px]">تقييم جزئي</Badge>
+                              )}
                             </div>
                           </TableCell>
-                          <TableCell>{a.students?.halaqat?.name || "—"}</TableCell>
-                          <TableCell className="text-center">{Number(a.total_hizb_count)}</TableCell>
-                          <TableCell className="text-center font-bold">{Number(a.grade)}</TableCell>
+                          <TableCell>{row.halaqa_name || "—"}</TableCell>
+                          <TableCell className="text-center">{Number(row.total_hizb_count)}</TableCell>
+                          <TableCell className="text-center font-bold">{Number(row.final_score)}</TableCell>
                           <TableCell className="text-center">
-                            <Badge variant={a.status === "pass" ? "default" : "destructive"}>
-                              {a.status === "pass" ? "ناجح" : "راسب"}
+                            {row.reviewer_count > 1
+                              ? <Badge variant="outline" className="text-xs">{row.reviewer_count} مسمعين</Badge>
+                              : <span className="text-muted-foreground text-xs">مسمع واحد</span>}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={row.status === "pass" ? "default" : "destructive"}>
+                              {row.status === "pass" ? "ناجح" : row.status === "fail" ? "راسب" : "معلّق"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">
@@ -397,14 +465,15 @@ export default function NarrationReports() {
                               variant="ghost"
                               size="sm"
                               className="h-7 text-xs"
+                              disabled={!row.qualifies_for_cert}
                               onClick={() => {
                                 setCertStudent({
-                                  studentName: a.students?.full_name,
-                                  halaqaName: a.students?.halaqat?.name || selectedSessionData?.halaqat?.name || "—",
-                                  totalHizb: Number(a.total_hizb_count),
-                                  grade: Number(a.grade),
+                                  studentName: row.student_name,
+                                  halaqaName: row.halaqa_name || selectedSessionData?.halaqat?.name || "—",
+                                  totalHizb: Number(row.total_hizb_count),
+                                  grade: Number(row.final_score),
                                   maxGrade: settings?.max_grade || 100,
-                                  status: a.status,
+                                  status: row.status,
                                   halaqaRank: i + 1,
                                   overallRank: 0,
                                   sessionDate: selectedSessionData?.session_date || "",
@@ -417,8 +486,7 @@ export default function NarrationReports() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                        );
-                      })}
+                      ))}
                     </TableBody>
                   </Table>
                 </CardContent>
