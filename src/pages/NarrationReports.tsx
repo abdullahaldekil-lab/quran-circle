@@ -155,18 +155,17 @@ export default function NarrationReports() {
 
   const selectedSessionData = sessions.find((s: any) => s.id === selectedSession);
 
-  // Session stats
-  const presented = attempts.filter((a: any) => a.status !== "absent" && a.status !== "pending");
-  const passed = attempts.filter((a: any) => a.status === "pass");
-  const failed = attempts.filter((a: any) => a.status === "fail");
-  const totalHizb = presented.reduce((s: number, a: any) => s + Number(a.total_hizb_count || 0), 0);
-  const passedHizb = passed.reduce((s: number, a: any) => s + Number(a.total_hizb_count || 0), 0);
+  // Session stats — derived from per-student summaries (multi-reviewer aware)
+  const presented = sessionSummaries.filter((s: any) => s.status !== "absent" && s.status !== "pending");
+  const passed = sessionSummaries.filter((s: any) => s.status === "pass");
+  const totalHizb = presented.reduce((acc: number, s: any) => acc + Number(s.total_hizb_count || 0), 0);
+  const passedHizb = passed.reduce((acc: number, s: any) => acc + Number(s.total_hizb_count || 0), 0);
   const avgGrade = presented.length > 0
-    ? (presented.reduce((s: number, a: any) => s + Number(a.grade || 0), 0) / presented.length).toFixed(1)
+    ? (presented.reduce((acc: number, s: any) => acc + Number(s.final_score || 0), 0) / presented.length).toFixed(1)
     : "—";
 
-  // Rankings
-  const ranked = [...presented].sort((a: any, b: any) => Number(b.grade) - Number(a.grade));
+  // Rankings (already sorted by final_score from the query)
+  const ranked = presented;
 
   // Overall halaqat stats
   const halaqatMap = new Map<string, { name: string; attempts: any[] }>();
