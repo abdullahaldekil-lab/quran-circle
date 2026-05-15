@@ -63,6 +63,7 @@ const KpiDashboard = () => {
     const [
       halaqatRes, studentsRes, recitationsRes, attendanceRes,
       goalsRes, objectivesRes, tasksRes, rewardsRes, transactionsRes,
+      programQuizzesRes, programResultsRes,
     ] = await Promise.all([
       (supabase as any).from("halaqat_tahfeez").select("id, name, talqeen_curriculum_id").eq("active", true),
       supabase.from("students").select("*").eq("status", "active"),
@@ -73,6 +74,8 @@ const KpiDashboard = () => {
       supabase.from("strategic_tasks").select("*"),
       supabase.from("reward_nominations").select("*").gte("created_at", monthStart + "T00:00:00"),
       isManager ? supabase.from("financial_transactions").select("*") : Promise.resolve({ data: [] }),
+      (supabase as any).from("program_quizzes").select("id, created_at").gte("created_at", monthStart + "T00:00:00"),
+      (supabase as any).from("program_quiz_results").select("program_score").gte("submitted_at", monthStart + "T00:00:00"),
     ]);
 
     const { filterTahfeezOnly } = await import("@/lib/halaqaType");
@@ -87,6 +90,8 @@ const KpiDashboard = () => {
     setTasks(tasksRes.data || []);
     setRewards(rewardsRes.data || []);
     setTransactions((transactionsRes as any).data || []);
+    setProgramQuizzes(((programQuizzesRes as any).data) || []);
+    setProgramResults(((programResultsRes as any).data) || []);
     setLoading(false);
   };
 
