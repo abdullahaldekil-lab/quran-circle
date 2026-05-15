@@ -2063,6 +2063,50 @@ export type Database = {
           },
         ]
       }
+      narration_external_tokens: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          expires_at: string
+          id: string
+          reviewer_name: string | null
+          reviewer_phone: string | null
+          session_id: string | null
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          reviewer_name?: string | null
+          reviewer_phone?: string | null
+          session_id?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          reviewer_name?: string | null
+          reviewer_phone?: string | null
+          session_id?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narration_external_tokens_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "narration_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       narration_goals: {
         Row: {
           created_at: string
@@ -2180,6 +2224,7 @@ export type Database = {
           manual_entry: boolean
           mistakes_count: number
           notes: string | null
+          recitation_duration_seconds: number | null
           session_id: string
           status: string
           student_id: string
@@ -2197,6 +2242,7 @@ export type Database = {
           manual_entry?: boolean
           mistakes_count?: number
           notes?: string | null
+          recitation_duration_seconds?: number | null
           session_id: string
           status?: string
           student_id: string
@@ -2214,6 +2260,7 @@ export type Database = {
           manual_entry?: boolean
           mistakes_count?: number
           notes?: string | null
+          recitation_duration_seconds?: number | null
           session_id?: string
           status?: string
           student_id?: string
