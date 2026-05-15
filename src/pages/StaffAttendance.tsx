@@ -118,6 +118,37 @@ const StaffAttendance = () => {
     },
   });
 
+  const { data: prepConfig } = useQuery({
+    queryKey: ["preparation-config"],
+    queryFn: async () => {
+      const { data } = await supabase.from("preparation_config").select("*").limit(1).maybeSingle();
+      return data as any;
+    },
+  });
+
+  const { data: prayerTimes } = useQuery({
+    queryKey: ["prayer-times-today"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("prayer-times");
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
+  const asrTime: string = prayerTimes?.asr || "";
+  const preparationStart = prepConfig?.auto_sync_asr
+    ? calcPreparationStart(asrTime)
+    : (prepConfig?.start_time || "");
+  const lateToleranceMin = prepConfig?.late_tolerance_minutes ?? 10;
+  const lateCutoff = (() => {
+    if (!preparationStart) return "";
+    const [h, m] = preparationStart.split(":").map(Number);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    const c = addMinutes(d, lateToleranceMin);
+    return `${String(c.getHours()).padStart(2, "0")}:${String(c.getMinutes()).padStart(2, "0")}`;
+  })();
+
   const activeShiftId = selectedShiftId || shifts[0]?.id || "";
   const activeShift = shifts.find((s) => s.id === activeShiftId);
 
