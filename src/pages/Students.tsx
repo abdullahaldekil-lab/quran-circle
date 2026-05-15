@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Search, User, Users, ChevronLeft, ChevronRight, Upload, Star } from "lucide-react";
+import { Plus, Search, User, Users, ChevronLeft, ChevronRight, Upload, Star, AlertTriangle, PhoneCall } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/useRole";
@@ -201,7 +202,67 @@ const Students = () => {
     fetchLevels();
     fetchDistinguished();
     fetchTracks();
+    if (isManager || isAdminStaff) fetchAbsenceAlerts();
+  }, [isManager, isAdminStaff]);
+
+  // Absence alerts (3+ absences this month) — for manager/secretary only
+  const [absentAlerts, setAbsentAlerts] = useState<{ student_id: string; full_name: string; absences: number }[]>([]);
+  const [contactedIds, setContactedIds] = useState<Set<string>>(new Set());
+
+  const fetchAbsenceAlerts = useCallback(async () => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+
+    const { data: rows } = await supabase
+      .from("attendance")
+      .select("student_id, status, students!inner(id, full_name, status)")
+      .eq("status", "absent")
+      .gte("attendance_date", monthStart)
+      .lte("attendance_date", monthEnd)
+      .eq("students.status", "active");
+
+    const counts: Record<string, { name: string; n: number }> = {};
+    (rows || []).forEach((r: any) => {
+      const sid = r.student_id;
+      const name = r.students?.full_name || "—";
+      counts[sid] = counts[sid] || { name, n: 0 };
+      counts[sid].n += 1;
+    });
+
+    // Exclude already contacted this month
+    const { data: logs } = await supabase
+      .from("student_status_log" as any)
+      .select("student_id, created_at, reason_category")
+      .gte("created_at", monthStart)
+      .eq("reason_category", "absence_contact");
+
+    const contactedThisMonth = new Set<string>((logs as any || []).map((l: any) => l.student_id));
+
+    const alerts = Object.entries(counts)
+      .filter(([sid, v]) => v.n >= 3 && !contactedThisMonth.has(sid))
+      .map(([sid, v]) => ({ student_id: sid, full_name: v.name, absences: v.n }))
+      .sort((a, b) => b.absences - a.absences);
+
+    setAbsentAlerts(alerts);
   }, []);
+
+  const handleMarkContacted = async (studentId: string) => {
+    const { error } = await supabase.from("student_status_log" as any).insert({
+      student_id: studentId,
+      new_status: "active",
+      reason_category: "absence_contact",
+      reason_detail: "تم التواصل مع ولي الأمر بشأن الغياب المتكرر",
+      changed_by: user?.id,
+      is_system: false,
+    });
+    if (error) {
+      toast.error("تعذر تسجيل التواصل");
+      return;
+    }
+    toast.success("تم تسجيل التواصل");
+    setContactedIds(prev => new Set(prev).add(studentId));
+  };
 
   useEffect(() => {
     fetchStudents();
@@ -255,6 +316,34 @@ const Students = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {(isManager || isAdminStaff) && absentAlerts.filter(a => !contactedIds.has(a.student_id)).length > 0 && (
+        <Alert variant="destructive" className="border-2">
+          <AlertTriangle className="w-5 h-5" />
+          <AlertTitle className="font-bold">طلاب تجاوزوا 3 أيام غياب هذا الشهر</AlertTitle>
+          <AlertDescription>
+            <div className="mt-2 space-y-2 max-h-72 overflow-y-auto">
+              {absentAlerts
+                .filter(a => !contactedIds.has(a.student_id))
+                .map(a => (
+                  <div key={a.student_id} className="flex items-center justify-between gap-2 bg-background/60 rounded-md p-2">
+                    <div className="flex-1 min-w-0">
+                      <span className="font-semibold text-sm">{a.full_name}</span>
+                      <Badge variant="outline" className="mr-2 text-xs">{a.absences} غياب</Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleMarkContacted(a.student_id)}
+                    >
+                      <PhoneCall className="w-3 h-3 ml-1" />
+                      تم التواصل
+                    </Button>
+                  </div>
+                ))}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">الطلاب</h1>

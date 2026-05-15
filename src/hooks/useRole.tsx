@@ -64,8 +64,8 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts",
     "/student-attendance-report",
-    "/notification-preferences", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
-    "/enrollment-form",
+    "/notification-preferences", "/notification-log", "/whatsapp-log", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
+    "/enrollment-form", "/programs-overview",
     "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/guardian-approvals",
   ],
   admin_staff: [

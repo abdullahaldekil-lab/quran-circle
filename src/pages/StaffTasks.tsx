@@ -195,6 +195,17 @@ const StaffTasks = () => {
     });
   }, [myTasks]);
 
+  // Completed tasks sorted by completion date (descending)
+  const completedTasks = useMemo(() => {
+    return processedMyTasks
+      .filter(t => t.status === "completed")
+      .sort((a, b) => {
+        const da = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+        const db = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+        return db - da;
+      });
+  }, [processedMyTasks]);
+
   // Group tasks by status for Kanban
   const kanbanColumns = useMemo(() => {
     const cols: Record<string, Task[]> = { pending: [], in_progress: [], completed: [], overdue: [] };
@@ -264,23 +275,8 @@ const StaffTasks = () => {
       const { error } = await supabase.from("staff_tasks").insert(payload);
       if (error) throw error;
 
-      // Create recurring copies if needed
-      if (form.recurrence !== "none" && dueDateTime) {
-        const copies = [];
-        for (let i = 1; i <= 4; i++) {
-          const nextDate = new Date(dueDateTime);
-          if (form.recurrence === "daily") nextDate.setDate(nextDate.getDate() + i);
-          else if (form.recurrence === "weekly") nextDate.setDate(nextDate.getDate() + i * 7);
-          else if (form.recurrence === "monthly") nextDate.setMonth(nextDate.getMonth() + i);
-          copies.push({
-            ...payload,
-            due_date: format(nextDate, "yyyy-MM-dd"),
-            due_time: dueDateTime ? format(dueDateTime, "HH:mm:ss") : null,
-            reminder_at: form.reminder_minutes ? new Date(nextDate.getTime() - Number(form.reminder_minutes) * 60000).toISOString() : null,
-          });
-        }
-        await supabase.from("staff_tasks").insert(copies);
-      }
+      // Recurrence is tracked on the task itself; no duplicate copies are pre-created
+      // (overdue tasks pulse instead — see KanbanCard).
 
       // Send notification
       if (form.assigned_to) {
@@ -371,7 +367,7 @@ const StaffTasks = () => {
         className={`cursor-pointer hover:shadow-md transition-shadow mb-3 relative ${isOverdue ? "border-2 border-destructive" : ""} ${urgent ? "ring-2 ring-destructive ring-offset-1" : ""}`}
         onClick={() => openDetail(task)}
       >
-        {urgent && (
+        {(urgent || isOverdue) && (
           <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
             <span className="relative inline-flex rounded-full h-4 w-4 bg-destructive"></span>
@@ -458,6 +454,7 @@ const StaffTasks = () => {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <TabsList>
             <TabsTrigger value="my-tasks">مهامي</TabsTrigger>
+            <TabsTrigger value="completed">المنتهية</TabsTrigger>
             {(isManager || isSupervisor) && <TabsTrigger value="assigned">المهام المُسنَدة</TabsTrigger>}
           </TabsList>
           {activeTab === "my-tasks" && (
@@ -533,6 +530,33 @@ const StaffTasks = () => {
                   </CardContent>
                 </Card>
               )}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Completed Tasks */}
+        <TabsContent value="completed" className="mt-4">
+          {completedTasks.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">لا توجد مهام منتهية</p>
+          ) : (
+            <div className="space-y-2">
+              {completedTasks.map(t => (
+                <Card key={t.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openDetail(t)}>
+                  <CardContent className="p-3 flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{t.title}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <Badge variant="outline" className="text-xs">{t.category}</Badge>
+                        <Badge className={`text-xs ${PRIORITY_COLORS[t.priority] || ""}`}>{t.priority}</Badge>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground text-left shrink-0 flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-green-600" />
+                      {t.completed_at ? formatDateTimeSmart(t.completed_at) : "—"}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </TabsContent>

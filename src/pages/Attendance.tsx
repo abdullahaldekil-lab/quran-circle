@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import StudentNameLink from "@/components/StudentNameLink";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -664,7 +664,7 @@ const Attendance = () => {
                     disabled={!canEdit}
                     className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all bg-muted/40 text-muted-foreground border-muted ${!canEdit ? "opacity-70 cursor-default" : "hover:bg-muted/60"}`}
                   >
-                    <StudentNameLink studentId={student.id} studentName={student.full_name} className="text-sm" />
+                    <span className="text-sm font-medium">{student.full_name}</span>
                     <div className="flex items-center gap-2 text-xs font-medium">
                       <Clock className="w-4 h-4" />
                       لم يُسجَّل
@@ -681,7 +681,7 @@ const Attendance = () => {
                   disabled={!canEdit}
                   className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${statusColors[displayStatus]} ${!canEdit ? "opacity-70 cursor-default" : ""}`}
                 >
-                  <StudentNameLink studentId={student.id} studentName={student.full_name} className="text-sm" />
+                  <span className="text-sm font-medium">{student.full_name}</span>
                   <div className="flex items-center gap-2 text-xs font-medium">
                     {markedTime && !isAdmin && (
                       <span className="text-[11px] opacity-75">{formatMarkedTime(markedTime)}</span>
