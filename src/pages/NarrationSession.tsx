@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import StudentNameLink from "@/components/StudentNameLink";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -158,6 +158,43 @@ export default function NarrationSession() {
   });
 
   // جلب المحاولات الموجودة مع النطاقات
+  // Multi-reviewer: fetch all narration_results for this session
+  const { data: allResultsBySession = [] } = useQuery<any[]>({
+    queryKey: ["narration-results-multi", sessionId],
+    queryFn: async () => {
+      if (!sessionId) return [];
+      const { data, error } = await supabase
+        .from("narration_results" as any)
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const results = (data as any[]) || [];
+      // Map reviewer names from profiles
+      const reviewerIds = Array.from(new Set(results.map((r) => r.reviewer_id).filter(Boolean)));
+      let nameMap = new Map<string, string>();
+      if (reviewerIds.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", reviewerIds);
+        nameMap = new Map((profs || []).map((p: any) => [p.id, p.full_name]));
+      }
+      return results.map((r) => ({ ...r, reviewer_name: r.reviewer_id ? nameMap.get(r.reviewer_id) : (r.reviewer_name_manual || null) }));
+    },
+    enabled: !!sessionId,
+  });
+
+  const resultsByStudent = (() => {
+    const m = new Map<string, any[]>();
+    for (const r of allResultsBySession) {
+      const list = m.get(r.student_id) || [];
+      list.push(r);
+      m.set(r.student_id, list);
+    }
+    return m;
+  })();
+
   const { data: existingAttempts = [] } = useQuery({
     queryKey: ["narration-attempts", sessionId],
     queryFn: async () => {
@@ -301,7 +338,7 @@ export default function NarrationSession() {
         toast({ title: `خطأ في الحذف: ${error.message}`, variant: "destructive" });
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] }); queryClient.invalidateQueries({ queryKey: ["narration-results-multi", sessionId] });
     }
     setRows((prev) => prev.filter((r) => r.student_id !== studentId));
     setDeleteStudentId(null);
@@ -313,6 +350,7 @@ export default function NarrationSession() {
     setSavingAttempt(true);
     try {
       const row = rows.find((r) => r.student_id === studentId);
+      const reviewerId = profile?.id ?? null;
       const attemptPayload = {
         session_id: sessionId!,
         student_id: studentId,
@@ -326,6 +364,7 @@ export default function NarrationSession() {
         status: data.status,
         manual_entry: data.manual_entry,
         notes: data.notes || null,
+        reviewer_id: reviewerId,
       };
 
       let attemptId = row?.attempt_id;
@@ -356,7 +395,7 @@ export default function NarrationSession() {
         if (rangeError) throw rangeError;
       }
 
-      // Upsert into narration_results with recitation duration
+      // Upsert into narration_results with recitation duration + reviewer info
       const resultPayload = {
         session_id: sessionId!,
         student_id: studentId,
@@ -371,11 +410,14 @@ export default function NarrationSession() {
         manual_entry: data.manual_entry,
         notes: data.notes || null,
         recitation_duration_seconds: data.recitation_duration_seconds ?? null,
+        reviewer_id: reviewerId,
+        is_partial: data.is_partial ?? false,
+        segment_label: data.segment_label ?? null,
       };
-      const { error: resultError } = await supabase.from("narration_results" as any).upsert(resultPayload, { onConflict: "session_id,student_id" });
+      const { error: resultError } = await supabase.from("narration_results" as any).upsert(resultPayload, { onConflict: "session_id,student_id,reviewer_id" });
       if (resultError) throw resultError;
 
-      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] }); queryClient.invalidateQueries({ queryKey: ["narration-results-multi", sessionId] });
       setEditingStudent(null);
       toast({ title: "تم حفظ النتيجة بنجاح ✓" });
 
@@ -438,6 +480,7 @@ export default function NarrationSession() {
     setBulkSaving(true);
     try {
       const studentIds = Array.from(selectedStudents);
+      const reviewerId = profile?.id ?? null;
       for (const studentId of studentIds) {
         const row = rows.find(r => r.student_id === studentId);
         const attemptPayload = {
@@ -453,6 +496,7 @@ export default function NarrationSession() {
           status: data.status,
           manual_entry: data.manual_entry,
           notes: data.notes || null,
+          reviewer_id: reviewerId,
         };
 
         let attemptId = row?.attempt_id;
@@ -479,7 +523,7 @@ export default function NarrationSession() {
           if (rangeError) throw rangeError;
         }
 
-        // Upsert into narration_results with recitation duration
+        // Upsert into narration_results with recitation duration + reviewer info
         const resultPayload = {
           session_id: sessionId!,
           student_id: studentId,
@@ -494,12 +538,15 @@ export default function NarrationSession() {
           manual_entry: data.manual_entry,
           notes: data.notes || null,
           recitation_duration_seconds: data.recitation_duration_seconds ?? null,
+          reviewer_id: reviewerId,
+          is_partial: data.is_partial ?? false,
+          segment_label: data.segment_label ?? null,
         };
-        const { error: resultError } = await supabase.from("narration_results" as any).upsert(resultPayload, { onConflict: "session_id,student_id" });
+        const { error: resultError } = await supabase.from("narration_results" as any).upsert(resultPayload, { onConflict: "session_id,student_id,reviewer_id" });
         if (resultError) throw resultError;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] }); queryClient.invalidateQueries({ queryKey: ["narration-results-multi", sessionId] });
       setBulkNarrationOpen(false);
       setSelectedStudents(new Set());
       toast({ title: `تم حفظ النتائج لـ ${studentIds.length} طالب ✓` });
@@ -641,7 +688,14 @@ export default function NarrationSession() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => (
+                {rows.map((row) => {
+                  const reviews = resultsByStudent.get(row.student_id) || [];
+                  const colCount = (canWrite ? 11 : 9);
+                  const avgScore = reviews.length > 0
+                    ? (reviews.reduce((s, r) => s + (Number(r.grade) || 0), 0) / reviews.length).toFixed(1)
+                    : null;
+                  return (
+                  <React.Fragment key={row.student_id}>
                   <TableRow
                     key={row.student_id}
                     className={`${row.status === "absent" ? "opacity-50" : ""} ${selectedStudents.has(row.student_id) ? "bg-primary/5" : ""}`}
@@ -701,7 +755,34 @@ export default function NarrationSession() {
                       </TableCell>
                     )}
                   </TableRow>
-                ))}
+                  {reviews.length > 1 && (
+                    <TableRow key={row.student_id + "-multi"} className="bg-muted/20">
+                      <TableCell colSpan={colCount} className="p-2">
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {reviews.length} تقييمات من مسمعين مختلفين
+                          </div>
+                          {reviews.map((r, i) => (
+                            <div key={r.id} className="px-3 py-1.5 border-t text-xs flex justify-between items-center">
+                              <span className="text-muted-foreground">
+                                {r.segment_label || `المسمع ${i + 1}`} — {r.reviewer_name || "مسمع خارجي"}
+                                {r.is_partial && <Badge className="mr-2 text-[10px]" variant="secondary">جزئي</Badge>}
+                              </span>
+                              <span className="font-bold text-primary">{r.grade}/100</span>
+                            </div>
+                          ))}
+                          <div className="px-3 py-1.5 bg-green-50 border-t text-xs flex justify-between font-semibold">
+                            <span>متوسط الدرجة الكلي</span>
+                            <span className="text-green-700">{avgScore}/100</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </React.Fragment>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import NarrationTypeSelector from "./NarrationTypeSelector";
 import RegularNarrationForm from "./RegularNarrationForm";
@@ -82,6 +83,8 @@ export default function NarrationAttemptDialog({
   const [grade, setGrade] = useState(settings.max_grade);
   const [manualEntry, setManualEntry] = useState(false);
   const [notes, setNotes] = useState("");
+  const [segmentLabel, setSegmentLabel] = useState("");
+  const [isPartial, setIsPartial] = useState(false);
 
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -128,6 +131,8 @@ export default function NarrationAttemptDialog({
       setGrade(existing.grade);
       setManualEntry(existing.manual_entry);
       setNotes(existing.notes || "");
+      setSegmentLabel((existing as any).segment_label || "");
+      setIsPartial((existing as any).is_partial || false);
     } else {
       setNarrationType("regular");
       setRanges([{ section: "regular", from_hizb: 1, to_hizb: 1, hizb_count: 1 }]);
@@ -137,6 +142,8 @@ export default function NarrationAttemptDialog({
       setGrade(settings.max_grade);
       setManualEntry(false);
       setNotes("");
+      setSegmentLabel("");
+      setIsPartial(false);
     }
   }, [existing, open, settings.max_grade]);
 
@@ -175,6 +182,8 @@ export default function NarrationAttemptDialog({
       manual_entry: manualEntry,
       notes,
       recitation_duration_seconds: timerSeconds > 0 ? timerSeconds : undefined,
+      is_partial: isPartial,
+      segment_label: segmentLabel || null,
     };
 
     if (!manualEntry) {
@@ -249,6 +258,34 @@ export default function NarrationAttemptDialog({
               </Button>
             </div>
           )}
+
+          {/* Reviewer Settings — multi-reviewer support */}
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-4 h-4 text-amber-700" />
+              <p className="text-sm font-semibold text-amber-800">إعدادات المسمع</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">المقطع / الجزء</Label>
+                <Input
+                  placeholder="مثال: الربع الأول"
+                  value={segmentLabel}
+                  onChange={(e) => setSegmentLabel(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">هذا تقييم جزئي؟</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Switch checked={isPartial} onCheckedChange={setIsPartial} />
+                  <span className="text-xs text-muted-foreground">
+                    {isPartial ? "نعم — سيُكمل مسمع آخر" : "لا — تقييم كامل"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Narration Type */}
           <NarrationTypeSelector value={narrationType} onChange={handleTypeChange} />

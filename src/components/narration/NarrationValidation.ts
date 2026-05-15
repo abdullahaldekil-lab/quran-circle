@@ -20,6 +20,8 @@ export interface NarrationAttemptData {
   manual_entry: boolean;
   notes: string;
   recitation_duration_seconds?: number;
+  is_partial?: boolean;
+  segment_label?: string | null;
 }
 
 export interface NarrationSettingsFull {

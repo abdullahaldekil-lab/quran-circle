@@ -2004,6 +2004,7 @@ export type Database = {
           mistakes_count: number
           narration_type: string
           notes: string | null
+          reviewer_id: string | null
           session_id: string
           status: string
           student_id: string
@@ -2021,6 +2022,7 @@ export type Database = {
           mistakes_count?: number
           narration_type?: string
           notes?: string | null
+          reviewer_id?: string | null
           session_id: string
           status?: string
           student_id: string
@@ -2038,6 +2040,7 @@ export type Database = {
           mistakes_count?: number
           narration_type?: string
           notes?: string | null
+          reviewer_id?: string | null
           session_id?: string
           status?: string
           student_id?: string
@@ -2220,11 +2223,15 @@ export type Database = {
           hizb_from: number
           hizb_to: number
           id: string
+          is_partial: boolean | null
           lahn_count: number
           manual_entry: boolean
           mistakes_count: number
           notes: string | null
           recitation_duration_seconds: number | null
+          reviewer_id: string | null
+          reviewer_name_manual: string | null
+          segment_label: string | null
           session_id: string
           status: string
           student_id: string
@@ -2238,11 +2245,15 @@ export type Database = {
           hizb_from?: number
           hizb_to?: number
           id?: string
+          is_partial?: boolean | null
           lahn_count?: number
           manual_entry?: boolean
           mistakes_count?: number
           notes?: string | null
           recitation_duration_seconds?: number | null
+          reviewer_id?: string | null
+          reviewer_name_manual?: string | null
+          segment_label?: string | null
           session_id: string
           status?: string
           student_id: string
@@ -2256,11 +2267,15 @@ export type Database = {
           hizb_from?: number
           hizb_to?: number
           id?: string
+          is_partial?: boolean | null
           lahn_count?: number
           manual_entry?: boolean
           mistakes_count?: number
           notes?: string | null
           recitation_duration_seconds?: number | null
+          reviewer_id?: string | null
+          reviewer_name_manual?: string | null
+          segment_label?: string | null
           session_id?: string
           status?: string
           student_id?: string
