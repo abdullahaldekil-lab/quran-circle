@@ -425,32 +425,39 @@ export default function NarrationReports() {
                         <TableHead className="text-right">الحلقة</TableHead>
                         <TableHead className="text-center">الأحزاب</TableHead>
                         <TableHead className="text-center">الدرجة</TableHead>
+                        <TableHead className="text-center">المسمعون</TableHead>
                         <TableHead className="text-center">الحالة</TableHead>
                         <TableHead className="text-center">شهادة</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {ranked.map((a: any, i: number) => {
-                        const isCertEligible = Number(a.grade) >= 90 && a.status === "pass";
-                        return (
-                        <TableRow key={a.id}>
+                      {ranked.map((row: any, i: number) => (
+                        <TableRow key={row.student_id}>
                           <TableCell className="text-center font-bold text-muted-foreground">{i + 1}</TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <StudentNameLink studentId={a.student_id} studentName={a.students?.full_name || "—"} />
-                              {isCertEligible && (
-                                <Badge variant="default" className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/20">
+                              <StudentNameLink studentId={row.student_id} studentName={row.student_name} />
+                              {row.qualifies_for_cert && (
+                                <Badge className="bg-amber-100 text-amber-800 text-[10px] border-amber-300">
                                   🏅 مؤهل للشهادة
                                 </Badge>
                               )}
+                              {!row.all_complete && (
+                                <Badge variant="secondary" className="text-[10px]">تقييم جزئي</Badge>
+                              )}
                             </div>
                           </TableCell>
-                          <TableCell>{a.students?.halaqat?.name || "—"}</TableCell>
-                          <TableCell className="text-center">{Number(a.total_hizb_count)}</TableCell>
-                          <TableCell className="text-center font-bold">{Number(a.grade)}</TableCell>
+                          <TableCell>{row.halaqa_name || "—"}</TableCell>
+                          <TableCell className="text-center">{Number(row.total_hizb_count)}</TableCell>
+                          <TableCell className="text-center font-bold">{Number(row.final_score)}</TableCell>
                           <TableCell className="text-center">
-                            <Badge variant={a.status === "pass" ? "default" : "destructive"}>
-                              {a.status === "pass" ? "ناجح" : "راسب"}
+                            {row.reviewer_count > 1
+                              ? <Badge variant="outline" className="text-xs">{row.reviewer_count} مسمعين</Badge>
+                              : <span className="text-muted-foreground text-xs">مسمع واحد</span>}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={row.status === "pass" ? "default" : "destructive"}>
+                              {row.status === "pass" ? "ناجح" : row.status === "fail" ? "راسب" : "معلّق"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">
@@ -458,14 +465,15 @@ export default function NarrationReports() {
                               variant="ghost"
                               size="sm"
                               className="h-7 text-xs"
+                              disabled={!row.qualifies_for_cert}
                               onClick={() => {
                                 setCertStudent({
-                                  studentName: a.students?.full_name,
-                                  halaqaName: a.students?.halaqat?.name || selectedSessionData?.halaqat?.name || "—",
-                                  totalHizb: Number(a.total_hizb_count),
-                                  grade: Number(a.grade),
+                                  studentName: row.student_name,
+                                  halaqaName: row.halaqa_name || selectedSessionData?.halaqat?.name || "—",
+                                  totalHizb: Number(row.total_hizb_count),
+                                  grade: Number(row.final_score),
                                   maxGrade: settings?.max_grade || 100,
-                                  status: a.status,
+                                  status: row.status,
                                   halaqaRank: i + 1,
                                   overallRank: 0,
                                   sessionDate: selectedSessionData?.session_date || "",
@@ -478,8 +486,7 @@ export default function NarrationReports() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                        );
-                      })}
+                      ))}
                     </TableBody>
                   </Table>
                 </CardContent>
