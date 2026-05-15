@@ -41,6 +41,7 @@ import {
   Star,
   UserX,
   QrCode,
+  Brain,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,7 @@ const navGroups: NavGroup[] = [
       { to: "/excellence/track-settings", icon: Settings, label: "إعدادات المسارات" },
       { to: "/excellence-comparison", icon: Trophy, label: "مقارنة المتميزين" },
       { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
+      { to: "/program-quiz", icon: Brain, label: "اختبارات البرامج" },
       { to: "/programs-overview", icon: LayoutDashboard, label: "إشراف البرامج" },
     ],
     subGroups: [

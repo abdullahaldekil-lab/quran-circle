@@ -49,6 +49,8 @@ const KpiDashboard = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [rewards, setRewards] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [programQuizzes, setProgramQuizzes] = useState<any[]>([]);
+  const [programResults, setProgramResults] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAllData();
@@ -63,6 +65,7 @@ const KpiDashboard = () => {
     const [
       halaqatRes, studentsRes, recitationsRes, attendanceRes,
       goalsRes, objectivesRes, tasksRes, rewardsRes, transactionsRes,
+      programQuizzesRes, programResultsRes,
     ] = await Promise.all([
       (supabase as any).from("halaqat_tahfeez").select("id, name, talqeen_curriculum_id").eq("active", true),
       supabase.from("students").select("*").eq("status", "active"),
@@ -73,6 +76,8 @@ const KpiDashboard = () => {
       supabase.from("strategic_tasks").select("*"),
       supabase.from("reward_nominations").select("*").gte("created_at", monthStart + "T00:00:00"),
       isManager ? supabase.from("financial_transactions").select("*") : Promise.resolve({ data: [] }),
+      (supabase as any).from("program_quizzes").select("id, created_at").gte("created_at", monthStart + "T00:00:00"),
+      (supabase as any).from("program_quiz_results").select("program_score").gte("submitted_at", monthStart + "T00:00:00"),
     ]);
 
     const { filterTahfeezOnly } = await import("@/lib/halaqaType");
@@ -87,6 +92,8 @@ const KpiDashboard = () => {
     setTasks(tasksRes.data || []);
     setRewards(rewardsRes.data || []);
     setTransactions((transactionsRes as any).data || []);
+    setProgramQuizzes(((programQuizzesRes as any).data) || []);
+    setProgramResults(((programResultsRes as any).data) || []);
     setLoading(false);
   };
 
@@ -147,8 +154,27 @@ const KpiDashboard = () => {
         status: avgTajweed >= 85 ? "on_track" : avgTajweed >= 70 ? "at_risk" : "delayed",
         icon: Star,
       },
+      {
+        label: "اختبارات البرامج (الشهر)",
+        value: programQuizzes.length,
+        target: "—",
+        status: programQuizzes.length > 0 ? "on_track" : "at_risk",
+        icon: Activity,
+      },
+      {
+        label: "متوسط درجة البرامج",
+        value: programResults.length
+          ? (programResults.reduce((s, r) => s + (Number(r.program_score) || 0), 0) / programResults.length).toFixed(1)
+          : "—",
+        target: "≥ 80",
+        status: programResults.length === 0
+          ? "at_risk"
+          : (programResults.reduce((s, r) => s + (Number(r.program_score) || 0), 0) / programResults.length) >= 80
+            ? "on_track" : "at_risk",
+        icon: TrendingUp,
+      },
     ];
-  }, [filtered]);
+  }, [filtered, programQuizzes, programResults]);
 
   // --- Attendance KPIs ---
   const attendanceKpis = useMemo((): KpiCard[] => {
