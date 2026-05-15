@@ -313,6 +313,7 @@ export default function NarrationSession() {
     setSavingAttempt(true);
     try {
       const row = rows.find((r) => r.student_id === studentId);
+      const reviewerId = profile?.id ?? null;
       const attemptPayload = {
         session_id: sessionId!,
         student_id: studentId,
@@ -326,6 +327,7 @@ export default function NarrationSession() {
         status: data.status,
         manual_entry: data.manual_entry,
         notes: data.notes || null,
+        reviewer_id: reviewerId,
       };
 
       let attemptId = row?.attempt_id;
