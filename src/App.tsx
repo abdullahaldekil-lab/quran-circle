@@ -147,6 +147,7 @@ const AppRoutes = () => {
       <Route path="/enroll" element={<Enroll />} />
       <Route path="/verify-certificate" element={<VerifyCertificate />} />
       <Route path="/verify-certificate/:number" element={<VerifyCertificate />} />
+      <Route path="/external-reviewer/:token" element={<ExternalReviewer />} />
 
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />
