@@ -534,6 +534,33 @@ const StaffTasks = () => {
           )}
         </TabsContent>
 
+        {/* Completed Tasks */}
+        <TabsContent value="completed" className="mt-4">
+          {completedTasks.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">لا توجد مهام منتهية</p>
+          ) : (
+            <div className="space-y-2">
+              {completedTasks.map(t => (
+                <Card key={t.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openDetail(t)}>
+                  <CardContent className="p-3 flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{t.title}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <Badge variant="outline" className="text-xs">{t.category}</Badge>
+                        <Badge className={`text-xs ${PRIORITY_COLORS[t.priority] || ""}`}>{t.priority}</Badge>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground text-left shrink-0 flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-green-600" />
+                      {t.completed_at ? formatDateTimeSmart(t.completed_at) : "—"}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
         {/* Assigned Tasks Table */}
         {(isManager || isSupervisor) && (
           <TabsContent value="assigned" className="mt-4 space-y-4">
