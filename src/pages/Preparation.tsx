@@ -277,7 +277,41 @@ const Preparation = () => {
               إعدادات التحضير (للمدير فقط)
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            {/* Auto-sync with Asr */}
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">مزامنة تلقائية مع أذان العصر</p>
+                <p className="text-xs text-muted-foreground">
+                  وقت التحضير = العصر − 5 دقائق — اليوم: {prayerTimes?.asr ? formatTime24to12(calcPreparationStart(prayerTimes.asr)) : "جارٍ الجلب..."}
+                </p>
+              </div>
+              <Switch
+                checked={config?.auto_sync_asr ?? true}
+                onCheckedChange={(v) => updateConfig({ auto_sync_asr: v })}
+              />
+            </div>
+
+            {/* Late tolerance */}
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">مدة التأخير المقبول</p>
+                <p className="text-xs text-muted-foreground">بعد وقت التحضير يُسجَّل الموظف متأخراً</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({ late_tolerance_minutes: Math.max(0, (config?.late_tolerance_minutes ?? 10) - 5) })}>−</Button>
+                <span className="w-16 text-center text-sm font-mono">
+                  {config?.late_tolerance_minutes ?? 10} دقيقة
+                </span>
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({ late_tolerance_minutes: (config?.late_tolerance_minutes ?? 10) + 5 })}>+</Button>
+              </div>
+            </div>
+
+            {/* Manual override settings (disabled when auto sync is on) */}
+            <div className={config?.auto_sync_asr ? "opacity-60 pointer-events-none" : ""}>
+
             {!editMode ? (
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
