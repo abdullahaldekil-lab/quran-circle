@@ -695,7 +695,7 @@ export default function NarrationSession() {
                     ? (reviews.reduce((s, r) => s + (Number(r.grade) || 0), 0) / reviews.length).toFixed(1)
                     : null;
                   return (
-                  <>
+                  <React.Fragment key={row.student_id}>
                   <TableRow
                     key={row.student_id}
                     className={`${row.status === "absent" ? "opacity-50" : ""} ${selectedStudents.has(row.student_id) ? "bg-primary/5" : ""}`}
