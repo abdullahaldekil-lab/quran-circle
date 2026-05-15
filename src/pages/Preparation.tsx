@@ -75,6 +75,16 @@ const Preparation = () => {
     Promise.all([fetchConfig(), fetchPrayerTimes()]).finally(() => setLoading(false));
   }, [fetchConfig, fetchPrayerTimes]);
 
+  const updateConfig = async (patch: Record<string, any>) => {
+    if (!config?.id) return;
+    const { error } = await supabase.from("preparation_config").update(patch).eq("id", config.id);
+    if (error) {
+      toast.error("تعذر تحديث الإعدادات");
+      return;
+    }
+    setConfig({ ...config, ...patch });
+  };
+
   const handleSaveConfig = async () => {
     if (!config?.id) return;
     const { error } = await supabase
