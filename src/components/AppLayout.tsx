@@ -41,6 +41,7 @@ import {
   Star,
   UserX,
   QrCode,
+  Brain,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
