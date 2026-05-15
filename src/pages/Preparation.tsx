@@ -8,7 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Clock, Settings, Sun, Moon, Sunrise, Sunset, CloudSun } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useRole } from "@/hooks/useRole";
+
+/** Calculate preparation start = asr - 5 minutes */
+export const calcPreparationStart = (asr: string) => {
+  if (!asr) return "";
+  const [h, m] = asr.split(":").map(Number);
+  const totalMins = h * 60 + m - 5;
+  const hh = Math.floor(totalMins / 60);
+  const mm = totalMins % 60;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+};
 
 const PRAYER_LABELS: Record<string, { label: string; icon: React.ElementType }> = {
   fajr: { label: "الفجر", icon: Sunrise },
@@ -63,6 +74,16 @@ const Preparation = () => {
   useEffect(() => {
     Promise.all([fetchConfig(), fetchPrayerTimes()]).finally(() => setLoading(false));
   }, [fetchConfig, fetchPrayerTimes]);
+
+  const updateConfig = async (patch: Record<string, any>) => {
+    if (!config?.id) return;
+    const { error } = await supabase.from("preparation_config").update(patch).eq("id", config.id);
+    if (error) {
+      toast.error("تعذر تحديث الإعدادات");
+      return;
+    }
+    setConfig({ ...config, ...patch });
+  };
 
   const handleSaveConfig = async () => {
     if (!config?.id) return;
@@ -256,7 +277,41 @@ const Preparation = () => {
               إعدادات التحضير (للمدير فقط)
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            {/* Auto-sync with Asr */}
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">مزامنة تلقائية مع أذان العصر</p>
+                <p className="text-xs text-muted-foreground">
+                  وقت التحضير = العصر − 5 دقائق — اليوم: {prayerTimes?.asr ? formatTime24to12(calcPreparationStart(prayerTimes.asr)) : "جارٍ الجلب..."}
+                </p>
+              </div>
+              <Switch
+                checked={config?.auto_sync_asr ?? true}
+                onCheckedChange={(v) => updateConfig({ auto_sync_asr: v })}
+              />
+            </div>
+
+            {/* Late tolerance */}
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">مدة التأخير المقبول</p>
+                <p className="text-xs text-muted-foreground">بعد وقت التحضير يُسجَّل الموظف متأخراً</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({ late_tolerance_minutes: Math.max(0, (config?.late_tolerance_minutes ?? 10) - 5) })}>−</Button>
+                <span className="w-16 text-center text-sm font-mono">
+                  {config?.late_tolerance_minutes ?? 10} دقيقة
+                </span>
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({ late_tolerance_minutes: (config?.late_tolerance_minutes ?? 10) + 5 })}>+</Button>
+              </div>
+            </div>
+
+            {/* Manual override settings (disabled when auto sync is on) */}
+            <div className={config?.auto_sync_asr ? "opacity-60 pointer-events-none" : ""}>
+
             {!editMode ? (
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
@@ -314,6 +369,7 @@ const Preparation = () => {
                 </div>
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
       )}

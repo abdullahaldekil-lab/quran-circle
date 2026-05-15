@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
-import { format } from "date-fns";
+import { format, addMinutes } from "date-fns";
 import { formatTime12h, formatHijriArabic } from "@/lib/hijri";
+import { calcPreparationStart } from "@/pages/Preparation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -117,6 +118,37 @@ const StaffAttendance = () => {
     },
   });
 
+  const { data: prepConfig } = useQuery({
+    queryKey: ["preparation-config"],
+    queryFn: async () => {
+      const { data } = await supabase.from("preparation_config").select("*").limit(1).maybeSingle();
+      return data as any;
+    },
+  });
+
+  const { data: prayerTimes } = useQuery({
+    queryKey: ["prayer-times-today"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("prayer-times");
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
+  const asrTime: string = prayerTimes?.asr || "";
+  const preparationStart = prepConfig?.auto_sync_asr
+    ? calcPreparationStart(asrTime)
+    : (prepConfig?.start_time || "");
+  const lateToleranceMin = prepConfig?.late_tolerance_minutes ?? 10;
+  const lateCutoff = (() => {
+    if (!preparationStart) return "";
+    const [h, m] = preparationStart.split(":").map(Number);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    const c = addMinutes(d, lateToleranceMin);
+    return `${String(c.getHours()).padStart(2, "0")}:${String(c.getMinutes()).padStart(2, "0")}`;
+  })();
+
   const activeShiftId = selectedShiftId || shifts[0]?.id || "";
   const activeShift = shifts.find((s) => s.id === activeShiftId);
 
@@ -167,7 +199,25 @@ const StaffAttendance = () => {
       if (isDayOff) throw new Error("لا يمكن تسجيل الحضور في أيام العطل");
       if (!activeShift) throw new Error("يرجى اختيار فترة الدوام");
       const now = new Date();
-      const { status, late_minutes } = computeStatus(now, activeShift);
+      let status: string;
+      let late_minutes: number;
+      if (prepConfig?.auto_sync_asr && preparationStart) {
+        const nowStr = format(now, "HH:mm");
+        if (nowStr <= preparationStart) {
+          status = "present";
+          late_minutes = 0;
+        } else if (nowStr <= lateCutoff) {
+          status = "late";
+          const [ph, pm] = preparationStart.split(":").map(Number);
+          const ps = new Date(now); ps.setHours(ph, pm, 0, 0);
+          late_minutes = Math.round((now.getTime() - ps.getTime()) / 60000);
+        } else {
+          status = "absent";
+          late_minutes = 0;
+        }
+      } else {
+        ({ status, late_minutes } = computeStatus(now, activeShift));
+      }
       const { error } = await supabase.from("staff_attendance").upsert({
         staff_id: staffId, attendance_date: dateStr, check_in_time: now.toISOString(), status, late_minutes, shift_id: activeShiftId,
       }, { onConflict: "staff_id,attendance_date" });
@@ -332,6 +382,14 @@ const StaffAttendance = () => {
           <Button variant="outline" size="sm" onClick={handleExportPdf} className="print:hidden"><FileDown className="w-4 h-4 ml-1" />PDF</Button>
         </div>
       </div>
+
+      {!isDayOff && prepConfig?.auto_sync_asr && (
+        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground bg-muted/40 rounded-lg p-3">
+          <span>🕌 أذان العصر: <strong className="text-foreground">{asrTime || "..."}</strong></span>
+          <span>📋 التحضير: <strong className="text-foreground">{preparationStart || "..."}</strong></span>
+          <span>⏰ آخر موعد: <strong className="text-foreground">{lateCutoff || "..."}</strong></span>
+        </div>
+      )}
 
       {isDayOff && (
         <Alert variant="destructive" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200">
