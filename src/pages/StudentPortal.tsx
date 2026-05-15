@@ -354,8 +354,8 @@ export default function StudentPortal() {
                         )}
                         {progress.map((p, i) => (
                           <tr key={i} className="border-b last:border-b-0">
-                            <td className="px-3 py-2">{p.hijri_month_name || p.hijri_month || "—"}</td>
-                            <td className="px-2 py-2 text-center">{p.target_memorization || 0}</td>
+                            <td className="px-3 py-2">{p.hijri_month_name || (p.month_number ? `شهر ${p.month_number}` : (p.hijri_month || "—"))}</td>
+                            <td className="px-2 py-2 text-center">{p.target_pages || p.target_memorization || 0}</td>
                             <td className="px-2 py-2 text-center text-green-700">{p.actual_memorization || 0}</td>
                             <td className="px-2 py-2 text-center text-blue-700">{p.actual_review || 0}</td>
                             <td className="px-2 py-2 text-center text-purple-700">{p.actual_linking || 0}</td>
