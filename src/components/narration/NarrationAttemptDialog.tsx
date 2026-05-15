@@ -189,6 +189,29 @@ export default function NarrationAttemptDialog({
           </DialogTitle>
         </DialogHeader>
 
+        {/* Timer */}
+        <div className="flex flex-col items-center gap-3 p-4 rounded-xl border bg-card mb-2">
+          <span className={`text-4xl font-mono font-bold tabular-nums ${
+            timerRunning ? 'text-green-600' : timerSeconds > 0 ? 'text-yellow-600' : 'text-muted-foreground'
+          }`}>{formatTime(timerSeconds)}</span>
+          <div className="flex gap-2">
+            {!timerRunning && timerSeconds === 0 && (
+              <Button size="sm" onClick={startTimer} className="bg-green-600 hover:bg-green-700 text-white">
+                ▶ ابدأ التوقيت
+              </Button>
+            )}
+            {timerRunning && (
+              <Button size="sm" variant="outline" onClick={pauseTimer}>⏸ إيقاف مؤقت</Button>
+            )}
+            {!timerRunning && timerSeconds > 0 && (
+              <>
+                <Button size="sm" onClick={startTimer} className="bg-green-600 hover:bg-green-700 text-white">▶ استئناف</Button>
+                <Button size="sm" variant="outline" onClick={stopTimer}>⏹ إعادة تعيين</Button>
+              </>
+            )}
+          </div>
+        </div>
+
         <div className="space-y-4 pt-2">
           {/* Narration Type */}
           <NarrationTypeSelector value={narrationType} onChange={handleTypeChange} />
