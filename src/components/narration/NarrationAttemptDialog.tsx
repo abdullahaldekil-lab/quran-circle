@@ -178,6 +178,8 @@ export default function NarrationAttemptDialog({
       manual_entry: manualEntry,
       notes,
       recitation_duration_seconds: timerSeconds > 0 ? timerSeconds : undefined,
+      is_partial: isPartial,
+      segment_label: segmentLabel || null,
     };
 
     if (!manualEntry) {
