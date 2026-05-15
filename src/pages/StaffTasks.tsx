@@ -264,23 +264,8 @@ const StaffTasks = () => {
       const { error } = await supabase.from("staff_tasks").insert(payload);
       if (error) throw error;
 
-      // Create recurring copies if needed
-      if (form.recurrence !== "none" && dueDateTime) {
-        const copies = [];
-        for (let i = 1; i <= 4; i++) {
-          const nextDate = new Date(dueDateTime);
-          if (form.recurrence === "daily") nextDate.setDate(nextDate.getDate() + i);
-          else if (form.recurrence === "weekly") nextDate.setDate(nextDate.getDate() + i * 7);
-          else if (form.recurrence === "monthly") nextDate.setMonth(nextDate.getMonth() + i);
-          copies.push({
-            ...payload,
-            due_date: format(nextDate, "yyyy-MM-dd"),
-            due_time: dueDateTime ? format(dueDateTime, "HH:mm:ss") : null,
-            reminder_at: form.reminder_minutes ? new Date(nextDate.getTime() - Number(form.reminder_minutes) * 60000).toISOString() : null,
-          });
-        }
-        await supabase.from("staff_tasks").insert(copies);
-      }
+      // Recurrence is tracked on the task itself; no duplicate copies are pre-created
+      // (overdue tasks pulse instead — see KanbanCard).
 
       // Send notification
       if (form.assigned_to) {
