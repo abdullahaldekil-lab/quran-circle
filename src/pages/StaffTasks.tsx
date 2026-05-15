@@ -454,6 +454,7 @@ const StaffTasks = () => {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <TabsList>
             <TabsTrigger value="my-tasks">مهامي</TabsTrigger>
+            <TabsTrigger value="completed">المنتهية</TabsTrigger>
             {(isManager || isSupervisor) && <TabsTrigger value="assigned">المهام المُسنَدة</TabsTrigger>}
           </TabsList>
           {activeTab === "my-tasks" && (
