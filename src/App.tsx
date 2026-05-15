@@ -91,6 +91,7 @@ import TeacherEvaluationsReport from "./pages/admin/TeacherEvaluationsReport";
 import GuardianApprovals from "./pages/admin/GuardianApprovals";
 import GuardianLinkRequest from "./pages/guardian/GuardianLinkRequest";
 import ExternalReviewer from "./pages/ExternalReviewer";
+import StudentPortal from "./pages/StudentPortal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
