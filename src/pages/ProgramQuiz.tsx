@@ -72,7 +72,7 @@ export default function ProgramQuiz() {
   }, [selectedCurriculum]);
 
   const loadQuizzes = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("program_quizzes")
       .select("*, halaqat(name), talqeen_curricula(name), talqeen_lessons(title)")
       .eq("status", "published")
