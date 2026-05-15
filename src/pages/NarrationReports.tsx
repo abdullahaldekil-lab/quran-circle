@@ -60,23 +60,73 @@ export default function NarrationReports() {
     },
   });
 
-  // Fetch attempts for selected session
-  const { data: attempts = [] } = useQuery({
-    queryKey: ["narration-attempts-report", selectedSession],
+  // Fetch all narration_results for selected session (supports multi-reviewer)
+  const { data: sessionSummaries = [] } = useQuery<any[]>({
+    queryKey: ["narration-results-report", selectedSession],
     queryFn: async () => {
       if (!selectedSession) return [];
       const { data, error } = await supabase
-        .from("narration_attempts" as any)
-        .select("*, students(full_name, halaqa_id, halaqat(name))")
+        .from("narration_results" as any)
+        .select("*, students:student_id(full_name, halaqa_id, halaqat(name))")
         .eq("session_id", selectedSession)
-        .order("grade", { ascending: false });
+        .order("student_id", { ascending: true })
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as any[];
+      const rawResults = (data as any[]) || [];
+
+      // Map reviewer names from profiles (no direct FK to auth.users)
+      const reviewerIds = Array.from(new Set(rawResults.map((r) => r.reviewer_id).filter(Boolean)));
+      const nameMap = new Map<string, string>();
+      if (reviewerIds.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", reviewerIds);
+        (profs || []).forEach((p: any) => nameMap.set(p.id, p.full_name));
+      }
+
+      // Group by student
+      const grouped = new Map<string, any>();
+      for (const r of rawResults) {
+        const sid = r.student_id;
+        if (!grouped.has(sid)) {
+          grouped.set(sid, {
+            student_id: sid,
+            student_name: r.students?.full_name || "—",
+            halaqa_id: r.students?.halaqa_id,
+            halaqa_name: r.students?.halaqat?.name || "—",
+            results: [],
+          });
+        }
+        grouped.get(sid).results.push({
+          ...r,
+          reviewer_name: r.reviewer_id ? nameMap.get(r.reviewer_id) : (r.reviewer_name_manual || null),
+        });
+      }
+
+      // Compute final summary per student
+      const summaries = Array.from(grouped.values()).map((g) => {
+        const allComplete = g.results.every((r: any) => !r.is_partial);
+        const avgScore = g.results.reduce((s: number, r: any) => s + Number(r.grade || 0), 0) / g.results.length;
+        const totalHizb = Math.max(0, ...g.results.map((r: any) => Number(r.total_hizbat || 0)));
+        const anyAbsent = g.results.some((r: any) => r.status === "absent");
+        const anyFail = g.results.some((r: any) => r.status === "fail");
+        const status = anyAbsent ? "absent" : !allComplete ? "pending" : anyFail ? "fail" : "pass";
+        return {
+          ...g,
+          final_score: Math.round(avgScore * 10) / 10,
+          all_complete: allComplete,
+          reviewer_count: g.results.length,
+          total_hizb_count: totalHizb,
+          status,
+          qualifies_for_cert: allComplete && avgScore >= 90 && status === "pass",
+        };
+      });
+
+      summaries.sort((a, b) => b.final_score - a.final_score);
+      return summaries;
     },
     enabled: !!selectedSession,
   });
 
-  // Fetch all attempts for overall stats
+  // Fetch all attempts for overall stats (kept on narration_attempts for cross-session aggregates)
   const { data: allAttempts = [] } = useQuery({
     queryKey: ["narration-attempts-all-reports"],
     queryFn: async () => {
