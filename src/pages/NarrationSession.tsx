@@ -77,6 +77,7 @@ export default function NarrationSession() {
   } | null>(null);
 
   const isManager = role === "manager";
+  const isSupervisor = role === "supervisor";
   const canWrite = isManager || role === "teacher" || role === "assistant_teacher";
 
   // جلب بيانات الجلسة
