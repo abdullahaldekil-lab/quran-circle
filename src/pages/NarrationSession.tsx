@@ -211,6 +211,35 @@ export default function NarrationSession() {
     })();
   }, [rows.length]);
 
+  // Fetch student annual plan info when editing
+  useEffect(() => {
+    if (!editingStudent) {
+      setStudentPlanInfo(null);
+      return;
+    }
+    const fetchPlan = async () => {
+      const { data: plan } = await (supabase as any)
+        .from('student_annual_plans')
+        .select('id, previous_memorized_from, previous_memorized_to, previous_memorized_pages')
+        .eq('student_id', editingStudent.student_id)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (!plan) return;
+      const { data: progress } = await (supabase as any)
+        .from('student_plan_progress')
+        .select('actual_memorization')
+        .eq('plan_id', plan.id);
+      const total = (progress || []).reduce((s: number, r: any) => s + (r.actual_memorization || 0), 0) + (plan.previous_memorized_pages || 0);
+      const totalHizb = Math.floor(total / 8);
+      setStudentPlanInfo({
+        totalHizb,
+        fromHizb: plan.previous_memorized_from || '',
+        toHizb: plan.previous_memorized_to || '',
+      });
+    };
+    fetchPlan();
+  }, [editingStudent]);
+
   function mapAttemptToRow(studentId: string, studentName: string, attempt: any): StudentRow {
     return {
       student_id: studentId,
