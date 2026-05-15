@@ -360,6 +360,49 @@ export default function StudentPortal() {
                 )}
               </Card>
             ))}
+
+            {/* روابط تعليمية */}
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3">روابط تعليمية</h3>
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  {
+                    name: "متجر سنابل",
+                    desc: "كتب ومصادر تعليمية إسلامية",
+                    icon: "📚",
+                    color: "bg-amber-50 border-amber-200 text-amber-800",
+                    url: "https://sanabelstore.com",
+                  },
+                  {
+                    name: "موقع القيم القرآنية",
+                    desc: "منهج القيم القرآنية للناشئة",
+                    icon: "📖",
+                    color: "bg-green-50 border-green-200 text-green-800",
+                    url: "https://quranvalues.com",
+                  },
+                  {
+                    name: "منصة حل",
+                    desc: "شرح المناهج الدراسية",
+                    icon: "🎓",
+                    color: "bg-blue-50 border-blue-200 text-blue-800",
+                    url: "https://hall.com",
+                  },
+                ].map(link => (
+                  <button
+                    key={link.name}
+                    onClick={() => openExternalLink(link.url, link.name)}
+                    className={`flex items-center gap-3 p-4 rounded-xl border text-right w-full transition-all active:scale-95 ${link.color}`}
+                  >
+                    <span className="text-2xl">{link.icon}</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{link.name}</p>
+                      <p className="text-xs opacity-70 mt-0.5">{link.desc}</p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 opacity-50" />
+                  </button>
+                ))}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
