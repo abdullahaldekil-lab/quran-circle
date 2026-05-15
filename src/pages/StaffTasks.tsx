@@ -195,6 +195,17 @@ const StaffTasks = () => {
     });
   }, [myTasks]);
 
+  // Completed tasks sorted by completion date (descending)
+  const completedTasks = useMemo(() => {
+    return processedMyTasks
+      .filter(t => t.status === "completed")
+      .sort((a, b) => {
+        const da = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+        const db = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+        return db - da;
+      });
+  }, [processedMyTasks]);
+
   // Group tasks by status for Kanban
   const kanbanColumns = useMemo(() => {
     const cols: Record<string, Task[]> = { pending: [], in_progress: [], completed: [], overdue: [] };
