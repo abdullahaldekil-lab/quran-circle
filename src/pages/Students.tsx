@@ -316,6 +316,34 @@ const Students = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {(isManager || isAdminStaff) && absentAlerts.filter(a => !contactedIds.has(a.student_id)).length > 0 && (
+        <Alert variant="destructive" className="border-2">
+          <AlertTriangle className="w-5 h-5" />
+          <AlertTitle className="font-bold">طلاب تجاوزوا 3 أيام غياب هذا الشهر</AlertTitle>
+          <AlertDescription>
+            <div className="mt-2 space-y-2 max-h-72 overflow-y-auto">
+              {absentAlerts
+                .filter(a => !contactedIds.has(a.student_id))
+                .map(a => (
+                  <div key={a.student_id} className="flex items-center justify-between gap-2 bg-background/60 rounded-md p-2">
+                    <div className="flex-1 min-w-0">
+                      <span className="font-semibold text-sm">{a.full_name}</span>
+                      <Badge variant="outline" className="mr-2 text-xs">{a.absences} غياب</Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleMarkContacted(a.student_id)}
+                    >
+                      <PhoneCall className="w-3 h-3 ml-1" />
+                      تم التواصل
+                    </Button>
+                  </div>
+                ))}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">الطلاب</h1>
