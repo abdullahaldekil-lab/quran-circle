@@ -202,7 +202,67 @@ const Students = () => {
     fetchLevels();
     fetchDistinguished();
     fetchTracks();
+    if (isManager || isAdminStaff) fetchAbsenceAlerts();
+  }, [isManager, isAdminStaff]);
+
+  // Absence alerts (3+ absences this month) — for manager/secretary only
+  const [absentAlerts, setAbsentAlerts] = useState<{ student_id: string; full_name: string; absences: number }[]>([]);
+  const [contactedIds, setContactedIds] = useState<Set<string>>(new Set());
+
+  const fetchAbsenceAlerts = useCallback(async () => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+
+    const { data: rows } = await supabase
+      .from("attendance")
+      .select("student_id, status, students!inner(id, full_name, status)")
+      .eq("status", "absent")
+      .gte("attendance_date", monthStart)
+      .lte("attendance_date", monthEnd)
+      .eq("students.status", "active");
+
+    const counts: Record<string, { name: string; n: number }> = {};
+    (rows || []).forEach((r: any) => {
+      const sid = r.student_id;
+      const name = r.students?.full_name || "—";
+      counts[sid] = counts[sid] || { name, n: 0 };
+      counts[sid].n += 1;
+    });
+
+    // Exclude already contacted this month
+    const { data: logs } = await supabase
+      .from("student_status_log" as any)
+      .select("student_id, created_at, reason_category")
+      .gte("created_at", monthStart)
+      .eq("reason_category", "absence_contact");
+
+    const contactedThisMonth = new Set<string>((logs as any || []).map((l: any) => l.student_id));
+
+    const alerts = Object.entries(counts)
+      .filter(([sid, v]) => v.n >= 3 && !contactedThisMonth.has(sid))
+      .map(([sid, v]) => ({ student_id: sid, full_name: v.name, absences: v.n }))
+      .sort((a, b) => b.absences - a.absences);
+
+    setAbsentAlerts(alerts);
   }, []);
+
+  const handleMarkContacted = async (studentId: string) => {
+    const { error } = await supabase.from("student_status_log" as any).insert({
+      student_id: studentId,
+      new_status: "active",
+      reason_category: "absence_contact",
+      reason_detail: "تم التواصل مع ولي الأمر بشأن الغياب المتكرر",
+      changed_by: user?.id,
+      is_system: false,
+    });
+    if (error) {
+      toast.error("تعذر تسجيل التواصل");
+      return;
+    }
+    toast.success("تم تسجيل التواصل");
+    setContactedIds(prev => new Set(prev).add(studentId));
+  };
 
   useEffect(() => {
     fetchStudents();
