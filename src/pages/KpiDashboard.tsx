@@ -49,6 +49,8 @@ const KpiDashboard = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [rewards, setRewards] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [programQuizzes, setProgramQuizzes] = useState<any[]>([]);
+  const [programResults, setProgramResults] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAllData();
