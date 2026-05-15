@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   BookOpen, Loader2, Calendar, MapPin, Award, ScrollText,
-  CheckSquare, GraduationCap, ClipboardList, Home,
+  CheckSquare, GraduationCap, ClipboardList, Home, X, ExternalLink,
 } from "lucide-react";
 
 const statusLabel: Record<string, { label: string; cls: string }> = {
@@ -34,6 +34,11 @@ export default function StudentPortal() {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [programs, setPrograms] = useState<any[]>([]);
   const [narration, setNarration] = useState<any[]>([]);
+
+  const [externalUrl, setExternalUrl] = useState("");
+  const [externalName, setExternalName] = useState("");
+  const [showExternal, setShowExternal] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
 
   const handleSearch = async (rawCode?: string) => {
     const codeToUse = (rawCode ?? inputCode).trim().toUpperCase();
@@ -104,6 +109,13 @@ export default function StudentPortal() {
     if (code) handleSearch(code);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const openExternalLink = (url: string, name: string) => {
+    setExternalUrl(url);
+    setExternalName(name);
+    setIframeError(false);
+    setShowExternal(true);
+  };
 
   const presentCount = attendance.filter(a => a.status === "present").length;
   const lateCount = attendance.filter(a => a.status === "late").length;
@@ -348,8 +360,104 @@ export default function StudentPortal() {
                 )}
               </Card>
             ))}
+
+            {/* روابط تعليمية */}
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3">روابط تعليمية</h3>
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  {
+                    name: "متجر سنابل",
+                    desc: "كتب ومصادر تعليمية إسلامية",
+                    icon: "📚",
+                    color: "bg-amber-50 border-amber-200 text-amber-800",
+                    url: "https://sanabelstore.com",
+                  },
+                  {
+                    name: "موقع القيم القرآنية",
+                    desc: "منهج القيم القرآنية للناشئة",
+                    icon: "📖",
+                    color: "bg-green-50 border-green-200 text-green-800",
+                    url: "https://quranvalues.com",
+                  },
+                  {
+                    name: "منصة حل",
+                    desc: "شرح المناهج الدراسية",
+                    icon: "🎓",
+                    color: "bg-blue-50 border-blue-200 text-blue-800",
+                    url: "https://hall.com",
+                  },
+                ].map(link => (
+                  <button
+                    key={link.name}
+                    onClick={() => openExternalLink(link.url, link.name)}
+                    className={`flex items-center gap-3 p-4 rounded-xl border text-right w-full transition-all active:scale-95 ${link.color}`}
+                  >
+                    <span className="text-2xl">{link.icon}</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{link.name}</p>
+                      <p className="text-xs opacity-70 mt-0.5">{link.desc}</p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 opacity-50" />
+                  </button>
+                ))}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
+
+        {/* نافذة عرض روابط خارجية */}
+        {showExternal && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-background" dir="rtl">
+            <div className="flex items-center justify-between p-3 border-b bg-card">
+              <button
+                onClick={() => setShowExternal(false)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" /> إغلاق
+              </button>
+              <span className="text-sm font-medium">{externalName}</span>
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                فتح خارجياً <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+            <iframe
+              src={externalUrl}
+              className="flex-1 w-full border-0"
+              title={externalName}
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+              loading="lazy"
+              onError={() => setIframeError(true)}
+            />
+            {iframeError && (
+              <div className="p-6 border-t bg-muted/30 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">لا يمكن عرض الموقع داخل التطبيق بسبب سياسات الأمان</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(externalUrl, "_blank")}
+                >
+                  <ExternalLink className="w-4 h-4 ml-1" />
+                  فتح في تبويب جديد
+                </Button>
+              </div>
+            )}
+            <div className="p-4 border-t bg-muted/30 text-center">
+              <p className="text-xs text-muted-foreground">
+                إذا لم يظهر المحتوى
+                <a href={externalUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-primary mx-1 underline">
+                  اضغط هنا للفتح مباشرة
+                </a>
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
