@@ -199,7 +199,25 @@ const StaffAttendance = () => {
       if (isDayOff) throw new Error("لا يمكن تسجيل الحضور في أيام العطل");
       if (!activeShift) throw new Error("يرجى اختيار فترة الدوام");
       const now = new Date();
-      const { status, late_minutes } = computeStatus(now, activeShift);
+      let status: string;
+      let late_minutes: number;
+      if (prepConfig?.auto_sync_asr && preparationStart) {
+        const nowStr = format(now, "HH:mm");
+        if (nowStr <= preparationStart) {
+          status = "present";
+          late_minutes = 0;
+        } else if (nowStr <= lateCutoff) {
+          status = "late";
+          const [ph, pm] = preparationStart.split(":").map(Number);
+          const ps = new Date(now); ps.setHours(ph, pm, 0, 0);
+          late_minutes = Math.round((now.getTime() - ps.getTime()) / 60000);
+        } else {
+          status = "absent";
+          late_minutes = 0;
+        }
+      } else {
+        ({ status, late_minutes } = computeStatus(now, activeShift));
+      }
       const { error } = await supabase.from("staff_attendance").upsert({
         staff_id: staffId, attendance_date: dateStr, check_in_time: now.toISOString(), status, late_minutes, shift_id: activeShiftId,
       }, { onConflict: "staff_id,attendance_date" });
