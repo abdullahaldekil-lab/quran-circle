@@ -99,12 +99,13 @@ export default function StudentPortal() {
 
   const lastNarration = narration[0];
 
-  // Current Hijri month progress (latest entry by hijri_month)
+  // Current month progress (latest entry by month_number/week_number)
   const currentMonthProgress = [...progress].sort((a, b) =>
-    (b.hijri_month || 0) - (a.hijri_month || 0)
+    ((b.month_number || b.hijri_month || 0) - (a.month_number || a.hijri_month || 0)) ||
+    ((b.week_number || 0) - (a.week_number || 0))
   )[0];
-  const monthTarget = Number(currentMonthProgress?.target_memorization || 0);
-  const monthMemorized = Number(currentMonthProgress?.actual_memorization || 0);
+  const monthTarget = Number(currentMonthProgress?.target_pages || currentMonthProgress?.target_memorization || 0);
+  const monthMemorized = Number(currentMonthProgress?.actual_memorization || currentMonthProgress?.actual_pages || 0);
   const monthReviewed = Number(currentMonthProgress?.actual_review || 0);
   const monthLinked = Number(currentMonthProgress?.actual_linking || 0);
   const monthPercent = monthTarget ? Math.min(100, Math.round((monthMemorized / monthTarget) * 100)) : 0;
@@ -217,7 +218,7 @@ export default function StudentPortal() {
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-bold flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-blue-700" />
-                    الشهر الحالي: {currentMonthProgress.hijri_month_name || `شهر ${currentMonthProgress.hijri_month}`}
+                    الشهر الحالي: {currentMonthProgress.hijri_month_name || `شهر ${currentMonthProgress.month_number || currentMonthProgress.hijri_month || ''}`}
                   </p>
                   {monthTarget > 0 && (
                     <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-300">
@@ -353,8 +354,8 @@ export default function StudentPortal() {
                         )}
                         {progress.map((p, i) => (
                           <tr key={i} className="border-b last:border-b-0">
-                            <td className="px-3 py-2">{p.hijri_month_name || p.hijri_month || "—"}</td>
-                            <td className="px-2 py-2 text-center">{p.target_memorization || 0}</td>
+                            <td className="px-3 py-2">{p.hijri_month_name || (p.month_number ? `شهر ${p.month_number}` : (p.hijri_month || "—"))}</td>
+                            <td className="px-2 py-2 text-center">{p.target_pages || p.target_memorization || 0}</td>
                             <td className="px-2 py-2 text-center text-green-700">{p.actual_memorization || 0}</td>
                             <td className="px-2 py-2 text-center text-blue-700">{p.actual_review || 0}</td>
                             <td className="px-2 py-2 text-center text-purple-700">{p.actual_linking || 0}</td>
