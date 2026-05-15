@@ -549,6 +549,11 @@ export default function NarrationSession() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {(isManager || isSupervisor) && sessionId && (
+            <Button variant="outline" size="sm" className="gap-1.5 print:hidden" onClick={generateExternalLink}>
+              🔗 رابط مسمع خارجي
+            </Button>
+          )}
           <Button variant="outline" className="gap-2 print:hidden" onClick={handlePrint}>
             <Printer className="w-4 h-4" />
             طباعة
