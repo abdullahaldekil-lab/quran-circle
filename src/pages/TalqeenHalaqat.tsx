@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays, Settings2, CheckCircle2, BookMarked, GraduationCap, ListChecks, CalendarIcon, History, Undo2, Eye } from "lucide-react";
+import { Plus, BookOpen, Users, User, Pencil, Trash2, ScrollText, ClipboardList, CalendarDays, Settings2, CheckCircle2, BookMarked, GraduationCap, ListChecks, CalendarIcon, History, Undo2, Eye, ClipboardCheck } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -24,6 +24,7 @@ import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDualDate } from "@/lib/hijri";
 import ContentViewer, { lessonTypeIcon, lessonTypeLabel } from "@/components/talqeen/ContentViewer";
+import DayRecordingDialog from "@/components/talqeen/DayRecordingDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
 // منتقي تاريخ بالتاريخ الهجري كأساس والميلادي كفرعي
@@ -80,6 +81,7 @@ const TalqeenHalaqat = () => {
   const [studentsByHalaqa, setStudentsByHalaqa] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [studentsDialogId, setStudentsDialogId] = useState<string | null>(null);
+  const [dayRecHalaqaId, setDayRecHalaqaId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", teacher_id: "", assistant_teacher_id: "", location: "", schedule: "", level_track_id: "", talqeen_curriculum_id: "" });
   const [editOpen, setEditOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -875,6 +877,10 @@ const TalqeenHalaqat = () => {
                 {h.location && <p className="text-muted-foreground">المكان: {h.location}</p>}
                 {h.schedule && <p className="text-muted-foreground">الجدول: {h.schedule}</p>}
                 <div className="flex flex-wrap gap-2 mt-1">
+                  <Button variant="default" size="sm" className="flex-1 min-w-[120px] bg-primary" onClick={() => setDayRecHalaqaId(h.id)}>
+                    <ClipboardCheck className="w-3 h-3 ml-1" />
+                    تسجيل اليوم
+                  </Button>
                   <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => setStudentsDialogId(h.id)}>
                     <User className="w-3 h-3 ml-1" />
                     عرض الطلاب ({count})
@@ -909,6 +915,17 @@ const TalqeenHalaqat = () => {
           );
         })}
       </div>
+
+      {/* Day recording dialog */}
+      {dayRecHalaqaId && (
+        <DayRecordingDialog
+          open={!!dayRecHalaqaId}
+          onClose={() => setDayRecHalaqaId(null)}
+          halaqaId={dayRecHalaqaId}
+          halaqaName={halaqat.find((h) => h.id === dayRecHalaqaId)?.name || ""}
+          students={(studentsByHalaqa[dayRecHalaqaId] || []).filter((s: any) => s.status === "active").map((s: any) => ({ id: s.id, full_name: s.full_name }))}
+        />
+      )}
 
       {/* Students list dialog */}
       <Dialog open={!!studentsDialogId} onOpenChange={() => setStudentsDialogId(null)}>
