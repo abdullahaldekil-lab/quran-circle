@@ -77,6 +77,7 @@ export default function NarrationSession() {
   } | null>(null);
 
   const isManager = role === "manager";
+  const isSupervisor = role === "supervisor";
   const canWrite = isManager || role === "teacher" || role === "assistant_teacher";
 
   // جلب بيانات الجلسة
@@ -398,6 +399,23 @@ export default function NarrationSession() {
 
   const handlePrint = () => { window.print(); };
 
+  // Generate external reviewer link
+  const generateExternalLink = async () => {
+    if (!sessionId || !profile) return;
+    const { data, error } = await (supabase as any)
+      .from('narration_external_tokens')
+      .insert({ session_id: sessionId, created_by: profile.id })
+      .select('token')
+      .single();
+    if (error || !data) {
+      toast({ title: 'فشل إنشاء الرابط', variant: 'destructive' });
+      return;
+    }
+    const link = `${window.location.origin}/external-reviewer/${data.token}`;
+    await navigator.clipboard.writeText(link);
+    toast({ title: '✅ تم نسخ الرابط', description: 'صالح لمدة 48 ساعة' });
+  };
+
   // Multi-select helpers
   const toggleStudent = (studentId: string) => {
     setSelectedStudents(prev => {
@@ -531,6 +549,11 @@ export default function NarrationSession() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {(isManager || isSupervisor) && sessionId && (
+            <Button variant="outline" size="sm" className="gap-1.5 print:hidden" onClick={generateExternalLink}>
+              🔗 رابط مسمع خارجي
+            </Button>
+          )}
           <Button variant="outline" className="gap-2 print:hidden" onClick={handlePrint}>
             <Printer className="w-4 h-4" />
             طباعة
