@@ -130,6 +130,16 @@ export default function StudentPortal() {
 
   const lastNarration = narration[0];
 
+  // Current Hijri month progress (latest entry by hijri_month)
+  const currentMonthProgress = [...progress].sort((a, b) =>
+    (b.hijri_month || 0) - (a.hijri_month || 0)
+  )[0];
+  const monthTarget = Number(currentMonthProgress?.target_memorization || 0);
+  const monthMemorized = Number(currentMonthProgress?.actual_memorization || 0);
+  const monthReviewed = Number(currentMonthProgress?.actual_review || 0);
+  const monthLinked = Number(currentMonthProgress?.actual_linking || 0);
+  const monthPercent = monthTarget ? Math.min(100, Math.round((monthMemorized / monthTarget) * 100)) : 0;
+
   if (!student) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex flex-col items-center justify-center p-6" dir="rtl">
@@ -214,6 +224,84 @@ export default function StudentPortal() {
                 </p>
               </Card>
             </div>
+
+            {/* لوحة ملخصة: تقدم الحفظ السنوي */}
+            {plan && (
+              <Card className="p-4 space-y-3 border-green-200 bg-gradient-to-br from-green-50 to-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-green-700" />
+                    <p className="text-sm font-bold text-green-900">تقدم الحفظ السنوي</p>
+                  </div>
+                  <Badge className="bg-green-700">{planProgress}%</Badge>
+                </div>
+                <Progress value={planProgress} className="h-2.5" />
+                <p className="text-xs text-muted-foreground text-center">
+                  {totalMemorized} من {planTarget} وجه
+                </p>
+              </Card>
+            )}
+
+            {/* ملخص الشهر الحالي */}
+            {currentMonthProgress && (
+              <Card className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-blue-700" />
+                    الشهر الحالي: {currentMonthProgress.hijri_month_name || `شهر ${currentMonthProgress.hijri_month}`}
+                  </p>
+                  {monthTarget > 0 && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-300">
+                      {monthPercent}%
+                    </Badge>
+                  )}
+                </div>
+                {monthTarget > 0 && <Progress value={monthPercent} className="h-2" />}
+                <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                  <div className="bg-green-50 rounded-lg p-2">
+                    <p className="text-[10px] text-green-700">حفظ</p>
+                    <p className="text-lg font-bold text-green-800">{monthMemorized}</p>
+                    {monthTarget > 0 && (
+                      <p className="text-[10px] text-muted-foreground">/ {monthTarget}</p>
+                    )}
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-2">
+                    <p className="text-[10px] text-blue-700">مراجعة</p>
+                    <p className="text-lg font-bold text-blue-800">{monthReviewed}</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-2">
+                    <p className="text-[10px] text-purple-700">ربط</p>
+                    <p className="text-lg font-bold text-purple-800">{monthLinked}</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* ملخص الحضور */}
+            <Card className="p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold flex items-center gap-2">
+                  <CheckSquare className="w-4 h-4 text-green-700" />
+                  حضور آخر 30 يوم
+                </p>
+                <Badge className="bg-green-700">{attendanceRate}%</Badge>
+              </div>
+              <Progress value={attendanceRate} className="h-2" />
+              <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+                <div>
+                  <p className="text-green-700 font-bold text-lg">{presentCount}</p>
+                  <p className="text-muted-foreground">حاضر</p>
+                </div>
+                <div>
+                  <p className="text-yellow-700 font-bold text-lg">{lateCount}</p>
+                  <p className="text-muted-foreground">متأخر</p>
+                </div>
+                <div>
+                  <p className="text-red-700 font-bold text-lg">{totalDays - presentCount - lateCount}</p>
+                  <p className="text-muted-foreground">غياب/معذور</p>
+                </div>
+              </div>
+            </Card>
 
             {halaqa && (
               <Card className="p-4 space-y-2">
