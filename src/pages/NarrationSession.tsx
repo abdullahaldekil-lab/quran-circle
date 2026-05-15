@@ -443,6 +443,7 @@ export default function NarrationSession() {
     setBulkSaving(true);
     try {
       const studentIds = Array.from(selectedStudents);
+      const reviewerId = profile?.id ?? null;
       for (const studentId of studentIds) {
         const row = rows.find(r => r.student_id === studentId);
         const attemptPayload = {
@@ -458,6 +459,7 @@ export default function NarrationSession() {
           status: data.status,
           manual_entry: data.manual_entry,
           notes: data.notes || null,
+          reviewer_id: reviewerId,
         };
 
         let attemptId = row?.attempt_id;
