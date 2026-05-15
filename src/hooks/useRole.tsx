@@ -37,7 +37,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/permissions-management", "/internal-requests",
     "/programs-overview", "/halaqa-performance", "/enrollment-form",
     "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/teacher-evaluations", "/admin/guardian-approvals",
-    "/student-portal",
+    "/student-portal", "/program-quiz",
   ],
   supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/kpi-dashboard",
@@ -49,7 +49,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/notification-preferences", "/internal-requests",
     "/programs-overview", "/halaqa-performance", "/enrollment-form",
     "/admin/guardian-approvals",
-    "/student-portal",
+    "/student-portal", "/program-quiz",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/kpi-dashboard",
@@ -60,7 +60,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-attendance-report", "/student-annual-plan",
     "/notification-preferences", "/internal-requests",
     "/programs-overview", "/halaqa-performance",
-    "/admin/guardian-approvals",
+    "/admin/guardian-approvals", "/program-quiz",
   ],
   secretary: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance",
@@ -89,7 +89,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/staff-attendance-log",
     "/student-attendance-report", "/student-annual-plan",
     "/notification-preferences", "/internal-requests", "/staff-tasks", "/staff-tasks-analytics",
-    "/enrollment-form",
+    "/enrollment-form", "/program-quiz",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/attendance",
