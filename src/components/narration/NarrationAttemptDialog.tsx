@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -75,6 +75,38 @@ export default function NarrationAttemptDialog({
   const [manualEntry, setManualEntry] = useState(false);
   const [notes, setNotes] = useState("");
 
+  // Timer state
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const formatTime = (s: number) =>
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+  const startTimer = () => {
+    setTimerRunning(true);
+    timerRef.current = setInterval(() => setTimerSeconds((prev) => prev + 1), 1000);
+  };
+  const pauseTimer = () => {
+    setTimerRunning(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+  const stopTimer = () => {
+    pauseTimer();
+    setTimerSeconds(0);
+  };
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  useEffect(() => {
+    // Reset timer when dialog opens/closes or student changes
+    setTimerSeconds(0);
+    setTimerRunning(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, [open, student.student_id]);
+
   // Load existing data
   useEffect(() => {
     if (existing) {
@@ -134,6 +166,7 @@ export default function NarrationAttemptDialog({
       status,
       manual_entry: manualEntry,
       notes,
+      recitation_duration_seconds: timerSeconds > 0 ? timerSeconds : undefined,
     };
 
     if (!manualEntry) {
@@ -155,6 +188,29 @@ export default function NarrationAttemptDialog({
             إدخال نتيجة سرد — {student.student_name}
           </DialogTitle>
         </DialogHeader>
+
+        {/* Timer */}
+        <div className="flex flex-col items-center gap-3 p-4 rounded-xl border bg-card mb-2">
+          <span className={`text-4xl font-mono font-bold tabular-nums ${
+            timerRunning ? 'text-green-600' : timerSeconds > 0 ? 'text-yellow-600' : 'text-muted-foreground'
+          }`}>{formatTime(timerSeconds)}</span>
+          <div className="flex gap-2">
+            {!timerRunning && timerSeconds === 0 && (
+              <Button size="sm" onClick={startTimer} className="bg-green-600 hover:bg-green-700 text-white">
+                ▶ ابدأ التوقيت
+              </Button>
+            )}
+            {timerRunning && (
+              <Button size="sm" variant="outline" onClick={pauseTimer}>⏸ إيقاف مؤقت</Button>
+            )}
+            {!timerRunning && timerSeconds > 0 && (
+              <>
+                <Button size="sm" onClick={startTimer} className="bg-green-600 hover:bg-green-700 text-white">▶ استئناف</Button>
+                <Button size="sm" variant="outline" onClick={stopTimer}>⏹ إعادة تعيين</Button>
+              </>
+            )}
+          </div>
+        </div>
 
         <div className="space-y-4 pt-2">
           {/* Narration Type */}

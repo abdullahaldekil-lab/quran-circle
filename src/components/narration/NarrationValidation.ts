@@ -19,6 +19,7 @@ export interface NarrationAttemptData {
   status: "pass" | "fail" | "absent" | "pending";
   manual_entry: boolean;
   notes: string;
+  recitation_duration_seconds?: number;
 }
 
 export interface NarrationSettingsFull {
