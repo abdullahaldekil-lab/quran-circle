@@ -916,6 +916,17 @@ const TalqeenHalaqat = () => {
         })}
       </div>
 
+      {/* Day recording dialog */}
+      {dayRecHalaqaId && (
+        <DayRecordingDialog
+          open={!!dayRecHalaqaId}
+          onClose={() => setDayRecHalaqaId(null)}
+          halaqaId={dayRecHalaqaId}
+          halaqaName={halaqat.find((h) => h.id === dayRecHalaqaId)?.name || ""}
+          students={(studentsByHalaqa[dayRecHalaqaId] || []).filter((s: any) => s.status === "active").map((s: any) => ({ id: s.id, full_name: s.full_name }))}
+        />
+      )}
+
       {/* Students list dialog */}
       <Dialog open={!!studentsDialogId} onOpenChange={() => setStudentsDialogId(null)}>
         <DialogContent>
