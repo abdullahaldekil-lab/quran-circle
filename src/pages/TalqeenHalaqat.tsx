@@ -877,6 +877,10 @@ const TalqeenHalaqat = () => {
                 {h.location && <p className="text-muted-foreground">المكان: {h.location}</p>}
                 {h.schedule && <p className="text-muted-foreground">الجدول: {h.schedule}</p>}
                 <div className="flex flex-wrap gap-2 mt-1">
+                  <Button variant="default" size="sm" className="flex-1 min-w-[120px] bg-primary" onClick={() => setDayRecHalaqaId(h.id)}>
+                    <ClipboardCheck className="w-3 h-3 ml-1" />
+                    تسجيل اليوم
+                  </Button>
                   <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => setStudentsDialogId(h.id)}>
                     <User className="w-3 h-3 ml-1" />
                     عرض الطلاب ({count})
