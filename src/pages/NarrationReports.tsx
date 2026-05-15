@@ -369,10 +369,21 @@ export default function NarrationReports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {ranked.map((a: any, i: number) => (
+                      {ranked.map((a: any, i: number) => {
+                        const isCertEligible = Number(a.grade) >= 90 && a.status === "pass";
+                        return (
                         <TableRow key={a.id}>
                           <TableCell className="text-center font-bold text-muted-foreground">{i + 1}</TableCell>
-                          <TableCell className="font-medium"><StudentNameLink studentId={a.student_id} studentName={a.students?.full_name || "—"} /></TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <StudentNameLink studentId={a.student_id} studentName={a.students?.full_name || "—"} />
+                              {isCertEligible && (
+                                <Badge variant="default" className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/20">
+                                  🏅 مؤهل للشهادة
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>{a.students?.halaqat?.name || "—"}</TableCell>
                           <TableCell className="text-center">{Number(a.total_hizb_count)}</TableCell>
                           <TableCell className="text-center font-bold">{Number(a.grade)}</TableCell>
