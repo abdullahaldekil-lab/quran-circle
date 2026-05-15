@@ -150,16 +150,59 @@ const talqeenSupervisorRoutes = [
   "/documents", "/rankings", "/trips", "/buses",
 ];
 
+// Routes hidden when an assistant_teacher works inside a Talqeen halaqa
+// (academic memorization sections do not apply to talqeen-only assistants)
+const talqeenIsolatedHidden = [
+  "/recitation", "/madarij", "/madarij-report", "/talqeen-curricula",
+  "/quran-narration", "/narration-test", "/review-test", "/narration-stats",
+  "/excellence", "/excellence-comparison", "/student-quiz", "/quiz-results", "/quiz-comparison",
+  "/levels", "/student-annual-plan", "/rankings",
+];
+
 export const useRole = () => {
   const { profile } = useAuth();
   const role = (profile?.role as StaffRole) || "teacher";
+  const [halaqaType, setHalaqaType] = useState<"tahfeez" | "talqeen" | null>(null);
 
-  const allowedRoutes =
+  // Detect whether the current teacher / assistant works in a Talqeen halaqa
+  useEffect(() => {
+    let cancelled = false;
+    const detect = async () => {
+      if (!profile?.id || (role !== "teacher" && role !== "assistant_teacher")) {
+        setHalaqaType(null);
+        return;
+      }
+      const { data } = await (supabase as any)
+        .from("halaqat")
+        .select("id, name, talqeen_curriculum_id")
+        .or(`teacher_id.eq.${profile.id},assistant_teacher_id.eq.${profile.id}`)
+        .eq("active", true)
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data && (data.talqeen_curriculum_id || (data.name || "").includes("تلقين"))) {
+        setHalaqaType("talqeen");
+      } else if (data) {
+        setHalaqaType("tahfeez");
+      } else {
+        setHalaqaType(null);
+      }
+    };
+    detect();
+    return () => { cancelled = true; };
+  }, [profile?.id, role]);
+
+  const isTalqeenIsolated = role === "assistant_teacher" && halaqaType === "talqeen";
+
+  const baseAllowed =
     role === "custom_1775663809732"
       ? talqeenSupervisorRoutes
       : (rolePermissions[role] || rolePermissions.teacher);
 
-  
+  // For talqeen-isolated assistant teachers, hide academic memorization routes
+  const allowedRoutes = isTalqeenIsolated
+    ? baseAllowed.filter((r) => !talqeenIsolatedHidden.includes(r))
+    : baseAllowed;
 
   const hasAccess = (path: string) => {
     return allowedRoutes.some(
@@ -191,5 +234,7 @@ export const useRole = () => {
     isTalqeenSupervisor,
     isAdminStaff,
     isTeacher,
+    halaqaType,
+    isTalqeenIsolated,
   };
 };
