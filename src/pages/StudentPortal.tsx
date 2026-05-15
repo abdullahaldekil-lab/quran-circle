@@ -110,6 +110,13 @@ export default function StudentPortal() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const openExternalLink = (url: string, name: string) => {
+    setExternalUrl(url);
+    setExternalName(name);
+    setIframeError(false);
+    setShowExternal(true);
+  };
+
   const presentCount = attendance.filter(a => a.status === "present").length;
   const lateCount = attendance.filter(a => a.status === "late").length;
   const totalDays = attendance.length;
