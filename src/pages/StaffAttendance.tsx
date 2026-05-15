@@ -383,6 +383,14 @@ const StaffAttendance = () => {
         </div>
       </div>
 
+      {!isDayOff && prepConfig?.auto_sync_asr && (
+        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground bg-muted/40 rounded-lg p-3">
+          <span>🕌 أذان العصر: <strong className="text-foreground">{asrTime || "..."}</strong></span>
+          <span>📋 التحضير: <strong className="text-foreground">{preparationStart || "..."}</strong></span>
+          <span>⏰ آخر موعد: <strong className="text-foreground">{lateCutoff || "..."}</strong></span>
+        </div>
+      )}
+
       {isDayOff && (
         <Alert variant="destructive" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200">
           <CalendarOff className="h-5 w-5" />
