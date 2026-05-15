@@ -321,6 +321,25 @@ export default function NarrationSession() {
         if (rangeError) throw rangeError;
       }
 
+      // Upsert into narration_results with recitation duration
+      const resultPayload = {
+        session_id: sessionId!,
+        student_id: studentId,
+        grade: data.grade,
+        status: data.status,
+        hizb_from: data.ranges[0]?.from_hizb ?? 0,
+        hizb_to: data.ranges[0]?.to_hizb ?? 0,
+        total_hizbat: data.total_hizb_count,
+        mistakes_count: data.mistakes_count,
+        lahn_count: data.lahn_count,
+        warnings_count: data.warnings_count,
+        manual_entry: data.manual_entry,
+        notes: data.notes || null,
+        recitation_duration_seconds: data.recitation_duration_seconds ?? null,
+      };
+      const { error: resultError } = await supabase.from("narration_results" as any).upsert(resultPayload, { onConflict: "session_id,student_id" });
+      if (resultError) throw resultError;
+
       queryClient.invalidateQueries({ queryKey: ["narration-attempts", sessionId] });
       setEditingStudent(null);
       toast({ title: "تم حفظ النتيجة بنجاح ✓" });
