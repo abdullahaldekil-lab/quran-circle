@@ -75,6 +75,38 @@ export default function NarrationAttemptDialog({
   const [manualEntry, setManualEntry] = useState(false);
   const [notes, setNotes] = useState("");
 
+  // Timer state
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const formatTime = (s: number) =>
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+  const startTimer = () => {
+    setTimerRunning(true);
+    timerRef.current = setInterval(() => setTimerSeconds((prev) => prev + 1), 1000);
+  };
+  const pauseTimer = () => {
+    setTimerRunning(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+  const stopTimer = () => {
+    pauseTimer();
+    setTimerSeconds(0);
+  };
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  useEffect(() => {
+    // Reset timer when dialog opens/closes or student changes
+    setTimerSeconds(0);
+    setTimerRunning(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, [open, student.student_id]);
+
   // Load existing data
   useEffect(() => {
     if (existing) {
