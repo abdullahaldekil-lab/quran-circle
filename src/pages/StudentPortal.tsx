@@ -445,20 +445,39 @@ export default function StudentPortal() {
                     color: "bg-blue-50 border-blue-200 text-blue-800",
                     url: "https://hall.com",
                   },
-                ].map(link => (
-                  <button
-                    key={link.name}
-                    onClick={() => openExternalLink(link.url, link.name)}
-                    className={`flex items-center gap-3 p-4 rounded-xl border text-right w-full transition-all active:scale-95 ${link.color}`}
-                  >
-                    <span className="text-2xl">{link.icon}</span>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">{link.name}</p>
-                      <p className="text-xs opacity-70 mt-0.5">{link.desc}</p>
-                    </div>
-                    <ExternalLink className="w-4 h-4 opacity-50" />
-                  </button>
-                ))}
+                ].map(link => {
+                  const openInNewTab = link.url.includes("nazem-plus.com");
+                  const commonClass = `flex items-center gap-3 p-4 rounded-xl border text-right w-full transition-all active:scale-95 ${link.color}`;
+                  const content = (
+                    <>
+                      <span className="text-2xl">{link.icon}</span>
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{link.name}</p>
+                        <p className="text-xs opacity-70 mt-0.5">{link.desc}</p>
+                      </div>
+                      <ExternalLink className="w-4 h-4 opacity-50" />
+                    </>
+                  );
+                  return openInNewTab ? (
+                    <a
+                      key={link.name}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={commonClass}
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <button
+                      key={link.name}
+                      onClick={() => openExternalLink(link.url, link.name)}
+                      className={commonClass}
+                    >
+                      {content}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </TabsContent>
