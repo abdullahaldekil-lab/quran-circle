@@ -432,11 +432,11 @@ export default function StudentPortal() {
                     url: "https://nazem-plus.com/dashboard",
                   },
                   {
-                    name: "موقع القيم القرآنية",
+                    name: "منصة القيم القرآنية",
                     desc: "منهج القيم القرآنية للناشئة",
                     icon: "📖",
                     color: "bg-green-50 border-green-200 text-green-800",
-                    url: "https://quranvalues.com",
+                    url: "https://www.qiyam-qur.com/auth/login",
                   },
                   {
                     name: "منصة حل",
