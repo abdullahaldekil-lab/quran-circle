@@ -425,11 +425,11 @@ export default function StudentPortal() {
               <div className="grid grid-cols-1 gap-3">
                 {[
                   {
-                    name: "متجر سنابل",
-                    desc: "كتب ومصادر تعليمية إسلامية",
-                    icon: "📚",
-                    color: "bg-amber-50 border-amber-200 text-amber-800",
-                    url: "https://sanabelstore.com",
+                    name: "منصة ناظم بلس",
+                    desc: "لوحة تحكم المنصة التعليمية",
+                    icon: "📊",
+                    color: "bg-blue-50 border-blue-200 text-blue-800",
+                    url: "https://nazem-plus.com/dashboard",
                   },
                   {
                     name: "موقع القيم القرآنية",
