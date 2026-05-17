@@ -336,6 +336,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     setOpenGroups(getInitialOpenGroups());
   }, [location.pathname]);
+
+  const toggleGroup = (id: string) => {
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
