@@ -4894,6 +4894,8 @@ export type Database = {
       }
       talqeen_sessions: {
         Row: {
+          attendance_done: boolean | null
+          attendance_done_at: string | null
           created_at: string | null
           educational_program_details: string | null
           educational_program_title: string | null
@@ -4903,15 +4905,24 @@ export type Database = {
           from_ayah: number | null
           halaqa_id: string
           homework: string | null
+          homework_checked: boolean | null
+          homework_checked_at: string | null
           homework_due_date: string | null
           id: string
+          lesson_done: boolean | null
+          lesson_done_at: string | null
           notes: string | null
           session_date: string
           status: string | null
           surah: string
+          tarbia_done: boolean | null
+          tarbia_done_at: string | null
+          teacher_id: string | null
           to_ayah: number | null
         }
         Insert: {
+          attendance_done?: boolean | null
+          attendance_done_at?: string | null
           created_at?: string | null
           educational_program_details?: string | null
           educational_program_title?: string | null
@@ -4921,15 +4932,24 @@ export type Database = {
           from_ayah?: number | null
           halaqa_id: string
           homework?: string | null
+          homework_checked?: boolean | null
+          homework_checked_at?: string | null
           homework_due_date?: string | null
           id?: string
+          lesson_done?: boolean | null
+          lesson_done_at?: string | null
           notes?: string | null
           session_date?: string
           status?: string | null
           surah: string
+          tarbia_done?: boolean | null
+          tarbia_done_at?: string | null
+          teacher_id?: string | null
           to_ayah?: number | null
         }
         Update: {
+          attendance_done?: boolean | null
+          attendance_done_at?: string | null
           created_at?: string | null
           educational_program_details?: string | null
           educational_program_title?: string | null
@@ -4939,12 +4959,19 @@ export type Database = {
           from_ayah?: number | null
           halaqa_id?: string
           homework?: string | null
+          homework_checked?: boolean | null
+          homework_checked_at?: string | null
           homework_due_date?: string | null
           id?: string
+          lesson_done?: boolean | null
+          lesson_done_at?: string | null
           notes?: string | null
           session_date?: string
           status?: string | null
           surah?: string
+          tarbia_done?: boolean | null
+          tarbia_done_at?: string | null
+          teacher_id?: string | null
           to_ayah?: number | null
         }
         Relationships: [

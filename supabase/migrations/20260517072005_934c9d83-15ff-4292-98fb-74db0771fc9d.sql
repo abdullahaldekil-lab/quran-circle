@@ -1,0 +1,10 @@
+ALTER TABLE public.talqeen_sessions
+  ADD COLUMN IF NOT EXISTS lesson_done BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS lesson_done_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS tarbia_done BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS tarbia_done_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS homework_checked BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS homework_checked_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS attendance_done BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS attendance_done_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS teacher_id UUID REFERENCES auth.users(id);
