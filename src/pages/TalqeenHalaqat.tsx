@@ -803,17 +803,6 @@ const TalqeenHalaqat = () => {
                   <Input value={form.schedule} onChange={(e) => setForm({ ...form, schedule: e.target.value })} placeholder="مثال: السبت - الخميس 4:00 - 6:00" />
                 </div>
                 <div className="space-y-2">
-                  <Label>مسار الحفظ</Label>
-                  <Select value={form.level_track_id} onValueChange={(v) => setForm({ ...form, level_track_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="اختر المسار (اختياري)" /></SelectTrigger>
-                    <SelectContent>
-                      {levelTracks.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
                   <Label>منهج التلقين (المستوى) *</Label>
                   <Select value={form.talqeen_curriculum_id} onValueChange={(v) => setForm({ ...form, talqeen_curriculum_id: v })}>
                     <SelectTrigger><SelectValue placeholder="اختر المنهج" /></SelectTrigger>
@@ -997,17 +986,6 @@ const TalqeenHalaqat = () => {
             <div className="space-y-2">
               <Label>الحد الأقصى للطلاب</Label>
               <Input type="number" value={editForm.capacity_max} onChange={(e) => setEditForm({ ...editForm, capacity_max: Number(e.target.value) })} min={1} />
-            </div>
-            <div className="space-y-2">
-              <Label>مسار الحفظ</Label>
-              <Select value={editForm.level_track_id} onValueChange={(v) => setEditForm({ ...editForm, level_track_id: v })}>
-                <SelectTrigger><SelectValue placeholder="اختر المسار (اختياري)" /></SelectTrigger>
-                <SelectContent>
-                  {levelTracks.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label>منهج التلقين (المستوى)</Label>
