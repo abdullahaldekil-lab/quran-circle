@@ -24,7 +24,7 @@ export type StaffRole =
 // Route-level access per role
 const rolePermissions: Record<StaffRole, string[]> = {
   manager: [
-    "/dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/attendance",
+    "/dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
     "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij", "/madarij-report", "/talqeen-curricula",
@@ -40,7 +40,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-portal", "/program-quiz",
   ],
   supervisor: [
-    "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
@@ -52,7 +52,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-portal", "/program-quiz",
   ],
   assistant_supervisor: [
-    "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",

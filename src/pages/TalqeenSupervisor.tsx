@@ -25,7 +25,7 @@ export default function TalqeenSupervisor() {
       .eq("active", true)
       .not("talqeen_curriculum_id", "is", null);
     const list = data || [];
-    const teacherIds = [...new Set(list.map((h: any) => h.teacher_id).filter(Boolean))];
+    const teacherIds = [...new Set(list.map((h: any) => h.teacher_id).filter(Boolean))] as string[];
     let profilesMap: Record<string, string> = {};
     if (teacherIds.length) {
       const { data: profs } = await supabase
