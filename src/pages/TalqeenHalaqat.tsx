@@ -923,7 +923,7 @@ const TalqeenHalaqat = () => {
           onClose={() => setDayRecHalaqaId(null)}
           halaqaId={dayRecHalaqaId}
           halaqaName={halaqat.find((h) => h.id === dayRecHalaqaId)?.name || ""}
-          students={(studentsByHalaqa[dayRecHalaqaId] || []).filter((s: any) => s.status === "active").map((s: any) => ({ id: s.id, full_name: s.full_name }))}
+          students={(studentsByHalaqa[dayRecHalaqaId] || []).map((s: any) => ({ id: s.id, full_name: s.full_name }))}
         />
       )}
 
