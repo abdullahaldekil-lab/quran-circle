@@ -84,6 +84,7 @@ const navGroups: NavGroup[] = [
       { to: "/halaqat", icon: BookOpen, label: "حلقات التحفيظ" },
       { to: "/talqeen-halaqat", icon: ScrollText, label: "حلقات التلقين" },
       { to: "/talqeen-programs", icon: BookOpen, label: "برامج التلقين" },
+      { to: "/talqeen-supervisor", icon: LayoutDashboard, label: "متابعة التلقين" },
     ],
   },
   {
