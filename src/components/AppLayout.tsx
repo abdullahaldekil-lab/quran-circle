@@ -77,14 +77,57 @@ const standaloneItems: NavItem[] = [
 const navGroups: NavGroup[] = [
   {
     id: "halaqat-group",
-    label: "الحلقات",
+    label: "الحلقات والبرامج",
     icon: BookOpen,
     color: "text-emerald-300",
-    items: [
-      { to: "/halaqat", icon: BookOpen, label: "حلقات التحفيظ" },
-      { to: "/talqeen-halaqat", icon: ScrollText, label: "حلقات التلقين" },
-      { to: "/talqeen-programs", icon: BookOpen, label: "برامج التلقين" },
-      { to: "/talqeen-supervisor", icon: LayoutDashboard, label: "متابعة التلقين" },
+    items: [],
+    subGroups: [
+      {
+        id: "tahfeez-sub",
+        label: "حلقات التحفيظ",
+        icon: BookOpen,
+        items: [
+          { to: "/halaqat", icon: BookOpen, label: "الحلقات" },
+          { to: "/recitation", icon: ClipboardList, label: "التسميع" },
+          { to: "/levels", icon: GraduationCap, label: "المستويات" },
+          { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
+          { to: "/narration-test", icon: ScrollText, label: "اختبار السرد" },
+          { to: "/review-test", icon: ClipboardList, label: "اختبار المراجعة" },
+          { to: "/narration-stats", icon: CalendarDays, label: "إحصائيات السرد" },
+        ],
+      },
+      {
+        id: "talqeen-sub",
+        label: "حلقات التلقين",
+        icon: ScrollText,
+        items: [
+          { to: "/talqeen-halaqat", icon: ScrollText, label: "حلقات التلقين" },
+          { to: "/talqeen-programs", icon: BookOpen, label: "برامج التلقين" },
+          { to: "/talqeen-curricula", icon: ScrollText, label: "مناهج التلقين" },
+          { to: "/talqeen-supervisor", icon: LayoutDashboard, label: "متابعة التلقين" },
+        ],
+      },
+      {
+        id: "madarij-sub",
+        label: "برنامج مدارج",
+        icon: BookOpen,
+        items: [
+          { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
+          { to: "/madarij-report", icon: BarChart3, label: "تقارير مدارج" },
+        ],
+      },
+      {
+        id: "excellence-sub",
+        label: "مسار التميّز",
+        icon: Trophy,
+        items: [
+          { to: "/excellence", icon: Trophy, label: "مسار التميّز" },
+          { to: "/excellence/tracks", icon: Award, label: "إدارة المسارات" },
+          { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
+          { to: "/excellence/track-settings", icon: Settings, label: "إعدادات المسارات" },
+          { to: "/excellence-comparison", icon: Trophy, label: "مقارنة المتميزين" },
+        ],
+      },
     ],
   },
   {
@@ -95,19 +138,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/students", icon: Users, label: "الطلاب" },
       { to: "/inactive-students", icon: UserX, label: "طلاب غير نشطين" },
-      { to: "/recitation", icon: ClipboardList, label: "التسميع" },
-      { to: "/talqeen-curricula", icon: ScrollText, label: "مناهج التلقين" },
-      { to: "/quran-narration", icon: ScrollText, label: "يوم السرد القرآني" },
-      { to: "/levels", icon: GraduationCap, label: "المستويات" },
-      { to: "/madarij", icon: BookOpen, label: "برنامج مدارج" },
-      { to: "/madarij-report", icon: BarChart3, label: "تقارير مدارج" },
-      { to: "/excellence", icon: Trophy, label: "مسار التميّز" },
-      { to: "/excellence/tracks", icon: Award, label: "إدارة المسارات" },
-      { to: "/excellence/distinguished", icon: Star, label: "الطلاب المميزون" },
-      { to: "/excellence/track-settings", icon: Settings, label: "إعدادات المسارات" },
-      { to: "/excellence-comparison", icon: Trophy, label: "مقارنة المتميزين" },
       { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
-      { to: "/program-quiz", icon: Brain, label: "اختبارات البرامج" },
       { to: "/programs-overview", icon: LayoutDashboard, label: "إشراف البرامج" },
     ],
     subGroups: [
@@ -117,8 +148,7 @@ const navGroups: NavGroup[] = [
         icon: ClipboardList,
         items: [
           { to: "/student-quiz", icon: GraduationCap, label: "الاختبار الذكي" },
-          { to: "/narration-test", icon: ScrollText, label: "اختبار السرد" },
-          { to: "/review-test", icon: ClipboardList, label: "اختبار المراجعة" },
+          { to: "/program-quiz", icon: Brain, label: "اختبارات البرامج" },
         ],
       },
       {
@@ -128,7 +158,6 @@ const navGroups: NavGroup[] = [
         items: [
           { to: "/quiz-results", icon: BarChart3, label: "نتائج الاختبار" },
           { to: "/quiz-comparison", icon: Trophy, label: "مقارنة الحلقات" },
-          { to: "/narration-stats", icon: CalendarDays, label: "إحصائيات يوم السرد" },
         ],
       },
     ],
