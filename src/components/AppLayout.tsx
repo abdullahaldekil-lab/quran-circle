@@ -332,6 +332,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(getInitialOpenGroups);
 
+  // Auto-expand groups & subgroups when route changes
+  useEffect(() => {
+    setOpenGroups(getInitialOpenGroups());
+  }, [location.pathname]);
+
   const toggleGroup = (id: string) => {
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
   };
