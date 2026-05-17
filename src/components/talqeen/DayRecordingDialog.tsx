@@ -1,16 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, Clock, BookOpen } from "lucide-react";
+import { Users, BookOpen, Heart, ClipboardCheck } from "lucide-react";
+import { formatDualDateSmart } from "@/lib/hijri";
 
 type AttStatus = "present" | "absent" | "late";
+type HwStatus = "submitted" | "not_submitted";
 
 interface Props {
   open: boolean;
@@ -21,58 +20,76 @@ interface Props {
 }
 
 export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName, students }: Props) {
+  const { user } = useAuth();
+  const today = new Date().toISOString().split("T")[0];
+  const dateLabels = formatDualDateSmart(today);
+
+  const [todaySession, setTodaySession] = useState<any | null>(null);
   const [todayLesson, setTodayLesson] = useState<any | null>(null);
   const [assignment, setAssignment] = useState<any | null>(null);
+
+  const [showAttendanceSheet, setShowAttendanceSheet] = useState(false);
+  const [showHomeworkSheet, setShowHomeworkSheet] = useState(false);
   const [attendance, setAttendance] = useState<Record<string, AttStatus>>({});
-  const [lessonDone, setLessonDone] = useState(false);
-  const [tarbiaNote, setTarbiaNote] = useState("");
-  const [tarbiaDone, setTarbiaDone] = useState(false);
-  const [homework, setHomework] = useState("");
-  const [homeworkDue, setHomeworkDue] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [homeworkStatus, setHomeworkStatus] = useState<Record<string, HwStatus>>({});
+  const [savingAtt, setSavingAtt] = useState(false);
+  const [savingHw, setSavingHw] = useState(false);
 
-  // Reset on open
+  const refetchTodaySession = useCallback(async () => {
+    const { data } = await (supabase as any)
+      .from("talqeen_sessions")
+      .select("*")
+      .eq("halaqa_id", halaqaId)
+      .eq("session_date", today)
+      .maybeSingle();
+    setTodaySession(data || null);
+
+    if (data?.id) {
+      const { data: atts } = await (supabase as any)
+        .from("talqeen_session_attendance")
+        .select("student_id, status, homework_status")
+        .eq("session_id", data.id);
+      const attMap: Record<string, AttStatus> = {};
+      const hwMap: Record<string, HwStatus> = {};
+      (atts || []).forEach((a: any) => {
+        attMap[a.student_id] = a.status;
+        if (a.homework_status === "submitted" || a.homework_status === "not_submitted") {
+          hwMap[a.student_id] = a.homework_status;
+        }
+      });
+      setAttendance(attMap);
+      setHomeworkStatus(hwMap);
+    } else {
+      setAttendance({});
+      setHomeworkStatus({});
+    }
+  }, [halaqaId, today]);
+
   useEffect(() => {
-    if (!open) return;
-    setAttendance({});
-    setLessonDone(false);
-    setTarbiaNote("");
-    setTarbiaDone(false);
-    setHomework("");
-    setHomeworkDue("");
-  }, [open]);
+    if (!open || !halaqaId) return;
+    refetchTodaySession();
+  }, [open, halaqaId, refetchTodaySession]);
 
-  // Fetch today's lesson based on completed lessons count
+  // Today's lesson based on progress
   useEffect(() => {
     if (!open || !halaqaId) return;
     (async () => {
-      // Get the active program assignment for this halaqa
       const { data: asg } = await (supabase as any)
         .from("talqeen_program_assignments")
         .select("id, curriculum_id")
         .eq("halaqa_id", halaqaId)
         .eq("is_active", true)
         .maybeSingle();
-
-      if (!asg) {
-        setAssignment(null);
-        setTodayLesson(null);
-        return;
-      }
+      if (!asg) { setAssignment(null); setTodayLesson(null); return; }
       setAssignment(asg);
 
-      // Get all lessons for this curriculum (via chapters), ordered
       const { data: chapters } = await (supabase as any)
         .from("talqeen_chapters")
-        .select("id, sort_order, chapter_number")
+        .select("id")
         .eq("curriculum_id", asg.curriculum_id)
         .order("sort_order", { ascending: true });
-
       const chapterIds = (chapters || []).map((c: any) => c.id);
-      if (chapterIds.length === 0) {
-        setTodayLesson(null);
-        return;
-      }
+      if (chapterIds.length === 0) { setTodayLesson(null); return; }
 
       const { data: lessons } = await (supabase as any)
         .from("talqeen_lessons")
@@ -80,87 +97,64 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
         .in("chapter_id", chapterIds)
         .order("lesson_number", { ascending: true });
 
-      // Get progress (completed lessons)
       const { data: progress } = await (supabase as any)
         .from("talqeen_program_progress")
         .select("lesson_id, status")
         .eq("assignment_id", asg.id)
         .eq("status", "completed");
-
-      const completedIds = new Set((progress || []).map((p: any) => p.lesson_id));
-      const next = (lessons || []).find((l: any) => !completedIds.has(l.id));
-      setTodayLesson(next || null);
+      const completed = new Set((progress || []).map((p: any) => p.lesson_id));
+      setTodayLesson((lessons || []).find((l: any) => !completed.has(l.id)) || null);
     })();
   }, [open, halaqaId]);
 
-  const cycleAttendance = (studentId: string) => {
-    setAttendance((prev) => {
-      const cur = prev[studentId];
-      const next: AttStatus = cur === "present" ? "absent" : cur === "absent" ? "late" : "present";
-      return { ...prev, [studentId]: next };
-    });
+  const ensureSession = async (extra: Record<string, any> = {}) => {
+    if (todaySession?.id) return todaySession;
+    const { data, error } = await (supabase as any)
+      .from("talqeen_sessions")
+      .insert({
+        halaqa_id: halaqaId,
+        session_date: today,
+        teacher_id: user?.id || null,
+        surah: todayLesson?.title || "",
+        status: "scheduled",
+        executed: false,
+        ...extra,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    setTodaySession(data);
+    return data;
   };
 
-  const handleSave = async () => {
-    const missing: string[] = [];
-    if (Object.keys(attendance).length === 0) missing.push("الحضور");
-    if (!lessonDone) missing.push("تنفيذ الدرس");
-    if (!tarbiaNote.trim()) missing.push("التنفيذ التربوي");
-    if (!homework.trim()) missing.push("الواجب المنزلي");
-    if (missing.length > 0) {
-      toast.error(`يرجى إكمال: ${missing.join("، ")}`);
-      return;
-    }
-
-    setSaving(true);
+  const markDone = async (type: "lesson" | "tarbia") => {
     try {
-      const today = new Date().toISOString().split("T")[0];
-      const { data: created, error } = await (supabase as any)
-        .from("talqeen_sessions")
-        .insert({
-          halaqa_id: halaqaId,
-          session_date: today,
-          surah: todayLesson?.title || "",
-          status: "completed",
-          executed: true,
-          executed_at: new Date().toISOString(),
-          educational_program_title: tarbiaNote,
-          educational_program_details: tarbiaDone ? "تم التنفيذ" : "لم يكتمل",
-          homework,
-          homework_due_date: homeworkDue || null,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-
-      const sessionId = created.id;
-
-      // Save attendance
-      const attRows = Object.entries(attendance).map(([sid, status]) => ({
-        session_id: sessionId,
-        student_id: sid,
-        status,
-      }));
-      if (attRows.length > 0) {
-        const { error: attErr } = await (supabase as any)
-          .from("talqeen_session_attendance")
-          .insert(attRows);
-        if (attErr) throw attErr;
+      const now = new Date().toISOString();
+      const updates = type === "lesson"
+        ? { lesson_done: true, lesson_done_at: now }
+        : { tarbia_done: true, tarbia_done_at: now };
+      if (todaySession?.id) {
+        const { error } = await (supabase as any)
+          .from("talqeen_sessions")
+          .update(updates)
+          .eq("id", todaySession.id);
+        if (error) throw error;
+      } else {
+        await ensureSession(updates);
       }
 
-      // Mark today's lesson as completed in program progress
-      if (todayLesson && assignment) {
+      // If lesson marked done, also advance curriculum progress
+      if (type === "lesson" && todayLesson && assignment) {
         const { data: existing } = await (supabase as any)
           .from("talqeen_program_progress")
           .select("id")
           .eq("assignment_id", assignment.id)
           .eq("lesson_id", todayLesson.id)
           .maybeSingle();
-
         if (existing) {
           await (supabase as any)
             .from("talqeen_program_progress")
-            .update({ status: "completed", completed_at: new Date().toISOString() })
+            .update({ status: "completed", completed_at: now })
             .eq("id", existing.id);
         } else {
           await (supabase as any).from("talqeen_program_progress").insert({
@@ -168,149 +162,297 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
             halaqa_id: halaqaId,
             lesson_id: todayLesson.id,
             status: "completed",
-            completed_at: new Date().toISOString(),
+            completed_at: now,
           });
         }
       }
 
-      toast.success("✅ تم حفظ يوم الحلقة بنجاح");
-      onClose();
+      toast.success(type === "lesson" ? "تم تأكيد شرح الدرس" : "تم تأكيد التنفيذ التربوي");
+      await refetchTodaySession();
     } catch (err: any) {
       toast.error(`خطأ: ${err.message}`);
-    } finally {
-      setSaving(false);
     }
   };
 
-  const attBtn = (sid: string, status: AttStatus, color: string, Icon: any, label: string) => {
-    const active = attendance[sid] === status;
-    return (
-      <Button
-        size="sm"
-        variant={active ? "default" : "outline"}
-        className={active ? color : ""}
-        onClick={() => setAttendance((p) => ({ ...p, [sid]: status }))}
-      >
-        <Icon className="w-3.5 h-3.5 ml-1" />
-        {label}
-      </Button>
-    );
+  const saveAttendance = async () => {
+    if (Object.keys(attendance).length === 0) {
+      toast.error("لم يتم تحديد حضور لأي طالب");
+      return;
+    }
+    setSavingAtt(true);
+    try {
+      const session = await ensureSession();
+      const rows = Object.entries(attendance).map(([sid, status]) => ({
+        session_id: session.id,
+        student_id: sid,
+        status,
+        homework_status: homeworkStatus[sid] || "not_submitted",
+      }));
+      const { error } = await (supabase as any)
+        .from("talqeen_session_attendance")
+        .upsert(rows, { onConflict: "session_id,student_id" });
+      if (error) throw error;
+
+      await (supabase as any)
+        .from("talqeen_sessions")
+        .update({ attendance_done: true, attendance_done_at: new Date().toISOString() })
+        .eq("id", session.id);
+
+      toast.success("✅ تم حفظ الحضور");
+      setShowAttendanceSheet(false);
+      await refetchTodaySession();
+    } catch (err: any) {
+      toast.error(`خطأ: ${err.message}`);
+    } finally {
+      setSavingAtt(false);
+    }
   };
 
+  const saveHomework = async () => {
+    if (Object.keys(homeworkStatus).length === 0) {
+      toast.error("لم يتم تحديد حالة لأي طالب");
+      return;
+    }
+    setSavingHw(true);
+    try {
+      const session = await ensureSession();
+      const rows = Object.entries(homeworkStatus).map(([sid, hw]) => ({
+        session_id: session.id,
+        student_id: sid,
+        status: attendance[sid] || "present",
+        homework_status: hw,
+      }));
+      const { error } = await (supabase as any)
+        .from("talqeen_session_attendance")
+        .upsert(rows, { onConflict: "session_id,student_id" });
+      if (error) throw error;
+
+      await (supabase as any)
+        .from("talqeen_sessions")
+        .update({ homework_checked: true, homework_checked_at: new Date().toISOString() })
+        .eq("id", session.id);
+
+      toast.success("✅ تم حفظ الواجبات");
+      setShowHomeworkSheet(false);
+      await refetchTodaySession();
+    } catch (err: any) {
+      toast.error(`خطأ: ${err.message}`);
+    } finally {
+      setSavingHw(false);
+    }
+  };
+
+  const allDone =
+    todaySession?.attendance_done &&
+    todaySession?.lesson_done &&
+    todaySession?.tarbia_done &&
+    todaySession?.homework_checked;
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
-        <DialogHeader>
-          <DialogTitle>تسجيل يوم الحلقة — {halaqaName}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="max-w-xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="sr-only">تسجيل يوم الحلقة</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-5 pt-2">
-          {/* القسم 1: الحضور */}
-          <Card>
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-foreground">١. الحضور ({students.length} طالب)</h3>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const all: Record<string, AttStatus> = {};
-                    students.forEach((s) => (all[s.id] = "present"));
-                    setAttendance(all);
-                  }}
-                >
-                  تحديد الكل حاضر
-                </Button>
-              </div>
-              {students.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">لا يوجد طلاب</p>
-              ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {students.map((s) => (
-                    <div key={s.id} className="flex items-center justify-between gap-2 p-2 rounded border">
-                      <span className="text-sm font-medium">{s.full_name}</span>
-                      <div className="flex gap-1.5">
-                        {attBtn(s.id, "present", "bg-green-600 hover:bg-green-700 text-white", CheckCircle2, "حاضر")}
-                        {attBtn(s.id, "absent", "bg-red-600 hover:bg-red-700 text-white", XCircle, "غائب")}
-                        {attBtn(s.id, "late", "bg-yellow-600 hover:bg-yellow-700 text-white", Clock, "متأخر")}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* القسم 2: تنفيذ الدرس */}
-          <div className="rounded-lg border p-4 bg-blue-50">
-            <p className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              ٢. درس اليوم
-            </p>
-            <p className="text-base text-blue-800">{todayLesson?.title || "لا يوجد درس محدد"}</p>
-            <div className="flex items-center gap-2 mt-3">
-              <Checkbox
-                id="lesson-done"
-                checked={lessonDone}
-                onCheckedChange={(v) => setLessonDone(v === true)}
-              />
-              <label htmlFor="lesson-done" className="text-sm cursor-pointer">
-                تم تنفيذ الدرس
-              </label>
-            </div>
+          {/* اليوم والحلقة */}
+          <div className="text-center mb-2">
+            {dateLabels && (
+              <p className="text-xs text-muted-foreground">
+                {dateLabels.hijri} — {dateLabels.gregorian}
+              </p>
+            )}
+            <h2 className="text-lg font-bold text-foreground">{halaqaName}</h2>
           </div>
 
-          {/* القسم 3: التنفيذ التربوي */}
-          <Card>
-            <CardContent className="p-4 space-y-2">
-              <h3 className="font-semibold text-foreground">٣. التنفيذ التربوي</h3>
-              <Textarea
-                placeholder="وصف الجانب التربوي المنفّذ اليوم..."
-                value={tarbiaNote}
-                onChange={(e) => setTarbiaNote(e.target.value)}
-                rows={2}
-              />
-              <div className="flex items-center gap-2 mt-2">
-                <Checkbox
-                  id="tarbia-done"
-                  checked={tarbiaDone}
-                  onCheckedChange={(v) => setTarbiaDone(v === true)}
-                />
-                <label htmlFor="tarbia-done" className="text-sm cursor-pointer">
-                  تم تنفيذ الجانب التربوي
-                </label>
+          {/* 4 بطاقات */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* الحضور */}
+            <button
+              onClick={() => setShowAttendanceSheet(true)}
+              className={`rounded-2xl p-4 border-2 text-right transition-all ${
+                todaySession?.attendance_done
+                  ? "bg-green-50 border-green-400"
+                  : "bg-card border-border hover:border-green-300"
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-2xl">{todaySession?.attendance_done ? "✅" : "⭕"}</span>
+                <Users className="w-5 h-5 text-muted-foreground" />
               </div>
-            </CardContent>
-          </Card>
+              <p className="font-bold text-sm text-foreground">الحضور</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {todaySession?.attendance_done ? "تم التسجيل" : "اضغط للتسجيل"}
+              </p>
+            </button>
 
-          {/* القسم 4: الواجب المنزلي */}
-          <Card>
-            <CardContent className="p-4 space-y-2">
-              <h3 className="font-semibold text-foreground">٤. الواجب المنزلي</h3>
-              <Input
-                placeholder="وصف الواجب المنزلي"
-                value={homework}
-                onChange={(e) => setHomework(e.target.value)}
-              />
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">تاريخ التسليم</Label>
-                <Input
-                  type="date"
-                  value={homeworkDue}
-                  onChange={(e) => setHomeworkDue(e.target.value)}
-                />
+            {/* شرح الدرس */}
+            <button
+              onClick={() => !todaySession?.lesson_done && markDone("lesson")}
+              disabled={!!todaySession?.lesson_done}
+              className={`rounded-2xl p-4 border-2 text-right transition-all ${
+                todaySession?.lesson_done
+                  ? "bg-green-50 border-green-400"
+                  : "bg-card border-border hover:border-blue-300"
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-2xl">{todaySession?.lesson_done ? "✅" : "⭕"}</span>
+                <BookOpen className="w-5 h-5 text-muted-foreground" />
               </div>
-            </CardContent>
-          </Card>
+              <p className="font-bold text-sm text-foreground">شرح الدرس</p>
+              <p className="text-xs text-muted-foreground mt-1 truncate">
+                {todayLesson?.title || "اضغط عند الإتمام"}
+              </p>
+            </button>
 
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={onClose}>إلغاء</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-primary">
-              {saving ? "جارٍ الحفظ..." : "حفظ يوم الحلقة"}
+            {/* التربوي */}
+            <button
+              onClick={() => !todaySession?.tarbia_done && markDone("tarbia")}
+              disabled={!!todaySession?.tarbia_done}
+              className={`rounded-2xl p-4 border-2 text-right transition-all ${
+                todaySession?.tarbia_done
+                  ? "bg-green-50 border-green-400"
+                  : "bg-card border-border hover:border-purple-300"
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-2xl">{todaySession?.tarbia_done ? "✅" : "⭕"}</span>
+                <Heart className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <p className="font-bold text-sm text-foreground">التربوي</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {todaySession?.tarbia_done ? "تم الإتمام" : "اضغط عند الإتمام"}
+              </p>
+            </button>
+
+            {/* الواجبات */}
+            <button
+              onClick={() => setShowHomeworkSheet(true)}
+              className={`rounded-2xl p-4 border-2 text-right transition-all ${
+                todaySession?.homework_checked
+                  ? "bg-green-50 border-green-400"
+                  : "bg-card border-border hover:border-amber-300"
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-2xl">{todaySession?.homework_checked ? "✅" : "⭕"}</span>
+                <ClipboardCheck className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <p className="font-bold text-sm text-foreground">الواجبات</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {todaySession?.homework_checked ? "تم المراجعة" : "اضغط للتسجيل"}
+              </p>
+            </button>
+          </div>
+
+          {allDone && (
+            <div className="mt-3 text-center text-sm text-green-700 bg-green-50 rounded-lg py-2 border border-green-200">
+              ✨ اكتمل تنفيذ يوم الحلقة
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end">
+            <Button variant="outline" onClick={onClose}>إغلاق</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sheet الحضور */}
+      <Sheet open={showAttendanceSheet} onOpenChange={setShowAttendanceSheet}>
+        <SheetContent side="bottom" className="h-[75vh] flex flex-col" dir="rtl">
+          <SheetHeader>
+            <SheetTitle>تسجيل الحضور — {halaqaName}</SheetTitle>
+          </SheetHeader>
+          <div className="flex justify-end mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const all: Record<string, AttStatus> = {};
+                students.forEach((s) => (all[s.id] = "present"));
+                setAttendance(all);
+              }}
+            >
+              تحديد الكل حاضر
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <div className="space-y-2 mt-3 overflow-y-auto flex-1">
+            {students.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">لا يوجد طلاب</p>
+            ) : (
+              students.map((s) => (
+                <div key={s.id} className="flex items-center justify-between p-3 rounded-xl border">
+                  <span className="font-medium text-sm">{s.full_name}</span>
+                  <div className="flex gap-2">
+                    {(["present", "late", "absent"] as const).map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setAttendance((a) => ({ ...a, [s.id]: status }))}
+                        className={`w-9 h-9 rounded-full text-lg transition-all ${
+                          attendance[s.id] === status ? "scale-110 shadow-md" : "opacity-40"
+                        }`}
+                        aria-label={status}
+                      >
+                        {status === "present" ? "✅" : status === "late" ? "⏰" : "❌"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <Button className="w-full mt-4" onClick={saveAttendance} disabled={savingAtt}>
+            {savingAtt ? "جارٍ الحفظ..." : "حفظ الحضور"}
+          </Button>
+        </SheetContent>
+      </Sheet>
+
+      {/* Sheet الواجبات */}
+      <Sheet open={showHomeworkSheet} onOpenChange={setShowHomeworkSheet}>
+        <SheetContent side="bottom" className="h-[75vh] flex flex-col" dir="rtl">
+          <SheetHeader>
+            <SheetTitle>مراجعة الواجبات — {halaqaName}</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-2 mt-3 overflow-y-auto flex-1">
+            {students.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">لا يوجد طلاب</p>
+            ) : (
+              students.map((s) => (
+                <div key={s.id} className="flex items-center justify-between p-3 rounded-xl border">
+                  <span className="font-medium text-sm">{s.full_name}</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setHomeworkStatus((h) => ({ ...h, [s.id]: "submitted" }))}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                        homeworkStatus[s.id] === "submitted"
+                          ? "bg-green-500 text-white"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      ✅ أتم
+                    </button>
+                    <button
+                      onClick={() => setHomeworkStatus((h) => ({ ...h, [s.id]: "not_submitted" }))}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                        homeworkStatus[s.id] === "not_submitted"
+                          ? "bg-red-500 text-white"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      ❌ لم يُتم
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <Button className="w-full mt-4" onClick={saveHomework} disabled={savingHw}>
+            {savingHw ? "جارٍ الحفظ..." : "حفظ الواجبات"}
+          </Button>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
