@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import GuardianLayout from "@/components/GuardianLayout";
@@ -147,7 +148,7 @@ const GuardianEvaluation = () => {
                   <div key={h.id} className="flex justify-between items-center py-2 border-b last:border-0">
                     <div>
                       <p className="text-sm font-medium">{h.term}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleDateString("ar-SA")}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateHijriOnly(h.created_at)}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-warning text-warning" />

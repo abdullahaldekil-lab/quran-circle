@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { getWeekdayArabic, formatDateHijriOnly } from "@/lib/hijri";
 import { supabase } from "@/integrations/supabase/client";
 
 type DayStatus = "active" | "weekend" | "holiday";
@@ -84,7 +85,7 @@ export const useAcademicCalendar = (): CalendarStatus => {
 
       if (!data) {
         setNextActiveDay(
-          candidate.toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+          `${getWeekdayArabic(candidate)}، ${formatDateHijriOnly(candidate)}`
         );
         return;
       }

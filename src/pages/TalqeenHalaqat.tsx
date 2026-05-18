@@ -18,11 +18,10 @@ import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { InlineDualDate } from "@/components/DualDateDisplay";
-import { formatDualDateSmart } from "@/lib/hijri";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import { cn } from "@/lib/utils";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
-import { formatDualDate } from "@/lib/hijri";
 import ContentViewer, { lessonTypeIcon, lessonTypeLabel } from "@/components/talqeen/ContentViewer";
 import DayRecordingDialog from "@/components/talqeen/DayRecordingDialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 // منتقي تاريخ بالتاريخ الهجري كأساس والميلادي كفرعي
 const DualDatePicker = ({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) => {
   const dateObj = value ? new Date(value) : undefined;
-  const labels = value ? formatDualDateSmart(value) : null;
+  const hijriLabel = value ? formatDateHijriOnly(value) : null;
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -40,11 +39,8 @@ const DualDatePicker = ({ value, onChange, required }: { value: string; onChange
           className={cn("w-full justify-start text-right font-normal h-auto py-2", !value && "text-muted-foreground")}
         >
           <CalendarIcon className="ml-2 h-4 w-4 opacity-60 shrink-0" />
-          {labels ? (
-            <span className="flex flex-col items-start">
-              <span className="text-sm font-medium">{labels.hijri}</span>
-              <span className="text-xs text-muted-foreground">{labels.gregorian}</span>
-            </span>
+          {hijriLabel ? (
+            <span className="text-sm font-medium">{hijriLabel}</span>
           ) : (
             <span>اختر التاريخ{required ? " *" : ""}</span>
           )}
@@ -1104,7 +1100,7 @@ const TalqeenHalaqat = () => {
               {changeLog.map((entry) => {
                 const oldName = curricula.find(c => c.id === entry.old_curriculum_id)?.name || "بدون منهج";
                 const newName = curricula.find(c => c.id === entry.new_curriculum_id)?.name || "بدون منهج";
-                const dual = formatDualDate(entry.created_at);
+                const dual = formatDateHijriOnly(entry.created_at);
                 return (
                   <li key={entry.id} className="p-3 flex items-start justify-between gap-3">
                     <div className="flex-1 space-y-1 text-sm">
@@ -1113,7 +1109,7 @@ const TalqeenHalaqat = () => {
                         <span className="font-semibold text-primary">{newName}</span>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {dual.hijri} — {dual.gregorian}
+                        {dual}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         عدد الطلاب المتأثرين: {entry.affected_students_count}

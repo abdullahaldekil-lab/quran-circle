@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDualDate } from "@/lib/hijri";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,7 +14,7 @@ const NarrationStats = () => {
   const printRef = useRef<HTMLDivElement>(null);
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
-  const { hijri: hijriArabic, gregorian: gregorianArabic } = formatDualDate(today);
+  const hijriArabic = formatDateHijriOnly(today);
 
   // Fetch halaqat
   const { data: halaqat = [] } = useQuery({
@@ -222,7 +222,6 @@ const NarrationStats = () => {
           <div className="flex items-center gap-2 text-sm mt-1">
             <CalendarDays className="w-4 h-4 text-muted-foreground" />
             <span className="font-medium">{hijriArabic}</span>
-            <span className="text-muted-foreground text-xs">، {gregorianArabic}</span>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">

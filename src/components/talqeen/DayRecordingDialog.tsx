@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Users, BookOpen, Heart, ClipboardCheck } from "lucide-react";
-import { formatDualDateSmart } from "@/lib/hijri";
+import { formatDateHijriOnly } from "@/lib/hijri";
 
 type AttStatus = "present" | "absent" | "late";
 type HwStatus = "submitted" | "not_submitted";
@@ -22,11 +22,12 @@ interface Props {
 export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName, students }: Props) {
   const { user } = useAuth();
   const today = new Date().toISOString().split("T")[0];
-  const dateLabels = formatDualDateSmart(today);
+  const dateHijri = formatDateHijriOnly(today);
 
   const [todaySession, setTodaySession] = useState<any | null>(null);
   const [todayLesson, setTodayLesson] = useState<any | null>(null);
   const [assignment, setAssignment] = useState<any | null>(null);
+  const [syncedFromMain, setSyncedFromMain] = useState(false);
 
   const [showAttendanceSheet, setShowAttendanceSheet] = useState(false);
   const [showHomeworkSheet, setShowHomeworkSheet] = useState(false);
@@ -59,9 +60,23 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
       });
       setAttendance(attMap);
       setHomeworkStatus(hwMap);
+
+      // Check if attendance was synced from the main attendance system
+      if (data.attendance_done) {
+        const { data: mainAtt } = await (supabase as any)
+          .from("attendance")
+          .select("id")
+          .eq("halaqa_id", halaqaId)
+          .eq("attendance_date", today)
+          .limit(1);
+        setSyncedFromMain((mainAtt?.length ?? 0) > 0);
+      } else {
+        setSyncedFromMain(false);
+      }
     } else {
       setAttendance({});
       setHomeworkStatus({});
+      setSyncedFromMain(false);
     }
   }, [halaqaId, today]);
 
@@ -258,9 +273,9 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
 
           {/* اليوم والحلقة */}
           <div className="text-center mb-2">
-            {dateLabels && (
+            {dateHijri && (
               <p className="text-xs text-muted-foreground">
-                {dateLabels.hijri} — {dateLabels.gregorian}
+                {dateHijri}
               </p>
             )}
             <h2 className="text-lg font-bold text-foreground">{halaqaName}</h2>
@@ -285,6 +300,9 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
               <p className="text-xs text-muted-foreground mt-1">
                 {todaySession?.attendance_done ? "تم التسجيل" : "اضغط للتسجيل"}
               </p>
+              {syncedFromMain && (
+                <p className="text-[10px] text-blue-600 mt-1">مزامن من صفحة الحضور ✓</p>
+              )}
             </button>
 
             {/* شرح الدرس */}

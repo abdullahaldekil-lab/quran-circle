@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { ArrowRight, Save, Printer, Users, BarChart3, ClipboardList } from "lucide-react";
 
-import { formatHijriStringArabic, formatGregorianArabic } from "@/lib/hijri";
+import { formatHijriStringArabic } from "@/lib/hijri";
 import ExcellencePrintTemplate from "@/components/ExcellencePrintTemplate";
 
 interface Student {
@@ -369,11 +369,6 @@ export default function ExcellenceSession() {
           <div>
             <h1 className="text-xl font-bold text-foreground">
               جلسة التميّز — {sessionHijri ? formatHijriStringArabic(sessionHijri) : ""}
-              {session?.session_date && (
-                <span className="text-muted-foreground text-base mr-2">
-                  ({formatGregorianArabic(session.session_date)})
-                </span>
-              )}
             </h1>
             <p className="text-sm text-muted-foreground">{sessionLabel}</p>
           </div>

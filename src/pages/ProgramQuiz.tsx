@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -287,7 +288,7 @@ export default function ProgramQuiz() {
                     <div className="flex gap-2">
                       <Badge variant="outline">{q.quiz_type === "essay" ? "مقالي" : "اختيار من متعدد"}</Badge>
                       <Badge variant="secondary">{qs.length} سؤال</Badge>
-                      <Badge>{new Date(q.created_at).toLocaleDateString("ar")}</Badge>
+                      <Badge>{formatDateHijriOnly(q.created_at)}</Badge>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -319,7 +320,7 @@ export default function ProgramQuiz() {
                               <td className="py-2">{r.students?.full_name || "—"}</td>
                               <td className="py-2 font-bold text-primary">{r.program_score ?? "—"}</td>
                               <td className="py-2 text-xs text-muted-foreground">
-                                {new Date(r.submitted_at).toLocaleDateString("ar")}
+                                {formatDateHijriOnly(r.submitted_at)}
                               </td>
                             </tr>
                           ))}

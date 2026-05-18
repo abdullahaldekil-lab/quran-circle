@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { ArrowRight, Printer, Save, Star, Send, FileText, Users, BookOpen, BarChart3, Award } from "lucide-react";
 
-import { formatHijriArabic, formatHijriStringArabic, formatGregorianArabic, formatDateSmart, toHijri, toMiladi, formatDateHijriOnly } from "@/lib/hijri";
+import { formatHijriArabic, formatHijriStringArabic, formatDateSmart, toHijri, toMiladi, formatDateHijriOnly } from "@/lib/hijri";
 import { sendNotification } from "@/utils/sendNotification";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -88,8 +88,7 @@ export default function ExcellenceReports() {
     const trackName = s.excellence_tracks?.track_name;
     const halaqaName = s.halaqat?.name;
     const hijriPart = s.session_hijri_date ? formatHijriStringArabic(s.session_hijri_date) : formatHijriArabic(s.session_date);
-    const gregPart = ` (${formatGregorianArabic(s.session_date)})`;
-    return `${hijriPart}${gregPart} — ${trackName || halaqaName || ""}`;
+    return `${hijriPart} — ${trackName || halaqaName || ""}`;
   };
 
   // Session Report

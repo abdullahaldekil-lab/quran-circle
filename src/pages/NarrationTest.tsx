@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import StudentNameLink from "@/components/StudentNameLink";
-import { formatDualDate, formatDateHijriOnly } from "@/lib/hijri";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -64,7 +64,7 @@ const NarrationTest = () => {
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
-  const { hijri: hijriArabic, gregorian: gregorianArabic } = formatDualDate(today);
+  const hijriArabic = formatDateHijriOnly(today);
 
   const { data: halaqat = [] } = useQuery({
     queryKey: ["halaqat_active"],
@@ -372,7 +372,6 @@ const NarrationTest = () => {
           <div className="flex items-center gap-2 text-sm mt-1">
             <CalendarDays className="w-4 h-4 text-muted-foreground" />
             <span className="font-medium">{hijriArabic}</span>
-            <span className="text-muted-foreground text-xs">، {gregorianArabic}</span>
           </div>
         </div>
       </div>

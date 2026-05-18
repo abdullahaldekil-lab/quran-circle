@@ -15,7 +15,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-import { formatDualDate, formatDateHijriOnly } from "@/lib/hijri";
+import { formatDateHijriOnly } from "@/lib/hijri";
 
 const GRADE_LABELS: Record<string, { label: string; color: string }> = {
   excellent: { label: "ممتاز", color: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300" },
@@ -236,7 +236,7 @@ const QuizResults = () => {
     );
   }
 
-  const { hijri: hijriToday, gregorian: gregorianToday } = formatDualDate(new Date());
+  const hijriToday = formatDateHijriOnly(new Date());
 
   return (
     <div className="space-y-6 animate-fade-in" dir="rtl">
@@ -251,7 +251,6 @@ const QuizResults = () => {
         <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-1.5">
           <CalendarDays className="w-4 h-4 text-muted-foreground" />
           <span className="font-medium">{hijriToday}</span>
-          <span className="text-muted-foreground text-xs">، {gregorianToday}</span>
         </div>
       </div>
 

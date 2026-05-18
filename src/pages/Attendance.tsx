@@ -14,7 +14,7 @@ import { useRole } from "@/hooks/useRole";
 import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import { sendNotification } from "@/utils/sendNotification";
-import { formatDualDate, formatFullDateHeader, formatDateSmart, getCurrentFullDateHeader } from "@/lib/hijri";
+import { formatDateHijriOnly, formatDateSmart, getCurrentFullDateHeader } from "@/lib/hijri";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
@@ -234,6 +234,66 @@ const Attendance = () => {
     fetchData();
   }, [selectedHalaqa, selectedDate]);
 
+  // After saving attendance, mirror it to talqeen_sessions/talqeen_session_attendance
+  // if the selected halaqa is a Talqeen halaqa (has talqeen_curriculum_id).
+  const syncToTalqeen = async (finalAttendance: Record<string, AttendanceStatus>, dateStr: string) => {
+    const halaqa = halaqat.find((h) => h.id === selectedHalaqa);
+    if (!halaqa?.talqeen_curriculum_id) return;
+
+    try {
+      const now = new Date().toISOString();
+
+      const { data: existing } = await (supabase as any)
+        .from("talqeen_sessions")
+        .select("id")
+        .eq("halaqa_id", selectedHalaqa)
+        .eq("session_date", dateStr)
+        .maybeSingle();
+
+      let sessionId: string;
+      if (existing?.id) {
+        await (supabase as any)
+          .from("talqeen_sessions")
+          .update({ attendance_done: true, attendance_done_at: now })
+          .eq("id", existing.id);
+        sessionId = existing.id;
+      } else {
+        const { data: created, error: createErr } = await (supabase as any)
+          .from("talqeen_sessions")
+          .insert({
+            halaqa_id: selectedHalaqa,
+            session_date: dateStr,
+            teacher_id: user?.id || null,
+            attendance_done: true,
+            attendance_done_at: now,
+            status: "scheduled",
+            executed: false,
+          })
+          .select("id")
+          .single();
+        if (createErr) throw createErr;
+        sessionId = created.id;
+      }
+
+      const toTalqeenStatus = (s: AttendanceStatus): "present" | "absent" | "late" =>
+        s === "present" ? "present" : s === "late" ? "late" : "absent";
+
+      const rows = Object.entries(finalAttendance).map(([student_id, status]) => ({
+        session_id: sessionId,
+        student_id,
+        status: toTalqeenStatus(status),
+      }));
+
+      if (rows.length > 0) {
+        await (supabase as any)
+          .from("talqeen_session_attendance")
+          .upsert(rows, { onConflict: "session_id,student_id" });
+      }
+    } catch (err) {
+      console.error("خطأ في مزامنة حضور التلقين:", err);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const markedAt = new Date().toISOString();
@@ -309,6 +369,9 @@ const Attendance = () => {
     } catch (notifErr) {
       console.error("خطأ في إرسال الإشعارات:", notifErr);
     }
+
+    // Mirror to Talqeen if this is a Talqeen halaqa (fire-and-forget, non-blocking)
+    syncToTalqeen(finalAttendance, selectedDate);
 
     setSaving(false);
     setAttendance(finalAttendance);
@@ -434,7 +497,7 @@ const Attendance = () => {
     );
   }
 
-  const { hijri: hijriFormatted, gregorian: gregorianFormatted } = formatDualDate(selectedDate);
+  const hijriFormatted = formatDateHijriOnly(selectedDate);
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
@@ -444,7 +507,6 @@ const Attendance = () => {
           <div className="flex items-center gap-2 text-sm mt-1">
             <CalendarDays className="w-4 h-4 text-muted-foreground" />
             <span className="font-medium">{hijriFormatted}</span>
-            <span className="text-muted-foreground text-xs">، {gregorianFormatted}</span>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)}>

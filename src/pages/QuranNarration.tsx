@@ -28,7 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollText, Plus, Pencil, Trash2, Eye, BookOpen, Users, CheckCircle, BarChart3, Settings, CalendarDays, Target, TrendingUp, CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { formatHijriArabic, formatDateSmart, formatDateHijriOnly, formatGregorianArabic } from "@/lib/hijri";
+import { formatHijriArabic, formatDateSmart, formatDateHijriOnly } from "@/lib/hijri";
 
 interface NarrationSession {
   id: string;
@@ -535,7 +535,6 @@ export default function QuranNarration() {
                         ? "border-r-4 border-r-destructive/50"
                         : "";
                       const hijriDate = formatDateHijriOnly(session.session_date);
-                      const gregDate = formatGregorianArabic(session.session_date);
                       return (
                         <TableRow key={session.id} className={borderClass}>
                           <TableCell>

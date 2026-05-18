@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ export default function ExternalReviewer() {
         </p>
         {tokenData?.narration_sessions?.session_date && (
           <p className="text-xs text-muted-foreground mt-1">
-            تاريخ الجلسة: {new Date(tokenData.narration_sessions.session_date).toLocaleDateString('ar-SA')}
+            تاريخ الجلسة: {formatDateHijriOnly(tokenData.narration_sessions.session_date)}
           </p>
         )}
       </div>

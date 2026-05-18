@@ -65,13 +65,21 @@ export function getWeekdayArabic(date: Date | string): string {
 }
 
 /**
- * Format full date header: "الأربعاء، 15 رمضان 1447 (4 مارس 2026)"
+ * Format full date header: "الأربعاء، 15 رمضان 1447 هـ"
  */
 export function formatFullDateHeader(date: Date | string): string {
   const weekday = getWeekdayArabic(date);
   const hijri = formatHijriArabic(date);
-  const gregorian = formatGregorianArabic(date);
-  return `${weekday}، ${hijri} (${gregorian})`;
+  return `${weekday}، ${hijri}`;
+}
+
+/**
+ * Format Hijri month and year only: "رمضان 1447 هـ"
+ */
+export function formatHijriMonthYear(date: Date | string): string {
+  const hijri = toHijri(date);
+  const monthName = HIJRI_MONTHS[hijri.month - 1] || "";
+  return `${monthName} ${hijri.year} هـ`;
 }
 
 /**
@@ -161,26 +169,14 @@ export function isHijriString(str: string): boolean {
 }
 
 /**
- * Smart date formatter: auto-detects Hijri vs Gregorian input
- * Returns Hijri as primary with Gregorian as secondary in parentheses
+ * Smart date formatter: auto-detects Hijri vs Gregorian input, returns Hijri only.
  * Input can be: Date object, ISO string, Gregorian date string, or Hijri string (YYYY/MM/DD)
  */
 export function formatDateSmart(date: Date | string): string {
   if (!date) return "";
   const str = typeof date === "string" ? date : "";
-
-  // If it's already a Hijri string like "1447/09/15"
-  if (str && isHijriString(str)) {
-    const hijriDisplay = formatHijriStringArabic(str);
-    const gregDate = hijriToGregorian(str);
-    const gregDisplay = gregDate ? formatGregorianArabic(gregDate) : "";
-    return gregDisplay ? `${hijriDisplay} (${gregDisplay})` : hijriDisplay;
-  }
-
-  // Otherwise treat as Gregorian
-  const hijriDisplay = formatHijriArabic(date);
-  const gregDisplay = formatGregorianArabic(date);
-  return `${hijriDisplay} (${gregDisplay})`;
+  if (str && isHijriString(str)) return formatHijriStringArabic(str);
+  return formatHijriArabic(date);
 }
 
 /**

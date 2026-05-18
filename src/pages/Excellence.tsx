@@ -14,7 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { Plus, Calendar, Users, BookOpen, Trophy, Star, Settings, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-import { gregorianToHijri, formatHijriArabic, formatHijriStringArabic, formatGregorianArabic, formatDateSmart } from "@/lib/hijri";
+import { gregorianToHijri, formatHijriArabic, formatHijriStringArabic, formatDateSmart } from "@/lib/hijri";
 
 interface Session {
   id: string;
@@ -359,11 +359,6 @@ export default function Excellence() {
                   <div>
                     <p className="font-semibold">
                       {s.session_hijri_date ? formatHijriStringArabic(s.session_hijri_date) : formatDateSmart(s.session_date)}
-                      {s.session_hijri_date && (
-                        <span className="text-muted-foreground text-sm mr-2">
-                          ({formatGregorianArabic(s.session_date)})
-                        </span>
-                      )}
                     </p>
                     <p className="text-sm text-muted-foreground">{getSessionLabel(s)}</p>
                   </div>

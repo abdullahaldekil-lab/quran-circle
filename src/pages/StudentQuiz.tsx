@@ -15,7 +15,7 @@ import { BookOpen, Brain, RefreshCw, Save, GraduationCap, User, Loader2, Printer
 import QuizQuestionCard from "@/components/quiz/QuizQuestionCard";
 import { sendNotification } from "@/utils/sendNotification";
 import QuizCertificate from "@/components/quiz/QuizCertificate";
-import { formatDualDate, formatDateHijriOnly } from "@/lib/hijri";
+import { formatDateHijriOnly } from "@/lib/hijri";
 
 interface QuizQuestion {
   question_number: number;
@@ -329,7 +329,7 @@ const StudentQuiz = () => {
     );
   }
 
-  const { hijri: hijriToday, gregorian: gregorianToday } = formatDualDate(new Date());
+  const hijriToday = formatDateHijriOnly(new Date());
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto" dir="rtl">
@@ -344,7 +344,6 @@ const StudentQuiz = () => {
         <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-1.5">
           <CalendarDays className="w-4 h-4 text-muted-foreground" />
           <span className="font-medium">{hijriToday}</span>
-          <span className="text-muted-foreground text-xs">، {gregorianToday}</span>
         </div>
       </div>
 

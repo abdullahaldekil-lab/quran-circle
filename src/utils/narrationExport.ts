@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { formatDateHijriOnly } from "@/lib/hijri";
 import "jspdf-autotable";
 import * as XLSX from "xlsx-js-style";
 
@@ -265,7 +266,7 @@ export function exportBulkCertificatesPdf(certs: CertData[], sessionDateStr: str
     doc.setTextColor(0, 0, 0);
     doc.text(`من حلقة: ${cert.halaqaName}`, pageWidth / 2, 98, { align: "center" });
 
-    const dateStr = new Date(cert.sessionDate).toLocaleDateString("ar-SA");
+    const dateStr = formatDateHijriOnly(cert.sessionDate);
     doc.text(`قد شارك في يوم السرد القرآني بتاريخ ${dateStr}`, pageWidth / 2, 110, { align: "center" });
     doc.text(`وقام بسرد ${cert.totalHizb} حزب/أحزاب`, pageWidth / 2, 122, { align: "center" });
 

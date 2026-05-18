@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from "date-fns";
 import { ar } from "date-fns/locale";
-import { formatDateHijriOnly, formatHijriArabic, toHijri, HIJRI_MONTHS } from "@/lib/hijri";
+import { formatDateHijriOnly, formatHijriArabic, toHijri, HIJRI_MONTHS, GREGORIAN_MONTHS } from "@/lib/hijri";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,7 +25,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string; symbol: stri
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => ({
   value: i,
-  label: new Date(2024, i).toLocaleDateString("ar-SA", { month: "long" }),
+  label: GREGORIAN_MONTHS[i],
 }));
 
 const currentYear = new Date().getFullYear();
