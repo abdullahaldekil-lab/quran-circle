@@ -84,20 +84,27 @@ const Recitation = () => {
       review_to: "",
       linking_from: "",
       linking_to: "",
-      memorization_quality: 40,
-      tajweed_score: 25,
-      mistakes_count: 0,
-      mistakes_breakdown: { jali: 0, khafi: 0, taraddod: 0, nisyan: 0 },
+      mistakes_breakdown: emptyBreakdown(),
       notes: "",
     });
     setAudioUrl("");
   };
 
+  // Aggregate counters across all sections
+  const aggregateCounts = (b: Record<string, Record<string, number>>) => {
+    let error = 0, lahn = 0, warning = 0;
+    Object.values(b).forEach((sec) => {
+      error   += Number(sec?.error   || 0);
+      lahn    += Number(sec?.lahn    || 0);
+      warning += Number(sec?.warning || 0);
+    });
+    return { error, lahn, warning, total: error + lahn + warning };
+  };
+
+  // Deductions: error = 5, lahn = 2, warning = 1 (out of 100)
   const calcScore = () => {
-    const q = form.memorization_quality;
-    const t = form.tajweed_score;
-    const m = Math.max(0, 20 - form.mistakes_count);
-    return q + t + m;
+    const c = aggregateCounts(form.mistakes_breakdown);
+    return Math.max(0, 100 - c.error * 5 - c.lahn * 2 - c.warning * 1);
   };
 
   const currentStudent = students[currentIndex];
@@ -106,6 +113,7 @@ const Recitation = () => {
     if (!currentStudent) return;
     setSaving(true);
     const totalScore = calcScore();
+    const counts = aggregateCounts(form.mistakes_breakdown);
     const { error } = await supabase.from("recitation_records").insert({
       student_id: currentStudent.id,
       halaqa_id: selectedHalaqa,
@@ -116,9 +124,7 @@ const Recitation = () => {
       review_to: form.review_to || null,
       linking_from: form.linking_from || null,
       linking_to: form.linking_to || null,
-      memorization_quality: form.memorization_quality,
-      tajweed_score: form.tajweed_score,
-      mistakes_count: form.mistakes_count,
+      mistakes_count: counts.total,
       mistakes_breakdown: form.mistakes_breakdown as any,
       total_score: totalScore,
       notes: form.notes || null,
@@ -129,6 +135,7 @@ const Recitation = () => {
       toast.error("حدث خطأ أثناء الحفظ");
       return;
     }
+
 
     // تحديث الخطة السنوية للطالب
     if (form.memorized_from && form.memorized_to) {
