@@ -65,6 +65,25 @@ const NarrationTest = () => {
   const [resultFilter, setResultFilter] = useState<ResultFilter>("all");
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Load test settings (from narration_test_settings)
+  const { data: settings = DEFAULT_SETTINGS } = useQuery({
+    queryKey: ["narration_test_settings"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("narration_test_settings")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data as any) || DEFAULT_SETTINGS;
+    },
+  });
+
+  const calcNarrationScore = (errors: number, lahn: number, warnings: number) =>
+    Math.max(0, Number(settings.narration_max) - errors * Number(settings.error_deduction) - lahn * Number(settings.lahn_deduction) - warnings * Number(settings.warning_deduction));
+  const ATTENDANCE_SCORE = Number(settings.attendance_score);
+  const PASS_THRESHOLD = Number(settings.pass_threshold);
+
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
   const hijriArabic = formatDateHijriOnly(today);
