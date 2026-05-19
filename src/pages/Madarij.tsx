@@ -22,6 +22,7 @@ const Madarij = () => {
   const navigate = useNavigate();
   const [tracks, setTracks] = useState<any[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [activePlans, setActivePlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [trackDialogOpen, setTrackDialogOpen] = useState(false);
   const [editingTrack, setEditingTrack] = useState<any>(null);
@@ -31,12 +32,17 @@ const Madarij = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [tracksRes, enrollRes] = await Promise.all([
+    const [tracksRes, enrollRes, plansRes] = await Promise.all([
       supabase.from("madarij_tracks").select("*").eq("active", true).order("created_at"),
       supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name)").order("created_at", { ascending: false }).limit(50),
+      supabase.from("student_annual_plans")
+        .select("id, student_id, halaqa_id, plan_type, start_date, end_date, total_target_pages, students(full_name), halaqat(name)")
+        .eq("status", "active")
+        .order("created_at", { ascending: false }),
     ]);
     setTracks(tracksRes.data || []);
     setEnrollments(enrollRes.data || []);
+    setActivePlans(plansRes.data || []);
     setLoading(false);
   };
 
