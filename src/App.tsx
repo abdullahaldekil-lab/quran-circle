@@ -74,6 +74,7 @@ import QuizComparison from "./pages/QuizComparison";
 import NarrationTest from "./pages/NarrationTest";
 import ReviewTest from "./pages/ReviewTest";
 import NarrationStats from "./pages/NarrationStats";
+import NarrationTestSettings from "./pages/NarrationTestSettings";
 import StudentAttendanceReport from "@/pages/StudentAttendanceReport";
 import StudentAnnualPlan from "@/pages/StudentAnnualPlan";
 import InternalRequests from "@/pages/InternalRequests";
