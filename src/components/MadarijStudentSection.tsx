@@ -254,9 +254,12 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
                 </Select>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1"><Label>الجزء</Label><Input type="number" min={1} max={30} value={form.part_number} onChange={e => setForm({...form, part_number: Number(e.target.value)})} /></div>
-              <div className="space-y-1"><Label>الحزب</Label><Input type="number" min={1} max={60} value={form.hizb_number} onChange={e => setForm({...form, hizb_number: Number(e.target.value)})} /></div>
+            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+              <div className="font-medium mb-1">الجزء والحزب (تلقائي)</div>
+              <div className="text-muted-foreground">
+                الجزء <span className="font-semibold text-foreground">{form.part_number}</span> — الحزب <span className="font-semibold text-foreground">{form.hizb_number}</span>
+                {!editingId && <span className="block text-xs mt-1">يتم تحديده تلقائياً بناءً على آخر تسجيل للطالب في برنامج مدارج</span>}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1"><Label>تاريخ البداية</Label><Input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} required /></div>
