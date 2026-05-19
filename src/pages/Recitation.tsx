@@ -385,8 +385,7 @@ const Recitation = () => {
                 });
               })()}
 
-                </div>
-              </div>
+
 
               {/* ملاحظات */}
               <div className="flex items-start gap-3 px-1 py-3">
