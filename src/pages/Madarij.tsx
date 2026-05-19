@@ -185,6 +185,52 @@ const Madarij = () => {
         </div>
       </div>
 
+      {/* Active Annual Plans */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-primary" />
+            الخطط السنوية النشطة ({activePlans.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {activePlans.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">لا توجد خطط سنوية نشطة</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>الطالب</TableHead>
+                  <TableHead>الحلقة</TableHead>
+                  <TableHead>النوع</TableHead>
+                  <TableHead>تاريخ البداية</TableHead>
+                  <TableHead>تاريخ النهاية</TableHead>
+                  <TableHead>الهدف (صفحات)</TableHead>
+                  <TableHead>عرض</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activePlans.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium"><StudentNameLink studentId={p.student_id} studentName={(p.students as any)?.full_name || "—"} /></TableCell>
+                    <TableCell>{(p.halaqat as any)?.name || "—"}</TableCell>
+                    <TableCell>{p.plan_type || "—"}</TableCell>
+                    <TableCell className="text-xs">{p.start_date}</TableCell>
+                    <TableCell className="text-xs">{p.end_date || "—"}</TableCell>
+                    <TableCell>{p.total_target_pages ?? "—"}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/student-annual-plan/${p.student_id}`)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Recent Enrollments */}
       <Card>
         <CardHeader>
