@@ -609,12 +609,16 @@ const NarrationTest = () => {
                         <TableHead className="text-center">الحزب</TableHead>
                         <TableHead className="text-center">المجموع</TableHead>
                         <TableHead className="text-center">تاريخ الاختبار</TableHead>
+                        <TableHead className="text-center">إجراء</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredPassed.map((s: any) => {
                         const last = studentSummary[s.id]?.lastResult;
                         const attemptNumber = studentSummary[s.id]?.attemptCount || 0;
+                        const currentHizb = studentSummary[s.id]?.currentHizb ? parseInt(studentSummary[s.id].currentHizb) : null;
+                        const lastHizb = last?.hizb ?? null;
+                        const canTestNext = currentHizb !== null && lastHizb !== null && currentHizb > lastHizb;
                         return (
                           <TableRow key={s.id}>
                             <TableCell><StudentNameLink studentId={s.id} studentName={s.full_name} /></TableCell>
@@ -626,6 +630,20 @@ const NarrationTest = () => {
                             <TableCell className="text-center">{last?.hizb || "—"}</TableCell>
                             <TableCell className="text-center font-bold text-emerald-700">{last?.score}</TableCell>
                             <TableCell className="text-center text-xs">{last && formatDateHijriOnly(last.date)}</TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!canTestNext}
+                                title={canTestNext ? `اختبار الحزب ${currentHizb}` : "بانتظار تحديث المعلم لإنهاء حفظ الحزب التالي في برنامج مدارج"}
+                                onClick={() => {
+                                  setSelectedIds((prev) => new Set([...prev, s.id]));
+                                  setActiveTab("test");
+                                }}
+                              >
+                                {canTestNext ? `اختبار الحزب ${currentHizb}` : "بانتظار التقدم"}
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         );
                       })}
