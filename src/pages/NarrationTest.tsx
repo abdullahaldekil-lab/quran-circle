@@ -228,6 +228,7 @@ const NarrationTest = () => {
           full_name: student.full_name,
           hizb: studentSummary[id]?.currentHizb || "",
           errors: 0,
+          lahn: 0,
           warnings: 0,
         };
       });
