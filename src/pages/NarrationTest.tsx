@@ -24,18 +24,21 @@ interface StudentRow {
   full_name: string;
   hizb: string;
   errors: number;
+  lahn: number;
   warnings: number;
 }
 
 const HIZB_OPTIONS = Array.from({ length: 60 }, (_, i) => String(i + 1));
-const ATTENDANCE_SCORE = 50;
-const PASS_THRESHOLD = 60;
-// New scoring: error = 5 points, warning = 1 point (out of 50 narration max)
-const ERROR_DEDUCTION = 5;
-const WARNING_DEDUCTION = 1;
 
-const calcNarrationScore = (errors: number, warnings: number) =>
-  Math.max(0, 50 - errors * ERROR_DEDUCTION - warnings * WARNING_DEDUCTION);
+// Defaults (overridden by settings table)
+const DEFAULT_SETTINGS = {
+  error_deduction: 5,
+  lahn_deduction: 2,
+  warning_deduction: 1,
+  pass_threshold: 60,
+  attendance_score: 50,
+  narration_max: 50,
+};
 
 const attemptLabel = (n: number) => (n === 1 ? "الأولى" : n === 2 ? "الثانية" : n >= 3 ? "الثالثة+" : "—");
 
