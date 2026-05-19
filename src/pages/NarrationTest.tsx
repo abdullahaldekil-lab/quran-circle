@@ -264,7 +264,7 @@ const NarrationTest = () => {
 
   const getTableData = () =>
     Object.values(studentRows).map((row) => {
-      const narrationScore = calcNarrationScore(row.errors, row.warnings);
+      const narrationScore = calcNarrationScore(row.errors, row.lahn, row.warnings);
       const total = narrationScore + ATTENDANCE_SCORE;
       const attemptNumber = (studentSummary[row.id]?.attemptCount || 0) + 1;
       return { ...row, narrationScore, total, passed: total >= PASS_THRESHOLD, attemptNumber };
@@ -291,6 +291,7 @@ const NarrationTest = () => {
         attempt_number: r.attemptNumber,
         hizb_number: parseInt(r.hizb),
         mistakes: r.errors,
+        lahn: r.lahn,
         warnings: r.warnings,
         narration_score: Number(r.narrationScore.toFixed(1)),
         total_score: Number(r.total.toFixed(1)),
