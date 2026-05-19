@@ -22,6 +22,7 @@ const Madarij = () => {
   const navigate = useNavigate();
   const [tracks, setTracks] = useState<any[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [activePlans, setActivePlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [trackDialogOpen, setTrackDialogOpen] = useState(false);
   const [editingTrack, setEditingTrack] = useState<any>(null);
@@ -31,12 +32,17 @@ const Madarij = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [tracksRes, enrollRes] = await Promise.all([
+    const [tracksRes, enrollRes, plansRes] = await Promise.all([
       supabase.from("madarij_tracks").select("*").eq("active", true).order("created_at"),
       supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name)").order("created_at", { ascending: false }).limit(50),
+      supabase.from("student_annual_plans")
+        .select("id, student_id, halaqa_id, plan_type, start_date, end_date, total_target_pages, students(full_name), halaqat(name)")
+        .eq("status", "active")
+        .order("created_at", { ascending: false }),
     ]);
     setTracks(tracksRes.data || []);
     setEnrollments(enrollRes.data || []);
+    setActivePlans(plansRes.data || []);
     setLoading(false);
   };
 
@@ -178,6 +184,52 @@ const Madarij = () => {
           ))}
         </div>
       </div>
+
+      {/* Active Annual Plans */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-primary" />
+            الخطط السنوية النشطة ({activePlans.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {activePlans.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">لا توجد خطط سنوية نشطة</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>الطالب</TableHead>
+                  <TableHead>الحلقة</TableHead>
+                  <TableHead>النوع</TableHead>
+                  <TableHead>تاريخ البداية</TableHead>
+                  <TableHead>تاريخ النهاية</TableHead>
+                  <TableHead>الهدف (صفحات)</TableHead>
+                  <TableHead>عرض</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activePlans.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium"><StudentNameLink studentId={p.student_id} studentName={(p.students as any)?.full_name || "—"} /></TableCell>
+                    <TableCell>{(p.halaqat as any)?.name || "—"}</TableCell>
+                    <TableCell>{p.plan_type || "—"}</TableCell>
+                    <TableCell className="text-xs">{p.start_date}</TableCell>
+                    <TableCell className="text-xs">{p.end_date || "—"}</TableCell>
+                    <TableCell>{p.total_target_pages ?? "—"}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/student-annual-plan/${p.student_id}`)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Enrollments */}
       <Card>

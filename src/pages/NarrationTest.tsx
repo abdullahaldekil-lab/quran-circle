@@ -202,16 +202,26 @@ const NarrationTest = () => {
     return map;
   }, [students, priorResults, enrollments]);
 
-  // Categorize students
+  // Categorize students. A passed student whose current hizb advanced past
+  // the last-tested hizb is treated as "not tested yet" for the new hizb.
   const categorized = useMemo(() => {
     const notTested: any[] = [];
     const passed: any[] = [];
     const failed: any[] = [];
     students.forEach((s: any) => {
       const summary = studentSummary[s.id];
-      if (!summary?.lastResult) notTested.push(s);
-      else if (summary.lastResult.passed) passed.push(s);
-      else failed.push(s);
+      if (!summary?.lastResult) { notTested.push(s); return; }
+      const currentHizb = summary.currentHizb ? parseInt(summary.currentHizb) : null;
+      const lastHizb = summary.lastResult.hizb ?? null;
+      if (summary.lastResult.passed) {
+        if (currentHizb !== null && lastHizb !== null && currentHizb > lastHizb) {
+          notTested.push(s);
+        } else {
+          passed.push(s);
+        }
+      } else {
+        failed.push(s);
+      }
     });
     return { notTested, passed, failed };
   }, [students, studentSummary]);

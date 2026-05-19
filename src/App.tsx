@@ -74,6 +74,7 @@ import QuizComparison from "./pages/QuizComparison";
 import NarrationTest from "./pages/NarrationTest";
 import ReviewTest from "./pages/ReviewTest";
 import NarrationStats from "./pages/NarrationStats";
+import NarrationTestSettings from "./pages/NarrationTestSettings";
 import StudentAttendanceReport from "@/pages/StudentAttendanceReport";
 import StudentAnnualPlan from "@/pages/StudentAnnualPlan";
 import InternalRequests from "@/pages/InternalRequests";
@@ -198,6 +199,7 @@ const AppRoutes = () => {
       <Route path="/narration-test" element={<ProtectedRoute path="/quran-narration"><NarrationTest /></ProtectedRoute>} />
       <Route path="/review-test" element={<ProtectedRoute path="/quran-narration"><ReviewTest /></ProtectedRoute>} />
       <Route path="/narration-stats" element={<ProtectedRoute path="/quran-narration"><NarrationStats /></ProtectedRoute>} />
+      <Route path="/narration-test-settings" element={<ProtectedRoute path="/quran-narration"><NarrationTestSettings /></ProtectedRoute>} />
       <Route path="/student-quiz" element={<ProtectedRoute path="/recitation"><StudentQuiz /></ProtectedRoute>} />
       <Route path="/quiz-results" element={<ProtectedRoute path="/quiz-results"><QuizResults /></ProtectedRoute>} />
       <Route path="/quiz-comparison" element={<ProtectedRoute path="/quiz-comparison"><QuizComparison /></ProtectedRoute>} />
