@@ -317,87 +317,74 @@ const Recitation = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-0">
-              {/* قسم الحفظ الجديد */}
-              <div className="p-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 space-y-3">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-green-600" />
-                  <span className="font-semibold text-green-800 dark:text-green-300">الحفظ الجديد</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="من: سورة / آية" value={form.memorized_from} onChange={(e) => setForm({ ...form, memorized_from: e.target.value })} className="text-sm h-9" />
-                  <Input placeholder="إلى: سورة / آية" value={form.memorized_to} onChange={(e) => setForm({ ...form, memorized_to: e.target.value })} className="text-sm h-9" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-green-700 dark:text-green-300 w-20 shrink-0">جودة الحفظ</span>
-                  <Slider value={[form.memorization_quality]} onValueChange={([v]) => setForm({ ...form, memorization_quality: v })} max={50} step={1} className="flex-1" />
-                  <span className="text-sm font-bold text-green-700 w-12 text-left">{form.memorization_quality}/50</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-green-700 dark:text-green-300">تصنيف الأخطاء</span>
-                    <span className="text-xs text-muted-foreground">
-                      المجموع: <span className="font-bold text-destructive">{form.mistakes_count}</span> ({Math.max(0, 20 - form.mistakes_count)}/20 درجة)
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: "jali", label: "لحن جلي", color: "text-red-700" },
-                      { key: "khafi", label: "لحن خفي", color: "text-orange-700" },
-                      { key: "taraddod", label: "تردد", color: "text-amber-700" },
-                      { key: "nisyan", label: "نسيان آية", color: "text-rose-700" },
-                    ].map((cat) => {
-                      const val = (form.mistakes_breakdown as any)[cat.key] || 0;
-                      const update = (delta: number) => {
-                        const next = Math.max(0, Math.min(20, val + delta));
-                        const newBreakdown = { ...form.mistakes_breakdown, [cat.key]: next };
-                        const total = Object.values(newBreakdown).reduce((a: number, b: any) => a + Number(b || 0), 0);
-                        setForm({ ...form, mistakes_breakdown: newBreakdown, mistakes_count: Math.min(20, total) });
-                      };
-                      return (
-                        <div key={cat.key} className="flex items-center justify-between gap-2 bg-white dark:bg-background rounded-md px-2 py-1 border">
-                          <span className={`text-xs font-medium ${cat.color}`}>{cat.label}</span>
-                          <div className="flex items-center gap-1">
-                            <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => update(-1)}>
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <span className="text-sm font-bold w-6 text-center">{val}</span>
-                            <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => update(1)}>
-                              <Plus className="w-3 h-3" />
-                            </Button>
-                          </div>
+              {(() => {
+                const SECTIONS = [
+                  { key: "memorization", title: "الحفظ الجديد", icon: BookOpen, fromKey: "memorized_from", toKey: "memorized_to",
+                    wrapper: "border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800",
+                    iconColor: "text-green-600", titleColor: "text-green-800 dark:text-green-300", chipColor: "text-green-700 dark:text-green-300" },
+                  { key: "review", title: "المراجعة", icon: RefreshCw, fromKey: "review_from", toKey: "review_to",
+                    wrapper: "border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800",
+                    iconColor: "text-blue-600", titleColor: "text-blue-800 dark:text-blue-300", chipColor: "text-blue-700 dark:text-blue-300" },
+                  { key: "linking", title: "الربط", icon: Link2, fromKey: "linking_from", toKey: "linking_to",
+                    wrapper: "border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800",
+                    iconColor: "text-purple-600", titleColor: "text-purple-800 dark:text-purple-300", chipColor: "text-purple-700 dark:text-purple-300" },
+                ] as const;
+                const CATEGORIES = [
+                  { key: "error",   label: "خطأ",  color: "text-red-700" },
+                  { key: "lahn",    label: "لحن",  color: "text-orange-700" },
+                  { key: "warning", label: "تنبيه", color: "text-amber-700" },
+                ] as const;
+                const updateCount = (section: string, cat: string, delta: number) => {
+                  const cur = form.mistakes_breakdown[section]?.[cat] ?? 0;
+                  const next = Math.max(0, cur + delta);
+                  const newSec = { ...(form.mistakes_breakdown[section] || { error: 0, lahn: 0, warning: 0 }), [cat]: next };
+                  setForm({ ...form, mistakes_breakdown: { ...form.mistakes_breakdown, [section]: newSec } });
+                };
+                return SECTIONS.map((sec, idx) => {
+                  const secCounts = form.mistakes_breakdown[sec.key] || { error: 0, lahn: 0, warning: 0 };
+                  const Icon = sec.icon;
+                  return (
+                    <div key={sec.key} className={`p-4 rounded-lg border space-y-3 ${sec.wrapper} ${idx > 0 ? "mt-3" : ""}`}>
+                      <div className="flex items-center gap-2">
+                        <Icon className={`w-5 h-5 ${sec.iconColor}`} />
+                        <span className={`font-semibold ${sec.titleColor}`}>{sec.title}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input placeholder="من: سورة / آية" value={(form as any)[sec.fromKey]} onChange={(e) => setForm({ ...form, [sec.fromKey]: e.target.value })} className="text-sm h-9" />
+                        <Input placeholder="إلى: سورة / آية" value={(form as any)[sec.toKey]}   onChange={(e) => setForm({ ...form, [sec.toKey]:   e.target.value })} className="text-sm h-9" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-sm font-medium ${sec.chipColor}`}>تصنيف الأخطاء</span>
+                          <span className="text-xs text-muted-foreground">
+                            المجموع: <span className="font-bold text-destructive">{(secCounts.error || 0) + (secCounts.lahn || 0) + (secCounts.warning || 0)}</span>
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {CATEGORIES.map((cat) => {
+                            const val = secCounts[cat.key] || 0;
+                            return (
+                              <div key={cat.key} className="flex items-center justify-between gap-2 bg-white dark:bg-background rounded-md px-2 py-1 border">
+                                <span className={`text-xs font-medium ${cat.color}`}>{cat.label}</span>
+                                <div className="flex items-center gap-1">
+                                  <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCount(sec.key, cat.key, -1)}>
+                                    <Minus className="w-3 h-3" />
+                                  </Button>
+                                  <span className="text-sm font-bold w-5 text-center">{val}</span>
+                                  <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCount(sec.key, cat.key, +1)}>
+                                    <Plus className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
 
-              {/* قسم المراجعة */}
-              <div className="p-4 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 space-y-3 mt-3">
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold text-blue-800 dark:text-blue-300">المراجعة</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="من: سورة / آية" value={form.review_from} onChange={(e) => setForm({ ...form, review_from: e.target.value })} className="text-sm h-9" />
-                  <Input placeholder="إلى: سورة / آية" value={form.review_to} onChange={(e) => setForm({ ...form, review_to: e.target.value })} className="text-sm h-9" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300 w-20 shrink-0">التجويد</span>
-                  <Slider value={[form.tajweed_score]} onValueChange={([v]) => setForm({ ...form, tajweed_score: v })} max={30} step={1} className="flex-1" />
-                  <span className="text-sm font-bold text-blue-700 w-12 text-left">{form.tajweed_score}/30</span>
-                </div>
-              </div>
-
-              {/* قسم الربط */}
-              <div className="p-4 rounded-lg border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800 space-y-3 mt-3">
-                <div className="flex items-center gap-2">
-                  <Link2 className="w-5 h-5 text-purple-600" />
-                  <span className="font-semibold text-purple-800 dark:text-purple-300">الربط</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="من: سورة / آية" value={form.linking_from} onChange={(e) => setForm({ ...form, linking_from: e.target.value })} className="text-sm h-9" />
-                  <Input placeholder="إلى: سورة / آية" value={form.linking_to} onChange={(e) => setForm({ ...form, linking_to: e.target.value })} className="text-sm h-9" />
                 </div>
               </div>
 
