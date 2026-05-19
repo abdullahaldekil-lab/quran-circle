@@ -24,18 +24,21 @@ interface StudentRow {
   full_name: string;
   hizb: string;
   errors: number;
+  lahn: number;
   warnings: number;
 }
 
 const HIZB_OPTIONS = Array.from({ length: 60 }, (_, i) => String(i + 1));
-const ATTENDANCE_SCORE = 50;
-const PASS_THRESHOLD = 60;
-// New scoring: error = 5 points, warning = 1 point (out of 50 narration max)
-const ERROR_DEDUCTION = 5;
-const WARNING_DEDUCTION = 1;
 
-const calcNarrationScore = (errors: number, warnings: number) =>
-  Math.max(0, 50 - errors * ERROR_DEDUCTION - warnings * WARNING_DEDUCTION);
+// Defaults (overridden by settings table)
+const DEFAULT_SETTINGS = {
+  error_deduction: 5,
+  lahn_deduction: 2,
+  warning_deduction: 1,
+  pass_threshold: 60,
+  attendance_score: 50,
+  narration_max: 50,
+};
 
 const attemptLabel = (n: number) => (n === 1 ? "الأولى" : n === 2 ? "الثانية" : n >= 3 ? "الثالثة+" : "—");
 
@@ -61,6 +64,25 @@ const NarrationTest = () => {
   const [historyDateFilter, setHistoryDateFilter] = useState("");
   const [resultFilter, setResultFilter] = useState<ResultFilter>("all");
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Load test settings (from narration_test_settings)
+  const { data: settings = DEFAULT_SETTINGS } = useQuery({
+    queryKey: ["narration_test_settings"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("narration_test_settings")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data as any) || DEFAULT_SETTINGS;
+    },
+  });
+
+  const calcNarrationScore = (errors: number, lahn: number, warnings: number) =>
+    Math.max(0, Number(settings.narration_max) - errors * Number(settings.error_deduction) - lahn * Number(settings.lahn_deduction) - warnings * Number(settings.warning_deduction));
+  const ATTENDANCE_SCORE = Number(settings.attendance_score);
+  const PASS_THRESHOLD = Number(settings.pass_threshold);
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
@@ -206,6 +228,7 @@ const NarrationTest = () => {
           full_name: student.full_name,
           hizb: studentSummary[id]?.currentHizb || "",
           errors: 0,
+          lahn: 0,
           warnings: 0,
         };
       });
@@ -241,7 +264,7 @@ const NarrationTest = () => {
 
   const getTableData = () =>
     Object.values(studentRows).map((row) => {
-      const narrationScore = calcNarrationScore(row.errors, row.warnings);
+      const narrationScore = calcNarrationScore(row.errors, row.lahn, row.warnings);
       const total = narrationScore + ATTENDANCE_SCORE;
       const attemptNumber = (studentSummary[row.id]?.attemptCount || 0) + 1;
       return { ...row, narrationScore, total, passed: total >= PASS_THRESHOLD, attemptNumber };
@@ -268,6 +291,7 @@ const NarrationTest = () => {
         attempt_number: r.attemptNumber,
         hizb_number: parseInt(r.hizb),
         mistakes: r.errors,
+        lahn: r.lahn,
         warnings: r.warnings,
         narration_score: Number(r.narrationScore.toFixed(1)),
         total_score: Number(r.total.toFixed(1)),
@@ -476,7 +500,7 @@ const NarrationTest = () => {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    احتساب الدرجات: خطأ = {ERROR_DEDUCTION} درجات، تنبيه = {WARNING_DEDUCTION} درجة. (من 50 + 50 حضور = 100)
+                    احتساب الدرجات: خطأ = {settings.error_deduction}، لحن = {settings.lahn_deduction}، تنبيه = {settings.warning_deduction}. (من {settings.narration_max} + {settings.attendance_score} حضور = {Number(settings.narration_max)+Number(settings.attendance_score)})
                   </p>
                 </CardHeader>
                 <CardContent className="p-0" ref={printRef}>
@@ -488,6 +512,7 @@ const NarrationTest = () => {
                           <TableHead className="text-center w-28">المرة</TableHead>
                           <TableHead className="text-center w-24">الحزب</TableHead>
                           <TableHead className="text-center w-20">الأخطاء</TableHead>
+                          <TableHead className="text-center w-20">اللحن</TableHead>
                           <TableHead className="text-center w-20">التنبيهات</TableHead>
                           <TableHead className="text-center w-24">درجة السرد</TableHead>
                           <TableHead className="text-center w-20">المجموع</TableHead>
@@ -496,7 +521,7 @@ const NarrationTest = () => {
                       </TableHeader>
                       <TableBody>
                         {Object.values(studentRows).map((row) => {
-                          const narrationScore = calcNarrationScore(row.errors, row.warnings);
+                          const narrationScore = calcNarrationScore(row.errors, row.lahn, row.warnings);
                           const total = narrationScore + ATTENDANCE_SCORE;
                           const passed = total >= PASS_THRESHOLD;
                           const attemptNumber = (studentSummary[row.id]?.attemptCount || 0) + 1;
@@ -517,6 +542,11 @@ const NarrationTest = () => {
                               <TableCell className="text-center">
                                 <Input type="number" min={0} value={row.errors}
                                   onChange={(e) => updateRow(row.id, "errors", Math.max(0, parseInt(e.target.value) || 0))}
+                                  className="h-8 text-center text-xs w-16 mx-auto" />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Input type="number" min={0} value={row.lahn}
+                                  onChange={(e) => updateRow(row.id, "lahn", Math.max(0, parseInt(e.target.value) || 0))}
                                   className="h-8 text-center text-xs w-16 mx-auto" />
                               </TableCell>
                               <TableCell className="text-center">
@@ -579,12 +609,16 @@ const NarrationTest = () => {
                         <TableHead className="text-center">الحزب</TableHead>
                         <TableHead className="text-center">المجموع</TableHead>
                         <TableHead className="text-center">تاريخ الاختبار</TableHead>
+                        <TableHead className="text-center">إجراء</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredPassed.map((s: any) => {
                         const last = studentSummary[s.id]?.lastResult;
                         const attemptNumber = studentSummary[s.id]?.attemptCount || 0;
+                        const currentHizb = studentSummary[s.id]?.currentHizb ? parseInt(studentSummary[s.id].currentHizb) : null;
+                        const lastHizb = last?.hizb ?? null;
+                        const canTestNext = currentHizb !== null && lastHizb !== null && currentHizb > lastHizb;
                         return (
                           <TableRow key={s.id}>
                             <TableCell><StudentNameLink studentId={s.id} studentName={s.full_name} /></TableCell>
@@ -596,6 +630,20 @@ const NarrationTest = () => {
                             <TableCell className="text-center">{last?.hizb || "—"}</TableCell>
                             <TableCell className="text-center font-bold text-emerald-700">{last?.score}</TableCell>
                             <TableCell className="text-center text-xs">{last && formatDateHijriOnly(last.date)}</TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!canTestNext}
+                                title={canTestNext ? `اختبار الحزب ${currentHizb}` : "بانتظار تحديث المعلم لإنهاء حفظ الحزب التالي في برنامج مدارج"}
+                                onClick={() => {
+                                  setSelectedIds((prev) => new Set([...prev, s.id]));
+                                  setActiveTab("test");
+                                }}
+                              >
+                                {canTestNext ? `اختبار الحزب ${currentHizb}` : "بانتظار التقدم"}
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         );
                       })}

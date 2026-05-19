@@ -2426,6 +2426,7 @@ export type Database = {
           halaqa_id: string
           hizb_number: number | null
           id: string
+          lahn: number
           mistakes: number
           narration_score: number
           notes: string | null
@@ -2444,6 +2445,7 @@ export type Database = {
           halaqa_id: string
           hizb_number?: number | null
           id?: string
+          lahn?: number
           mistakes?: number
           narration_score?: number
           notes?: string | null
@@ -2462,6 +2464,7 @@ export type Database = {
           halaqa_id?: string
           hizb_number?: number | null
           id?: string
+          lahn?: number
           mistakes?: number
           narration_score?: number
           notes?: string | null
@@ -2503,6 +2506,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      narration_test_settings: {
+        Row: {
+          attendance_score: number
+          error_deduction: number
+          id: string
+          lahn_deduction: number
+          narration_max: number
+          pass_threshold: number
+          updated_at: string
+          updated_by: string | null
+          warning_deduction: number
+        }
+        Insert: {
+          attendance_score?: number
+          error_deduction?: number
+          id?: string
+          lahn_deduction?: number
+          narration_max?: number
+          pass_threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+          warning_deduction?: number
+        }
+        Update: {
+          attendance_score?: number
+          error_deduction?: number
+          id?: string
+          lahn_deduction?: number
+          narration_max?: number
+          pass_threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+          warning_deduction?: number
+        }
+        Relationships: []
       }
       notification_templates: {
         Row: {
