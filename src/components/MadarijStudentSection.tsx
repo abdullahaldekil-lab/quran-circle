@@ -59,14 +59,24 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
     fetchMeta();
   }, [studentId]);
 
+  const computeNextHizb = () => {
+    // Highest previously enrolled hizb + 1, fallback 1
+    const maxHizb = enrollments.reduce((m, e) => Math.max(m, Number(e.hizb_number) || 0), 0);
+    const next = Math.min(60, maxHizb + 1 || 1);
+    const part = Math.max(1, Math.min(30, Math.ceil(next / 2)));
+    return { hizb_number: next, part_number: part };
+  };
+
   const openNewDialog = () => {
     if (hasActiveEnrollment) {
       toast.error("لا يمكن تسجيل الطالب في أكثر من مسار نشط في نفس الوقت");
       return;
     }
     setEditingId(null);
+    const auto = computeNextHizb();
     setForm({
-      track_id: "", level_track_id: "", branch_id: "", part_number: 1, hizb_number: 1,
+      track_id: "", level_track_id: "", branch_id: "",
+      part_number: auto.part_number, hizb_number: auto.hizb_number,
       start_date: new Date().toISOString().split("T")[0], end_date: "",
     });
     setDialogOpen(true);
