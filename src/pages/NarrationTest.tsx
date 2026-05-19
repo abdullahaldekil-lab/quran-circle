@@ -500,7 +500,7 @@ const NarrationTest = () => {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    احتساب الدرجات: خطأ = {ERROR_DEDUCTION} درجات، تنبيه = {WARNING_DEDUCTION} درجة. (من 50 + 50 حضور = 100)
+                    احتساب الدرجات: خطأ = {settings.error_deduction}، لحن = {settings.lahn_deduction}، تنبيه = {settings.warning_deduction}. (من {settings.narration_max} + {settings.attendance_score} حضور = {Number(settings.narration_max)+Number(settings.attendance_score)})
                   </p>
                 </CardHeader>
                 <CardContent className="p-0" ref={printRef}>
@@ -512,6 +512,7 @@ const NarrationTest = () => {
                           <TableHead className="text-center w-28">المرة</TableHead>
                           <TableHead className="text-center w-24">الحزب</TableHead>
                           <TableHead className="text-center w-20">الأخطاء</TableHead>
+                          <TableHead className="text-center w-20">اللحن</TableHead>
                           <TableHead className="text-center w-20">التنبيهات</TableHead>
                           <TableHead className="text-center w-24">درجة السرد</TableHead>
                           <TableHead className="text-center w-20">المجموع</TableHead>
@@ -520,7 +521,7 @@ const NarrationTest = () => {
                       </TableHeader>
                       <TableBody>
                         {Object.values(studentRows).map((row) => {
-                          const narrationScore = calcNarrationScore(row.errors, row.warnings);
+                          const narrationScore = calcNarrationScore(row.errors, row.lahn, row.warnings);
                           const total = narrationScore + ATTENDANCE_SCORE;
                           const passed = total >= PASS_THRESHOLD;
                           const attemptNumber = (studentSummary[row.id]?.attemptCount || 0) + 1;
@@ -541,6 +542,11 @@ const NarrationTest = () => {
                               <TableCell className="text-center">
                                 <Input type="number" min={0} value={row.errors}
                                   onChange={(e) => updateRow(row.id, "errors", Math.max(0, parseInt(e.target.value) || 0))}
+                                  className="h-8 text-center text-xs w-16 mx-auto" />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Input type="number" min={0} value={row.lahn}
+                                  onChange={(e) => updateRow(row.id, "lahn", Math.max(0, parseInt(e.target.value) || 0))}
                                   className="h-8 text-center text-xs w-16 mx-auto" />
                               </TableCell>
                               <TableCell className="text-center">
