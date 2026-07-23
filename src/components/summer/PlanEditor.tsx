@@ -5,9 +5,40 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PLAN_TRACKS, type PlanType } from "@/lib/summer-scoring";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatDateTimeSmart } from "@/lib/hijri";
+import { History, ArrowLeft, User } from "lucide-react";
+
+interface ChangeLog {
+  id: string;
+  old_plan_type: string | null;
+  new_plan_type: string | null;
+  old_plan_track: string | null;
+  new_plan_track: string | null;
+  old_plan_goal: string | null;
+  new_plan_goal: string | null;
+  old_assigned_reciter: string | null;
+  new_assigned_reciter: string | null;
+  changed_by_name: string | null;
+  created_at: string;
+}
+
+const PLAN_LABEL: Record<string, string> = { hifz: "حفظ", taahud: "تعاهد" };
+
+function fieldRow(label: string, oldVal: string | null, newVal: string | null) {
+  if ((oldVal || "") === (newVal || "")) return null;
+  return (
+    <div className="flex items-center gap-2 text-xs flex-wrap">
+      <span className="text-muted-foreground min-w-16">{label}:</span>
+      <Badge variant="outline" className="text-xs">{oldVal || "—"}</Badge>
+      <ArrowLeft className="w-3 h-3 text-muted-foreground rtl:rotate-180" />
+      <Badge variant="secondary" className="text-xs">{newVal || "—"}</Badge>
+    </div>
+  );
+}
 
 interface Props {
   open: boolean;
