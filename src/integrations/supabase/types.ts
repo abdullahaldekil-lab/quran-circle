@@ -2731,32 +2731,38 @@ export type Database = {
       }
       preparation_config: {
         Row: {
+          absent_minutes: number | null
           auto_sync_asr: boolean | null
           base_prayer: string
           duration_minutes: number
           id: string
           late_tolerance_minutes: number | null
           offset_minutes: number
+          tardiness_minutes: number | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          absent_minutes?: number | null
           auto_sync_asr?: boolean | null
           base_prayer?: string
           duration_minutes?: number
           id?: string
           late_tolerance_minutes?: number | null
           offset_minutes?: number
+          tardiness_minutes?: number | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          absent_minutes?: number | null
           auto_sync_asr?: boolean | null
           base_prayer?: string
           duration_minutes?: number
           id?: string
           late_tolerance_minutes?: number | null
           offset_minutes?: number
+          tardiness_minutes?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -2869,6 +2875,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      program_materials: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          file_path: string | null
+          id: string
+          material_type: string
+          order_index: number | null
+          program_id: string | null
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          material_type?: string
+          order_index?: number | null
+          program_id?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          material_type?: string
+          order_index?: number | null
+          program_id?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
       }
       program_quiz_results: {
         Row: {
@@ -3314,8 +3365,12 @@ export type Database = {
           early_leave_minutes: number
           id: string
           late_minutes: number
+          latitude: number | null
+          longitude: number | null
           notes: string | null
+          qr_code: string | null
           shift_id: string | null
+          source: string | null
           staff_id: string
           status: string
           total_work_minutes: number
@@ -3329,8 +3384,12 @@ export type Database = {
           early_leave_minutes?: number
           id?: string
           late_minutes?: number
+          latitude?: number | null
+          longitude?: number | null
           notes?: string | null
+          qr_code?: string | null
           shift_id?: string | null
+          source?: string | null
           staff_id: string
           status?: string
           total_work_minutes?: number
@@ -3344,8 +3403,12 @@ export type Database = {
           early_leave_minutes?: number
           id?: string
           late_minutes?: number
+          latitude?: number | null
+          longitude?: number | null
           notes?: string | null
+          qr_code?: string | null
           shift_id?: string | null
+          source?: string | null
           staff_id?: string
           status?: string
           total_work_minutes?: number
@@ -3398,6 +3461,42 @@ export type Database = {
           id?: string
           name?: string
           start_time?: string
+        }
+        Relationships: []
+      }
+      staff_checkin_qr: {
+        Row: {
+          active: boolean | null
+          code: string
+          created_at: string
+          id: string
+          label: string | null
+          latitude: number | null
+          longitude: number | null
+          radius_meters: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          code: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          radius_meters?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          radius_meters?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -4473,6 +4572,187 @@ export type Database = {
             columns: ["halaqa_id"]
             isOneToOne: false
             referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      summer_attendance: {
+        Row: {
+          attendance_date: string
+          created_at: string
+          id: string
+          notes: string | null
+          recorded_by: string | null
+          status: string
+          summer_student_id: string
+        }
+        Insert: {
+          attendance_date: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          recorded_by?: string | null
+          status?: string
+          summer_student_id: string
+        }
+        Update: {
+          attendance_date?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          recorded_by?: string | null
+          status?: string
+          summer_student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summer_attendance_summer_student_id_fkey"
+            columns: ["summer_student_id"]
+            isOneToOne: false
+            referencedRelation: "summer_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      summer_maqare: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          maqra_type: string
+          name: string
+          program_id: string
+          teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          maqra_type?: string
+          name: string
+          program_id: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          maqra_type?: string
+          name?: string
+          program_id?: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summer_maqare_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "summer_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      summer_programs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      summer_students: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          id: string
+          joined_at: string
+          maqra_id: string
+          source_halaqa_id: string | null
+          student_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          joined_at?: string
+          maqra_id: string
+          source_halaqa_id?: string | null
+          student_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          joined_at?: string
+          maqra_id?: string
+          source_halaqa_id?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summer_students_maqra_id_fkey"
+            columns: ["maqra_id"]
+            isOneToOne: false
+            referencedRelation: "summer_maqare"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "summer_students_source_halaqa_id_fkey"
+            columns: ["source_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "summer_students_source_halaqa_id_fkey"
+            columns: ["source_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "summer_students_source_halaqa_id_fkey"
+            columns: ["source_halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "summer_students_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -5793,7 +6073,12 @@ export type Database = {
       }
     }
     Enums: {
-      attendance_status: "present" | "absent" | "late" | "excused"
+      attendance_status:
+        | "present"
+        | "absent"
+        | "late"
+        | "excused"
+        | "late_excused"
       enrollment_request_status:
         | "pending"
         | "approved"
@@ -5952,7 +6237,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      attendance_status: ["present", "absent", "late", "excused"],
+      attendance_status: [
+        "present",
+        "absent",
+        "late",
+        "excused",
+        "late_excused",
+      ],
       enrollment_request_status: [
         "pending",
         "approved",
