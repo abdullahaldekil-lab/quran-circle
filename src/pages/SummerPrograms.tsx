@@ -250,49 +250,59 @@ export default function SummerPrograms() {
 
               <TabsContent value="maqare" className="space-y-3">
                 <div className="flex justify-end">
-                  <Dialog open={maqraOpen} onOpenChange={setMaqraOpen}>
-                    <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />مقرأة جديدة</Button></DialogTrigger>
-                    <DialogContent dir="rtl">
-                      <DialogHeader><DialogTitle>إضافة مقرأة</DialogTitle></DialogHeader>
-                      <div className="space-y-3">
-                        <div><Label>الاسم</Label><Input value={maqraForm.name} onChange={e => setMaqraForm({ ...maqraForm, name: e.target.value })} /></div>
-                        <div><Label>النوع</Label>
-                          <Select value={maqraForm.maqra_type} onValueChange={v => setMaqraForm({ ...maqraForm, maqra_type: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="male">بنين</SelectItem>
-                              <SelectItem value="female">بنات</SelectItem>
-                              <SelectItem value="mixed">مختلط</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div><Label>الموقع</Label><Input value={maqraForm.location} onChange={e => setMaqraForm({ ...maqraForm, location: e.target.value })} /></div>
-                        <div><Label>المعلم</Label>
-                          <Select value={maqraForm.teacher_id} onValueChange={v => setMaqraForm({ ...maqraForm, teacher_id: v })}>
-                            <SelectTrigger><SelectValue placeholder="اختر معلماً" /></SelectTrigger>
-                            <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <DialogFooter><Button onClick={createMaqra}>حفظ</Button></DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <Button size="sm" onClick={openNewMaqra}><Plus className="w-4 h-4 ml-1" />مقرأة جديدة</Button>
                 </div>
+                <Dialog open={maqraOpen} onOpenChange={(v) => { setMaqraOpen(v); if (!v) setEditingMaqraId(null); }}>
+                  <DialogContent dir="rtl">
+                    <DialogHeader><DialogTitle>{editingMaqraId ? "تعديل مقرأة" : "إضافة مقرأة"}</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                      <div><Label>الاسم</Label><Input value={maqraForm.name} onChange={e => setMaqraForm({ ...maqraForm, name: e.target.value })} /></div>
+                      <div><Label>النوع</Label>
+                        <Select value={maqraForm.maqra_type} onValueChange={v => setMaqraForm({ ...maqraForm, maqra_type: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">بنين</SelectItem>
+                            <SelectItem value="female">بنات</SelectItem>
+                            <SelectItem value="mixed">مختلط</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label>الموقع</Label><Input value={maqraForm.location} onChange={e => setMaqraForm({ ...maqraForm, location: e.target.value })} /></div>
+                      <div><Label>المعلم</Label>
+                        <Select value={maqraForm.teacher_id} onValueChange={v => setMaqraForm({ ...maqraForm, teacher_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="اختر معلماً" /></SelectTrigger>
+                          <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter><Button onClick={saveMaqra}>حفظ</Button></DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {maqare.map(m => (
-                    <Card key={m.id} className={`cursor-pointer hover:border-primary ${selectedMaqra === m.id ? "border-primary" : ""}`} onClick={() => { setSelectedMaqra(m.id); setTab("students"); }}>
-                      <CardContent className="pt-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-semibold">{m.name}</p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" />{m.location || "—"}</p>
-                            <Badge variant="outline" className="mt-2">{m.maqra_type === "male" ? "بنين" : m.maqra_type === "female" ? "بنات" : "مختلط"}</Badge>
+                  {maqare.map(m => {
+                    const teacher = teachers.find(t => t.id === m.teacher_id);
+                    return (
+                      <Card key={m.id} className={`cursor-pointer hover:border-primary ${selectedMaqra === m.id ? "border-primary" : ""}`} onClick={() => { setSelectedMaqra(m.id); setTab("students"); }}>
+                        <CardContent className="pt-4">
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold">{m.name}</p>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" />{m.location || "—"}</p>
+                              {teacher && <p className="text-xs text-muted-foreground mt-1">المعلم: {teacher.full_name}</p>}
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                <Badge variant="outline">{m.maqra_type === "male" ? "بنين" : m.maqra_type === "female" ? "بنات" : "مختلط"}</Badge>
+                                <Badge variant="secondary" className="gap-1"><Users className="w-3 h-3" />{maqraCounts[m.id] || 0} طالب</Badge>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openEditMaqra(m); }}><Pencil className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); deleteMaqra(m.id); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                            </div>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); deleteMaqra(m.id); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                   {!maqare.length && <p className="text-muted-foreground col-span-full">لا توجد مقارئ.</p>}
                 </div>
               </TabsContent>
