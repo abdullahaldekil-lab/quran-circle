@@ -379,9 +379,14 @@ export default function SummerPrograms() {
 
       <div className="flex flex-wrap gap-2">
         {programs.map(p => (
-          <Button key={p.id} variant={selectedProgram === p.id ? "default" : "outline"} onClick={() => setSelectedProgram(p.id)}>
-            {p.name} <Badge variant="secondary" className="mr-2">{p.status}</Badge>
-          </Button>
+          <div key={p.id} className="flex items-center gap-1">
+            <Button variant={selectedProgram === p.id ? "default" : "outline"} onClick={() => setSelectedProgram(p.id)}>
+              {p.name} <Badge variant="secondary" className="mr-2">{p.status}</Badge>
+            </Button>
+            <Button variant="ghost" size="icon" title="حذف البرنامج" onClick={() => deleteProgram(p.id, p.name)}>
+              <Trash2 className="w-4 h-4 text-destructive" />
+            </Button>
+          </div>
         ))}
         {!programs.length && <p className="text-muted-foreground">لا توجد برامج بعد.</p>}
       </div>
