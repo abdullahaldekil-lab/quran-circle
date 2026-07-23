@@ -45,16 +45,16 @@ export const calcLinkScore = (r: DailyRecordInput): number => {
 };
 
 export const calcAmyalScore = (r: DailyRecordInput): number =>
-  r.plan_type === "taahud" ? clamp(r.amyal_score, 0, 5) : 5; // hifz reserves 5 pts (listening+repetitions already in new)
+  r.plan_type === "taahud" ? clamp(r.amyal_score, 0, 5) : 0;
 
+// Total is always out of 40:
+//   hifz   = new(0..15) + link(0..15) + engagement(10, day completion)
+//   taahud = new(0..15) + link(0..15) + link_execution(5) + amyal(0..5)
 export const calcTotalScore = (r: DailyRecordInput): number => {
   const n = calcNewScore(r);
   const l = calcLinkScore(r);
-  const extra = r.plan_type === "taahud" ? clamp(r.amyal_score, 0, 5) : 10; // hifz: 5 listening + 5 repetitions already in `n`? no — in taahud extras split.
-  // For hifz the 40 pts = new(15, includes listening+repetitions bonuses) + link(15) + fixed 10 pts of engagement (attendance + full-day work).
-  // For taahud the 40 pts = new(15) + link(15) + amyal(5) + test bonus already inside new.
-  const totalRaw = r.plan_type === "hifz" ? n + l + 10 : n + l + extra;
-  return Math.round(clamp(totalRaw, 0, 40) * 10) / 10;
+  const tail = r.plan_type === "hifz" ? 10 : 5 + clamp(r.amyal_score, 0, 5);
+  return Math.round(clamp(n + l + tail, 0, 40) * 10) / 10;
 };
 
 export const PLAN_TRACKS: Record<PlanType, string[]> = {
