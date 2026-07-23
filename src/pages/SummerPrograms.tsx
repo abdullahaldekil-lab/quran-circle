@@ -310,19 +310,32 @@ export default function SummerPrograms() {
               <TabsContent value="students" className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4" />{currentMaqra?.name} — {summerStudents.length} طالب</h3>
-                  <Dialog open={addStuOpen} onOpenChange={setAddStuOpen}>
-                    <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />إضافة طالب</Button></DialogTrigger>
-                    <DialogContent dir="rtl">
-                      <DialogHeader><DialogTitle>إضافة طالب للمقرأة</DialogTitle></DialogHeader>
-                      <Select value={pickStudent} onValueChange={setPickStudent}>
-                        <SelectTrigger><SelectValue placeholder="اختر طالباً" /></SelectTrigger>
-                        <SelectContent className="max-h-80">
+                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); } }}>
+                    <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
+                    <DialogContent dir="rtl" className="max-w-lg">
+                      <DialogHeader><DialogTitle>ربط طلاب بالمقرأة</DialogTitle></DialogHeader>
+                      <div className="space-y-2">
+                        <Input placeholder="بحث بالاسم..." value={stuSearch} onChange={e => setStuSearch(e.target.value)} />
+                        <p className="text-xs text-muted-foreground">تم تحديد {pickStudents.length} طالب</p>
+                        <div className="border rounded max-h-72 overflow-y-auto divide-y">
                           {allStudents
                             .filter(s => !summerStudents.find(ss => ss.student_id === s.id))
-                            .map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <DialogFooter><Button onClick={addStudent}>إضافة</Button></DialogFooter>
+                            .filter(s => !stuSearch || s.full_name.includes(stuSearch))
+                            .slice(0, 200)
+                            .map(s => {
+                              const checked = pickStudents.includes(s.id);
+                              return (
+                                <label key={s.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-muted/50">
+                                  <Checkbox checked={checked} onCheckedChange={(v) => {
+                                    setPickStudents(prev => v ? [...prev, s.id] : prev.filter(x => x !== s.id));
+                                  }} />
+                                  <span className="text-sm">{s.full_name}</span>
+                                </label>
+                              );
+                            })}
+                        </div>
+                      </div>
+                      <DialogFooter><Button onClick={addStudents} disabled={!pickStudents.length}>ربط ({pickStudents.length})</Button></DialogFooter>
                     </DialogContent>
                   </Dialog>
                 </div>
@@ -346,6 +359,9 @@ export default function SummerPrograms() {
                         </Button>
                         <Button variant="default" size="sm" disabled={!s.plan_type} onClick={() => setDailyTarget(s)}>
                           <ClipboardList className="w-3.5 h-3.5 ml-1" />سجل يومي
+                        </Button>
+                        <Button variant="outline" size="icon" title="نقل إلى مقرأة أخرى" onClick={() => { setTransferTarget(s); setTransferMaqraId(""); }}>
+                          <ArrowRightLeft className="w-4 h-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
                       </div>
