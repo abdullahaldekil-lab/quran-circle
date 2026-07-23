@@ -145,9 +145,11 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
   const markDone = async (type: "lesson" | "tarbia") => {
     try {
       const now = new Date().toISOString();
+      const currentDone = type === "lesson" ? !!todaySession?.lesson_done : !!todaySession?.tarbia_done;
+      const newVal = !currentDone;
       const updates = type === "lesson"
-        ? { lesson_done: true, lesson_done_at: now }
-        : { tarbia_done: true, tarbia_done_at: now };
+        ? { lesson_done: newVal, lesson_done_at: newVal ? now : null }
+        : { tarbia_done: newVal, tarbia_done_at: newVal ? now : null };
       if (todaySession?.id) {
         const { error } = await (supabase as any)
           .from("talqeen_sessions")
@@ -307,13 +309,13 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
 
             {/* شرح الدرس */}
             <button
-              onClick={() => !todaySession?.lesson_done && markDone("lesson")}
-              disabled={!!todaySession?.lesson_done}
+              onClick={() => markDone("lesson")}
               className={`rounded-2xl p-4 border-2 text-right transition-all ${
                 todaySession?.lesson_done
                   ? "bg-green-50 border-green-400"
                   : "bg-card border-border hover:border-blue-300"
               }`}
+              title={todaySession?.lesson_done ? "اضغط للتراجع" : "اضغط عند الإتمام"}
             >
               <div className="flex justify-between items-start mb-2">
                 <span className="text-2xl">{todaySession?.lesson_done ? "✅" : "⭕"}</span>
@@ -327,13 +329,13 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
 
             {/* التربوي */}
             <button
-              onClick={() => !todaySession?.tarbia_done && markDone("tarbia")}
-              disabled={!!todaySession?.tarbia_done}
+              onClick={() => markDone("tarbia")}
               className={`rounded-2xl p-4 border-2 text-right transition-all ${
                 todaySession?.tarbia_done
                   ? "bg-green-50 border-green-400"
                   : "bg-card border-border hover:border-purple-300"
               }`}
+              title={todaySession?.tarbia_done ? "اضغط للتراجع" : "اضغط عند الإتمام"}
             >
               <div className="flex justify-between items-start mb-2">
                 <span className="text-2xl">{todaySession?.tarbia_done ? "✅" : "⭕"}</span>
