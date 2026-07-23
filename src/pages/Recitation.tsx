@@ -30,11 +30,7 @@ const Recitation = () => {
   const [saving, setSaving] = useState(false);
   const [audioUrl, setAudioUrl] = useState("");
   // New per-section error structure: { error, lahn, warning } × { memorization, review, linking }
-  const emptyBreakdown = () => ({
-    memorization: { error: 0, lahn: 0, warning: 0 },
-    review:       { error: 0, lahn: 0, warning: 0 },
-    linking:      { error: 0, lahn: 0, warning: 0 },
-  });
+  const emptyBreakdown = () => sharedEmptyBreakdown();
   const [form, setForm] = useState({
     memorized_from: "",
     memorized_to: "",
