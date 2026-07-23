@@ -9,6 +9,7 @@ import { Download, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
+import { buildNazemRow } from "@/lib/nazem-export";
 
 const NazemExport = () => {
   const today = new Date().toISOString().split("T")[0];
