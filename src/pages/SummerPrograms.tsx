@@ -283,12 +283,13 @@ export default function SummerPrograms() {
     const planType = (maqra?.plan_category || null) as PlanType | null;
     const planTrack = planType ? (linkPlanTrack || null) : null;
     const reciter = linkReciter.trim() || null;
-    const juz = parseFloat(linkJuz) || 0;
-    const extra = parseInt(linkExtraPages) || 0;
-    const pagesTarget = juzToPages(juz, extra);
+    const juzFrom = parseInt(linkJuzFrom) || 0;
+    const juzTo = parseInt(linkJuzTo) || 0;
+    const pagesTarget = juzRangeToPages(juzFrom, juzTo);
     const startDate = linkStartDate || null;
     const endDate = linkEndDate || null;
-    const daily = computeDailyPages(pagesTarget, startDate, endDate);
+    const workingDays = computeWorkingDays(startDate, endDate, holidays);
+    const daily = computeDailyPagesWorking(pagesTarget, workingDays);
     const rows = pickStudents.map(sid => {
       const stu = allStudents.find(s => s.id === sid);
       return {
@@ -298,18 +299,21 @@ export default function SummerPrograms() {
         plan_type: planType,
         plan_track: planTrack,
         assigned_reciter: reciter,
+        juz_from: juzFrom || null,
+        juz_to: juzTo || null,
         pages_target: pagesTarget,
         plan_start_date: startDate,
         plan_end_date: endDate,
+        working_days: workingDays || null,
         daily_pages: daily,
         active: true,
-      };
+      } as any;
     });
     const { error } = await supabase.from("summer_students").upsert(rows, { onConflict: "maqra_id,student_id" });
     if (error) return toast.error(error.message);
-    toast.success(`تمت إضافة ${rows.length} طالب — الحد اليومي: ${daily} وجه`);
+    toast.success(`تمت إضافة ${rows.length} طالب — ${workingDays} يوم عمل · ${daily} وجه/يوم`);
     setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter("");
-    setLinkJuz(""); setLinkExtraPages(""); setLinkStartDate(""); setLinkEndDate("");
+    setLinkJuzFrom(""); setLinkJuzTo(""); setLinkStartDate(""); setLinkEndDate("");
     setAddStuOpen(false);
     loadSummerStudents(selectedMaqra);
     if (selectedProgram) { loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); }
