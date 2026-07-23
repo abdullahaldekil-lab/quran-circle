@@ -60,6 +60,8 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
   const [goal, setGoal] = useState(initial.plan_goal || "");
   const [reciter, setReciter] = useState(initial.assigned_reciter || "");
   const [saving, setSaving] = useState(false);
+  const [logs, setLogs] = useState<ChangeLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
 
   useEffect(() => {
     setPlanType(initial.plan_type || "hifz");
