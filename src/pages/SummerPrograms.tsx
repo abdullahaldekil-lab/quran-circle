@@ -10,11 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2 } from "lucide-react";
+import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOpen } from "lucide-react";
+import PlanEditor from "@/components/summer/PlanEditor";
+import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
+import type { PlanType } from "@/lib/summer-scoring";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
 type Maqra = { id: string; program_id: string; name: string; maqra_type: string; location: string | null; teacher_id: string | null };
-type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null };
+type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null; plan_type: PlanType | null; plan_track: string | null; plan_goal: string | null; assigned_reciter: string | null };
 type StudentLite = { id: string; full_name: string; halaqa_id: string | null };
 type Teacher = { id: string; full_name: string };
 
