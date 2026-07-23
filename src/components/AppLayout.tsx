@@ -237,6 +237,16 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    id: "summer",
+    label: "البرنامج الصيفي والمواد",
+    icon: Sun,
+    color: "text-amber-400",
+    items: [
+      { to: "/summer-programs", icon: Sun, label: "البرامج الصيفية" },
+      { to: "/program-materials", icon: Library, label: "مواد البرامج" },
+    ],
+  },
+  {
     id: "admin",
     label: "الإدارة والإعدادات",
     icon: ShieldCheck,

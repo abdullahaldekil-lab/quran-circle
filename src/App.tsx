@@ -97,6 +97,8 @@ import GuardianApprovals from "./pages/admin/GuardianApprovals";
 import GuardianLinkRequest from "./pages/guardian/GuardianLinkRequest";
 import ExternalReviewer from "./pages/ExternalReviewer";
 import StudentPortal from "./pages/StudentPortal";
+import SummerPrograms from "./pages/SummerPrograms";
+import ProgramMaterials from "./pages/ProgramMaterials";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -236,6 +238,9 @@ const AppRoutes = () => {
       <Route path="/admin/guardian-excuses" element={<ProtectedRoute path="/admin/guardian-excuses"><GuardianExcusesAdmin /></ProtectedRoute>} />
       <Route path="/admin/teacher-evaluations" element={<ProtectedRoute path="/admin/teacher-evaluations"><TeacherEvaluationsReport /></ProtectedRoute>} />
       <Route path="/admin/guardian-approvals" element={<ProtectedRoute path="/admin/guardian-approvals"><GuardianApprovals /></ProtectedRoute>} />
+
+      <Route path="/summer-programs" element={<ProtectedRoute path="/summer-programs"><SummerPrograms /></ProtectedRoute>} />
+      <Route path="/program-materials" element={<ProtectedRoute path="/program-materials"><ProgramMaterials /></ProtectedRoute>} />
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
