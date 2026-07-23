@@ -297,8 +297,9 @@ export default function SummerPrograms() {
                 <TabsTrigger value="maqare">المقارئ</TabsTrigger>
                 <TabsTrigger value="students" disabled={!selectedMaqra}>الطلاب</TabsTrigger>
                 <TabsTrigger value="attendance" disabled={!selectedMaqra}>الحضور</TabsTrigger>
-                <TabsTrigger value="records" disabled={!selectedMaqra}>السجل اليومي</TabsTrigger>
-                <TabsTrigger value="stats"><BarChart3 className="w-3.5 h-3.5 ml-1" />الإحصائيات</TabsTrigger>
+               <TabsTrigger value="records" disabled={!selectedMaqra}>السجل اليومي</TabsTrigger>
+               <TabsTrigger value="schedule" disabled={!selectedMaqra}>الجدول اليومي</TabsTrigger>
+               <TabsTrigger value="stats"><BarChart3 className="w-3.5 h-3.5 ml-1" />الإحصائيات</TabsTrigger>
               </TabsList>
 
               <TabsContent value="maqare" className="space-y-3">
