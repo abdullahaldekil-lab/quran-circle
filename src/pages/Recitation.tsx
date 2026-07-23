@@ -100,24 +100,14 @@ const Recitation = () => {
     if (!currentStudent) return;
     setSaving(true);
     const totalScore = calcScore();
-    const counts = aggregateCounts(form.mistakes_breakdown);
-    const { error } = await supabase.from("recitation_records").insert({
-      student_id: currentStudent.id,
-      halaqa_id: selectedHalaqa,
-      teacher_id: user?.id,
-      memorized_from: form.memorized_from || null,
-      memorized_to: form.memorized_to || null,
-      review_from: form.review_from || null,
-      review_to: form.review_to || null,
-      linking_from: form.linking_from || null,
-      linking_to: form.linking_to || null,
-      mistakes_count: counts.total,
-      mistakes_breakdown: form.mistakes_breakdown as any,
-      total_score: totalScore,
-      notes: form.notes || null,
-      audio_url: audioUrl || null,
+    const result = await saveRecitationRecord(supabase as any, {
+      studentId: currentStudent.id,
+      halaqaId: selectedHalaqa,
+      teacherId: user?.id,
+      form,
+      audioUrl,
     });
-    if (error) {
+    if (!result.ok) {
       setSaving(false);
       toast.error("حدث خطأ أثناء الحفظ");
       return;
