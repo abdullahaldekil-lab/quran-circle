@@ -45,6 +45,7 @@ import {
   type LucideIcon,
   Sun,
   Library,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
