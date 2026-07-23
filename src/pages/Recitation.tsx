@@ -19,6 +19,7 @@ import { formatDateHijriOnly } from "@/lib/hijri";
 import StudentAnnualPlanCard from "@/components/recitation/StudentAnnualPlanCard";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
 import { emptyBreakdown as sharedEmptyBreakdown, aggregateCounts as sharedAggregate, calcScore as sharedCalcScore } from "@/lib/recitation-scoring";
+import { saveRecitationRecord } from "@/lib/recitation-save";
 
 const Recitation = () => {
   const { user } = useAuth();
