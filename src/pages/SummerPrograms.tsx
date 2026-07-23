@@ -712,7 +712,7 @@ export default function SummerPrograms() {
                 {summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0).map(s => {
                   const start = new Date(s.plan_start_date!);
                   const end = new Date(s.plan_end_date!);
-                  const days = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
+                  const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
                   const daily = s.daily_pages || 0;
                   const target = s.pages_target || 0;
                   // group records by record_date for this student
@@ -720,12 +720,27 @@ export default function SummerPrograms() {
                   records.filter((r: any) => r.summer_student_id === s.id).forEach((r: any) => {
                     byDate[r.record_date] = (byDate[r.record_date] || 0) + (r.link_pages_count || 0);
                   });
-                  const rows = Array.from({ length: days }, (_, i) => {
+                  // build rows for WORKING days only (Sun–Thu, no holidays)
+                  const rows: { idx: number; date: string; weekday: string; hijri: string; target: number; targetCum: number; actual: number }[] = [];
+                  let cum = 0;
+                  let idx = 0;
+                  for (let i = 0; i < totalDays; i++) {
                     const d = new Date(start.getTime() + i * 86400000);
+                    if (!isWorkingDay(d, holidays)) continue;
+                    idx += 1;
                     const key = d.toISOString().slice(0, 10);
-                    const targetCum = Math.min(target, Math.round(daily * (i + 1) * 100) / 100);
-                    return { idx: i + 1, date: key, target: daily, targetCum, actual: byDate[key] || 0 };
-                  });
+                    cum = Math.min(target, Math.round((cum + daily) * 100) / 100);
+                    rows.push({
+                      idx,
+                      date: key,
+                      weekday: getWeekdayArabic(d),
+                      hijri: formatDateHijriOnly(d),
+                      target: daily,
+                      targetCum: cum,
+                      actual: byDate[key] || 0,
+                    });
+                  }
+                  const workingDays = rows.length;
                   let actualCum = 0;
                   const today = new Date().toISOString().slice(0, 10);
                   return (
@@ -737,9 +752,12 @@ export default function SummerPrograms() {
                             <Badge variant="outline" className={s.plan_type === "hifz" ? "border-rose-400" : "border-amber-400"}>
                               {s.plan_type === "hifz" ? "حفظ" : "إتقان"}
                             </Badge>
+                            {(s as any).juz_from && (s as any).juz_to && (
+                              <Badge variant="outline">الأجزاء {(s as any).juz_from}–{(s as any).juz_to}</Badge>
+                            )}
                           </span>
                           <span className="text-xs font-normal text-muted-foreground">
-                            {s.plan_start_date} → {s.plan_end_date} · {days} يوم · {daily} وجه/يوم · الهدف {target} وجه
+                            {formatDateHijriOnly(s.plan_start_date!)} → {formatDateHijriOnly(s.plan_end_date!)} · {workingDays} يوم عمل / {totalDays} يوم · {daily} وجه/يوم · الهدف {target} وجه
                           </span>
                         </CardTitle>
                       </CardHeader>
@@ -749,7 +767,8 @@ export default function SummerPrograms() {
                             <thead className="bg-muted/50 sticky top-0">
                               <tr>
                                 <th className="p-2 text-right">اليوم</th>
-                                <th className="p-2 text-right">التاريخ</th>
+                                <th className="p-2 text-right">اليوم</th>
+                                <th className="p-2 text-right">التاريخ الهجري</th>
                                 <th className="p-2 text-right">المطلوب اليومي</th>
                                 <th className="p-2 text-right">تراكمي مطلوب</th>
                                 <th className="p-2 text-right">المسمَّع فعلاً</th>
@@ -769,7 +788,8 @@ export default function SummerPrograms() {
                                 return (
                                   <tr key={r.date} className={`border-t ${r.date === today ? "bg-primary/5" : ""}`}>
                                     <td className="p-2">{r.idx}</td>
-                                    <td className="p-2 font-mono">{r.date}</td>
+                                    <td className="p-2">{r.weekday}</td>
+                                    <td className="p-2">{r.hijri}</td>
                                     <td className="p-2">{r.target}</td>
                                     <td className="p-2 text-muted-foreground">{r.targetCum}</td>
                                     <td className="p-2 font-semibold">{r.actual || "—"}</td>
