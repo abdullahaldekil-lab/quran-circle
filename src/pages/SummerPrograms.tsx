@@ -188,6 +188,7 @@ export default function SummerPrograms() {
                 <TabsTrigger value="maqare">المقارئ</TabsTrigger>
                 <TabsTrigger value="students" disabled={!selectedMaqra}>الطلاب</TabsTrigger>
                 <TabsTrigger value="attendance" disabled={!selectedMaqra}>الحضور</TabsTrigger>
+                <TabsTrigger value="records" disabled={!selectedMaqra}>السجل اليومي</TabsTrigger>
               </TabsList>
 
               <TabsContent value="maqare" className="space-y-3">
