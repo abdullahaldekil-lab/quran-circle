@@ -766,7 +766,7 @@ export default function SummerPrograms() {
                           <table className="w-full text-xs">
                             <thead className="bg-muted/50 sticky top-0">
                               <tr>
-                                <th className="p-2 text-right">اليوم</th>
+                                <th className="p-2 text-right">#</th>
                                 <th className="p-2 text-right">اليوم</th>
                                 <th className="p-2 text-right">التاريخ الهجري</th>
                                 <th className="p-2 text-right">المطلوب اليومي</th>
