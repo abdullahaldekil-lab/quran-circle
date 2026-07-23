@@ -14,7 +14,7 @@ import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOp
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
-import type { PlanType } from "@/lib/summer-scoring";
+import { PLAN_TRACKS, type PlanType } from "@/lib/summer-scoring";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
 type Maqra = { id: string; program_id: string; name: string; maqra_type: string; location: string | null; teacher_id: string | null };
@@ -42,6 +42,9 @@ export default function SummerPrograms() {
   const [addStuOpen, setAddStuOpen] = useState(false);
   const [pickStudents, setPickStudents] = useState<string[]>([]);
   const [stuSearch, setStuSearch] = useState("");
+  const [linkPlanType, setLinkPlanType] = useState<PlanType | "none">("none");
+  const [linkPlanTrack, setLinkPlanTrack] = useState<string>("");
+  const [linkReciter, setLinkReciter] = useState<string>("");
   const [transferTarget, setTransferTarget] = useState<SummerStudent | null>(null);
   const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
@@ -149,14 +152,24 @@ export default function SummerPrograms() {
   }
   async function addStudents() {
     if (!selectedMaqra || !pickStudents.length) return;
+    const planType = linkPlanType === "none" ? null : linkPlanType;
+    const planTrack = planType ? (linkPlanTrack || null) : null;
+    const reciter = linkReciter.trim() || null;
     const rows = pickStudents.map(sid => {
       const stu = allStudents.find(s => s.id === sid);
-      return { maqra_id: selectedMaqra, student_id: sid, source_halaqa_id: stu?.halaqa_id || null };
+      return {
+        maqra_id: selectedMaqra,
+        student_id: sid,
+        source_halaqa_id: stu?.halaqa_id || null,
+        plan_type: planType,
+        plan_track: planTrack,
+        assigned_reciter: reciter,
+      };
     });
     const { error } = await supabase.from("summer_students").insert(rows);
     if (error) return toast.error(error.message);
     toast.success(`تمت إضافة ${rows.length} طالب`);
-    setPickStudents([]); setStuSearch(""); setAddStuOpen(false);
+    setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); setAddStuOpen(false);
     loadSummerStudents(selectedMaqra);
     if (selectedProgram) loadMaqraCounts(selectedProgram);
   }
@@ -310,7 +323,7 @@ export default function SummerPrograms() {
               <TabsContent value="students" className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4" />{currentMaqra?.name} — {summerStudents.length} طالب</h3>
-                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); } }}>
+                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); } }}>
                     <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
                     <DialogContent dir="rtl" className="max-w-lg">
                       <DialogHeader><DialogTitle>ربط طلاب بالمقرأة</DialogTitle></DialogHeader>
@@ -333,6 +346,38 @@ export default function SummerPrograms() {
                                 </label>
                               );
                             })}
+                        </div>
+                        <div className="border-t pt-3 space-y-2">
+                          <p className="text-sm font-semibold">تعيين الخطة تلقائيًا (اختياري)</p>
+                          <p className="text-xs text-muted-foreground">تُطبَّق هذه الخطة على كل الطلاب المحددين عند الربط.</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">نوع الخطة</Label>
+                              <Select value={linkPlanType} onValueChange={(v) => { setLinkPlanType(v as PlanType | "none"); setLinkPlanTrack(""); }}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">بدون خطة</SelectItem>
+                                  <SelectItem value="hifz">حفظ</SelectItem>
+                                  <SelectItem value="taahud">تعاهد / إتقان</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-xs">المسار</Label>
+                              <Select value={linkPlanTrack} onValueChange={setLinkPlanTrack} disabled={linkPlanType === "none"}>
+                                <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
+                                <SelectContent>
+                                  {linkPlanType !== "none" && PLAN_TRACKS[linkPlanType].map(t => (
+                                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs">المقرئ المرافق</Label>
+                            <Input value={linkReciter} onChange={e => setLinkReciter(e.target.value)} placeholder="اسم المقرئ (اختياري)" disabled={linkPlanType === "none"} />
+                          </div>
                         </div>
                       </div>
                       <DialogFooter><Button onClick={addStudents} disabled={!pickStudents.length}>ربط ({pickStudents.length})</Button></DialogFooter>
