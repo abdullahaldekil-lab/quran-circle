@@ -268,7 +268,7 @@ export default function StudentPortal() {
                 </div>
                 <div>
                   <p className="text-red-700 font-bold text-lg">{totalDays - presentCount - lateCount}</p>
-                  <p className="text-muted-foreground">غياب/معذور</p>
+                  <p className="text-muted-foreground">غياب/مستأذن</p>
                 </div>
               </div>
             </Card>
