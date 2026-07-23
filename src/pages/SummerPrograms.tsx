@@ -347,6 +347,38 @@ export default function SummerPrograms() {
                               );
                             })}
                         </div>
+                        <div className="border-t pt-3 space-y-2">
+                          <p className="text-sm font-semibold">تعيين الخطة تلقائيًا (اختياري)</p>
+                          <p className="text-xs text-muted-foreground">تُطبَّق هذه الخطة على كل الطلاب المحددين عند الربط.</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">نوع الخطة</Label>
+                              <Select value={linkPlanType} onValueChange={(v) => { setLinkPlanType(v as PlanType | "none"); setLinkPlanTrack(""); }}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">بدون خطة</SelectItem>
+                                  <SelectItem value="hifz">حفظ</SelectItem>
+                                  <SelectItem value="taahud">تعاهد / إتقان</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-xs">المسار</Label>
+                              <Select value={linkPlanTrack} onValueChange={setLinkPlanTrack} disabled={linkPlanType === "none"}>
+                                <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
+                                <SelectContent>
+                                  {linkPlanType !== "none" && PLAN_TRACKS[linkPlanType].map(t => (
+                                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs">المقرئ المرافق</Label>
+                            <Input value={linkReciter} onChange={e => setLinkReciter(e.target.value)} placeholder="اسم المقرئ (اختياري)" disabled={linkPlanType === "none"} />
+                          </div>
+                        </div>
                       </div>
                       <DialogFooter><Button onClick={addStudents} disabled={!pickStudents.length}>ربط ({pickStudents.length})</Button></DialogFooter>
                     </DialogContent>
