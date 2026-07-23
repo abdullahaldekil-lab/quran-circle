@@ -4747,6 +4747,62 @@ export type Database = {
           },
         ]
       }
+      summer_plan_change_log: {
+        Row: {
+          changed_by: string | null
+          changed_by_name: string | null
+          created_at: string
+          id: string
+          new_assigned_reciter: string | null
+          new_plan_goal: string | null
+          new_plan_track: string | null
+          new_plan_type: string | null
+          old_assigned_reciter: string | null
+          old_plan_goal: string | null
+          old_plan_track: string | null
+          old_plan_type: string | null
+          summer_student_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          new_assigned_reciter?: string | null
+          new_plan_goal?: string | null
+          new_plan_track?: string | null
+          new_plan_type?: string | null
+          old_assigned_reciter?: string | null
+          old_plan_goal?: string | null
+          old_plan_track?: string | null
+          old_plan_type?: string | null
+          summer_student_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          new_assigned_reciter?: string | null
+          new_plan_goal?: string | null
+          new_plan_track?: string | null
+          new_plan_type?: string | null
+          old_assigned_reciter?: string | null
+          old_plan_goal?: string | null
+          old_plan_track?: string | null
+          old_plan_type?: string | null
+          summer_student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summer_plan_change_log_summer_student_id_fkey"
+            columns: ["summer_student_id"]
+            isOneToOne: false
+            referencedRelation: "summer_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       summer_programs: {
         Row: {
           created_at: string
