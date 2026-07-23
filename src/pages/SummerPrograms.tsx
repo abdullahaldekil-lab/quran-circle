@@ -102,36 +102,79 @@ export default function SummerPrograms() {
     setProgForm({ name: "", description: "", start_date: "", end_date: "", status: "planned" });
     loadPrograms();
   }
-  async function createMaqra() {
-    if (!selectedProgram || !maqraForm.name) return;
+  function openNewMaqra() {
+    setEditingMaqraId(null);
+    setMaqraForm({ name: "", maqra_type: "male", location: "", teacher_id: "" });
+    setMaqraOpen(true);
+  }
+  function openEditMaqra(m: Maqra) {
+    setEditingMaqraId(m.id);
+    setMaqraForm({ name: m.name, maqra_type: m.maqra_type, location: m.location || "", teacher_id: m.teacher_id || "" });
+    setMaqraOpen(true);
+  }
+  async function saveMaqra() {
+    if (!selectedProgram || !maqraForm.name) { toast.error("أدخل اسم المقرأة"); return; }
     const payload: any = { ...maqraForm, program_id: selectedProgram };
-    if (!payload.teacher_id) delete payload.teacher_id;
-    const { error } = await supabase.from("summer_maqare").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("تمت الإضافة"); setMaqraOpen(false);
+    if (!payload.teacher_id) payload.teacher_id = null;
+    if (editingMaqraId) {
+      const { error } = await supabase.from("summer_maqare").update(payload).eq("id", editingMaqraId);
+      if (error) return toast.error(error.message);
+      toast.success("تم التحديث");
+    } else {
+      const { error } = await supabase.from("summer_maqare").insert(payload);
+      if (error) return toast.error(error.message);
+      toast.success("تمت الإضافة");
+    }
+    setMaqraOpen(false);
+    setEditingMaqraId(null);
     setMaqraForm({ name: "", maqra_type: "male", location: "", teacher_id: "" });
     loadMaqare(selectedProgram);
   }
   async function deleteMaqra(id: string) {
-    if (!confirm("حذف المقرأة؟")) return;
+    if (!confirm("حذف المقرأة؟ سيتم إلغاء ربط الطلاب بها.")) return;
     const { error } = await supabase.from("summer_maqare").delete().eq("id", id);
     if (error) return toast.error(error.message);
+    toast.success("تم الحذف");
+    if (selectedMaqra === id) setSelectedMaqra(null);
     if (selectedProgram) loadMaqare(selectedProgram);
   }
-  async function addStudent() {
-    if (!selectedMaqra || !pickStudent) return;
-    const stu = allStudents.find(s => s.id === pickStudent);
-    const { error } = await supabase.from("summer_students").insert({
-      maqra_id: selectedMaqra, student_id: pickStudent, source_halaqa_id: stu?.halaqa_id || null,
+  async function loadMaqraCounts(pid: string) {
+    const { data } = await supabase.from("summer_maqare").select("id").eq("program_id", pid);
+    const ids = (data || []).map((r: any) => r.id);
+    if (!ids.length) { setMaqraCounts({}); return; }
+    const { data: ss } = await supabase.from("summer_students").select("maqra_id").in("maqra_id", ids).eq("active", true);
+    const counts: Record<string, number> = {};
+    (ss || []).forEach((r: any) => { counts[r.maqra_id] = (counts[r.maqra_id] || 0) + 1; });
+    setMaqraCounts(counts);
+  }
+  async function addStudents() {
+    if (!selectedMaqra || !pickStudents.length) return;
+    const rows = pickStudents.map(sid => {
+      const stu = allStudents.find(s => s.id === sid);
+      return { maqra_id: selectedMaqra, student_id: sid, source_halaqa_id: stu?.halaqa_id || null };
     });
+    const { error } = await supabase.from("summer_students").insert(rows);
     if (error) return toast.error(error.message);
-    toast.success("تمت الإضافة"); setPickStudent(""); setAddStuOpen(false);
+    toast.success(`تمت إضافة ${rows.length} طالب`);
+    setPickStudents([]); setStuSearch(""); setAddStuOpen(false);
     loadSummerStudents(selectedMaqra);
+    if (selectedProgram) loadMaqraCounts(selectedProgram);
   }
   async function removeStudent(id: string) {
+    if (!confirm("إلغاء ربط الطالب من المقرأة؟")) return;
     const { error } = await supabase.from("summer_students").update({ active: false }).eq("id", id);
     if (error) return toast.error(error.message);
     if (selectedMaqra) loadSummerStudents(selectedMaqra);
+    if (selectedProgram) loadMaqraCounts(selectedProgram);
+  }
+  async function transferStudent() {
+    if (!transferTarget || !transferMaqraId || transferMaqraId === transferTarget.maqra_id) { setTransferTarget(null); return; }
+    const { error } = await supabase.from("summer_students").update({ maqra_id: transferMaqraId }).eq("id", transferTarget.id);
+    if (error) return toast.error(error.message);
+    toast.success("تم النقل");
+    setTransferTarget(null); setTransferMaqraId("");
+    if (selectedMaqra) loadSummerStudents(selectedMaqra);
+    if (selectedProgram) loadMaqraCounts(selectedProgram);
   }
   async function setStatus(summerStudentId: string, status: string) {
     setAttendance(a => ({ ...a, [summerStudentId]: status }));
