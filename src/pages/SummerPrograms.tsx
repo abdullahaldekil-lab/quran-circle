@@ -323,7 +323,7 @@ export default function SummerPrograms() {
               <TabsContent value="students" className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4" />{currentMaqra?.name} — {summerStudents.length} طالب</h3>
-                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); } }}>
+                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); } }}>
                     <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
                     <DialogContent dir="rtl" className="max-w-lg">
                       <DialogHeader><DialogTitle>ربط طلاب بالمقرأة</DialogTitle></DialogHeader>
