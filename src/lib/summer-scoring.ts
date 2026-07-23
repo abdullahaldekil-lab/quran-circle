@@ -62,13 +62,69 @@ export const PLAN_TRACKS: Record<PlanType, string[]> = {
   taahud: ["إتقان وجهين", "إتقان 3 أوجه", "إتقان 4 أوجه", "إتقان 5 أوجه", "إتقان جزء"],
 };
 
-// Standard Madinah mushaf: 1 juz ≈ 20 wajh (pages/faces).
+// Standard Madinah mushaf: 1 juz = 20 wajh (pages/faces).
 export const WAJH_PER_JUZ = 20;
 
 export const juzToPages = (juz: number, extraPages = 0): number =>
   Math.max(0, Math.round(juz * WAJH_PER_JUZ + extraPages));
 
-/** Distribute a page target across the plan duration (min 1 wajh/day). */
+/** Pages for an inclusive juz range using the Madinah mushaf: (to - from + 1) * 20. */
+export const juzRangeToPages = (juzFrom: number, juzTo: number): number => {
+  const f = Math.max(1, Math.min(30, Math.round(juzFrom || 0)));
+  const t = Math.max(1, Math.min(30, Math.round(juzTo || 0)));
+  if (!juzFrom || !juzTo || t < f) return 0;
+  return (t - f + 1) * WAJH_PER_JUZ;
+};
+
+export interface HolidayRange { start_date: string; end_date: string; }
+
+/** Weekend rule: Friday (getDay=5) and Saturday (getDay=6) are non-working. */
+export const isWeekend = (d: Date): boolean => {
+  const g = d.getDay();
+  return g === 5 || g === 6;
+};
+
+/** Is date inside any of the holiday ranges (inclusive). */
+export const isHoliday = (d: Date, holidays: HolidayRange[]): boolean => {
+  const key = d.toISOString().slice(0, 10);
+  return holidays.some(h => key >= h.start_date && key <= h.end_date);
+};
+
+/** Working day = not Fri/Sat AND not in holidays list. */
+export const isWorkingDay = (d: Date, holidays: HolidayRange[] = []): boolean =>
+  !isWeekend(d) && !isHoliday(d, holidays);
+
+/** Count working days between start and end (inclusive). */
+export const computeWorkingDays = (
+  start: string | null,
+  end: string | null,
+  holidays: HolidayRange[] = []
+): number => {
+  if (!start || !end) return 0;
+  const s = new Date(start);
+  const e = new Date(end);
+  if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return 0;
+  let count = 0;
+  const cur = new Date(s);
+  while (cur <= e) {
+    if (isWorkingDay(cur, holidays)) count++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return count;
+};
+
+/** Daily wajh across working days only. Clamped between 1 and 20. */
+export const computeDailyPagesWorking = (
+  pagesTarget: number,
+  workingDays: number
+): number => {
+  if (!pagesTarget || workingDays <= 0) return 0;
+  const raw = pagesTarget / workingDays;
+  const clamped = Math.max(1, Math.min(20, raw));
+  return Math.round(clamped * 100) / 100;
+};
+
+/** Legacy: distribute pages across calendar days, min 1/day, max 20/day. */
 export const computeDailyPages = (
   pagesTarget: number,
   startDate: string | null,
@@ -79,7 +135,8 @@ export const computeDailyPages = (
   const e = new Date(endDate);
   if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return 0;
   const days = Math.max(1, Math.floor((e.getTime() - s.getTime()) / 86400000) + 1);
-  return Math.max(1, Math.round((pagesTarget / days) * 100) / 100);
+  const raw = pagesTarget / days;
+  return Math.max(1, Math.min(20, Math.round(raw * 100) / 100));
 };
 
 export const planDurationDays = (start: string | null, end: string | null): number => {
