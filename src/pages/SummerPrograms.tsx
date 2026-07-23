@@ -670,6 +670,7 @@ export default function SummerPrograms() {
                 })}
               </TabsContent>
 
+              <TabsContent value="stats" className="space-y-4">
                 {(() => {
                   const totalStudents = programStudents.length;
                   const hifzStudents = programStudents.filter(s => s.plan_type === "hifz").length;
