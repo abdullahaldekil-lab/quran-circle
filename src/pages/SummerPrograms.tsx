@@ -272,6 +272,9 @@ export default function SummerPrograms() {
             <DialogFooter><Button onClick={createProgram}>حفظ</Button></DialogFooter>
           </DialogContent>
         </Dialog>
+        <Button variant="outline" onClick={seedDemoData}>
+          <Sun className="w-4 h-4 ml-1" />بيانات تجريبية
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-2">
