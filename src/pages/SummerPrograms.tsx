@@ -360,7 +360,6 @@ export default function SummerPrograms() {
                         </Select>
                         <p className="text-xs text-muted-foreground mt-1">يحدد نوع الخطة الافتراضية لجميع الطلاب المضافين لاحقاً.</p>
                       </div>
-                      </div>
                       <div><Label>الموقع</Label><Input value={maqraForm.location} onChange={e => setMaqraForm({ ...maqraForm, location: e.target.value })} /></div>
                       <div><Label>المعلم</Label>
                         <Select value={maqraForm.teacher_id} onValueChange={v => setMaqraForm({ ...maqraForm, teacher_id: v })}>
