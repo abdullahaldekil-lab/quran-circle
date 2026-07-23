@@ -10,11 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2 } from "lucide-react";
+import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOpen } from "lucide-react";
+import PlanEditor from "@/components/summer/PlanEditor";
+import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
+import type { PlanType } from "@/lib/summer-scoring";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
 type Maqra = { id: string; program_id: string; name: string; maqra_type: string; location: string | null; teacher_id: string | null };
-type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null };
+type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null; plan_type: PlanType | null; plan_track: string | null; plan_goal: string | null; assigned_reciter: string | null };
 type StudentLite = { id: string; full_name: string; halaqa_id: string | null };
 type Teacher = { id: string; full_name: string };
 
@@ -36,11 +39,15 @@ export default function SummerPrograms() {
   const [maqraForm, setMaqraForm] = useState({ name: "", maqra_type: "male", location: "", teacher_id: "" });
   const [addStuOpen, setAddStuOpen] = useState(false);
   const [pickStudent, setPickStudent] = useState<string>("");
+  const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
+  const [dailyTarget, setDailyTarget] = useState<SummerStudent | null>(null);
+  const [records, setRecords] = useState<any[]>([]);
 
   useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); }, []);
   useEffect(() => { if (selectedProgram) loadMaqare(selectedProgram); }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate]);
+  useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
 
   async function loadPrograms() {
     const { data } = await supabase.from("summer_programs").select("*").order("start_date", { ascending: false });
@@ -72,6 +79,13 @@ export default function SummerPrograms() {
     const map: Record<string, string> = {};
     (data || []).forEach((r: any) => { map[r.summer_student_id] = r.status; });
     setAttendance(map);
+  }
+  async function loadRecords(mid: string) {
+    const { data: ss } = await supabase.from("summer_students").select("id").eq("maqra_id", mid);
+    const ids = (ss || []).map((r: any) => r.id);
+    if (!ids.length) { setRecords([]); return; }
+    const { data } = await supabase.from("summer_daily_records").select("*").in("summer_student_id", ids).order("record_date", { ascending: false }).limit(200);
+    setRecords((data || []) as any);
   }
 
   async function createProgram() {
@@ -182,6 +196,7 @@ export default function SummerPrograms() {
                 <TabsTrigger value="maqare">المقارئ</TabsTrigger>
                 <TabsTrigger value="students" disabled={!selectedMaqra}>الطلاب</TabsTrigger>
                 <TabsTrigger value="attendance" disabled={!selectedMaqra}>الحضور</TabsTrigger>
+                <TabsTrigger value="records" disabled={!selectedMaqra}>السجل اليومي</TabsTrigger>
               </TabsList>
 
               <TabsContent value="maqare" className="space-y-3">
@@ -254,9 +269,27 @@ export default function SummerPrograms() {
                 </div>
                 <div className="border rounded-lg divide-y">
                   {summerStudents.map(s => (
-                    <div key={s.id} className="flex items-center justify-between p-3">
-                      <span>{studentNameMap[s.student_id] || "—"}</span>
-                      <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
+                    <div key={s.id} className="flex items-center justify-between gap-2 p-3 flex-wrap">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="font-medium">{studentNameMap[s.student_id] || "—"}</span>
+                        {s.plan_type ? (
+                          <Badge variant="outline" className={s.plan_type === "hifz" ? "border-rose-400 text-rose-700 dark:text-rose-300" : "border-amber-400 text-amber-700 dark:text-amber-300"}>
+                            {s.plan_type === "hifz" ? "حفظ" : "تعاهد"}{s.plan_track ? ` — ${s.plan_track}` : ""}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">بدون خطة</Badge>
+                        )}
+                        {s.assigned_reciter && <span className="text-xs text-muted-foreground">المقرئ: {s.assigned_reciter}</span>}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" onClick={() => setPlanTarget(s)}>
+                          <BookOpen className="w-3.5 h-3.5 ml-1" />الخطة
+                        </Button>
+                        <Button variant="default" size="sm" disabled={!s.plan_type} onClick={() => setDailyTarget(s)}>
+                          <ClipboardList className="w-3.5 h-3.5 ml-1" />سجل يومي
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
+                      </div>
                     </div>
                   ))}
                   {!summerStudents.length && <p className="p-4 text-center text-muted-foreground">لا يوجد طلاب.</p>}
@@ -292,9 +325,74 @@ export default function SummerPrograms() {
                   {!summerStudents.length && <p className="p-4 text-center text-muted-foreground">أضف طلاباً أولاً.</p>}
                 </div>
               </TabsContent>
+
+              <TabsContent value="records" className="space-y-3">
+                <div className="border rounded-lg overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 text-right">التاريخ</th>
+                        <th className="p-2 text-right">الطالب</th>
+                        <th className="p-2 text-right">النوع</th>
+                        <th className="p-2 text-right">الجديد</th>
+                        <th className="p-2 text-right">الربط</th>
+                        <th className="p-2 text-right">أميل</th>
+                        <th className="p-2 text-right">المجموع</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {records.map((r: any) => {
+                        const stu = summerStudents.find(ss => ss.id === r.summer_student_id);
+                        return (
+                          <tr key={r.id} className="border-t">
+                            <td className="p-2">{r.record_date}</td>
+                            <td className="p-2">{stu ? studentNameMap[stu.student_id] : "—"}</td>
+                            <td className="p-2">{stu?.plan_type === "hifz" ? "حفظ" : stu?.plan_type === "taahud" ? "تعاهد" : "—"}</td>
+                            <td className="p-2">{r.new_score}</td>
+                            <td className="p-2">{r.link_score}</td>
+                            <td className="p-2">{r.amyal_score}</td>
+                            <td className="p-2 font-bold text-primary">{r.total_score} / 40</td>
+                          </tr>
+                        );
+                      })}
+                      {!records.length && (
+                        <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">لا توجد سجلات بعد.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
+      )}
+
+      {planTarget && (
+        <PlanEditor
+          open={!!planTarget}
+          onOpenChange={(v) => !v && setPlanTarget(null)}
+          summerStudentId={planTarget.id}
+          studentName={studentNameMap[planTarget.student_id] || ""}
+          initial={{
+            plan_type: planTarget.plan_type,
+            plan_track: planTarget.plan_track,
+            plan_goal: planTarget.plan_goal,
+            assigned_reciter: planTarget.assigned_reciter,
+          }}
+          onSaved={() => selectedMaqra && loadSummerStudents(selectedMaqra)}
+        />
+      )}
+      {dailyTarget && dailyTarget.plan_type && (
+        <DailyRecordDialog
+          open={!!dailyTarget}
+          onOpenChange={(v) => !v && setDailyTarget(null)}
+          summerStudentId={dailyTarget.id}
+          studentName={studentNameMap[dailyTarget.student_id] || ""}
+          planType={dailyTarget.plan_type}
+          planTrack={dailyTarget.plan_track}
+          defaultReciter={dailyTarget.assigned_reciter}
+          onSaved={() => selectedMaqra && loadRecords(selectedMaqra)}
+        />
       )}
     </div>
   );
