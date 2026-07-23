@@ -317,9 +317,74 @@ export default function SummerPrograms() {
                   {!summerStudents.length && <p className="p-4 text-center text-muted-foreground">أضف طلاباً أولاً.</p>}
                 </div>
               </TabsContent>
+
+              <TabsContent value="records" className="space-y-3">
+                <div className="border rounded-lg overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="p-2 text-right">التاريخ</th>
+                        <th className="p-2 text-right">الطالب</th>
+                        <th className="p-2 text-right">النوع</th>
+                        <th className="p-2 text-right">الجديد</th>
+                        <th className="p-2 text-right">الربط</th>
+                        <th className="p-2 text-right">أميل</th>
+                        <th className="p-2 text-right">المجموع</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {records.map((r: any) => {
+                        const stu = summerStudents.find(ss => ss.id === r.summer_student_id);
+                        return (
+                          <tr key={r.id} className="border-t">
+                            <td className="p-2">{r.record_date}</td>
+                            <td className="p-2">{stu ? studentNameMap[stu.student_id] : "—"}</td>
+                            <td className="p-2">{stu?.plan_type === "hifz" ? "حفظ" : stu?.plan_type === "taahud" ? "تعاهد" : "—"}</td>
+                            <td className="p-2">{r.new_score}</td>
+                            <td className="p-2">{r.link_score}</td>
+                            <td className="p-2">{r.amyal_score}</td>
+                            <td className="p-2 font-bold text-primary">{r.total_score} / 40</td>
+                          </tr>
+                        );
+                      })}
+                      {!records.length && (
+                        <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">لا توجد سجلات بعد.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
+      )}
+
+      {planTarget && (
+        <PlanEditor
+          open={!!planTarget}
+          onOpenChange={(v) => !v && setPlanTarget(null)}
+          summerStudentId={planTarget.id}
+          studentName={studentNameMap[planTarget.student_id] || ""}
+          initial={{
+            plan_type: planTarget.plan_type,
+            plan_track: planTarget.plan_track,
+            plan_goal: planTarget.plan_goal,
+            assigned_reciter: planTarget.assigned_reciter,
+          }}
+          onSaved={() => selectedMaqra && loadSummerStudents(selectedMaqra)}
+        />
+      )}
+      {dailyTarget && dailyTarget.plan_type && (
+        <DailyRecordDialog
+          open={!!dailyTarget}
+          onOpenChange={(v) => !v && setDailyTarget(null)}
+          summerStudentId={dailyTarget.id}
+          studentName={studentNameMap[dailyTarget.student_id] || ""}
+          planType={dailyTarget.plan_type}
+          planTrack={dailyTarget.plan_track}
+          defaultReciter={dailyTarget.assigned_reciter}
+          onSaved={() => selectedMaqra && loadRecords(selectedMaqra)}
+        />
       )}
     </div>
   );
