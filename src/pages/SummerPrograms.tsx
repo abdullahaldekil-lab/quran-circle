@@ -469,6 +469,24 @@ export default function SummerPrograms() {
           onSaved={() => selectedMaqra && loadRecords(selectedMaqra)}
         />
       )}
+
+      <Dialog open={!!transferTarget} onOpenChange={(v) => { if (!v) { setTransferTarget(null); setTransferMaqraId(""); } }}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>نقل الطالب إلى مقرأة أخرى</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm">{transferTarget && (studentNameMap[transferTarget.student_id] || "")}</p>
+            <Select value={transferMaqraId} onValueChange={setTransferMaqraId}>
+              <SelectTrigger><SelectValue placeholder="اختر المقرأة الجديدة" /></SelectTrigger>
+              <SelectContent>
+                {maqare.filter(m => m.id !== transferTarget?.maqra_id).map(m => (
+                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter><Button onClick={transferStudent} disabled={!transferMaqraId}>نقل</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
