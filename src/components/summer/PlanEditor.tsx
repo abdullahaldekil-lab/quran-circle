@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -6,11 +6,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PLAN_TRACKS, computeDailyPagesWorking, computeWorkingDays, juzRangeToPages, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
+import {
+  PLAN_TRACKS,
+  computeDailyPagesWorking,
+  computeWorkingDays,
+  juzRangeToPages,
+  type HolidayRange,
+  type PlanType,
+} from "@/lib/summer-scoring";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDateTimeSmart, formatDateHijriOnly } from "@/lib/hijri";
-import { History, ArrowLeft, User, Target, AlertTriangle } from "lucide-react";
+import { History, ArrowLeft, User, RefreshCw, AlertTriangle } from "lucide-react";
 
 interface ChangeLog {
   id: string;
@@ -105,41 +112,58 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
 
   const jf = parseInt(juzFrom) || 0;
   const jt = parseInt(juzTo) || 0;
-  const pagesTarget = juzRangeToPages(jf, jt);
-  const workDays = computeWorkingDays(startDate || null, endDate || null, holidays);
-  const rawDaily = pagesTarget && workDays > 0 ? pagesTarget / workDays : 0;
-  const daily = computeDailyPagesWorking(pagesTarget, workDays);
+  const preview = useMemo(() => {
+    const pages = juzRangeToPages(jf, jt);
+    const wd = computeWorkingDays(startDate || null, endDate || null, holidays);
+    const daily = computeDailyPagesWorking(pages, wd);
+    return { pages, workingDays: wd, daily };
+  }, [jf, jt, startDate, endDate, holidays]);
+
+  const rawDaily = preview.pages && preview.workingDays > 0 ? preview.pages / preview.workingDays : 0;
   const overLimit = rawDaily > 20;
 
+  const juzChanged =
+    jf !== (initial.juz_from || 0) ||
+    jt !== (initial.juz_to || 0) ||
+    (startDate || "") !== (initial.plan_start_date || "") ||
+    (endDate || "") !== (initial.plan_end_date || "");
+
   const save = async () => {
-    if (pagesTarget > 0 && workDays <= 0) {
+    if (preview.pages > 0 && preview.workingDays <= 0) {
       toast.error("حدد تاريخي البدء والانتهاء لاحتساب أيام العمل");
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("summer_students").update({
+    const patch: any = {
       plan_type: planType,
       plan_track: track || null,
       plan_goal: goal || null,
       assigned_reciter: reciter || null,
-      juz_from: jf || null,
-      juz_to: jt || null,
-      pages_target: pagesTarget,
-      plan_start_date: startDate || null,
-      plan_end_date: endDate || null,
-      working_days: workDays || null,
-      daily_pages: daily,
-    }).eq("id", summerStudentId);
+    };
+    if (jf > 0 && jt >= jf) {
+      patch.juz_from = jf;
+      patch.juz_to = jt;
+      patch.plan_start_date = startDate || null;
+      patch.plan_end_date = endDate || null;
+      patch.pages_target = preview.pages;
+      patch.working_days = preview.workingDays || null;
+      patch.daily_pages = preview.daily;
+    }
+    const { error } = await supabase.from("summer_students").update(patch).eq("id", summerStudentId);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success(pagesTarget > 0 ? `تم حفظ الخطة — ${workDays} يوم عمل · ${daily} وجه/يوم` : "تم حفظ الخطة");
+    toast.success(
+      juzChanged && preview.pages > 0
+        ? `تم الحفظ — ${preview.pages} وجه · ${preview.workingDays} يوم عمل · ${preview.daily} وجه/يوم`
+        : "تم حفظ الخطة"
+    );
     onOpenChange(false);
     onSaved();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="max-h-[92vh] overflow-y-auto">
+      <DialogContent dir="rtl" className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>خطة الطالب — {studentName}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
@@ -153,43 +177,6 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
             </Select>
           </div>
 
-          <div className="border rounded-lg p-3 space-y-3">
-            <p className="text-sm font-semibold flex items-center gap-2"><Target className="w-4 h-4" />الأجزاء والمدة (مصحف المدينة)</p>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">من الجزء</Label>
-                <Input type="number" min={1} max={30} value={juzFrom} onChange={(e) => setJuzFrom(e.target.value)} placeholder="1" />
-              </div>
-              <div>
-                <Label className="text-xs">إلى الجزء</Label>
-                <Input type="number" min={1} max={30} value={juzTo} onChange={(e) => setJuzTo(e.target.value)} placeholder="7" />
-              </div>
-              <div>
-                <Label className="text-xs">تاريخ البدء</Label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                {startDate && <p className="text-[10px] text-muted-foreground mt-1">{formatDateHijriOnly(startDate)}</p>}
-              </div>
-              <div>
-                <Label className="text-xs">تاريخ الانتهاء</Label>
-                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                {endDate && <p className="text-[10px] text-muted-foreground mt-1">{formatDateHijriOnly(endDate)}</p>}
-              </div>
-            </div>
-            {pagesTarget > 0 && (
-              <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/40 rounded p-2">
-                <div><span className="block text-muted-foreground">إجمالي الأوجه</span><b>{pagesTarget}</b></div>
-                <div><span className="block text-muted-foreground">أيام العمل</span><b>{workDays}</b></div>
-                <div><span className="block text-muted-foreground">الحد اليومي</span><b className="text-primary">{daily} وجه/يوم</b></div>
-              </div>
-            )}
-            {overLimit && (
-              <p className="text-xs text-destructive flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                المطلوب فعليًا {Math.round(rawDaily * 10) / 10} وجه/يوم يتجاوز الحد الأقصى (20). قلّل الأجزاء أو مدّد الفترة.
-              </p>
-            )}
-          </div>
-
           <div>
             <Label>المسار</Label>
             <Select value={track} onValueChange={setTrack}>
@@ -201,6 +188,50 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
           </div>
           <div><Label>المقرئ المرافق</Label><Input value={reciter} onChange={(e) => setReciter(e.target.value)} placeholder="اسم المقرئ" /></div>
           <div><Label>هدف الدورة</Label><Textarea value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="سأضبط ..." /></div>
+
+          <div className="border-t pt-3 mt-2">
+            <div className="flex items-center gap-2 mb-2">
+              <RefreshCw className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">نطاق الحفظ (الأجزاء) — يعيد توليد الخطة والجدول اليومي</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">من الجزء</Label>
+                <Input type="number" min={1} max={30} value={juzFrom} onChange={(e) => setJuzFrom(e.target.value)} placeholder="1" />
+              </div>
+              <div>
+                <Label className="text-xs">إلى الجزء</Label>
+                <Input type="number" min={1} max={30} value={juzTo} onChange={(e) => setJuzTo(e.target.value)} placeholder="7" />
+              </div>
+              <div>
+                <Label className="text-xs">تاريخ بداية الخطة</Label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                {startDate && <p className="text-[11px] text-muted-foreground mt-1">{formatDateHijriOnly(startDate)}</p>}
+              </div>
+              <div>
+                <Label className="text-xs">تاريخ نهاية الخطة</Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                {endDate && <p className="text-[11px] text-muted-foreground mt-1">{formatDateHijriOnly(endDate)}</p>}
+              </div>
+            </div>
+            {preview.pages > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2 bg-muted/40 rounded-md p-2 text-xs">
+                <Badge variant="outline">إجمالي: {preview.pages} وجه</Badge>
+                <Badge variant="outline">أيام العمل: {preview.workingDays}</Badge>
+                <Badge variant="secondary">الحد اليومي: {preview.daily} وجه/يوم</Badge>
+                {juzChanged && <Badge className="bg-primary text-primary-foreground">سيُعاد توليد الجدول عند الحفظ</Badge>}
+              </div>
+            )}
+            {preview.pages > 0 && preview.workingDays === 0 && (
+              <p className="text-[11px] text-destructive mt-1">حدد تاريخي بداية ونهاية صالحين لحساب أيام العمل.</p>
+            )}
+            {overLimit && (
+              <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                المطلوب فعليًا {Math.round(rawDaily * 10) / 10} وجه/يوم يتجاوز الحد الأقصى (20). قلّل الأجزاء أو مدّد الفترة.
+              </p>
+            )}
+          </div>
 
           <div className="border-t pt-3 mt-2">
             <div className="flex items-center gap-2 mb-2">
