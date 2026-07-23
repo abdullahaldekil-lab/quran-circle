@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { calcNewScore, calcLinkScore, calcTotalScore, type PlanType, type DailyRecordInput } from "@/lib/summer-scoring";
+import { formatDateHijriOnly } from "@/lib/hijri";
 
 interface Props {
   open: boolean;
@@ -109,9 +110,10 @@ export default function DailyRecordDialog({ open, onOpenChange, summerStudentId,
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Label>التاريخ</Label>
             <Input type="date" value={state.record_date} onChange={(e) => set("record_date", e.target.value)} className="w-48" />
+            {state.record_date && <span className="text-sm text-muted-foreground">{formatDateHijriOnly(state.record_date)}</span>}
           </div>
 
           {/* Section: New portion */}

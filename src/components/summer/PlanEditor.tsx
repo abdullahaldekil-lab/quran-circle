@@ -17,7 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDateTimeSmart, formatDateHijriOnly } from "@/lib/hijri";
-import { History, ArrowLeft, User, RefreshCw } from "lucide-react";
+import { History, ArrowLeft, User, RefreshCw, AlertTriangle } from "lucide-react";
 
 interface ChangeLog {
   id: string;
@@ -63,10 +63,12 @@ interface Props {
     plan_end_date?: string | null;
   };
   holidays?: HolidayRange[];
+  /** Program end date — used as the default plan end (predetermined duration). */
+  defaultEndDate?: string | null;
   onSaved: () => void;
 }
 
-export default function PlanEditor({ open, onOpenChange, summerStudentId, studentName, initial, holidays = [], onSaved }: Props) {
+export default function PlanEditor({ open, onOpenChange, summerStudentId, studentName, initial, holidays = [], defaultEndDate, onSaved }: Props) {
   const [planType, setPlanType] = useState<PlanType>(initial.plan_type || "hifz");
   const [track, setTrack] = useState(initial.plan_track || "");
   const [goal, setGoal] = useState(initial.plan_goal || "");
@@ -86,8 +88,9 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
     setReciter(initial.assigned_reciter || "");
     setJuzFrom(initial.juz_from ? String(initial.juz_from) : "");
     setJuzTo(initial.juz_to ? String(initial.juz_to) : "");
-    setStartDate(initial.plan_start_date || "");
-    setEndDate(initial.plan_end_date || "");
+    // البدء الافتراضي = يوم الانضمام (اليوم)، والانتهاء = نهاية البرنامج المحددة سلفًا
+    setStartDate(initial.plan_start_date || new Date().toISOString().slice(0, 10));
+    setEndDate(initial.plan_end_date || defaultEndDate || "");
   }, [summerStudentId, open]);
 
   useEffect(() => {
@@ -116,6 +119,9 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
     return { pages, workingDays: wd, daily };
   }, [jf, jt, startDate, endDate, holidays]);
 
+  const rawDaily = preview.pages && preview.workingDays > 0 ? preview.pages / preview.workingDays : 0;
+  const overLimit = rawDaily > 20;
+
   const juzChanged =
     jf !== (initial.juz_from || 0) ||
     jt !== (initial.juz_to || 0) ||
@@ -123,6 +129,10 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
     (endDate || "") !== (initial.plan_end_date || "");
 
   const save = async () => {
+    if (preview.pages > 0 && preview.workingDays <= 0) {
+      toast.error("حدد تاريخي البدء والانتهاء لاحتساب أيام العمل");
+      return;
+    }
     setSaving(true);
     const patch: any = {
       plan_type: planType,
@@ -166,6 +176,7 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
               </SelectContent>
             </Select>
           </div>
+
           <div>
             <Label>المسار</Label>
             <Select value={track} onValueChange={setTrack}>
@@ -213,6 +224,12 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
             )}
             {preview.pages > 0 && preview.workingDays === 0 && (
               <p className="text-[11px] text-destructive mt-1">حدد تاريخي بداية ونهاية صالحين لحساب أيام العمل.</p>
+            )}
+            {overLimit && (
+              <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                المطلوب فعليًا {Math.round(rawDaily * 10) / 10} وجه/يوم يتجاوز الحد الأقصى (20). قلّل الأجزاء أو مدّد الفترة.
+              </p>
             )}
           </div>
 

@@ -14,13 +14,13 @@ import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, A
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
-import { PLAN_TRACKS, computeDailyPages, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, juzToPages, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
+import { PLAN_TRACKS, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
 import { formatDateHijriOnly, getWeekdayArabic } from "@/lib/hijri";
 import { Progress } from "@/components/ui/progress";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
 type Maqra = { id: string; program_id: string; name: string; maqra_type: string; plan_category: PlanType | null; location: string | null; teacher_id: string | null };
-type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null; plan_type: PlanType | null; plan_track: string | null; plan_goal: string | null; assigned_reciter: string | null; pages_target: number | null; plan_start_date: string | null; plan_end_date: string | null; daily_pages: number | null };
+type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null; plan_type: PlanType | null; plan_track: string | null; plan_goal: string | null; assigned_reciter: string | null; juz_from: number | null; juz_to: number | null; pages_target: number | null; plan_start_date: string | null; plan_end_date: string | null; daily_pages: number | null };
 type StudentLite = { id: string; full_name: string; halaqa_id: string | null };
 type Teacher = { id: string; full_name: string };
 type HalaqaLite = { id: string; name: string };
@@ -154,12 +154,15 @@ export default function SummerPrograms() {
         program_id: prog.id, name: "مقرأة تجريبية (حفظ)", maqra_type: "male", plan_category: "hifz", location: "قاعة 1",
       }).select().single();
       if (mErr || !maq) { toast.error(mErr?.message || "فشل إنشاء المقرأة"); return; }
-      const pagesTarget = juzToPages(2); // 40 pages
-      const daily = computeDailyPages(pagesTarget, startISO, endISO);
+      const pagesTarget = juzRangeToPages(1, 2); // 40 pages
+      const workDays = computeWorkingDays(startISO, endISO, holidays);
+      const daily = computeDailyPagesWorking(pagesTarget, workDays);
       const rows = stu.map(s => ({
         maqra_id: maq.id, student_id: s.id, source_halaqa_id: s.halaqa_id, active: true,
-        plan_type: "hifz" as const, plan_track: PLAN_TRACKS[0]?.value || null,
-        pages_target: pagesTarget, plan_start_date: startISO, plan_end_date: endISO, daily_pages: daily,
+        plan_type: "hifz" as const, plan_track: PLAN_TRACKS.hifz[0] || null,
+        juz_from: 1, juz_to: 2,
+        pages_target: pagesTarget, plan_start_date: startISO, plan_end_date: endISO,
+        working_days: workDays || null, daily_pages: daily,
       }));
       const { error: sErr } = await supabase.from("summer_students").insert(rows);
       if (sErr) { toast.error(sErr.message); return; }
@@ -294,6 +297,7 @@ export default function SummerPrograms() {
     const endDate = linkEndDate || null;
     const workingDays = computeWorkingDays(startDate, endDate, holidays);
     const daily = computeDailyPagesWorking(pagesTarget, workingDays);
+    if (pagesTarget > 0 && workingDays <= 0) { toast.error("حدد تاريخي البدء والانتهاء لاحتساب أيام العمل"); return; }
     const rows = pickStudents.map(sid => {
       const stu = allStudents.find(s => s.id === sid);
       return {
@@ -365,8 +369,16 @@ export default function SummerPrograms() {
               <div><Label>الاسم</Label><Input value={progForm.name} onChange={e => setProgForm({ ...progForm, name: e.target.value })} /></div>
               <div><Label>الوصف</Label><Textarea value={progForm.description} onChange={e => setProgForm({ ...progForm, description: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>تاريخ البدء</Label><Input type="date" value={progForm.start_date} onChange={e => setProgForm({ ...progForm, start_date: e.target.value })} /></div>
-                <div><Label>تاريخ الانتهاء</Label><Input type="date" value={progForm.end_date} onChange={e => setProgForm({ ...progForm, end_date: e.target.value })} /></div>
+                <div>
+                  <Label>تاريخ البدء</Label>
+                  <Input type="date" value={progForm.start_date} onChange={e => setProgForm({ ...progForm, start_date: e.target.value })} />
+                  {progForm.start_date && <p className="text-xs text-muted-foreground mt-1">{formatDateHijriOnly(progForm.start_date)}</p>}
+                </div>
+                <div>
+                  <Label>تاريخ الانتهاء</Label>
+                  <Input type="date" value={progForm.end_date} onChange={e => setProgForm({ ...progForm, end_date: e.target.value })} />
+                  {progForm.end_date && <p className="text-xs text-muted-foreground mt-1">{formatDateHijriOnly(progForm.end_date)}</p>}
+                </div>
               </div>
               <div><Label>الحالة</Label>
                 <Select value={progForm.status} onValueChange={v => setProgForm({ ...progForm, status: v })}>
@@ -406,7 +418,7 @@ export default function SummerPrograms() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>{currentProgram.name}</span>
-              <span className="text-sm text-muted-foreground">{currentProgram.start_date} → {currentProgram.end_date}</span>
+              <span className="text-sm text-muted-foreground">{formatDateHijriOnly(currentProgram.start_date)} → {formatDateHijriOnly(currentProgram.end_date)}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -488,7 +500,17 @@ export default function SummerPrograms() {
               <TabsContent value="students" className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4" />{currentMaqra?.name} — {summerStudents.length} طالب</h3>
-                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter(""); setLinkJuzFrom(""); setLinkJuzTo(""); setLinkStartDate(""); setLinkEndDate(""); } }}>
+                  <Dialog open={addStuOpen} onOpenChange={(v) => {
+                    setAddStuOpen(v);
+                    if (v) {
+                      // البدء = يوم الانضمام (اليوم)، والانتهاء = نهاية البرنامج المحددة سلفًا
+                      const today = new Date().toISOString().slice(0, 10);
+                      setLinkStartDate(prev => prev || (currentProgram && today < currentProgram.start_date ? currentProgram.start_date : today));
+                      setLinkEndDate(prev => prev || currentProgram?.end_date || "");
+                    } else {
+                      setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter(""); setLinkJuzFrom(""); setLinkJuzTo(""); setLinkStartDate(""); setLinkEndDate("");
+                    }
+                  }}>
                     <DialogTrigger asChild><Button size="sm" disabled={!currentMaqra?.plan_category}><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
                     <DialogContent dir="rtl" className="max-w-2xl max-h-[92vh] overflow-y-auto">
                       <DialogHeader>
@@ -546,13 +568,19 @@ export default function SummerPrograms() {
                             const workDays = computeWorkingDays(linkStartDate, linkEndDate, holidays);
                             const daily = computeDailyPagesWorking(pages, workDays);
                             if (!pages) return null;
+                            const rawDaily = workDays > 0 ? pages / workDays : 0;
                             return (
-                              <div className="grid grid-cols-4 gap-2 text-center text-xs bg-muted/40 rounded p-2">
-                                <div><span className="block text-muted-foreground">إجمالي</span><b>{pages} وجه</b></div>
-                                <div><span className="block text-muted-foreground">مدة الخطة</span><b>{totalDays} يوم</b></div>
-                                <div><span className="block text-muted-foreground">أيام العمل</span><b>{workDays} يوم</b></div>
-                                <div><span className="block text-muted-foreground">الحد اليومي</span><b className="text-primary">{daily} وجه/يوم</b></div>
-                              </div>
+                              <>
+                                <div className="grid grid-cols-4 gap-2 text-center text-xs bg-muted/40 rounded p-2">
+                                  <div><span className="block text-muted-foreground">إجمالي</span><b>{pages} وجه</b></div>
+                                  <div><span className="block text-muted-foreground">مدة الخطة</span><b>{totalDays} يوم</b></div>
+                                  <div><span className="block text-muted-foreground">أيام العمل</span><b>{workDays} يوم</b></div>
+                                  <div><span className="block text-muted-foreground">الحد اليومي</span><b className="text-primary">{daily} وجه/يوم</b></div>
+                                </div>
+                                {rawDaily > 20 && (
+                                  <p className="text-xs text-destructive">المطلوب فعليًا {Math.round(rawDaily * 10) / 10} وجه/يوم يتجاوز الحد الأقصى (20). قلّل الأجزاء أو مدّد الفترة.</p>
+                                )}
+                              </>
                             );
                           })()}
                           <div className="grid grid-cols-2 gap-2">
@@ -629,9 +657,10 @@ export default function SummerPrograms() {
               </TabsContent>
 
               <TabsContent value="attendance" className="space-y-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <Label>التاريخ</Label>
                   <Input type="date" value={attDate} onChange={e => setAttDate(e.target.value)} className="w-48" />
+                  <span className="text-sm text-muted-foreground">{getWeekdayArabic(attDate)}، {formatDateHijriOnly(attDate)}</span>
                 </div>
                 <div className="border rounded-lg divide-y">
                   {summerStudents.map(s => {
@@ -677,7 +706,7 @@ export default function SummerPrograms() {
                         const stu = summerStudents.find(ss => ss.id === r.summer_student_id);
                         return (
                           <tr key={r.id} className="border-t">
-                            <td className="p-2">{r.record_date}</td>
+                            <td className="p-2">{formatDateHijriOnly(r.record_date)}</td>
                             <td className="p-2">{stu ? studentNameMap[stu.student_id] : "—"}</td>
                             <td className="p-2">{stu?.plan_type === "hifz" ? "حفظ" : stu?.plan_type === "taahud" ? "تعاهد" : "—"}</td>
                             <td className="p-2">{r.new_score}</td>
@@ -752,8 +781,8 @@ export default function SummerPrograms() {
                             <Badge variant="outline" className={s.plan_type === "hifz" ? "border-rose-400" : "border-amber-400"}>
                               {s.plan_type === "hifz" ? "حفظ" : "إتقان"}
                             </Badge>
-                            {(s as any).juz_from && (s as any).juz_to && (
-                              <Badge variant="outline">الأجزاء {(s as any).juz_from}–{(s as any).juz_to}</Badge>
+                            {s.juz_from && s.juz_to && (
+                              <Badge variant="outline">الأجزاء {s.juz_from}–{s.juz_to}</Badge>
                             )}
                           </span>
                           <span className="text-xs font-normal text-muted-foreground">
@@ -924,12 +953,13 @@ export default function SummerPrograms() {
             plan_track: planTarget.plan_track,
             plan_goal: planTarget.plan_goal,
             assigned_reciter: planTarget.assigned_reciter,
-            juz_from: (planTarget as any).juz_from,
-            juz_to: (planTarget as any).juz_to,
+            juz_from: planTarget.juz_from,
+            juz_to: planTarget.juz_to,
             plan_start_date: planTarget.plan_start_date,
             plan_end_date: planTarget.plan_end_date,
           }}
           holidays={holidays}
+          defaultEndDate={currentProgram?.end_date || null}
           onSaved={() => selectedMaqra && loadSummerStudents(selectedMaqra)}
         />
       )}
