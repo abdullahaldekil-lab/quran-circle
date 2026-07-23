@@ -4850,6 +4850,8 @@ export type Database = {
           daily_pages: number
           id: string
           joined_at: string
+          juz_from: number | null
+          juz_to: number | null
           maqra_id: string
           pages_target: number
           plan_end_date: string | null
@@ -4859,6 +4861,7 @@ export type Database = {
           plan_type: string | null
           source_halaqa_id: string | null
           student_id: string
+          working_days: number | null
         }
         Insert: {
           active?: boolean | null
@@ -4867,6 +4870,8 @@ export type Database = {
           daily_pages?: number
           id?: string
           joined_at?: string
+          juz_from?: number | null
+          juz_to?: number | null
           maqra_id: string
           pages_target?: number
           plan_end_date?: string | null
@@ -4876,6 +4881,7 @@ export type Database = {
           plan_type?: string | null
           source_halaqa_id?: string | null
           student_id: string
+          working_days?: number | null
         }
         Update: {
           active?: boolean | null
@@ -4884,6 +4890,8 @@ export type Database = {
           daily_pages?: number
           id?: string
           joined_at?: string
+          juz_from?: number | null
+          juz_to?: number | null
           maqra_id?: string
           pages_target?: number
           plan_end_date?: string | null
@@ -4893,6 +4901,7 @@ export type Database = {
           plan_type?: string | null
           source_halaqa_id?: string | null
           student_id?: string
+          working_days?: number | null
         }
         Relationships: [
           {
