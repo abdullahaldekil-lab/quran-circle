@@ -87,22 +87,11 @@ const Recitation = () => {
     setAudioUrl("");
   };
 
-  // Aggregate counters across all sections
-  const aggregateCounts = (b: Record<string, Record<string, number>>) => {
-    let error = 0, lahn = 0, warning = 0;
-    Object.values(b).forEach((sec) => {
-      error   += Number(sec?.error   || 0);
-      lahn    += Number(sec?.lahn    || 0);
-      warning += Number(sec?.warning || 0);
-    });
-    return { error, lahn, warning, total: error + lahn + warning };
-  };
+  // Aggregate counters across all sections (delegates to shared util)
+  const aggregateCounts = (b: Record<string, Record<string, number>>) => sharedAggregate(b);
 
   // Deductions: error = 5, lahn = 2, warning = 1 (out of 100)
-  const calcScore = () => {
-    const c = aggregateCounts(form.mistakes_breakdown);
-    return Math.max(0, 100 - c.error * 5 - c.lahn * 2 - c.warning * 1);
-  };
+  const calcScore = () => sharedCalcScore(form.mistakes_breakdown);
 
   const currentStudent = students[currentIndex];
 
