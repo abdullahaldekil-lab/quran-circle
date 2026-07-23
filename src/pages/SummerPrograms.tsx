@@ -48,10 +48,11 @@ export default function SummerPrograms() {
   const [stuSearch, setStuSearch] = useState("");
   const [linkPlanTrack, setLinkPlanTrack] = useState<string>("");
   const [linkReciter, setLinkReciter] = useState<string>("");
-  const [linkJuz, setLinkJuz] = useState<string>("");
-  const [linkExtraPages, setLinkExtraPages] = useState<string>("");
+  const [linkJuzFrom, setLinkJuzFrom] = useState<string>("");
+  const [linkJuzTo, setLinkJuzTo] = useState<string>("");
   const [linkStartDate, setLinkStartDate] = useState<string>("");
   const [linkEndDate, setLinkEndDate] = useState<string>("");
+  const [holidays, setHolidays] = useState<HolidayRange[]>([]);
   const [transferTarget, setTransferTarget] = useState<SummerStudent | null>(null);
   const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
