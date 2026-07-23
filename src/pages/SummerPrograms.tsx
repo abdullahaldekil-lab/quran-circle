@@ -80,6 +80,13 @@ export default function SummerPrograms() {
     (data || []).forEach((r: any) => { map[r.summer_student_id] = r.status; });
     setAttendance(map);
   }
+  async function loadRecords(mid: string) {
+    const { data: ss } = await supabase.from("summer_students").select("id").eq("maqra_id", mid);
+    const ids = (ss || []).map((r: any) => r.id);
+    if (!ids.length) { setRecords([]); return; }
+    const { data } = await supabase.from("summer_daily_records").select("*").in("summer_student_id", ids).order("record_date", { ascending: false }).limit(200);
+    setRecords((data || []) as any);
+  }
 
   async function createProgram() {
     if (!progForm.name || !progForm.start_date || !progForm.end_date) { toast.error("أدخل البيانات المطلوبة"); return; }
