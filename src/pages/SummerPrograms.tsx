@@ -388,7 +388,7 @@ export default function SummerPrograms() {
                                     {m.plan_category === "hifz" ? "مقرأة حفظ" : "مقرأة إتقان"}
                                   </Badge>
                                 )}
-                                <Badge variant="outline">{m.maqra_type === "male" ? "بنين" : m.maqra_type === "female" ? "بنات" : "مختلط"}</Badge>
+                                {null}
                                 <Badge variant="secondary" className="gap-1"><Users className="w-3 h-3" />{maqraCounts[m.id] || 0} طالب</Badge>
                               </div>
                             </div>
