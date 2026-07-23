@@ -424,7 +424,7 @@ const Attendance = () => {
   const cycleStatus = (studentId: string) => {
     if (!canEdit) return;
 
-    const order: AttendanceStatus[] = ["present", "absent", "late", "excused"];
+    const order: AttendanceStatus[] = ["present", "absent", "late", "late_excused", "excused"];
 
     if (!isAdmin && !attendance[studentId]) {
       // Teacher first tap: auto-detect status based on time
