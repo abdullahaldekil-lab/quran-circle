@@ -152,14 +152,24 @@ export default function SummerPrograms() {
   }
   async function addStudents() {
     if (!selectedMaqra || !pickStudents.length) return;
+    const planType = linkPlanType === "none" ? null : linkPlanType;
+    const planTrack = planType ? (linkPlanTrack || null) : null;
+    const reciter = linkReciter.trim() || null;
     const rows = pickStudents.map(sid => {
       const stu = allStudents.find(s => s.id === sid);
-      return { maqra_id: selectedMaqra, student_id: sid, source_halaqa_id: stu?.halaqa_id || null };
+      return {
+        maqra_id: selectedMaqra,
+        student_id: sid,
+        source_halaqa_id: stu?.halaqa_id || null,
+        plan_type: planType,
+        plan_track: planTrack,
+        assigned_reciter: reciter,
+      };
     });
     const { error } = await supabase.from("summer_students").insert(rows);
     if (error) return toast.error(error.message);
     toast.success(`تمت إضافة ${rows.length} طالب`);
-    setPickStudents([]); setStuSearch(""); setAddStuOpen(false);
+    setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); setAddStuOpen(false);
     loadSummerStudents(selectedMaqra);
     if (selectedProgram) loadMaqraCounts(selectedProgram);
   }
