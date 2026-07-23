@@ -62,7 +62,7 @@ export default function SummerPrograms() {
   const [programRecords, setProgramRecords] = useState<any[]>([]);
   const [programStudents, setProgramStudents] = useState<SummerStudent[]>([]);
 
-  useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); loadHalaqat(); }, []);
+  useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); loadHalaqat(); loadHolidays(); }, []);
   useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate, summerStudents]);
