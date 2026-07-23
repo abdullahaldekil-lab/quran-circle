@@ -115,6 +115,27 @@ export default function SummerPrograms() {
     loadPrograms();
   }
 
+  async function deleteProgram(pid: string, pname: string) {
+    if (!confirm(`هل أنت متأكد من حذف البرنامج "${pname}"؟\n\nسيتم حذف جميع المقارئ والطلاب والسجلات المرتبطة به نهائيًا.`)) return;
+    const { data: maqareList } = await supabase.from("summer_maqare").select("id").eq("program_id", pid);
+    const mIds = (maqareList || []).map((m: any) => m.id);
+    if (mIds.length) {
+      const { data: studs } = await supabase.from("summer_students").select("id").in("maqra_id", mIds);
+      const sIds = (studs || []).map((s: any) => s.id);
+      if (sIds.length) {
+        await supabase.from("summer_daily_records").delete().in("summer_student_id", sIds);
+        await (supabase as any).from("summer_plan_change_log").delete().in("summer_student_id", sIds);
+        await supabase.from("summer_students").delete().in("id", sIds);
+      }
+      await supabase.from("summer_maqare").delete().in("id", mIds);
+    }
+    const { error } = await supabase.from("summer_programs").delete().eq("id", pid);
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم حذف البرنامج");
+    if (selectedProgram === pid) setSelectedProgram(null);
+    loadPrograms();
+  }
+
   async function seedDemoData() {
     try {
       const { data: stu } = await supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active").limit(5);
@@ -358,9 +379,14 @@ export default function SummerPrograms() {
 
       <div className="flex flex-wrap gap-2">
         {programs.map(p => (
-          <Button key={p.id} variant={selectedProgram === p.id ? "default" : "outline"} onClick={() => setSelectedProgram(p.id)}>
-            {p.name} <Badge variant="secondary" className="mr-2">{p.status}</Badge>
-          </Button>
+          <div key={p.id} className="flex items-center gap-1">
+            <Button variant={selectedProgram === p.id ? "default" : "outline"} onClick={() => setSelectedProgram(p.id)}>
+              {p.name} <Badge variant="secondary" className="mr-2">{p.status}</Badge>
+            </Button>
+            <Button variant="ghost" size="icon" title="حذف البرنامج" onClick={() => deleteProgram(p.id, p.name)}>
+              <Trash2 className="w-4 h-4 text-destructive" />
+            </Button>
+          </div>
         ))}
         {!programs.length && <p className="text-muted-foreground">لا توجد برامج بعد.</p>}
       </div>
