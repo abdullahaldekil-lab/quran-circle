@@ -148,6 +148,7 @@ export default function SummerPrograms() {
     } catch (e: any) {
       toast.error(e?.message || "خطأ غير متوقع");
     }
+  }
   function openNewMaqra() {
     setEditingMaqraId(null);
     setMaqraForm({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
