@@ -14,7 +14,8 @@ import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, A
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
-import { PLAN_TRACKS, computeDailyPages, juzToPages, planDurationDays, type PlanType } from "@/lib/summer-scoring";
+import { PLAN_TRACKS, computeDailyPages, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, juzToPages, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
+import { formatDateHijriOnly, getWeekdayArabic } from "@/lib/hijri";
 import { Progress } from "@/components/ui/progress";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
