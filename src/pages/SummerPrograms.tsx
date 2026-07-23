@@ -612,9 +612,14 @@ export default function SummerPrograms() {
               </TabsContent>
 
               <TabsContent value="schedule" className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  توزيع الأوجه المستهدفة على أيام الخطة لكل طالب، مع مقارنة بما تم تسميعه فعلياً في كل تاريخ.
-                </p>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    توزيع الأوجه المستهدفة على أيام الخطة لكل طالب، مع مقارنة بما تم تسميعه فعلياً في كل تاريخ.
+                  </p>
+                  <Button size="sm" variant="outline" onClick={seedDemoRecords}>
+                    <ClipboardList className="w-4 h-4 ml-1" />سجلات تجريبية (7 أيام)
+                  </Button>
+                </div>
                 {summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0).length === 0 && (
                   <p className="p-6 text-center text-muted-foreground border rounded-lg">
                     لا يوجد طلاب لديهم خطة محددة بتواريخ. حدّد الأجزاء وتاريخ البدء والانتهاء عند إضافة الطلاب أو من زر «الخطة».
