@@ -64,7 +64,7 @@ export default function SummerPrograms() {
   useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate, summerStudents]);
-  useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
+  useEffect(() => { if (selectedMaqra && (tab === "records" || tab === "schedule")) loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
   useEffect(() => { if (selectedProgram && tab === "stats") loadProgramAggregate(selectedProgram); }, [tab, selectedProgram]);
 
   async function loadPrograms() {
@@ -297,8 +297,9 @@ export default function SummerPrograms() {
                 <TabsTrigger value="maqare">المقارئ</TabsTrigger>
                 <TabsTrigger value="students" disabled={!selectedMaqra}>الطلاب</TabsTrigger>
                 <TabsTrigger value="attendance" disabled={!selectedMaqra}>الحضور</TabsTrigger>
-                <TabsTrigger value="records" disabled={!selectedMaqra}>السجل اليومي</TabsTrigger>
-                <TabsTrigger value="stats"><BarChart3 className="w-3.5 h-3.5 ml-1" />الإحصائيات</TabsTrigger>
+               <TabsTrigger value="records" disabled={!selectedMaqra}>السجل اليومي</TabsTrigger>
+               <TabsTrigger value="schedule" disabled={!selectedMaqra}>الجدول اليومي</TabsTrigger>
+               <TabsTrigger value="stats"><BarChart3 className="w-3.5 h-3.5 ml-1" />الإحصائيات</TabsTrigger>
               </TabsList>
 
               <TabsContent value="maqare" className="space-y-3">
@@ -580,6 +581,93 @@ export default function SummerPrograms() {
                     </tbody>
                   </table>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="schedule" className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  توزيع الأوجه المستهدفة على أيام الخطة لكل طالب، مع مقارنة بما تم تسميعه فعلياً في كل تاريخ.
+                </p>
+                {summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0).length === 0 && (
+                  <p className="p-6 text-center text-muted-foreground border rounded-lg">
+                    لا يوجد طلاب لديهم خطة محددة بتواريخ. حدّد الأجزاء وتاريخ البدء والانتهاء عند إضافة الطلاب أو من زر «الخطة».
+                  </p>
+                )}
+                {summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0).map(s => {
+                  const start = new Date(s.plan_start_date!);
+                  const end = new Date(s.plan_end_date!);
+                  const days = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
+                  const daily = s.daily_pages || 0;
+                  const target = s.pages_target || 0;
+                  // group records by record_date for this student
+                  const byDate: Record<string, number> = {};
+                  records.filter((r: any) => r.summer_student_id === s.id).forEach((r: any) => {
+                    byDate[r.record_date] = (byDate[r.record_date] || 0) + (r.link_pages_count || 0);
+                  });
+                  const rows = Array.from({ length: days }, (_, i) => {
+                    const d = new Date(start.getTime() + i * 86400000);
+                    const key = d.toISOString().slice(0, 10);
+                    const targetCum = Math.min(target, Math.round(daily * (i + 1) * 100) / 100);
+                    return { idx: i + 1, date: key, target: daily, targetCum, actual: byDate[key] || 0 };
+                  });
+                  let actualCum = 0;
+                  const today = new Date().toISOString().slice(0, 10);
+                  return (
+                    <Card key={s.id}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center justify-between flex-wrap gap-2">
+                          <span className="flex items-center gap-2">
+                            {studentNameMap[s.student_id] || "—"}
+                            <Badge variant="outline" className={s.plan_type === "hifz" ? "border-rose-400" : "border-amber-400"}>
+                              {s.plan_type === "hifz" ? "حفظ" : "إتقان"}
+                            </Badge>
+                          </span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {s.plan_start_date} → {s.plan_end_date} · {days} يوم · {daily} وجه/يوم · الهدف {target} وجه
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="border rounded-lg overflow-x-auto max-h-96">
+                          <table className="w-full text-xs">
+                            <thead className="bg-muted/50 sticky top-0">
+                              <tr>
+                                <th className="p-2 text-right">اليوم</th>
+                                <th className="p-2 text-right">التاريخ</th>
+                                <th className="p-2 text-right">المطلوب اليومي</th>
+                                <th className="p-2 text-right">تراكمي مطلوب</th>
+                                <th className="p-2 text-right">المسمَّع فعلاً</th>
+                                <th className="p-2 text-right">تراكمي فعلي</th>
+                                <th className="p-2 text-right">الحالة</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rows.map(r => {
+                                actualCum = Math.round((actualCum + r.actual) * 100) / 100;
+                                const isFuture = r.date > today;
+                                let status: { label: string; cls: string };
+                                if (isFuture) status = { label: "قادم", cls: "text-muted-foreground" };
+                                else if (r.actual >= r.target) status = { label: "منجز", cls: "text-green-600 dark:text-green-400" };
+                                else if (r.actual > 0) status = { label: "جزئي", cls: "text-amber-600 dark:text-amber-400" };
+                                else status = { label: "متأخر", cls: "text-red-600 dark:text-red-400" };
+                                return (
+                                  <tr key={r.date} className={`border-t ${r.date === today ? "bg-primary/5" : ""}`}>
+                                    <td className="p-2">{r.idx}</td>
+                                    <td className="p-2 font-mono">{r.date}</td>
+                                    <td className="p-2">{r.target}</td>
+                                    <td className="p-2 text-muted-foreground">{r.targetCum}</td>
+                                    <td className="p-2 font-semibold">{r.actual || "—"}</td>
+                                    <td className="p-2 text-muted-foreground">{actualCum}</td>
+                                    <td className={`p-2 font-semibold ${status.cls}`}>{status.label}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </TabsContent>
 
               <TabsContent value="stats" className="space-y-4">
