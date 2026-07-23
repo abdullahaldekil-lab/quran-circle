@@ -354,6 +354,11 @@ export default function SummerPrograms() {
                               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" />{m.location || "—"}</p>
                               {teacher && <p className="text-xs text-muted-foreground mt-1">المعلم: {teacher.full_name}</p>}
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {m.plan_category && (
+                                  <Badge className={m.plan_category === "hifz" ? "bg-rose-600 hover:bg-rose-700" : "bg-amber-600 hover:bg-amber-700"}>
+                                    {m.plan_category === "hifz" ? "مقرأة حفظ" : "مقرأة إتقان"}
+                                  </Badge>
+                                )}
                                 <Badge variant="outline">{m.maqra_type === "male" ? "بنين" : m.maqra_type === "female" ? "بنات" : "مختلط"}</Badge>
                                 <Badge variant="secondary" className="gap-1"><Users className="w-3 h-3" />{maqraCounts[m.id] || 0} طالب</Badge>
                               </div>
