@@ -4614,6 +4614,98 @@ export type Database = {
           },
         ]
       }
+      summer_daily_records: {
+        Row: {
+          amyal_score: number
+          created_at: string
+          created_by: string | null
+          id: string
+          link_from: string | null
+          link_mistakes_lahn: number
+          link_notifications: number
+          link_pages_count: number
+          link_reciter: string | null
+          link_score: number
+          link_time_per_page: string | null
+          link_to: string | null
+          new_from: string | null
+          new_listening_done: boolean
+          new_mistakes_lahn: number
+          new_notifications: number
+          new_repetitions_done: boolean
+          new_score: number
+          new_test_score: number
+          new_to: string | null
+          notes: string | null
+          record_date: string
+          summer_student_id: string
+          total_score: number
+          updated_at: string
+        }
+        Insert: {
+          amyal_score?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_from?: string | null
+          link_mistakes_lahn?: number
+          link_notifications?: number
+          link_pages_count?: number
+          link_reciter?: string | null
+          link_score?: number
+          link_time_per_page?: string | null
+          link_to?: string | null
+          new_from?: string | null
+          new_listening_done?: boolean
+          new_mistakes_lahn?: number
+          new_notifications?: number
+          new_repetitions_done?: boolean
+          new_score?: number
+          new_test_score?: number
+          new_to?: string | null
+          notes?: string | null
+          record_date?: string
+          summer_student_id: string
+          total_score?: number
+          updated_at?: string
+        }
+        Update: {
+          amyal_score?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_from?: string | null
+          link_mistakes_lahn?: number
+          link_notifications?: number
+          link_pages_count?: number
+          link_reciter?: string | null
+          link_score?: number
+          link_time_per_page?: string | null
+          link_to?: string | null
+          new_from?: string | null
+          new_listening_done?: boolean
+          new_mistakes_lahn?: number
+          new_notifications?: number
+          new_repetitions_done?: boolean
+          new_score?: number
+          new_test_score?: number
+          new_to?: string | null
+          notes?: string | null
+          record_date?: string
+          summer_student_id?: string
+          total_score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summer_daily_records_summer_student_id_fkey"
+            columns: ["summer_student_id"]
+            isOneToOne: false
+            referencedRelation: "summer_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       summer_maqare: {
         Row: {
           created_at: string
@@ -4694,28 +4786,40 @@ export type Database = {
       summer_students: {
         Row: {
           active: boolean | null
+          assigned_reciter: string | null
           created_at: string
           id: string
           joined_at: string
           maqra_id: string
+          plan_goal: string | null
+          plan_track: string | null
+          plan_type: string | null
           source_halaqa_id: string | null
           student_id: string
         }
         Insert: {
           active?: boolean | null
+          assigned_reciter?: string | null
           created_at?: string
           id?: string
           joined_at?: string
           maqra_id: string
+          plan_goal?: string | null
+          plan_track?: string | null
+          plan_type?: string | null
           source_halaqa_id?: string | null
           student_id: string
         }
         Update: {
           active?: boolean | null
+          assigned_reciter?: string | null
           created_at?: string
           id?: string
           joined_at?: string
           maqra_id?: string
+          plan_goal?: string | null
+          plan_track?: string | null
+          plan_type?: string | null
           source_halaqa_id?: string | null
           student_id?: string
         }
