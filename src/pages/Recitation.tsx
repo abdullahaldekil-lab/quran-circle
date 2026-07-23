@@ -18,6 +18,7 @@ import StudentNameLink from "@/components/StudentNameLink";
 import { formatDateHijriOnly } from "@/lib/hijri";
 import StudentAnnualPlanCard from "@/components/recitation/StudentAnnualPlanCard";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
+import { emptyBreakdown as sharedEmptyBreakdown, aggregateCounts as sharedAggregate, calcScore as sharedCalcScore } from "@/lib/recitation-scoring";
 
 const Recitation = () => {
   const { user } = useAuth();
@@ -29,11 +30,7 @@ const Recitation = () => {
   const [saving, setSaving] = useState(false);
   const [audioUrl, setAudioUrl] = useState("");
   // New per-section error structure: { error, lahn, warning } × { memorization, review, linking }
-  const emptyBreakdown = () => ({
-    memorization: { error: 0, lahn: 0, warning: 0 },
-    review:       { error: 0, lahn: 0, warning: 0 },
-    linking:      { error: 0, lahn: 0, warning: 0 },
-  });
+  const emptyBreakdown = () => sharedEmptyBreakdown();
   const [form, setForm] = useState({
     memorized_from: "",
     memorized_to: "",
@@ -90,22 +87,11 @@ const Recitation = () => {
     setAudioUrl("");
   };
 
-  // Aggregate counters across all sections
-  const aggregateCounts = (b: Record<string, Record<string, number>>) => {
-    let error = 0, lahn = 0, warning = 0;
-    Object.values(b).forEach((sec) => {
-      error   += Number(sec?.error   || 0);
-      lahn    += Number(sec?.lahn    || 0);
-      warning += Number(sec?.warning || 0);
-    });
-    return { error, lahn, warning, total: error + lahn + warning };
-  };
+  // Aggregate counters across all sections (delegates to shared util)
+  const aggregateCounts = (b: Record<string, Record<string, number>>) => sharedAggregate(b);
 
   // Deductions: error = 5, lahn = 2, warning = 1 (out of 100)
-  const calcScore = () => {
-    const c = aggregateCounts(form.mistakes_breakdown);
-    return Math.max(0, 100 - c.error * 5 - c.lahn * 2 - c.warning * 1);
-  };
+  const calcScore = () => sharedCalcScore(form.mistakes_breakdown);
 
   const currentStudent = students[currentIndex];
 
