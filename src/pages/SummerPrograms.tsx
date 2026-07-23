@@ -360,16 +360,6 @@ export default function SummerPrograms() {
                         </Select>
                         <p className="text-xs text-muted-foreground mt-1">يحدد نوع الخطة الافتراضية لجميع الطلاب المضافين لاحقاً.</p>
                       </div>
-                      <div><Label>الفئة</Label>
-                        <Select value={maqraForm.maqra_type} onValueChange={v => setMaqraForm({ ...maqraForm, maqra_type: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="male">بنين</SelectItem>
-                            <SelectItem value="female">بنات</SelectItem>
-                            <SelectItem value="mixed">مختلط</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
                       <div><Label>الموقع</Label><Input value={maqraForm.location} onChange={e => setMaqraForm({ ...maqraForm, location: e.target.value })} /></div>
                       <div><Label>المعلم</Label>
                         <Select value={maqraForm.teacher_id} onValueChange={v => setMaqraForm({ ...maqraForm, teacher_id: v })}>
@@ -398,7 +388,7 @@ export default function SummerPrograms() {
                                     {m.plan_category === "hifz" ? "مقرأة حفظ" : "مقرأة إتقان"}
                                   </Badge>
                                 )}
-                                <Badge variant="outline">{m.maqra_type === "male" ? "بنين" : m.maqra_type === "female" ? "بنات" : "مختلط"}</Badge>
+                                {null}
                                 <Badge variant="secondary" className="gap-1"><Users className="w-3 h-3" />{maqraCounts[m.id] || 0} طالب</Badge>
                               </div>
                             </div>
