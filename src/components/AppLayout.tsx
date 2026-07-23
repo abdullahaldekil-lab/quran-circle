@@ -97,6 +97,7 @@ const navGroups: NavGroup[] = [
           { to: "/review-test", icon: ClipboardList, label: "اختبار المراجعة" },
           { to: "/narration-stats", icon: CalendarDays, label: "إحصائيات السرد" },
           { to: "/narration-test-settings", icon: Settings, label: "إعدادات اختبار السرد" },
+          { to: "/nazem-export", icon: FileSpreadsheet, label: "تصدير لناظم" },
         ],
       },
       {
