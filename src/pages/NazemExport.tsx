@@ -62,27 +62,9 @@ const NazemExport = () => {
       const halaqaMap = new Map((halaqatRes.data || []).map((h: any) => [h.id, h]));
       const teacherMap = new Map((teachers || []).map((t: any) => [t.id, t]));
 
-      const rows = records.map((r: any) => {
-        const s: any = studentMap.get(r.student_id) || {};
-        const h: any = halaqaMap.get(r.halaqa_id) || {};
-        const t: any = teacherMap.get(h.teacher_id) || {};
-        const mb = r.mistakes_breakdown?.memorization || {};
-        return {
-          "التاريخ": r.record_date,
-          "اسم الطالب": s.full_name || "",
-          "رقم الهوية": s.national_id || "",
-          "كود الطالب": s.student_code || "",
-          "الحلقة": h.name || "",
-          "المعلم": t.full_name || "",
-          "من": r.memorized_from || "",
-          "إلى": r.memorized_to || "",
-          "الدرجة": r.memorization_grade ?? "",
-          "أخطاء": mb.error || 0,
-          "لحن": mb.lahn || 0,
-          "تنبيه": mb.warning || 0,
-          "ملاحظات": r.notes || "",
-        };
-      });
+      const rows = records.map((r: any) =>
+        buildNazemRow(r, studentMap as any, halaqaMap as any, teacherMap as any),
+      );
 
       const ws = XLSX.utils.json_to_sheet(rows);
       ws["!cols"] = [
