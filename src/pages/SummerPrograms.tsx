@@ -39,6 +39,9 @@ export default function SummerPrograms() {
   const [maqraForm, setMaqraForm] = useState({ name: "", maqra_type: "male", location: "", teacher_id: "" });
   const [addStuOpen, setAddStuOpen] = useState(false);
   const [pickStudent, setPickStudent] = useState<string>("");
+  const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
+  const [dailyTarget, setDailyTarget] = useState<SummerStudent | null>(null);
+  const [records, setRecords] = useState<any[]>([]);
 
   useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); }, []);
   useEffect(() => { if (selectedProgram) loadMaqare(selectedProgram); }, [selectedProgram]);
