@@ -149,6 +149,50 @@ export default function SummerPrograms() {
       toast.error(e?.message || "خطأ غير متوقع");
     }
   }
+
+  async function seedDemoRecords() {
+    if (!selectedMaqra) { toast.error("اختر مقرأة أولاً"); return; }
+    const students = summerStudents.filter(s => (s.pages_target || 0) > 0);
+    if (students.length === 0) { toast.error("لا يوجد طلاب بخطة في هذه المقرأة"); return; }
+    try {
+      // shift plan_start_date back 6 days so past 7 days are inside the plan window
+      const today = new Date();
+      const shiftedStart = new Date(today); shiftedStart.setDate(today.getDate() - 6);
+      const startISO = shiftedStart.toISOString().slice(0, 10);
+      const updates = students.map(s =>
+        supabase.from("summer_students").update({ plan_start_date: startISO }).eq("id", s.id)
+      );
+      await Promise.all(updates);
+
+      // status pattern for the 7 days: منجز, منجز, جزئي, متأخر, منجز, جزئي, منجز(اليوم)
+      const pattern = [1, 1, 0.5, 0, 1, 0.6, 1];
+      const rows: any[] = [];
+      for (const s of students) {
+        const daily = Math.max(1, s.daily_pages || 1);
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(today); d.setDate(today.getDate() - (6 - i));
+          const ratio = pattern[i];
+          if (ratio === 0) continue; // leave as متأخر (no record)
+          const pages = Math.max(1, Math.round(daily * ratio));
+          rows.push({
+            summer_student_id: s.id,
+            record_date: d.toISOString().slice(0, 10),
+            link_from: "الفاتحة", link_to: "الفاتحة",
+            link_pages_count: pages,
+            link_score: ratio >= 1 ? 10 : 7,
+            total_score: ratio >= 1 ? 10 : 7,
+          });
+        }
+      }
+      const { error } = await supabase.from("summer_daily_records").upsert(rows, { onConflict: "summer_student_id,record_date" });
+      if (error) { toast.error(error.message); return; }
+      toast.success(`تم إنشاء ${rows.length} سجل تجريبي`);
+      await loadSummerStudents(selectedMaqra);
+      await loadRecords(selectedMaqra);
+    } catch (e: any) {
+      toast.error(e?.message || "خطأ غير متوقع");
+    }
+  }
   function openNewMaqra() {
     setEditingMaqraId(null);
     setMaqraForm({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
@@ -612,9 +656,14 @@ export default function SummerPrograms() {
               </TabsContent>
 
               <TabsContent value="schedule" className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  توزيع الأوجه المستهدفة على أيام الخطة لكل طالب، مع مقارنة بما تم تسميعه فعلياً في كل تاريخ.
-                </p>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    توزيع الأوجه المستهدفة على أيام الخطة لكل طالب، مع مقارنة بما تم تسميعه فعلياً في كل تاريخ.
+                  </p>
+                  <Button size="sm" variant="outline" onClick={seedDemoRecords}>
+                    <ClipboardList className="w-4 h-4 ml-1" />سجلات تجريبية (7 أيام)
+                  </Button>
+                </div>
                 {summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0).length === 0 && (
                   <p className="p-6 text-center text-muted-foreground border rounded-lg">
                     لا يوجد طلاب لديهم خطة محددة بتواريخ. حدّد الأجزاء وتاريخ البدء والانتهاء عند إضافة الطلاب أو من زر «الخطة».
