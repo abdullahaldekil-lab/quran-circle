@@ -114,6 +114,40 @@ export default function SummerPrograms() {
     setProgForm({ name: "", description: "", start_date: "", end_date: "", status: "planned" });
     loadPrograms();
   }
+
+  async function seedDemoData() {
+    try {
+      const { data: stu } = await supabase.from("students").select("id, full_name, halaqa_id").eq("status", "active").limit(5);
+      if (!stu || stu.length === 0) { toast.error("لا يوجد طلاب نشطون لإنشاء بيانات تجريبية"); return; }
+      const today = new Date();
+      const end = new Date(); end.setDate(today.getDate() + 59);
+      const startISO = today.toISOString().slice(0, 10);
+      const endISO = end.toISOString().slice(0, 10);
+      const { data: prog, error: pErr } = await supabase.from("summer_programs").insert({
+        name: "برنامج تجريبي - " + startISO, description: "بيانات توضيحية", start_date: startISO, end_date: endISO, status: "active",
+      }).select().single();
+      if (pErr || !prog) { toast.error(pErr?.message || "فشل إنشاء البرنامج"); return; }
+      const { data: maq, error: mErr } = await supabase.from("summer_maqare").insert({
+        program_id: prog.id, name: "مقرأة تجريبية (حفظ)", maqra_type: "male", plan_category: "hifz", location: "قاعة 1",
+      }).select().single();
+      if (mErr || !maq) { toast.error(mErr?.message || "فشل إنشاء المقرأة"); return; }
+      const pagesTarget = juzToPages(2); // 40 pages
+      const daily = computeDailyPages(pagesTarget, startISO, endISO);
+      const rows = stu.map(s => ({
+        maqra_id: maq.id, student_id: s.id, source_halaqa_id: s.halaqa_id, active: true,
+        plan_type: "hifz" as const, plan_track: PLAN_TRACKS[0]?.value || null,
+        pages_target: pagesTarget, plan_start_date: startISO, plan_end_date: endISO, daily_pages: daily,
+      }));
+      const { error: sErr } = await supabase.from("summer_students").insert(rows);
+      if (sErr) { toast.error(sErr.message); return; }
+      toast.success(`تم إنشاء بيانات تجريبية (${stu.length} طلاب)`);
+      await loadPrograms();
+      setSelectedProgram(prog.id);
+      setSelectedMaqra(maq.id);
+      setTab("schedule");
+    } catch (e: any) {
+      toast.error(e?.message || "خطأ غير متوقع");
+    }
   function openNewMaqra() {
     setEditingMaqraId(null);
     setMaqraForm({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
