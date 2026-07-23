@@ -158,7 +158,7 @@ const GuardianChildProfile = () => {
       case "present": return "حاضر";
       case "absent": return "غائب";
       case "late": return "متأخر";
-      case "excused": return "معذور";
+      case "excused": return "مستأذن";
       default: return status;
     }
   };

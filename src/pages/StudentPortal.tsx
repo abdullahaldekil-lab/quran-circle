@@ -17,7 +17,7 @@ const statusLabel: Record<string, { label: string; cls: string }> = {
   present: { label: "حاضر", cls: "bg-green-100 text-green-800 border-green-300" },
   absent: { label: "غائب", cls: "bg-red-100 text-red-800 border-red-300" },
   late: { label: "متأخر", cls: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-  excused: { label: "معذور", cls: "bg-blue-100 text-blue-800 border-blue-300" },
+  excused: { label: "مستأذن", cls: "bg-blue-100 text-blue-800 border-blue-300" },
 };
 
 export default function StudentPortal() {
@@ -268,7 +268,7 @@ export default function StudentPortal() {
                 </div>
                 <div>
                   <p className="text-red-700 font-bold text-lg">{totalDays - presentCount - lateCount}</p>
-                  <p className="text-muted-foreground">غياب/معذور</p>
+                  <p className="text-muted-foreground">غياب/مستأذن</p>
                 </div>
               </div>
             </Card>
@@ -292,7 +292,7 @@ export default function StudentPortal() {
               <p className="text-sm text-muted-foreground">نسبة الحضور (آخر 30 يوم)</p>
               <p className="text-3xl font-bold text-green-700 mt-1">{attendanceRate}%</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {presentCount} حاضر • {lateCount} متأخر • {totalDays - presentCount - lateCount} غياب/معذور
+                {presentCount} حاضر • {lateCount} متأخر • {totalDays - presentCount - lateCount} غياب/مستأذن
               </p>
             </Card>
             <Card>

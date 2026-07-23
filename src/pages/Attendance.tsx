@@ -382,13 +382,15 @@ const Attendance = () => {
   const statusIcons: Record<AttendanceStatus, any> = {
     present: <Check className="w-4 h-4" />, absent: <X className="w-4 h-4" />,
     late: <Clock className="w-4 h-4" />, excused: <AlertCircle className="w-4 h-4" />,
+    late_excused: <Clock className="w-4 h-4" />,
   };
-  const statusLabels: Record<AttendanceStatus, string> = { present: "حاضر", absent: "غائب", late: "متأخر", excused: "معذور" };
+  const statusLabels: Record<AttendanceStatus, string> = { present: "حاضر", absent: "غائب", late: "متأخر", excused: "مستأذن", late_excused: "متأخر بإذن" };
   const statusColors: Record<AttendanceStatus, string> = {
     present: "bg-success/10 text-success border-success/30",
     absent: "bg-destructive/10 text-destructive border-destructive/30",
     late: "bg-warning/10 text-warning border-warning/30",
     excused: "bg-info/10 text-info border-info/30",
+    late_excused: "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950/30 dark:text-purple-300",
   };
 
   const TEACHER_WINDOW_MAP: Record<TeacherWindowStatus, { label: string; color: string; icon: any }> = {
@@ -422,7 +424,7 @@ const Attendance = () => {
   const cycleStatus = (studentId: string) => {
     if (!canEdit) return;
 
-    const order: AttendanceStatus[] = ["present", "absent", "late", "excused"];
+    const order: AttendanceStatus[] = ["present", "absent", "late", "late_excused", "excused"];
 
     if (!isAdmin && !attendance[studentId]) {
       // Teacher first tap: auto-detect status based on time
@@ -690,7 +692,7 @@ const Attendance = () => {
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> حاضر: {presentCount}</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" /> متأخر: {lateCount}</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> غائب: {absentCount}</span>
-                    {excusedCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> معذور: {excusedCount}</span>}
+                    {excusedCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> مستأذن: {excusedCount}</span>}
                   </div>
                 </div>
               );

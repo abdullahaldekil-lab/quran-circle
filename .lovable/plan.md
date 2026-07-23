@@ -1,112 +1,149 @@
+## خطة شاملة للتعديلات والإضافات الجديدة
 
-## الهدف
-تعديلات على برنامج مدارج (الحفظ)، نموذج التسميع، واختبار السرد لتبسيط الإدخال وحل عدة مشاكل وظيفية.
+### 1. التعديلات السريعة (لغوية/سلوكية)
 
----
+**أ. تسمية "معذور" → "مستأذن"**
+- تعديل جميع النصوص في الواجهة (`attendance` status label = `excused`) لعرض "مستأذن" بدل "معذور".
+- يشمل: `Attendance.tsx`, `StudentAttendanceReport.tsx`, `AttendanceCalendar.tsx`, `StudentProfile.tsx`, `GuardianChildProfile.tsx`, وأي طباعة أو تقرير.
+- لا يتم تغيير قيمة العمود في قاعدة البيانات (`excused`) للحفاظ على التوافق.
 
-## 1) إظهار الخطة السنوية في برنامج مدارج
-المشكلة: عند إنشاء "خطة سنوية" تُحفظ في `student_annual_plans` لكنها لا تظهر في صفحة `Madarij` (التي تعرض `madarij_enrollments` فقط).
+**ب. حالة حضور جديدة: "متأخر بإذن"**
+- إضافة قيمة `late_excused` إلى `attendance.status` (يمكن تخزينها كنص، أو إضافة CHECK بسيط).
+- إتاحتها في دورة الضغط باللمس (`Attendance.tsx`): حاضر → متأخر → متأخر بإذن → مستأذن → غائب → لا شيء.
+- لون خاص + عدّ منفصل في التقارير (لا يُحتسب غياباً).
 
-الحل في `src/pages/Madarij.tsx`:
-- إضافة قسم/تبويب جديد "الخطط السنوية النشطة" يجلب من `student_annual_plans` (status=active) ويعرض: الطالب، الحلقة، نوع الخطة، تاريخ البداية والنهاية، المجموع المستهدف، نسبة الإنجاز (محسوبة من `student_plan_progress`).
-- زر "عرض الخطة" يفتح `/student-annual-plan/:studentId`.
-- ربط زر "إنشاء خطة سنوية" بتحديث القائمة بعد الحفظ (موجود `onSaved={fetchData}` — توسيع `fetchData` ليجلب الخطط أيضًا).
+**ج. منع تحويل طالب جديد إلى حلقة تلقين**
+- في `EnrollmentRequests.tsx` عند القبول: فلترة القائمة إلى حلقات نوعها = "memorization" (منع نوع "talqeen").
+- إضافة تنبيه واضح إن حاول أحدهم اختيار حلقة تلقين.
 
----
+**د. دمج المهام والطلبات الداخلية في إطار واحد**
+- تعديل `AppLayout.tsx`: حذف الرابط المنفصل لـ "الطلبات الداخلية" ودمجه كتبويب داخل صفحة "المهام".
+- في `StaffTasks.tsx`: إضافة تبويبات علوية `Tabs` (مهامي / طلباتي / المُرسلة إليّ / الأرشيف)، مع تحميل من `staff_tasks` و`internal_requests` كلٍ في تبويبه.
 
-## 2) ربط تسجيل مدارج تلقائيًا بالخطة (إلغاء اختيار الجزء والحزب يدويًا)
-المشكلة: تسجيل المدارج يتطلب تحديد الجزء والحزب يدويًا.
+**هـ. إمكانية تعديل حالة تسجيل اليوم لمعلم التلقين**
+- في `DayRecordingDialog.tsx`: إزالة قفل "تم الحفظ" — السماح بإعادة التبديل على كل بطاقة (شرح/تربوي/واجبات/حضور) وتحديث `talqeen_sessions` مع تسجيل `updated_at`.
+- إضافة زر "إعادة فتح" في حال كانت الجلسة مقفلة تلقائياً بعد اليوم.
 
-الحل في `src/pages/MadarijEnrollment.tsx`:
-- عند اختيار الطالب والمسار: قراءة `student_annual_plans` النشطة للطالب → استخراج `previous_memorized_pages` لحساب الحزب/الجزء الحالي تلقائيًا (page → hizb via lookup).
-- إذا لا يوجد خطة: العودة لآخر `madarij_enrollment` للطالب وأخذ آخر حزب +1.
-- إخفاء حقلَي "الجزء" و"الحزب" من النموذج، وعرضهما كقيمة محسوبة فقط (read-only chip: "الحزب الحالي: X — الجزء Y") مع زر "تعديل يدوي" للمدير فقط عند الحاجة.
-
----
-
-## 3) تعديلات نموذج التسميع `src/pages/Recitation.tsx`
-- **إلغاء "جودة الحفظ"**: حذف `memorization_quality` من الحالة، النموذج (السلايدر سطر 320-324)، حساب الدرجة (سطر 94)، وحقل الإدراج (سطر 116).
-- **إلغاء "التجويد"**: حذف `tajweed_score` بنفس الطريقة (سطر 376-378, 95, 117).
-- **إعادة هيكلة فئات الأخطاء**: استبدال `{ jali, khafi, taraddod, nisyan }` بـ `{ error, lahn, warning }` (خطأ — لحن — تنبيه) في:
-  - الحالة الافتراضية (سطر 41, 87)
-  - مصفوفة الفئات المعروضة (سطر 339+)
-  - تطبيقها على البطاقات الثلاث: الحفظ، المراجعة، الربط (نفس بنية الأخطاء لكل قسم).
-- **حساب الدرجة الجديد**: مبني فقط على عدد الأخطاء/اللحن/التنبيهات (سنحدد معاملات الخصم في إعدادات التسميع — أو نستخدم نفس معاملات السرد: خطأ=2، لحن=1، تنبيه=0.5).
-- **Migration على `recitations`**: إضافة عمود `mistakes_breakdown_v2` JSONB أو تحديث استخدام نفس `mistakes_breakdown` بمفاتيح جديدة (نتبع الثاني لتجنب كسر البيانات القديمة، مع دالة قراءة متوافقة).
-
-> ملاحظة: سيتم الاحتفاظ بالأعمدة `memorization_quality` و`tajweed_score` في قاعدة البيانات (لا حذف) حفاظًا على البيانات التاريخية، مع تعطيلها في الواجهة فقط.
+**و. باركود لرابط التسجيل**
+- في صفحة `Enroll.tsx` (أو لوحة الإدارة): زر "توليد باركود" يعرض QR للرابط `/enroll` باستخدام مكتبة `qrcode.react` (خفيفة) — قابل للطباعة.
 
 ---
 
-## 4) اختبار السرد — حل مشكلة عدم القدرة على إضافة اختبار ثانٍ بعد النجاح
-المشكلة الحالية: زر "إعادة الاختبار" يظهر فقط للراسبين (سطر 643-647). الطالب الناجح يبقى في تبويب "النتائج" بدون أي طريقة لاختباره مجددًا على الحزب التالي.
+### 2. الإشعارات والحضور الآلي
 
-الحل في `src/pages/NarrationTest.tsx`:
-- **لكل طالب ناجح**: عرض زر "اختبار الحزب التالي" في قسم "الناجحون".
-- **منطق الحزب التالي**: يُحدَّد تلقائيًا من `madarij_enrollments.hizb_number` النشط للطالب (الذي يحدّثه المعلم عند إنهاء الحفظ). إذا كان الحزب الحالي > آخر حزب مختبَر → الزر فعّال. إذا لم يتقدم بعد → الزر معطّل مع tooltip: "بانتظار تحديث المعلم لإنهاء حفظ الحزب التالي".
-- عند الضغط: يضاف الطالب إلى `selectedIds` مع `currentHizb` المحدّث، وينتقل لتبويب "الاختبار".
-- توسيع `categorized` لإعادة وضع الطالب في `notTested` تلقائيًا إذا تقدّم حزبه (currentHizb > آخر hizb مختبَر).
+**أ. تفعيل إشعارات العاملين**
+- التحقق من `notification_templates` — إضافة قوالب مفقودة للعاملين (تكليف مهمة، رد على طلب، تنبيه بصمة).
+- تفعيل `user_notification_preferences` الافتراضي = ON للأدوار الإدارية.
 
----
-
-## 5) إضافة "لحن" إلى اختبار السرد
-- إضافة عمود `lahn` (INTEGER DEFAULT 0) إلى `narration_test_results` عبر migration.
-- تحديث `StudentRow` بإضافة `lahn` ، عمود في الجدول بين "الأخطاء" و"التنبيهات".
-- تحديث `calcNarrationScore(errors, lahn, warnings)` ليأخذ في الحسبان: `score = 50 - errors*errDed - lahn*lahnDed - warnings*warnDed`.
+**ب. رسائل التأخر والغياب التلقائية (70/100 دقيقة)**
+- Edge Function جديدة `check-tardiness` تعمل عبر `pg_cron` كل 5 دقائق:
+  - تجلب وقت أذان العصر من `preparation_config` أو `prayer-times`.
+  - عند مرور 70 دقيقة بعد الأذان: كل طالب لم يُسجّل حضوره → إشعار وليّ أمر "تأخر ابنكم".
+  - عند مرور 100 دقيقة: يتحول الحضور تلقائياً إلى `absent` + إشعار "غياب اليوم".
+  - يحترم إجازات `holidays` وأيام الجمعة/السبت.
+- إضافة إعداد في `preparation_config` للتحكم بـ (70/100) بدل الأرقام الثابتة.
 
 ---
 
-## 6) إعدادات اختبارات السرد
-صفحة جديدة `/narration-test-settings` (للمدير والمشرف):
-- جدول جديد `narration_test_settings` (صف واحد):
-  - `error_deduction` (default 2)
-  - `lahn_deduction` (default 1)
-  - `warning_deduction` (default 0.5)
-  - `pass_threshold` (default 85)
-  - `attendance_score` (default 50)
-  - `narration_max` (default 50)
-- نموذج بسيط لتحرير القيم.
-- `NarrationTest.tsx` يقرأ هذه الإعدادات بدل الثوابت الحالية (`ERROR_DEDUCTION`, `WARNING_DEDUCTION`, `PASS_THRESHOLD`, `ATTENDANCE_SCORE`).
-- إضافة الرابط في القائمة الجانبية ضمن "الاختبارات" أو "الإعدادات".
+### 3. بصمة الموظفين (QR + موقع جغرافي)
 
----
-
-## التفاصيل التقنية
-
-### Migrations المطلوبة
+**أ. جدول `staff_checkin_qr`** (قيمة QR ثابتة/دورية للمجمع + إحداثيات)
 ```sql
--- لحن في اختبار السرد
-ALTER TABLE public.narration_test_results
-  ADD COLUMN IF NOT EXISTS lahn INTEGER DEFAULT 0;
-
--- إعدادات اختبارات السرد
-CREATE TABLE IF NOT EXISTS public.narration_test_settings (
+CREATE TABLE public.staff_checkin_qr (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  error_deduction NUMERIC NOT NULL DEFAULT 2,
-  lahn_deduction NUMERIC NOT NULL DEFAULT 1,
-  warning_deduction NUMERIC NOT NULL DEFAULT 0.5,
-  pass_threshold NUMERIC NOT NULL DEFAULT 85,
-  attendance_score NUMERIC NOT NULL DEFAULT 50,
-  narration_max NUMERIC NOT NULL DEFAULT 50,
-  updated_at TIMESTAMPTZ DEFAULT now()
+  code TEXT UNIQUE NOT NULL,
+  latitude NUMERIC, longitude NUMERIC, radius_meters INT DEFAULT 100,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
 );
-ALTER TABLE public.narration_test_settings ENABLE ROW LEVEL SECURITY;
--- سياسات: قراءة للجميع المصادقين، تعديل للمدير/المشرف فقط
-INSERT INTO public.narration_test_settings (id) VALUES (gen_random_uuid()) ON CONFLICT DO NOTHING;
 ```
 
-### الملفات المتأثرة
-- `src/pages/Madarij.tsx` — إضافة قسم الخطط السنوية
-- `src/pages/MadarijEnrollment.tsx` — إخفاء حقول الجزء/الحزب + جلب تلقائي
-- `src/pages/Recitation.tsx` — إزالة جودة/تجويد + تعديل فئات الأخطاء
-- `src/pages/NarrationTest.tsx` — إضافة لحن + زر "الحزب التالي" + قراءة الإعدادات
-- `src/pages/NarrationTestSettings.tsx` — جديد
-- `src/App.tsx` + `src/components/AppLayout.tsx` — إضافة الرابط
-- Migrations جديدة
+**ب. صفحة `/staff-checkin`**
+- الموظف يفتح الصفحة على جواله → يمسح QR (`html5-qrcode`) → يطلب الموقع (`navigator.geolocation`) → التحقق أن المسافة ≤ radius.
+- عند النجاح: يُدرج سجل في `staff_attendance` (check_in_time) + يُغلق بمسحة ثانية (check_out_time).
+- الفشل: رسالة "أنت خارج نطاق المجمع" أو "QR غير صالح".
+
+**ج. تكامل مع البرنامج**
+- في `StaffAttendance.tsx`: عرض مصدر التسجيل (bio/manual) + مقارنة بمواعيد الشفت.
 
 ---
 
-## أسئلة للتأكيد قبل التنفيذ
-1. **معاملات خصم نموذج التسميع الجديد (خطأ/لحن/تنبيه)**: هل نستخدم نفس قيم السرد (2 / 1 / 0.5) أم قيم مختلفة؟
-2. **بطاقات الأخطاء في التسميع**: هل تظهر فئات (خطأ/لحن/تنبيه) منفصلة لكل قسم (حفظ، مراجعة، ربط) — أي 9 عدادات إجمالًا — أم فئة موحدة لكل قسم؟
-3. **شرط فتح اختبار الحزب التالي**: هل يكفي تقدّم حزب المدارج، أم تريد علامة صريحة من المعلم "أنهى الحفظ — جاهز للاختبار" تُحرّك زر التفعيل؟
+### 4. البرنامج الصيفي (وحدة مستقلة)
+
+**أ. جداول جديدة**
+```sql
+summer_programs (id, name, start_date, end_date, status)
+summer_maqare (id, program_id, name, type: 'hifz' | 'itqan', teacher_id, location)
+summer_students (id, maqra_id, student_id, source_halaqa_id, joined_at)
+summer_attendance (id, summer_student_id, date, status, notes)
+```
+
+**ب. صفحة `/summer-program`**
+- إدارة برنامج صيفي: إنشاء، إضافة مقارئ، تعيين معلمين، إضافة طلاب من الحلقات الأساسية (`multi-select` من `students`)، تسجيل الحضور اليومي.
+
+**ج. لوحة إحصاءات**
+- يومية/أسبوعية/إجمالية.
+- نسب: فردية (الطالب)، على مستوى المقرأة، على مستوى الحلقة الأصلية.
+- مخططات `recharts` (Bar + Line).
+
+---
+
+### 5. إشراف البرامج مع المواد (كتب/يوتيوب/صوت)
+
+**أ. فصل الإشراف عن `program_quizzes` الحالي**
+- جدول جديد `program_materials`:
+```sql
+program_materials (
+  id, program_id, title, type: 'book' | 'youtube' | 'audio' | 'pdf',
+  url TEXT, file_path TEXT, description, order_index, active
+)
+```
+- صفحة `/program-materials/:programId` لمشرف البرامج: إضافة/تعديل/حذف مواد + تصنيفها.
+- عرض في بوابة الطالب (`StudentPortal.tsx` تبويب البرامج) مع مشغّل صوت مدمج و`iframe` يوتيوب.
+
+---
+
+### 6. ربط الخطة الفصلية بالتسميع + تحسين إضافة المحفوظ
+
+**أ. جلب تلقائي في `Recitation.tsx`**
+- عند فتح نموذج التسميع لطالب: قراءة `student_annual_plans` النشطة + آخر `student_plan_progress` → اقتراح رقم الصفحة/السورة/الجزء المقبل تلقائياً.
+- عرض شريط "الخطة تقول: هذا الأسبوع صفحة X إلى Y" مع زر "استخدم الاقتراح".
+
+**ب. تحسين آلية إضافة المحفوظ**
+- عند حفظ التسميع الجديد: تحديث `student_plan_progress.actual_pages` تلقائياً (موجود جزئياً — التأكد من دقته).
+- إظهار نسبة إنجاز الأسبوع/الشهر فور الحفظ (toast).
+
+---
+
+### 7. تصدير النتائج اليومية لناظم (CSV/Excel)
+
+**أ. صفحة `/nazem-export`**
+- اختيار فترة زمنية + حلقة/برنامج.
+- توليد ملف Excel بأعمدة متوافقة مع تنسيق ناظم: (رقم الهوية، الاسم، التاريخ، الحضور، التسميع، الدرجة...).
+- استخدام `xlsx-js-style` (موجود بالمشروع).
+- زر "تنزيل" فوري + سجل تصديرات سابقة (اختياري).
+
+---
+
+### 8. التنفيذ التقني
+
+- كل تعديل RLS في migration منفصل.
+- كل صفحة/مكوّن جديد بحد أقصى 300 سطر (تقسيم إن لزم).
+- إضافة الروابط للقائمة الجانبية `AppLayout.tsx` في مجموعاتها المناسبة.
+- الحفاظ على RTL/العربية/الألوان (أخضر داكن + بيج).
+- بعد كل مايجريشن: تحديث types + الكود التابع.
+
+---
+
+### 9. ترتيب التنفيذ المقترح
+
+```text
+المرحلة أ (لغوي/سريع): معذور→مستأذن، منع تحويل تلقين، دمج مهام/طلبات، QR تسجيل، تعديل جلسة التلقين
+المرحلة ب (إشعارات): قوالب العاملين + Edge Function تأخر/غياب تلقائي
+المرحلة ج (بصمة): جدول QR + صفحة /staff-checkin + تكامل
+المرحلة د (برنامج صيفي): جداول + صفحة + إحصاءات
+المرحلة هـ (مواد البرامج): جدول + صفحة إشراف + عرض في البوابة
+المرحلة و (خطة↔تسميع + ناظم): جلب تلقائي + تصدير Excel
+```
+
+هل توافق على البدء بالمرحلة (أ) أولاً؟ أم تفضّل ترتيباً مختلفاً؟
