@@ -43,6 +43,8 @@ import {
   QrCode,
   Brain,
   type LucideIcon,
+  Sun,
+  Library,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
