@@ -64,7 +64,7 @@ export default function SummerPrograms() {
   useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate, summerStudents]);
-  useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
+  useEffect(() => { if (selectedMaqra && (tab === "records" || tab === "schedule")) loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
   useEffect(() => { if (selectedProgram && tab === "stats") loadProgramAggregate(selectedProgram); }, [tab, selectedProgram]);
 
   async function loadPrograms() {
