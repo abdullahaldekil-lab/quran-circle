@@ -229,6 +229,8 @@ const navGroups: NavGroup[] = [
       { to: "/staff-attendance", icon: CheckSquare, label: "حضور العاملين" },
       { to: "/staff-attendance-log", icon: ClipboardList, label: "سجل الحضور" },
       { to: "/staff-shifts", icon: Clock, label: "جداول الدوام" },
+      { to: "/staff-qr-management", icon: ShieldCheck, label: "نقاط بصمة QR" },
+      { to: "/staff-qr-checkin", icon: CheckSquare, label: "بصمة الحضور (QR)" },
       { to: "/staff-tasks", icon: Target, label: "المهام" },
       { to: "/staff-tasks-analytics", icon: BarChart3, label: "تحليلات المهام" },
       { to: "/internal-requests", icon: ScrollText, label: "الطلبات الداخلية" },

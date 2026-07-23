@@ -55,6 +55,8 @@ import StudentNarrationProgress from "./pages/StudentNarrationProgress";
 import StaffAttendance from "./pages/StaffAttendance";
 import StaffAttendanceLog from "./pages/StaffAttendanceLog";
 import StaffShiftManagement from "./pages/StaffShiftManagement";
+import StaffQrManagement from "./pages/StaffQrManagement";
+import StaffQrCheckin from "./pages/StaffQrCheckin";
 import NotificationTemplates from "./pages/NotificationTemplates";
 import NotificationLog from "./pages/NotificationLog";
 import NotificationPreferences from "./pages/NotificationPreferences";
@@ -216,6 +218,8 @@ const AppRoutes = () => {
       <Route path="/staff-attendance" element={<ProtectedRoute path="/staff-attendance"><StaffAttendance /></ProtectedRoute>} />
       <Route path="/staff-attendance-log" element={<ProtectedRoute path="/staff-attendance-log"><StaffAttendanceLog /></ProtectedRoute>} />
       <Route path="/staff-shifts" element={<ProtectedRoute path="/staff-shifts"><StaffShiftManagement /></ProtectedRoute>} />
+      <Route path="/staff-qr-management" element={<ProtectedRoute path="/staff-qr-management"><StaffQrManagement /></ProtectedRoute>} />
+      <Route path="/staff-qr-checkin" element={<ProtectedRoute path="/staff-qr-checkin"><StaffQrCheckin /></ProtectedRoute>} />
       <Route path="/internal-requests" element={<ProtectedRoute path="/internal-requests"><InternalRequests /></ProtectedRoute>} />
       <Route path="/staff-tasks" element={<ProtectedRoute path="/staff-tasks"><StaffTasks /></ProtectedRoute>} />
       <Route path="/staff-tasks-analytics" element={<ProtectedRoute path="/staff-tasks-analytics"><StaffTasksAnalytics /></ProtectedRoute>} />
