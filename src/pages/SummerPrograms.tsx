@@ -261,9 +261,27 @@ export default function SummerPrograms() {
                 </div>
                 <div className="border rounded-lg divide-y">
                   {summerStudents.map(s => (
-                    <div key={s.id} className="flex items-center justify-between p-3">
-                      <span>{studentNameMap[s.student_id] || "—"}</span>
-                      <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
+                    <div key={s.id} className="flex items-center justify-between gap-2 p-3 flex-wrap">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="font-medium">{studentNameMap[s.student_id] || "—"}</span>
+                        {s.plan_type ? (
+                          <Badge variant="outline" className={s.plan_type === "hifz" ? "border-rose-400 text-rose-700 dark:text-rose-300" : "border-amber-400 text-amber-700 dark:text-amber-300"}>
+                            {s.plan_type === "hifz" ? "حفظ" : "تعاهد"}{s.plan_track ? ` — ${s.plan_track}` : ""}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">بدون خطة</Badge>
+                        )}
+                        {s.assigned_reciter && <span className="text-xs text-muted-foreground">المقرئ: {s.assigned_reciter}</span>}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" onClick={() => setPlanTarget(s)}>
+                          <BookOpen className="w-3.5 h-3.5 ml-1" />الخطة
+                        </Button>
+                        <Button variant="default" size="sm" disabled={!s.plan_type} onClick={() => setDailyTarget(s)}>
+                          <ClipboardList className="w-3.5 h-3.5 ml-1" />سجل يومي
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
+                      </div>
                     </div>
                   ))}
                   {!summerStudents.length && <p className="p-4 text-center text-muted-foreground">لا يوجد طلاب.</p>}
