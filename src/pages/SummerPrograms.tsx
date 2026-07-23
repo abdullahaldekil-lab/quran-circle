@@ -373,60 +373,85 @@ export default function SummerPrograms() {
               <TabsContent value="students" className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4" />{currentMaqra?.name} — {summerStudents.length} طالب</h3>
-                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); } }}>
-                    <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
-                    <DialogContent dir="rtl" className="max-w-lg">
-                      <DialogHeader><DialogTitle>ربط طلاب بالمقرأة</DialogTitle></DialogHeader>
-                      <div className="space-y-2">
+                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter(""); setLinkJuz(""); setLinkExtraPages(""); setLinkStartDate(""); setLinkEndDate(""); } }}>
+                    <DialogTrigger asChild><Button size="sm" disabled={!currentMaqra?.plan_category}><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
+                    <DialogContent dir="rtl" className="max-w-2xl max-h-[92vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>ربط طلاب بمقرأة {currentMaqra?.plan_category === "hifz" ? "الحفظ" : "الإتقان"}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
                         <Input placeholder="بحث بالاسم..." value={stuSearch} onChange={e => setStuSearch(e.target.value)} />
                         <p className="text-xs text-muted-foreground">تم تحديد {pickStudents.length} طالب</p>
-                        <div className="border rounded max-h-72 overflow-y-auto divide-y">
+                        <div className="border rounded max-h-60 overflow-y-auto divide-y">
                           {allStudents
                             .filter(s => !summerStudents.find(ss => ss.student_id === s.id))
                             .filter(s => !stuSearch || s.full_name.includes(stuSearch))
                             .slice(0, 200)
                             .map(s => {
                               const checked = pickStudents.includes(s.id);
+                              const halaqa = halaqat.find(h => h.id === s.halaqa_id);
                               return (
                                 <label key={s.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-muted/50">
                                   <Checkbox checked={checked} onCheckedChange={(v) => {
                                     setPickStudents(prev => v ? [...prev, s.id] : prev.filter(x => x !== s.id));
                                   }} />
-                                  <span className="text-sm">{s.full_name}</span>
+                                  <span className="text-sm flex-1">{s.full_name}</span>
+                                  {halaqa && <Badge variant="outline" className="text-[10px]">{halaqa.name}</Badge>}
                                 </label>
                               );
                             })}
                         </div>
-                        <div className="border-t pt-3 space-y-2">
-                          <p className="text-sm font-semibold">تعيين الخطة تلقائيًا (اختياري)</p>
-                          <p className="text-xs text-muted-foreground">تُطبَّق هذه الخطة على كل الطلاب المحددين عند الربط.</p>
-                          <div className="grid grid-cols-2 gap-2">
+                        <div className="border-t pt-3 space-y-3">
+                          <p className="text-sm font-semibold flex items-center gap-2"><Target className="w-4 h-4" />خطة {currentMaqra?.plan_category === "hifz" ? "الحفظ" : "الإتقان"}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             <div>
-                              <Label className="text-xs">نوع الخطة</Label>
-                              <Select value={linkPlanType} onValueChange={(v) => { setLinkPlanType(v as PlanType | "none"); setLinkPlanTrack(""); }}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">بدون خطة</SelectItem>
-                                  <SelectItem value="hifz">حفظ</SelectItem>
-                                  <SelectItem value="taahud">تعاهد / إتقان</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <Label className="text-xs">عدد الأجزاء</Label>
+                              <Input type="number" min={0} step={0.5} value={linkJuz} onChange={e => setLinkJuz(e.target.value)} placeholder="مثال: 2" />
                             </div>
                             <div>
-                              <Label className="text-xs">المسار</Label>
-                              <Select value={linkPlanTrack} onValueChange={setLinkPlanTrack} disabled={linkPlanType === "none"}>
+                              <Label className="text-xs">أوجه إضافية</Label>
+                              <Input type="number" min={0} value={linkExtraPages} onChange={e => setLinkExtraPages(e.target.value)} placeholder="0" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">تاريخ البدء</Label>
+                              <Input type="date" value={linkStartDate} onChange={e => setLinkStartDate(e.target.value)} />
+                            </div>
+                            <div>
+                              <Label className="text-xs">تاريخ الانتهاء</Label>
+                              <Input type="date" value={linkEndDate} onChange={e => setLinkEndDate(e.target.value)} />
+                            </div>
+                          </div>
+                          {(() => {
+                            const juz = parseFloat(linkJuz) || 0;
+                            const extra = parseInt(linkExtraPages) || 0;
+                            const pages = juzToPages(juz, extra);
+                            const days = planDurationDays(linkStartDate, linkEndDate);
+                            const daily = computeDailyPages(pages, linkStartDate, linkEndDate);
+                            if (!pages) return null;
+                            return (
+                              <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/40 rounded p-2">
+                                <div><span className="block text-muted-foreground">إجمالي</span><b>{pages} وجه</b></div>
+                                <div><span className="block text-muted-foreground">مدة الخطة</span><b>{days} يوم</b></div>
+                                <div><span className="block text-muted-foreground">الحد اليومي</span><b className="text-primary">{daily} وجه/يوم</b></div>
+                              </div>
+                            );
+                          })()}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">المسار (اختياري)</Label>
+                              <Select value={linkPlanTrack} onValueChange={setLinkPlanTrack}>
                                 <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
                                 <SelectContent>
-                                  {linkPlanType !== "none" && PLAN_TRACKS[linkPlanType].map(t => (
+                                  {currentMaqra?.plan_category && PLAN_TRACKS[currentMaqra.plan_category].map(t => (
                                     <SelectItem key={t} value={t}>{t}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                             </div>
-                          </div>
-                          <div>
-                            <Label className="text-xs">المقرئ المرافق</Label>
-                            <Input value={linkReciter} onChange={e => setLinkReciter(e.target.value)} placeholder="اسم المقرئ (اختياري)" disabled={linkPlanType === "none"} />
+                            <div>
+                              <Label className="text-xs">المقرئ المرافق</Label>
+                              <Input value={linkReciter} onChange={e => setLinkReciter(e.target.value)} placeholder="اختياري" />
+                            </div>
                           </div>
                         </div>
                       </div>
