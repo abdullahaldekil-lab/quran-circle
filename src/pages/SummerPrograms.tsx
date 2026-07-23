@@ -14,7 +14,7 @@ import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOp
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
-import type { PlanType } from "@/lib/summer-scoring";
+import { PLAN_TRACKS, type PlanType } from "@/lib/summer-scoring";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
 type Maqra = { id: string; program_id: string; name: string; maqra_type: string; location: string | null; teacher_id: string | null };
