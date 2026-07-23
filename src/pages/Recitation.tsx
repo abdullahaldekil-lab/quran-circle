@@ -18,6 +18,7 @@ import StudentNameLink from "@/components/StudentNameLink";
 import { formatDateHijriOnly } from "@/lib/hijri";
 import StudentAnnualPlanCard from "@/components/recitation/StudentAnnualPlanCard";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
+import { emptyBreakdown as sharedEmptyBreakdown, aggregateCounts as sharedAggregate, calcScore as sharedCalcScore } from "@/lib/recitation-scoring";
 
 const Recitation = () => {
   const { user } = useAuth();
