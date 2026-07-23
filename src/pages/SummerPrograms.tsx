@@ -14,7 +14,8 @@ import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, A
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
-import { PLAN_TRACKS, computeDailyPages, juzToPages, planDurationDays, type PlanType } from "@/lib/summer-scoring";
+import { PLAN_TRACKS, computeDailyPages, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, juzToPages, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
+import { formatDateHijriOnly, getWeekdayArabic } from "@/lib/hijri";
 import { Progress } from "@/components/ui/progress";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
@@ -47,10 +48,11 @@ export default function SummerPrograms() {
   const [stuSearch, setStuSearch] = useState("");
   const [linkPlanTrack, setLinkPlanTrack] = useState<string>("");
   const [linkReciter, setLinkReciter] = useState<string>("");
-  const [linkJuz, setLinkJuz] = useState<string>("");
-  const [linkExtraPages, setLinkExtraPages] = useState<string>("");
+  const [linkJuzFrom, setLinkJuzFrom] = useState<string>("");
+  const [linkJuzTo, setLinkJuzTo] = useState<string>("");
   const [linkStartDate, setLinkStartDate] = useState<string>("");
   const [linkEndDate, setLinkEndDate] = useState<string>("");
+  const [holidays, setHolidays] = useState<HolidayRange[]>([]);
   const [transferTarget, setTransferTarget] = useState<SummerStudent | null>(null);
   const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
@@ -60,7 +62,7 @@ export default function SummerPrograms() {
   const [programRecords, setProgramRecords] = useState<any[]>([]);
   const [programStudents, setProgramStudents] = useState<SummerStudent[]>([]);
 
-  useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); loadHalaqat(); }, []);
+  useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); loadHalaqat(); loadHolidays(); }, []);
   useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate, summerStudents]);
@@ -263,6 +265,10 @@ export default function SummerPrograms() {
     const { data } = await supabase.from("halaqat").select("id, name").order("name");
     setHalaqat((data || []) as any);
   }
+  async function loadHolidays() {
+    const { data } = await supabase.from("holidays").select("start_date, end_date");
+    setHolidays((data || []) as any);
+  }
   async function loadProgramAggregate(pid: string) {
     // pull all maqare, then their students + records for stats
     const { data: mList } = await supabase.from("summer_maqare").select("id").eq("program_id", pid);
@@ -281,12 +287,13 @@ export default function SummerPrograms() {
     const planType = (maqra?.plan_category || null) as PlanType | null;
     const planTrack = planType ? (linkPlanTrack || null) : null;
     const reciter = linkReciter.trim() || null;
-    const juz = parseFloat(linkJuz) || 0;
-    const extra = parseInt(linkExtraPages) || 0;
-    const pagesTarget = juzToPages(juz, extra);
+    const juzFrom = parseInt(linkJuzFrom) || 0;
+    const juzTo = parseInt(linkJuzTo) || 0;
+    const pagesTarget = juzRangeToPages(juzFrom, juzTo);
     const startDate = linkStartDate || null;
     const endDate = linkEndDate || null;
-    const daily = computeDailyPages(pagesTarget, startDate, endDate);
+    const workingDays = computeWorkingDays(startDate, endDate, holidays);
+    const daily = computeDailyPagesWorking(pagesTarget, workingDays);
     const rows = pickStudents.map(sid => {
       const stu = allStudents.find(s => s.id === sid);
       return {
@@ -296,18 +303,21 @@ export default function SummerPrograms() {
         plan_type: planType,
         plan_track: planTrack,
         assigned_reciter: reciter,
+        juz_from: juzFrom || null,
+        juz_to: juzTo || null,
         pages_target: pagesTarget,
         plan_start_date: startDate,
         plan_end_date: endDate,
+        working_days: workingDays || null,
         daily_pages: daily,
         active: true,
-      };
+      } as any;
     });
     const { error } = await supabase.from("summer_students").upsert(rows, { onConflict: "maqra_id,student_id" });
     if (error) return toast.error(error.message);
-    toast.success(`تمت إضافة ${rows.length} طالب — الحد اليومي: ${daily} وجه`);
+    toast.success(`تمت إضافة ${rows.length} طالب — ${workingDays} يوم عمل · ${daily} وجه/يوم`);
     setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter("");
-    setLinkJuz(""); setLinkExtraPages(""); setLinkStartDate(""); setLinkEndDate("");
+    setLinkJuzFrom(""); setLinkJuzTo(""); setLinkStartDate(""); setLinkEndDate("");
     setAddStuOpen(false);
     loadSummerStudents(selectedMaqra);
     if (selectedProgram) { loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); }
@@ -478,7 +488,7 @@ export default function SummerPrograms() {
               <TabsContent value="students" className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4" />{currentMaqra?.name} — {summerStudents.length} طالب</h3>
-                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter(""); setLinkJuz(""); setLinkExtraPages(""); setLinkStartDate(""); setLinkEndDate(""); } }}>
+                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter(""); setLinkJuzFrom(""); setLinkJuzTo(""); setLinkStartDate(""); setLinkEndDate(""); } }}>
                     <DialogTrigger asChild><Button size="sm" disabled={!currentMaqra?.plan_category}><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
                     <DialogContent dir="rtl" className="max-w-2xl max-h-[92vh] overflow-y-auto">
                       <DialogHeader>
@@ -510,33 +520,37 @@ export default function SummerPrograms() {
                           <p className="text-sm font-semibold flex items-center gap-2"><Target className="w-4 h-4" />خطة {currentMaqra?.plan_category === "hifz" ? "الحفظ" : "الإتقان"}</p>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             <div>
-                              <Label className="text-xs">عدد الأجزاء</Label>
-                              <Input type="number" min={0} step={0.5} value={linkJuz} onChange={e => setLinkJuz(e.target.value)} placeholder="مثال: 2" />
+                              <Label className="text-xs">من الجزء</Label>
+                              <Input type="number" min={1} max={30} value={linkJuzFrom} onChange={e => setLinkJuzFrom(e.target.value)} placeholder="1" />
                             </div>
                             <div>
-                              <Label className="text-xs">أوجه إضافية</Label>
-                              <Input type="number" min={0} value={linkExtraPages} onChange={e => setLinkExtraPages(e.target.value)} placeholder="0" />
+                              <Label className="text-xs">إلى الجزء</Label>
+                              <Input type="number" min={1} max={30} value={linkJuzTo} onChange={e => setLinkJuzTo(e.target.value)} placeholder="7" />
                             </div>
                             <div>
                               <Label className="text-xs">تاريخ البدء</Label>
                               <Input type="date" value={linkStartDate} onChange={e => setLinkStartDate(e.target.value)} />
+                              {linkStartDate && <p className="text-[10px] text-muted-foreground mt-1">{formatDateHijriOnly(linkStartDate)}</p>}
                             </div>
                             <div>
                               <Label className="text-xs">تاريخ الانتهاء</Label>
                               <Input type="date" value={linkEndDate} onChange={e => setLinkEndDate(e.target.value)} />
+                              {linkEndDate && <p className="text-[10px] text-muted-foreground mt-1">{formatDateHijriOnly(linkEndDate)}</p>}
                             </div>
                           </div>
                           {(() => {
-                            const juz = parseFloat(linkJuz) || 0;
-                            const extra = parseInt(linkExtraPages) || 0;
-                            const pages = juzToPages(juz, extra);
-                            const days = planDurationDays(linkStartDate, linkEndDate);
-                            const daily = computeDailyPages(pages, linkStartDate, linkEndDate);
+                            const jf = parseInt(linkJuzFrom) || 0;
+                            const jt = parseInt(linkJuzTo) || 0;
+                            const pages = juzRangeToPages(jf, jt);
+                            const totalDays = planDurationDays(linkStartDate, linkEndDate);
+                            const workDays = computeWorkingDays(linkStartDate, linkEndDate, holidays);
+                            const daily = computeDailyPagesWorking(pages, workDays);
                             if (!pages) return null;
                             return (
-                              <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/40 rounded p-2">
+                              <div className="grid grid-cols-4 gap-2 text-center text-xs bg-muted/40 rounded p-2">
                                 <div><span className="block text-muted-foreground">إجمالي</span><b>{pages} وجه</b></div>
-                                <div><span className="block text-muted-foreground">مدة الخطة</span><b>{days} يوم</b></div>
+                                <div><span className="block text-muted-foreground">مدة الخطة</span><b>{totalDays} يوم</b></div>
+                                <div><span className="block text-muted-foreground">أيام العمل</span><b>{workDays} يوم</b></div>
                                 <div><span className="block text-muted-foreground">الحد اليومي</span><b className="text-primary">{daily} وجه/يوم</b></div>
                               </div>
                             );
@@ -698,7 +712,7 @@ export default function SummerPrograms() {
                 {summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0).map(s => {
                   const start = new Date(s.plan_start_date!);
                   const end = new Date(s.plan_end_date!);
-                  const days = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
+                  const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
                   const daily = s.daily_pages || 0;
                   const target = s.pages_target || 0;
                   // group records by record_date for this student
@@ -706,12 +720,27 @@ export default function SummerPrograms() {
                   records.filter((r: any) => r.summer_student_id === s.id).forEach((r: any) => {
                     byDate[r.record_date] = (byDate[r.record_date] || 0) + (r.link_pages_count || 0);
                   });
-                  const rows = Array.from({ length: days }, (_, i) => {
+                  // build rows for WORKING days only (Sun–Thu, no holidays)
+                  const rows: { idx: number; date: string; weekday: string; hijri: string; target: number; targetCum: number; actual: number }[] = [];
+                  let cum = 0;
+                  let idx = 0;
+                  for (let i = 0; i < totalDays; i++) {
                     const d = new Date(start.getTime() + i * 86400000);
+                    if (!isWorkingDay(d, holidays)) continue;
+                    idx += 1;
                     const key = d.toISOString().slice(0, 10);
-                    const targetCum = Math.min(target, Math.round(daily * (i + 1) * 100) / 100);
-                    return { idx: i + 1, date: key, target: daily, targetCum, actual: byDate[key] || 0 };
-                  });
+                    cum = Math.min(target, Math.round((cum + daily) * 100) / 100);
+                    rows.push({
+                      idx,
+                      date: key,
+                      weekday: getWeekdayArabic(d),
+                      hijri: formatDateHijriOnly(d),
+                      target: daily,
+                      targetCum: cum,
+                      actual: byDate[key] || 0,
+                    });
+                  }
+                  const workingDays = rows.length;
                   let actualCum = 0;
                   const today = new Date().toISOString().slice(0, 10);
                   return (
@@ -723,9 +752,12 @@ export default function SummerPrograms() {
                             <Badge variant="outline" className={s.plan_type === "hifz" ? "border-rose-400" : "border-amber-400"}>
                               {s.plan_type === "hifz" ? "حفظ" : "إتقان"}
                             </Badge>
+                            {(s as any).juz_from && (s as any).juz_to && (
+                              <Badge variant="outline">الأجزاء {(s as any).juz_from}–{(s as any).juz_to}</Badge>
+                            )}
                           </span>
                           <span className="text-xs font-normal text-muted-foreground">
-                            {s.plan_start_date} → {s.plan_end_date} · {days} يوم · {daily} وجه/يوم · الهدف {target} وجه
+                            {formatDateHijriOnly(s.plan_start_date!)} → {formatDateHijriOnly(s.plan_end_date!)} · {workingDays} يوم عمل / {totalDays} يوم · {daily} وجه/يوم · الهدف {target} وجه
                           </span>
                         </CardTitle>
                       </CardHeader>
@@ -734,8 +766,9 @@ export default function SummerPrograms() {
                           <table className="w-full text-xs">
                             <thead className="bg-muted/50 sticky top-0">
                               <tr>
+                                <th className="p-2 text-right">#</th>
                                 <th className="p-2 text-right">اليوم</th>
-                                <th className="p-2 text-right">التاريخ</th>
+                                <th className="p-2 text-right">التاريخ الهجري</th>
                                 <th className="p-2 text-right">المطلوب اليومي</th>
                                 <th className="p-2 text-right">تراكمي مطلوب</th>
                                 <th className="p-2 text-right">المسمَّع فعلاً</th>
@@ -755,7 +788,8 @@ export default function SummerPrograms() {
                                 return (
                                   <tr key={r.date} className={`border-t ${r.date === today ? "bg-primary/5" : ""}`}>
                                     <td className="p-2">{r.idx}</td>
-                                    <td className="p-2 font-mono">{r.date}</td>
+                                    <td className="p-2">{r.weekday}</td>
+                                    <td className="p-2">{r.hijri}</td>
                                     <td className="p-2">{r.target}</td>
                                     <td className="p-2 text-muted-foreground">{r.targetCum}</td>
                                     <td className="p-2 font-semibold">{r.actual || "—"}</td>

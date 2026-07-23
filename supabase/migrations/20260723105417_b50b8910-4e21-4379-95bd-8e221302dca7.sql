@@ -1,0 +1,5 @@
+
+ALTER TABLE public.summer_students
+  ADD COLUMN IF NOT EXISTS juz_from INTEGER,
+  ADD COLUMN IF NOT EXISTS juz_to   INTEGER,
+  ADD COLUMN IF NOT EXISTS working_days INTEGER;
