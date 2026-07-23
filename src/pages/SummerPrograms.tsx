@@ -55,7 +55,7 @@ export default function SummerPrograms() {
   useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); }, []);
   useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
-  useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate]);
+  useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate, summerStudents]);
   useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
 
   async function loadPrograms() {
@@ -164,9 +164,11 @@ export default function SummerPrograms() {
         plan_type: planType,
         plan_track: planTrack,
         assigned_reciter: reciter,
+        active: true,
       };
     });
-    const { error } = await supabase.from("summer_students").insert(rows);
+    // upsert يعيد تفعيل الطالب الذي سبق إلغاء ربطه بنفس المقرأة بدل فشل قيد التفرد
+    const { error } = await supabase.from("summer_students").upsert(rows, { onConflict: "maqra_id,student_id" });
     if (error) return toast.error(error.message);
     toast.success(`تمت إضافة ${rows.length} طالب`);
     setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); setAddStuOpen(false);
@@ -183,7 +185,7 @@ export default function SummerPrograms() {
   async function transferStudent() {
     if (!transferTarget || !transferMaqraId || transferMaqraId === transferTarget.maqra_id) { setTransferTarget(null); return; }
     const { error } = await supabase.from("summer_students").update({ maqra_id: transferMaqraId }).eq("id", transferTarget.id);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(error.code === "23505" ? "الطالب مسجل مسبقًا في المقرأة المستهدفة" : error.message);
     toast.success("تم النقل");
     setTransferTarget(null); setTransferMaqraId("");
     if (selectedMaqra) loadSummerStudents(selectedMaqra);
