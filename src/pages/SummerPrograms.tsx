@@ -309,7 +309,18 @@ export default function SummerPrograms() {
                     <DialogHeader><DialogTitle>{editingMaqraId ? "تعديل مقرأة" : "إضافة مقرأة"}</DialogTitle></DialogHeader>
                     <div className="space-y-3">
                       <div><Label>الاسم</Label><Input value={maqraForm.name} onChange={e => setMaqraForm({ ...maqraForm, name: e.target.value })} /></div>
-                      <div><Label>النوع</Label>
+                      <div>
+                        <Label>تصنيف المقرأة *</Label>
+                        <Select value={maqraForm.plan_category} onValueChange={(v) => setMaqraForm({ ...maqraForm, plan_category: v as PlanType })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="hifz">مقرأة حفظ</SelectItem>
+                            <SelectItem value="taahud">مقرأة إتقان</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">يحدد نوع الخطة الافتراضية لجميع الطلاب المضافين لاحقاً.</p>
+                      </div>
+                      <div><Label>الفئة</Label>
                         <Select value={maqraForm.maqra_type} onValueChange={v => setMaqraForm({ ...maqraForm, maqra_type: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
