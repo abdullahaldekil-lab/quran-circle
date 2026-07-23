@@ -329,13 +329,13 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
 
             {/* التربوي */}
             <button
-              onClick={() => !todaySession?.tarbia_done && markDone("tarbia")}
-              disabled={!!todaySession?.tarbia_done}
+              onClick={() => markDone("tarbia")}
               className={`rounded-2xl p-4 border-2 text-right transition-all ${
                 todaySession?.tarbia_done
                   ? "bg-green-50 border-green-400"
                   : "bg-card border-border hover:border-purple-300"
               }`}
+              title={todaySession?.tarbia_done ? "اضغط للتراجع" : "اضغط عند الإتمام"}
             >
               <div className="flex justify-between items-start mb-2">
                 <span className="text-2xl">{todaySession?.tarbia_done ? "✅" : "⭕"}</span>
