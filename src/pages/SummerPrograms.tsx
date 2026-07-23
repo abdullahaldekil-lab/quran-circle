@@ -50,7 +50,7 @@ export default function SummerPrograms() {
   const [maqraCounts, setMaqraCounts] = useState<Record<string, number>>({});
 
   useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); }, []);
-  useEffect(() => { if (selectedProgram) loadMaqare(selectedProgram); }, [selectedProgram]);
+  useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate]);
   useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
