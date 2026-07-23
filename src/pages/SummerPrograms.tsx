@@ -516,33 +516,37 @@ export default function SummerPrograms() {
                           <p className="text-sm font-semibold flex items-center gap-2"><Target className="w-4 h-4" />خطة {currentMaqra?.plan_category === "hifz" ? "الحفظ" : "الإتقان"}</p>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             <div>
-                              <Label className="text-xs">عدد الأجزاء</Label>
-                              <Input type="number" min={0} step={0.5} value={linkJuz} onChange={e => setLinkJuz(e.target.value)} placeholder="مثال: 2" />
+                              <Label className="text-xs">من الجزء</Label>
+                              <Input type="number" min={1} max={30} value={linkJuzFrom} onChange={e => setLinkJuzFrom(e.target.value)} placeholder="1" />
                             </div>
                             <div>
-                              <Label className="text-xs">أوجه إضافية</Label>
-                              <Input type="number" min={0} value={linkExtraPages} onChange={e => setLinkExtraPages(e.target.value)} placeholder="0" />
+                              <Label className="text-xs">إلى الجزء</Label>
+                              <Input type="number" min={1} max={30} value={linkJuzTo} onChange={e => setLinkJuzTo(e.target.value)} placeholder="7" />
                             </div>
                             <div>
                               <Label className="text-xs">تاريخ البدء</Label>
                               <Input type="date" value={linkStartDate} onChange={e => setLinkStartDate(e.target.value)} />
+                              {linkStartDate && <p className="text-[10px] text-muted-foreground mt-1">{formatDateHijriOnly(linkStartDate)}</p>}
                             </div>
                             <div>
                               <Label className="text-xs">تاريخ الانتهاء</Label>
                               <Input type="date" value={linkEndDate} onChange={e => setLinkEndDate(e.target.value)} />
+                              {linkEndDate && <p className="text-[10px] text-muted-foreground mt-1">{formatDateHijriOnly(linkEndDate)}</p>}
                             </div>
                           </div>
                           {(() => {
-                            const juz = parseFloat(linkJuz) || 0;
-                            const extra = parseInt(linkExtraPages) || 0;
-                            const pages = juzToPages(juz, extra);
-                            const days = planDurationDays(linkStartDate, linkEndDate);
-                            const daily = computeDailyPages(pages, linkStartDate, linkEndDate);
+                            const jf = parseInt(linkJuzFrom) || 0;
+                            const jt = parseInt(linkJuzTo) || 0;
+                            const pages = juzRangeToPages(jf, jt);
+                            const totalDays = planDurationDays(linkStartDate, linkEndDate);
+                            const workDays = computeWorkingDays(linkStartDate, linkEndDate, holidays);
+                            const daily = computeDailyPagesWorking(pages, workDays);
                             if (!pages) return null;
                             return (
-                              <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/40 rounded p-2">
+                              <div className="grid grid-cols-4 gap-2 text-center text-xs bg-muted/40 rounded p-2">
                                 <div><span className="block text-muted-foreground">إجمالي</span><b>{pages} وجه</b></div>
-                                <div><span className="block text-muted-foreground">مدة الخطة</span><b>{days} يوم</b></div>
+                                <div><span className="block text-muted-foreground">مدة الخطة</span><b>{totalDays} يوم</b></div>
+                                <div><span className="block text-muted-foreground">أيام العمل</span><b>{workDays} يوم</b></div>
                                 <div><span className="block text-muted-foreground">الحد اليومي</span><b className="text-primary">{daily} وجه/يوم</b></div>
                               </div>
                             );
