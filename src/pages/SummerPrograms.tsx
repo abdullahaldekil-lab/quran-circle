@@ -10,17 +10,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOpen, Pencil, ArrowRightLeft } from "lucide-react";
+import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, ArrowRightLeft, BarChart3, Target } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
-import { PLAN_TRACKS, type PlanType } from "@/lib/summer-scoring";
+import { PLAN_TRACKS, computeDailyPages, juzToPages, planDurationDays, type PlanType } from "@/lib/summer-scoring";
+import { Progress } from "@/components/ui/progress";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
-type Maqra = { id: string; program_id: string; name: string; maqra_type: string; location: string | null; teacher_id: string | null };
-type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null; plan_type: PlanType | null; plan_track: string | null; plan_goal: string | null; assigned_reciter: string | null };
+type Maqra = { id: string; program_id: string; name: string; maqra_type: string; plan_category: PlanType | null; location: string | null; teacher_id: string | null };
+type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null; plan_type: PlanType | null; plan_track: string | null; plan_goal: string | null; assigned_reciter: string | null; pages_target: number | null; plan_start_date: string | null; plan_end_date: string | null; daily_pages: number | null };
 type StudentLite = { id: string; full_name: string; halaqa_id: string | null };
 type Teacher = { id: string; full_name: string };
+type HalaqaLite = { id: string; name: string };
 
 export default function SummerPrograms() {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -28,6 +30,7 @@ export default function SummerPrograms() {
   const [summerStudents, setSummerStudents] = useState<SummerStudent[]>([]);
   const [allStudents, setAllStudents] = useState<StudentLite[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [halaqat, setHalaqat] = useState<HalaqaLite[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [selectedMaqra, setSelectedMaqra] = useState<string | null>(null);
   const [tab, setTab] = useState("maqare");
@@ -38,25 +41,31 @@ export default function SummerPrograms() {
   const [progForm, setProgForm] = useState({ name: "", description: "", start_date: "", end_date: "", status: "planned" });
   const [maqraOpen, setMaqraOpen] = useState(false);
   const [editingMaqraId, setEditingMaqraId] = useState<string | null>(null);
-  const [maqraForm, setMaqraForm] = useState({ name: "", maqra_type: "male", location: "", teacher_id: "" });
+  const [maqraForm, setMaqraForm] = useState<{ name: string; maqra_type: string; plan_category: PlanType; location: string; teacher_id: string }>({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
   const [addStuOpen, setAddStuOpen] = useState(false);
   const [pickStudents, setPickStudents] = useState<string[]>([]);
   const [stuSearch, setStuSearch] = useState("");
-  const [linkPlanType, setLinkPlanType] = useState<PlanType | "none">("none");
   const [linkPlanTrack, setLinkPlanTrack] = useState<string>("");
   const [linkReciter, setLinkReciter] = useState<string>("");
+  const [linkJuz, setLinkJuz] = useState<string>("");
+  const [linkExtraPages, setLinkExtraPages] = useState<string>("");
+  const [linkStartDate, setLinkStartDate] = useState<string>("");
+  const [linkEndDate, setLinkEndDate] = useState<string>("");
   const [transferTarget, setTransferTarget] = useState<SummerStudent | null>(null);
   const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
   const [dailyTarget, setDailyTarget] = useState<SummerStudent | null>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [maqraCounts, setMaqraCounts] = useState<Record<string, number>>({});
+  const [programRecords, setProgramRecords] = useState<any[]>([]);
+  const [programStudents, setProgramStudents] = useState<SummerStudent[]>([]);
 
-  useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); }, []);
-  useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); } }, [selectedProgram]);
+  useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); loadHalaqat(); }, []);
+  useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate, summerStudents]);
   useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
+  useEffect(() => { if (selectedProgram && tab === "stats") loadProgramAggregate(selectedProgram); }, [tab, selectedProgram]);
 
   async function loadPrograms() {
     const { data } = await supabase.from("summer_programs").select("*").order("start_date", { ascending: false });
@@ -107,12 +116,12 @@ export default function SummerPrograms() {
   }
   function openNewMaqra() {
     setEditingMaqraId(null);
-    setMaqraForm({ name: "", maqra_type: "male", location: "", teacher_id: "" });
+    setMaqraForm({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
     setMaqraOpen(true);
   }
   function openEditMaqra(m: Maqra) {
     setEditingMaqraId(m.id);
-    setMaqraForm({ name: m.name, maqra_type: m.maqra_type, location: m.location || "", teacher_id: m.teacher_id || "" });
+    setMaqraForm({ name: m.name, maqra_type: m.maqra_type, plan_category: (m.plan_category || "hifz") as PlanType, location: m.location || "", teacher_id: m.teacher_id || "" });
     setMaqraOpen(true);
   }
   async function saveMaqra() {
@@ -130,7 +139,7 @@ export default function SummerPrograms() {
     }
     setMaqraOpen(false);
     setEditingMaqraId(null);
-    setMaqraForm({ name: "", maqra_type: "male", location: "", teacher_id: "" });
+    setMaqraForm({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
     loadMaqare(selectedProgram);
   }
   async function deleteMaqra(id: string) {
@@ -150,11 +159,34 @@ export default function SummerPrograms() {
     (ss || []).forEach((r: any) => { counts[r.maqra_id] = (counts[r.maqra_id] || 0) + 1; });
     setMaqraCounts(counts);
   }
+  async function loadHalaqat() {
+    const { data } = await supabase.from("halaqat").select("id, name").order("name");
+    setHalaqat((data || []) as any);
+  }
+  async function loadProgramAggregate(pid: string) {
+    // pull all maqare, then their students + records for stats
+    const { data: mList } = await supabase.from("summer_maqare").select("id").eq("program_id", pid);
+    const mIds = (mList || []).map((r: any) => r.id);
+    if (!mIds.length) { setProgramStudents([]); setProgramRecords([]); return; }
+    const { data: ss } = await supabase.from("summer_students").select("*").in("maqra_id", mIds).eq("active", true);
+    setProgramStudents((ss || []) as any);
+    const sIds = (ss || []).map((r: any) => r.id);
+    if (!sIds.length) { setProgramRecords([]); return; }
+    const { data: rec } = await supabase.from("summer_daily_records").select("summer_student_id, link_pages_count, total_score, record_date").in("summer_student_id", sIds);
+    setProgramRecords((rec || []) as any);
+  }
   async function addStudents() {
     if (!selectedMaqra || !pickStudents.length) return;
-    const planType = linkPlanType === "none" ? null : linkPlanType;
+    const maqra = maqare.find(m => m.id === selectedMaqra);
+    const planType = (maqra?.plan_category || null) as PlanType | null;
     const planTrack = planType ? (linkPlanTrack || null) : null;
     const reciter = linkReciter.trim() || null;
+    const juz = parseFloat(linkJuz) || 0;
+    const extra = parseInt(linkExtraPages) || 0;
+    const pagesTarget = juzToPages(juz, extra);
+    const startDate = linkStartDate || null;
+    const endDate = linkEndDate || null;
+    const daily = computeDailyPages(pagesTarget, startDate, endDate);
     const rows = pickStudents.map(sid => {
       const stu = allStudents.find(s => s.id === sid);
       return {
@@ -164,16 +196,21 @@ export default function SummerPrograms() {
         plan_type: planType,
         plan_track: planTrack,
         assigned_reciter: reciter,
+        pages_target: pagesTarget,
+        plan_start_date: startDate,
+        plan_end_date: endDate,
+        daily_pages: daily,
         active: true,
       };
     });
-    // upsert يعيد تفعيل الطالب الذي سبق إلغاء ربطه بنفس المقرأة بدل فشل قيد التفرد
     const { error } = await supabase.from("summer_students").upsert(rows, { onConflict: "maqra_id,student_id" });
     if (error) return toast.error(error.message);
-    toast.success(`تمت إضافة ${rows.length} طالب`);
-    setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); setAddStuOpen(false);
+    toast.success(`تمت إضافة ${rows.length} طالب — الحد اليومي: ${daily} وجه`);
+    setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter("");
+    setLinkJuz(""); setLinkExtraPages(""); setLinkStartDate(""); setLinkEndDate("");
+    setAddStuOpen(false);
     loadSummerStudents(selectedMaqra);
-    if (selectedProgram) loadMaqraCounts(selectedProgram);
+    if (selectedProgram) { loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); }
   }
   async function removeStudent(id: string) {
     if (!confirm("إلغاء ربط الطالب من المقرأة؟")) return;
