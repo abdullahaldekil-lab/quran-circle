@@ -145,9 +145,11 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
   const markDone = async (type: "lesson" | "tarbia") => {
     try {
       const now = new Date().toISOString();
+      const currentDone = type === "lesson" ? !!todaySession?.lesson_done : !!todaySession?.tarbia_done;
+      const newVal = !currentDone;
       const updates = type === "lesson"
-        ? { lesson_done: true, lesson_done_at: now }
-        : { tarbia_done: true, tarbia_done_at: now };
+        ? { lesson_done: newVal, lesson_done_at: newVal ? now : null }
+        : { tarbia_done: newVal, tarbia_done_at: newVal ? now : null };
       if (todaySession?.id) {
         const { error } = await (supabase as any)
           .from("talqeen_sessions")
