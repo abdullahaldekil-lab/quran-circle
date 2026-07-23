@@ -42,6 +42,9 @@ export default function SummerPrograms() {
   const [addStuOpen, setAddStuOpen] = useState(false);
   const [pickStudents, setPickStudents] = useState<string[]>([]);
   const [stuSearch, setStuSearch] = useState("");
+  const [linkPlanType, setLinkPlanType] = useState<PlanType | "none">("none");
+  const [linkPlanTrack, setLinkPlanTrack] = useState<string>("");
+  const [linkReciter, setLinkReciter] = useState<string>("");
   const [transferTarget, setTransferTarget] = useState<SummerStudent | null>(null);
   const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
