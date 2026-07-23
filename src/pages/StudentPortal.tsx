@@ -292,7 +292,7 @@ export default function StudentPortal() {
               <p className="text-sm text-muted-foreground">نسبة الحضور (آخر 30 يوم)</p>
               <p className="text-3xl font-bold text-green-700 mt-1">{attendanceRate}%</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {presentCount} حاضر • {lateCount} متأخر • {totalDays - presentCount - lateCount} غياب/معذور
+                {presentCount} حاضر • {lateCount} متأخر • {totalDays - presentCount - lateCount} غياب/مستأذن
               </p>
             </Card>
             <Card>
