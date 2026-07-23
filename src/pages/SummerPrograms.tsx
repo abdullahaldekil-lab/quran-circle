@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOpen } from "lucide-react";
+import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOpen, Pencil, ArrowRightLeft } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
 import type { PlanType } from "@/lib/summer-scoring";
@@ -36,15 +37,20 @@ export default function SummerPrograms() {
   const [progOpen, setProgOpen] = useState(false);
   const [progForm, setProgForm] = useState({ name: "", description: "", start_date: "", end_date: "", status: "planned" });
   const [maqraOpen, setMaqraOpen] = useState(false);
+  const [editingMaqraId, setEditingMaqraId] = useState<string | null>(null);
   const [maqraForm, setMaqraForm] = useState({ name: "", maqra_type: "male", location: "", teacher_id: "" });
   const [addStuOpen, setAddStuOpen] = useState(false);
-  const [pickStudent, setPickStudent] = useState<string>("");
+  const [pickStudents, setPickStudents] = useState<string[]>([]);
+  const [stuSearch, setStuSearch] = useState("");
+  const [transferTarget, setTransferTarget] = useState<SummerStudent | null>(null);
+  const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
   const [dailyTarget, setDailyTarget] = useState<SummerStudent | null>(null);
   const [records, setRecords] = useState<any[]>([]);
+  const [maqraCounts, setMaqraCounts] = useState<Record<string, number>>({});
 
   useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); }, []);
-  useEffect(() => { if (selectedProgram) loadMaqare(selectedProgram); }, [selectedProgram]);
+  useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate]);
   useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
@@ -96,36 +102,79 @@ export default function SummerPrograms() {
     setProgForm({ name: "", description: "", start_date: "", end_date: "", status: "planned" });
     loadPrograms();
   }
-  async function createMaqra() {
-    if (!selectedProgram || !maqraForm.name) return;
+  function openNewMaqra() {
+    setEditingMaqraId(null);
+    setMaqraForm({ name: "", maqra_type: "male", location: "", teacher_id: "" });
+    setMaqraOpen(true);
+  }
+  function openEditMaqra(m: Maqra) {
+    setEditingMaqraId(m.id);
+    setMaqraForm({ name: m.name, maqra_type: m.maqra_type, location: m.location || "", teacher_id: m.teacher_id || "" });
+    setMaqraOpen(true);
+  }
+  async function saveMaqra() {
+    if (!selectedProgram || !maqraForm.name) { toast.error("أدخل اسم المقرأة"); return; }
     const payload: any = { ...maqraForm, program_id: selectedProgram };
-    if (!payload.teacher_id) delete payload.teacher_id;
-    const { error } = await supabase.from("summer_maqare").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("تمت الإضافة"); setMaqraOpen(false);
+    if (!payload.teacher_id) payload.teacher_id = null;
+    if (editingMaqraId) {
+      const { error } = await supabase.from("summer_maqare").update(payload).eq("id", editingMaqraId);
+      if (error) return toast.error(error.message);
+      toast.success("تم التحديث");
+    } else {
+      const { error } = await supabase.from("summer_maqare").insert(payload);
+      if (error) return toast.error(error.message);
+      toast.success("تمت الإضافة");
+    }
+    setMaqraOpen(false);
+    setEditingMaqraId(null);
     setMaqraForm({ name: "", maqra_type: "male", location: "", teacher_id: "" });
     loadMaqare(selectedProgram);
   }
   async function deleteMaqra(id: string) {
-    if (!confirm("حذف المقرأة؟")) return;
+    if (!confirm("حذف المقرأة؟ سيتم إلغاء ربط الطلاب بها.")) return;
     const { error } = await supabase.from("summer_maqare").delete().eq("id", id);
     if (error) return toast.error(error.message);
+    toast.success("تم الحذف");
+    if (selectedMaqra === id) setSelectedMaqra(null);
     if (selectedProgram) loadMaqare(selectedProgram);
   }
-  async function addStudent() {
-    if (!selectedMaqra || !pickStudent) return;
-    const stu = allStudents.find(s => s.id === pickStudent);
-    const { error } = await supabase.from("summer_students").insert({
-      maqra_id: selectedMaqra, student_id: pickStudent, source_halaqa_id: stu?.halaqa_id || null,
+  async function loadMaqraCounts(pid: string) {
+    const { data } = await supabase.from("summer_maqare").select("id").eq("program_id", pid);
+    const ids = (data || []).map((r: any) => r.id);
+    if (!ids.length) { setMaqraCounts({}); return; }
+    const { data: ss } = await supabase.from("summer_students").select("maqra_id").in("maqra_id", ids).eq("active", true);
+    const counts: Record<string, number> = {};
+    (ss || []).forEach((r: any) => { counts[r.maqra_id] = (counts[r.maqra_id] || 0) + 1; });
+    setMaqraCounts(counts);
+  }
+  async function addStudents() {
+    if (!selectedMaqra || !pickStudents.length) return;
+    const rows = pickStudents.map(sid => {
+      const stu = allStudents.find(s => s.id === sid);
+      return { maqra_id: selectedMaqra, student_id: sid, source_halaqa_id: stu?.halaqa_id || null };
     });
+    const { error } = await supabase.from("summer_students").insert(rows);
     if (error) return toast.error(error.message);
-    toast.success("تمت الإضافة"); setPickStudent(""); setAddStuOpen(false);
+    toast.success(`تمت إضافة ${rows.length} طالب`);
+    setPickStudents([]); setStuSearch(""); setAddStuOpen(false);
     loadSummerStudents(selectedMaqra);
+    if (selectedProgram) loadMaqraCounts(selectedProgram);
   }
   async function removeStudent(id: string) {
+    if (!confirm("إلغاء ربط الطالب من المقرأة؟")) return;
     const { error } = await supabase.from("summer_students").update({ active: false }).eq("id", id);
     if (error) return toast.error(error.message);
     if (selectedMaqra) loadSummerStudents(selectedMaqra);
+    if (selectedProgram) loadMaqraCounts(selectedProgram);
+  }
+  async function transferStudent() {
+    if (!transferTarget || !transferMaqraId || transferMaqraId === transferTarget.maqra_id) { setTransferTarget(null); return; }
+    const { error } = await supabase.from("summer_students").update({ maqra_id: transferMaqraId }).eq("id", transferTarget.id);
+    if (error) return toast.error(error.message);
+    toast.success("تم النقل");
+    setTransferTarget(null); setTransferMaqraId("");
+    if (selectedMaqra) loadSummerStudents(selectedMaqra);
+    if (selectedProgram) loadMaqraCounts(selectedProgram);
   }
   async function setStatus(summerStudentId: string, status: string) {
     setAttendance(a => ({ ...a, [summerStudentId]: status }));
@@ -201,49 +250,59 @@ export default function SummerPrograms() {
 
               <TabsContent value="maqare" className="space-y-3">
                 <div className="flex justify-end">
-                  <Dialog open={maqraOpen} onOpenChange={setMaqraOpen}>
-                    <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />مقرأة جديدة</Button></DialogTrigger>
-                    <DialogContent dir="rtl">
-                      <DialogHeader><DialogTitle>إضافة مقرأة</DialogTitle></DialogHeader>
-                      <div className="space-y-3">
-                        <div><Label>الاسم</Label><Input value={maqraForm.name} onChange={e => setMaqraForm({ ...maqraForm, name: e.target.value })} /></div>
-                        <div><Label>النوع</Label>
-                          <Select value={maqraForm.maqra_type} onValueChange={v => setMaqraForm({ ...maqraForm, maqra_type: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="male">بنين</SelectItem>
-                              <SelectItem value="female">بنات</SelectItem>
-                              <SelectItem value="mixed">مختلط</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div><Label>الموقع</Label><Input value={maqraForm.location} onChange={e => setMaqraForm({ ...maqraForm, location: e.target.value })} /></div>
-                        <div><Label>المعلم</Label>
-                          <Select value={maqraForm.teacher_id} onValueChange={v => setMaqraForm({ ...maqraForm, teacher_id: v })}>
-                            <SelectTrigger><SelectValue placeholder="اختر معلماً" /></SelectTrigger>
-                            <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <DialogFooter><Button onClick={createMaqra}>حفظ</Button></DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <Button size="sm" onClick={openNewMaqra}><Plus className="w-4 h-4 ml-1" />مقرأة جديدة</Button>
                 </div>
+                <Dialog open={maqraOpen} onOpenChange={(v) => { setMaqraOpen(v); if (!v) setEditingMaqraId(null); }}>
+                  <DialogContent dir="rtl">
+                    <DialogHeader><DialogTitle>{editingMaqraId ? "تعديل مقرأة" : "إضافة مقرأة"}</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                      <div><Label>الاسم</Label><Input value={maqraForm.name} onChange={e => setMaqraForm({ ...maqraForm, name: e.target.value })} /></div>
+                      <div><Label>النوع</Label>
+                        <Select value={maqraForm.maqra_type} onValueChange={v => setMaqraForm({ ...maqraForm, maqra_type: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">بنين</SelectItem>
+                            <SelectItem value="female">بنات</SelectItem>
+                            <SelectItem value="mixed">مختلط</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label>الموقع</Label><Input value={maqraForm.location} onChange={e => setMaqraForm({ ...maqraForm, location: e.target.value })} /></div>
+                      <div><Label>المعلم</Label>
+                        <Select value={maqraForm.teacher_id} onValueChange={v => setMaqraForm({ ...maqraForm, teacher_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="اختر معلماً" /></SelectTrigger>
+                          <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter><Button onClick={saveMaqra}>حفظ</Button></DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {maqare.map(m => (
-                    <Card key={m.id} className={`cursor-pointer hover:border-primary ${selectedMaqra === m.id ? "border-primary" : ""}`} onClick={() => { setSelectedMaqra(m.id); setTab("students"); }}>
-                      <CardContent className="pt-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-semibold">{m.name}</p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" />{m.location || "—"}</p>
-                            <Badge variant="outline" className="mt-2">{m.maqra_type === "male" ? "بنين" : m.maqra_type === "female" ? "بنات" : "مختلط"}</Badge>
+                  {maqare.map(m => {
+                    const teacher = teachers.find(t => t.id === m.teacher_id);
+                    return (
+                      <Card key={m.id} className={`cursor-pointer hover:border-primary ${selectedMaqra === m.id ? "border-primary" : ""}`} onClick={() => { setSelectedMaqra(m.id); setTab("students"); }}>
+                        <CardContent className="pt-4">
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold">{m.name}</p>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" />{m.location || "—"}</p>
+                              {teacher && <p className="text-xs text-muted-foreground mt-1">المعلم: {teacher.full_name}</p>}
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                <Badge variant="outline">{m.maqra_type === "male" ? "بنين" : m.maqra_type === "female" ? "بنات" : "مختلط"}</Badge>
+                                <Badge variant="secondary" className="gap-1"><Users className="w-3 h-3" />{maqraCounts[m.id] || 0} طالب</Badge>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openEditMaqra(m); }}><Pencil className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); deleteMaqra(m.id); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                            </div>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); deleteMaqra(m.id); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                   {!maqare.length && <p className="text-muted-foreground col-span-full">لا توجد مقارئ.</p>}
                 </div>
               </TabsContent>
@@ -251,19 +310,32 @@ export default function SummerPrograms() {
               <TabsContent value="students" className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4" />{currentMaqra?.name} — {summerStudents.length} طالب</h3>
-                  <Dialog open={addStuOpen} onOpenChange={setAddStuOpen}>
-                    <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />إضافة طالب</Button></DialogTrigger>
-                    <DialogContent dir="rtl">
-                      <DialogHeader><DialogTitle>إضافة طالب للمقرأة</DialogTitle></DialogHeader>
-                      <Select value={pickStudent} onValueChange={setPickStudent}>
-                        <SelectTrigger><SelectValue placeholder="اختر طالباً" /></SelectTrigger>
-                        <SelectContent className="max-h-80">
+                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); } }}>
+                    <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
+                    <DialogContent dir="rtl" className="max-w-lg">
+                      <DialogHeader><DialogTitle>ربط طلاب بالمقرأة</DialogTitle></DialogHeader>
+                      <div className="space-y-2">
+                        <Input placeholder="بحث بالاسم..." value={stuSearch} onChange={e => setStuSearch(e.target.value)} />
+                        <p className="text-xs text-muted-foreground">تم تحديد {pickStudents.length} طالب</p>
+                        <div className="border rounded max-h-72 overflow-y-auto divide-y">
                           {allStudents
                             .filter(s => !summerStudents.find(ss => ss.student_id === s.id))
-                            .map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <DialogFooter><Button onClick={addStudent}>إضافة</Button></DialogFooter>
+                            .filter(s => !stuSearch || s.full_name.includes(stuSearch))
+                            .slice(0, 200)
+                            .map(s => {
+                              const checked = pickStudents.includes(s.id);
+                              return (
+                                <label key={s.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-muted/50">
+                                  <Checkbox checked={checked} onCheckedChange={(v) => {
+                                    setPickStudents(prev => v ? [...prev, s.id] : prev.filter(x => x !== s.id));
+                                  }} />
+                                  <span className="text-sm">{s.full_name}</span>
+                                </label>
+                              );
+                            })}
+                        </div>
+                      </div>
+                      <DialogFooter><Button onClick={addStudents} disabled={!pickStudents.length}>ربط ({pickStudents.length})</Button></DialogFooter>
                     </DialogContent>
                   </Dialog>
                 </div>
@@ -287,6 +359,9 @@ export default function SummerPrograms() {
                         </Button>
                         <Button variant="default" size="sm" disabled={!s.plan_type} onClick={() => setDailyTarget(s)}>
                           <ClipboardList className="w-3.5 h-3.5 ml-1" />سجل يومي
+                        </Button>
+                        <Button variant="outline" size="icon" title="نقل إلى مقرأة أخرى" onClick={() => { setTransferTarget(s); setTransferMaqraId(""); }}>
+                          <ArrowRightLeft className="w-4 h-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
                       </div>
@@ -394,6 +469,24 @@ export default function SummerPrograms() {
           onSaved={() => selectedMaqra && loadRecords(selectedMaqra)}
         />
       )}
+
+      <Dialog open={!!transferTarget} onOpenChange={(v) => { if (!v) { setTransferTarget(null); setTransferMaqraId(""); } }}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>نقل الطالب إلى مقرأة أخرى</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm">{transferTarget && (studentNameMap[transferTarget.student_id] || "")}</p>
+            <Select value={transferMaqraId} onValueChange={setTransferMaqraId}>
+              <SelectTrigger><SelectValue placeholder="اختر المقرأة الجديدة" /></SelectTrigger>
+              <SelectContent>
+                {maqare.filter(m => m.id !== transferTarget?.maqra_id).map(m => (
+                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter><Button onClick={transferStudent} disabled={!transferMaqraId}>نقل</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
