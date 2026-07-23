@@ -5,9 +5,40 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PLAN_TRACKS, type PlanType } from "@/lib/summer-scoring";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatDateTimeSmart } from "@/lib/hijri";
+import { History, ArrowLeft, User } from "lucide-react";
+
+interface ChangeLog {
+  id: string;
+  old_plan_type: string | null;
+  new_plan_type: string | null;
+  old_plan_track: string | null;
+  new_plan_track: string | null;
+  old_plan_goal: string | null;
+  new_plan_goal: string | null;
+  old_assigned_reciter: string | null;
+  new_assigned_reciter: string | null;
+  changed_by_name: string | null;
+  created_at: string;
+}
+
+const PLAN_LABEL: Record<string, string> = { hifz: "حفظ", taahud: "تعاهد" };
+
+function fieldRow(label: string, oldVal: string | null, newVal: string | null) {
+  if ((oldVal || "") === (newVal || "")) return null;
+  return (
+    <div className="flex items-center gap-2 text-xs flex-wrap">
+      <span className="text-muted-foreground min-w-16">{label}:</span>
+      <Badge variant="outline" className="text-xs">{oldVal || "—"}</Badge>
+      <ArrowLeft className="w-3 h-3 text-muted-foreground rtl:rotate-180" />
+      <Badge variant="secondary" className="text-xs">{newVal || "—"}</Badge>
+    </div>
+  );
+}
 
 interface Props {
   open: boolean;
@@ -29,12 +60,29 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
   const [goal, setGoal] = useState(initial.plan_goal || "");
   const [reciter, setReciter] = useState(initial.assigned_reciter || "");
   const [saving, setSaving] = useState(false);
+  const [logs, setLogs] = useState<ChangeLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
 
   useEffect(() => {
     setPlanType(initial.plan_type || "hifz");
     setTrack(initial.plan_track || "");
     setGoal(initial.plan_goal || "");
     setReciter(initial.assigned_reciter || "");
+  }, [summerStudentId, open]);
+
+  useEffect(() => {
+    if (!open || !summerStudentId) return;
+    setLoadingLogs(true);
+    supabase
+      .from("summer_plan_change_log" as any)
+      .select("*")
+      .eq("summer_student_id", summerStudentId)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        setLogs((data as any) || []);
+        setLoadingLogs(false);
+      });
   }, [summerStudentId, open]);
 
   const tracks = PLAN_TRACKS[planType];
@@ -80,6 +128,36 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
           </div>
           <div><Label>المقرئ المرافق</Label><Input value={reciter} onChange={(e) => setReciter(e.target.value)} placeholder="اسم المقرئ" /></div>
           <div><Label>هدف الدورة</Label><Textarea value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="سأضبط ..." /></div>
+
+          <div className="border-t pt-3 mt-2">
+            <div className="flex items-center gap-2 mb-2">
+              <History className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">سجل تغييرات الخطة</span>
+              {logs.length > 0 && <Badge variant="outline" className="text-xs">{logs.length}</Badge>}
+            </div>
+            {loadingLogs ? (
+              <p className="text-xs text-muted-foreground text-center py-2">جارٍ التحميل...</p>
+            ) : logs.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">لا يوجد تغييرات سابقة</p>
+            ) : (
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                {logs.map((log) => (
+                  <div key={log.id} className="bg-muted/30 rounded-md p-2 space-y-1">
+                    {fieldRow("النوع", log.old_plan_type ? PLAN_LABEL[log.old_plan_type] || log.old_plan_type : null, log.new_plan_type ? PLAN_LABEL[log.new_plan_type] || log.new_plan_type : null)}
+                    {fieldRow("المسار", log.old_plan_track, log.new_plan_track)}
+                    {fieldRow("المقرئ", log.old_assigned_reciter, log.new_assigned_reciter)}
+                    {fieldRow("الهدف", log.old_plan_goal, log.new_plan_goal)}
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground pt-1">
+                      <User className="w-3 h-3" />
+                      <span>{log.changed_by_name || "النظام"}</span>
+                      <span>•</span>
+                      <span>{formatDateTimeSmart(log.created_at)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter><Button onClick={save} disabled={saving}>{saving ? "جارٍ الحفظ..." : "حفظ"}</Button></DialogFooter>
       </DialogContent>
