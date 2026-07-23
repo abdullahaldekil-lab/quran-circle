@@ -4713,6 +4713,7 @@ export type Database = {
           location: string | null
           maqra_type: string
           name: string
+          plan_category: string | null
           program_id: string
           teacher_id: string | null
           updated_at: string
@@ -4723,6 +4724,7 @@ export type Database = {
           location?: string | null
           maqra_type?: string
           name: string
+          plan_category?: string | null
           program_id: string
           teacher_id?: string | null
           updated_at?: string
@@ -4733,6 +4735,7 @@ export type Database = {
           location?: string | null
           maqra_type?: string
           name?: string
+          plan_category?: string | null
           program_id?: string
           teacher_id?: string | null
           updated_at?: string
@@ -4844,10 +4847,14 @@ export type Database = {
           active: boolean | null
           assigned_reciter: string | null
           created_at: string
+          daily_pages: number
           id: string
           joined_at: string
           maqra_id: string
+          pages_target: number
+          plan_end_date: string | null
           plan_goal: string | null
+          plan_start_date: string | null
           plan_track: string | null
           plan_type: string | null
           source_halaqa_id: string | null
@@ -4857,10 +4864,14 @@ export type Database = {
           active?: boolean | null
           assigned_reciter?: string | null
           created_at?: string
+          daily_pages?: number
           id?: string
           joined_at?: string
           maqra_id: string
+          pages_target?: number
+          plan_end_date?: string | null
           plan_goal?: string | null
+          plan_start_date?: string | null
           plan_track?: string | null
           plan_type?: string | null
           source_halaqa_id?: string | null
@@ -4870,10 +4881,14 @@ export type Database = {
           active?: boolean | null
           assigned_reciter?: string | null
           created_at?: string
+          daily_pages?: number
           id?: string
           joined_at?: string
           maqra_id?: string
+          pages_target?: number
+          plan_end_date?: string | null
           plan_goal?: string | null
+          plan_start_date?: string | null
           plan_track?: string | null
           plan_type?: string | null
           source_halaqa_id?: string | null

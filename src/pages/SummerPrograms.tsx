@@ -10,17 +10,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOpen, Pencil, ArrowRightLeft } from "lucide-react";
+import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, ArrowRightLeft, BarChart3, Target } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
-import { PLAN_TRACKS, type PlanType } from "@/lib/summer-scoring";
+import { PLAN_TRACKS, computeDailyPages, juzToPages, planDurationDays, type PlanType } from "@/lib/summer-scoring";
+import { Progress } from "@/components/ui/progress";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
-type Maqra = { id: string; program_id: string; name: string; maqra_type: string; location: string | null; teacher_id: string | null };
-type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null; plan_type: PlanType | null; plan_track: string | null; plan_goal: string | null; assigned_reciter: string | null };
+type Maqra = { id: string; program_id: string; name: string; maqra_type: string; plan_category: PlanType | null; location: string | null; teacher_id: string | null };
+type SummerStudent = { id: string; maqra_id: string; student_id: string; source_halaqa_id: string | null; joined_at: string; active: boolean | null; plan_type: PlanType | null; plan_track: string | null; plan_goal: string | null; assigned_reciter: string | null; pages_target: number | null; plan_start_date: string | null; plan_end_date: string | null; daily_pages: number | null };
 type StudentLite = { id: string; full_name: string; halaqa_id: string | null };
 type Teacher = { id: string; full_name: string };
+type HalaqaLite = { id: string; name: string };
 
 export default function SummerPrograms() {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -28,6 +30,7 @@ export default function SummerPrograms() {
   const [summerStudents, setSummerStudents] = useState<SummerStudent[]>([]);
   const [allStudents, setAllStudents] = useState<StudentLite[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [halaqat, setHalaqat] = useState<HalaqaLite[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [selectedMaqra, setSelectedMaqra] = useState<string | null>(null);
   const [tab, setTab] = useState("maqare");
@@ -38,25 +41,31 @@ export default function SummerPrograms() {
   const [progForm, setProgForm] = useState({ name: "", description: "", start_date: "", end_date: "", status: "planned" });
   const [maqraOpen, setMaqraOpen] = useState(false);
   const [editingMaqraId, setEditingMaqraId] = useState<string | null>(null);
-  const [maqraForm, setMaqraForm] = useState({ name: "", maqra_type: "male", location: "", teacher_id: "" });
+  const [maqraForm, setMaqraForm] = useState<{ name: string; maqra_type: string; plan_category: PlanType; location: string; teacher_id: string }>({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
   const [addStuOpen, setAddStuOpen] = useState(false);
   const [pickStudents, setPickStudents] = useState<string[]>([]);
   const [stuSearch, setStuSearch] = useState("");
-  const [linkPlanType, setLinkPlanType] = useState<PlanType | "none">("none");
   const [linkPlanTrack, setLinkPlanTrack] = useState<string>("");
   const [linkReciter, setLinkReciter] = useState<string>("");
+  const [linkJuz, setLinkJuz] = useState<string>("");
+  const [linkExtraPages, setLinkExtraPages] = useState<string>("");
+  const [linkStartDate, setLinkStartDate] = useState<string>("");
+  const [linkEndDate, setLinkEndDate] = useState<string>("");
   const [transferTarget, setTransferTarget] = useState<SummerStudent | null>(null);
   const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
   const [dailyTarget, setDailyTarget] = useState<SummerStudent | null>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [maqraCounts, setMaqraCounts] = useState<Record<string, number>>({});
+  const [programRecords, setProgramRecords] = useState<any[]>([]);
+  const [programStudents, setProgramStudents] = useState<SummerStudent[]>([]);
 
-  useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); }, []);
-  useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); } }, [selectedProgram]);
+  useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); loadHalaqat(); }, []);
+  useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); } }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate, summerStudents]);
   useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
+  useEffect(() => { if (selectedProgram && tab === "stats") loadProgramAggregate(selectedProgram); }, [tab, selectedProgram]);
 
   async function loadPrograms() {
     const { data } = await supabase.from("summer_programs").select("*").order("start_date", { ascending: false });
@@ -107,12 +116,12 @@ export default function SummerPrograms() {
   }
   function openNewMaqra() {
     setEditingMaqraId(null);
-    setMaqraForm({ name: "", maqra_type: "male", location: "", teacher_id: "" });
+    setMaqraForm({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
     setMaqraOpen(true);
   }
   function openEditMaqra(m: Maqra) {
     setEditingMaqraId(m.id);
-    setMaqraForm({ name: m.name, maqra_type: m.maqra_type, location: m.location || "", teacher_id: m.teacher_id || "" });
+    setMaqraForm({ name: m.name, maqra_type: m.maqra_type, plan_category: (m.plan_category || "hifz") as PlanType, location: m.location || "", teacher_id: m.teacher_id || "" });
     setMaqraOpen(true);
   }
   async function saveMaqra() {
@@ -130,7 +139,7 @@ export default function SummerPrograms() {
     }
     setMaqraOpen(false);
     setEditingMaqraId(null);
-    setMaqraForm({ name: "", maqra_type: "male", location: "", teacher_id: "" });
+    setMaqraForm({ name: "", maqra_type: "male", plan_category: "hifz", location: "", teacher_id: "" });
     loadMaqare(selectedProgram);
   }
   async function deleteMaqra(id: string) {
@@ -150,11 +159,34 @@ export default function SummerPrograms() {
     (ss || []).forEach((r: any) => { counts[r.maqra_id] = (counts[r.maqra_id] || 0) + 1; });
     setMaqraCounts(counts);
   }
+  async function loadHalaqat() {
+    const { data } = await supabase.from("halaqat").select("id, name").order("name");
+    setHalaqat((data || []) as any);
+  }
+  async function loadProgramAggregate(pid: string) {
+    // pull all maqare, then their students + records for stats
+    const { data: mList } = await supabase.from("summer_maqare").select("id").eq("program_id", pid);
+    const mIds = (mList || []).map((r: any) => r.id);
+    if (!mIds.length) { setProgramStudents([]); setProgramRecords([]); return; }
+    const { data: ss } = await supabase.from("summer_students").select("*").in("maqra_id", mIds).eq("active", true);
+    setProgramStudents((ss || []) as any);
+    const sIds = (ss || []).map((r: any) => r.id);
+    if (!sIds.length) { setProgramRecords([]); return; }
+    const { data: rec } = await supabase.from("summer_daily_records").select("summer_student_id, link_pages_count, total_score, record_date").in("summer_student_id", sIds);
+    setProgramRecords((rec || []) as any);
+  }
   async function addStudents() {
     if (!selectedMaqra || !pickStudents.length) return;
-    const planType = linkPlanType === "none" ? null : linkPlanType;
+    const maqra = maqare.find(m => m.id === selectedMaqra);
+    const planType = (maqra?.plan_category || null) as PlanType | null;
     const planTrack = planType ? (linkPlanTrack || null) : null;
     const reciter = linkReciter.trim() || null;
+    const juz = parseFloat(linkJuz) || 0;
+    const extra = parseInt(linkExtraPages) || 0;
+    const pagesTarget = juzToPages(juz, extra);
+    const startDate = linkStartDate || null;
+    const endDate = linkEndDate || null;
+    const daily = computeDailyPages(pagesTarget, startDate, endDate);
     const rows = pickStudents.map(sid => {
       const stu = allStudents.find(s => s.id === sid);
       return {
@@ -164,16 +196,21 @@ export default function SummerPrograms() {
         plan_type: planType,
         plan_track: planTrack,
         assigned_reciter: reciter,
+        pages_target: pagesTarget,
+        plan_start_date: startDate,
+        plan_end_date: endDate,
+        daily_pages: daily,
         active: true,
       };
     });
-    // upsert يعيد تفعيل الطالب الذي سبق إلغاء ربطه بنفس المقرأة بدل فشل قيد التفرد
     const { error } = await supabase.from("summer_students").upsert(rows, { onConflict: "maqra_id,student_id" });
     if (error) return toast.error(error.message);
-    toast.success(`تمت إضافة ${rows.length} طالب`);
-    setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); setAddStuOpen(false);
+    toast.success(`تمت إضافة ${rows.length} طالب — الحد اليومي: ${daily} وجه`);
+    setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter("");
+    setLinkJuz(""); setLinkExtraPages(""); setLinkStartDate(""); setLinkEndDate("");
+    setAddStuOpen(false);
     loadSummerStudents(selectedMaqra);
-    if (selectedProgram) loadMaqraCounts(selectedProgram);
+    if (selectedProgram) { loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); }
   }
   async function removeStudent(id: string) {
     if (!confirm("إلغاء ربط الطالب من المقرأة؟")) return;
@@ -261,6 +298,7 @@ export default function SummerPrograms() {
                 <TabsTrigger value="students" disabled={!selectedMaqra}>الطلاب</TabsTrigger>
                 <TabsTrigger value="attendance" disabled={!selectedMaqra}>الحضور</TabsTrigger>
                 <TabsTrigger value="records" disabled={!selectedMaqra}>السجل اليومي</TabsTrigger>
+                <TabsTrigger value="stats"><BarChart3 className="w-3.5 h-3.5 ml-1" />الإحصائيات</TabsTrigger>
               </TabsList>
 
               <TabsContent value="maqare" className="space-y-3">
@@ -272,7 +310,18 @@ export default function SummerPrograms() {
                     <DialogHeader><DialogTitle>{editingMaqraId ? "تعديل مقرأة" : "إضافة مقرأة"}</DialogTitle></DialogHeader>
                     <div className="space-y-3">
                       <div><Label>الاسم</Label><Input value={maqraForm.name} onChange={e => setMaqraForm({ ...maqraForm, name: e.target.value })} /></div>
-                      <div><Label>النوع</Label>
+                      <div>
+                        <Label>تصنيف المقرأة *</Label>
+                        <Select value={maqraForm.plan_category} onValueChange={(v) => setMaqraForm({ ...maqraForm, plan_category: v as PlanType })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="hifz">مقرأة حفظ</SelectItem>
+                            <SelectItem value="taahud">مقرأة إتقان</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">يحدد نوع الخطة الافتراضية لجميع الطلاب المضافين لاحقاً.</p>
+                      </div>
+                      <div><Label>الفئة</Label>
                         <Select value={maqraForm.maqra_type} onValueChange={v => setMaqraForm({ ...maqraForm, maqra_type: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -305,6 +354,11 @@ export default function SummerPrograms() {
                               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" />{m.location || "—"}</p>
                               {teacher && <p className="text-xs text-muted-foreground mt-1">المعلم: {teacher.full_name}</p>}
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {m.plan_category && (
+                                  <Badge className={m.plan_category === "hifz" ? "bg-rose-600 hover:bg-rose-700" : "bg-amber-600 hover:bg-amber-700"}>
+                                    {m.plan_category === "hifz" ? "مقرأة حفظ" : "مقرأة إتقان"}
+                                  </Badge>
+                                )}
                                 <Badge variant="outline">{m.maqra_type === "male" ? "بنين" : m.maqra_type === "female" ? "بنات" : "مختلط"}</Badge>
                                 <Badge variant="secondary" className="gap-1"><Users className="w-3 h-3" />{maqraCounts[m.id] || 0} طالب</Badge>
                               </div>
@@ -325,60 +379,85 @@ export default function SummerPrograms() {
               <TabsContent value="students" className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold flex items-center gap-2"><Users className="w-4 h-4" />{currentMaqra?.name} — {summerStudents.length} طالب</h3>
-                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanType("none"); setLinkPlanTrack(""); setLinkReciter(""); } }}>
-                    <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
-                    <DialogContent dir="rtl" className="max-w-lg">
-                      <DialogHeader><DialogTitle>ربط طلاب بالمقرأة</DialogTitle></DialogHeader>
-                      <div className="space-y-2">
+                  <Dialog open={addStuOpen} onOpenChange={(v) => { setAddStuOpen(v); if (!v) { setPickStudents([]); setStuSearch(""); setLinkPlanTrack(""); setLinkReciter(""); setLinkJuz(""); setLinkExtraPages(""); setLinkStartDate(""); setLinkEndDate(""); } }}>
+                    <DialogTrigger asChild><Button size="sm" disabled={!currentMaqra?.plan_category}><Plus className="w-4 h-4 ml-1" />إضافة طلاب</Button></DialogTrigger>
+                    <DialogContent dir="rtl" className="max-w-2xl max-h-[92vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>ربط طلاب بمقرأة {currentMaqra?.plan_category === "hifz" ? "الحفظ" : "الإتقان"}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
                         <Input placeholder="بحث بالاسم..." value={stuSearch} onChange={e => setStuSearch(e.target.value)} />
                         <p className="text-xs text-muted-foreground">تم تحديد {pickStudents.length} طالب</p>
-                        <div className="border rounded max-h-72 overflow-y-auto divide-y">
+                        <div className="border rounded max-h-60 overflow-y-auto divide-y">
                           {allStudents
                             .filter(s => !summerStudents.find(ss => ss.student_id === s.id))
                             .filter(s => !stuSearch || s.full_name.includes(stuSearch))
                             .slice(0, 200)
                             .map(s => {
                               const checked = pickStudents.includes(s.id);
+                              const halaqa = halaqat.find(h => h.id === s.halaqa_id);
                               return (
                                 <label key={s.id} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-muted/50">
                                   <Checkbox checked={checked} onCheckedChange={(v) => {
                                     setPickStudents(prev => v ? [...prev, s.id] : prev.filter(x => x !== s.id));
                                   }} />
-                                  <span className="text-sm">{s.full_name}</span>
+                                  <span className="text-sm flex-1">{s.full_name}</span>
+                                  {halaqa && <Badge variant="outline" className="text-[10px]">{halaqa.name}</Badge>}
                                 </label>
                               );
                             })}
                         </div>
-                        <div className="border-t pt-3 space-y-2">
-                          <p className="text-sm font-semibold">تعيين الخطة تلقائيًا (اختياري)</p>
-                          <p className="text-xs text-muted-foreground">تُطبَّق هذه الخطة على كل الطلاب المحددين عند الربط.</p>
-                          <div className="grid grid-cols-2 gap-2">
+                        <div className="border-t pt-3 space-y-3">
+                          <p className="text-sm font-semibold flex items-center gap-2"><Target className="w-4 h-4" />خطة {currentMaqra?.plan_category === "hifz" ? "الحفظ" : "الإتقان"}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             <div>
-                              <Label className="text-xs">نوع الخطة</Label>
-                              <Select value={linkPlanType} onValueChange={(v) => { setLinkPlanType(v as PlanType | "none"); setLinkPlanTrack(""); }}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">بدون خطة</SelectItem>
-                                  <SelectItem value="hifz">حفظ</SelectItem>
-                                  <SelectItem value="taahud">تعاهد / إتقان</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <Label className="text-xs">عدد الأجزاء</Label>
+                              <Input type="number" min={0} step={0.5} value={linkJuz} onChange={e => setLinkJuz(e.target.value)} placeholder="مثال: 2" />
                             </div>
                             <div>
-                              <Label className="text-xs">المسار</Label>
-                              <Select value={linkPlanTrack} onValueChange={setLinkPlanTrack} disabled={linkPlanType === "none"}>
+                              <Label className="text-xs">أوجه إضافية</Label>
+                              <Input type="number" min={0} value={linkExtraPages} onChange={e => setLinkExtraPages(e.target.value)} placeholder="0" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">تاريخ البدء</Label>
+                              <Input type="date" value={linkStartDate} onChange={e => setLinkStartDate(e.target.value)} />
+                            </div>
+                            <div>
+                              <Label className="text-xs">تاريخ الانتهاء</Label>
+                              <Input type="date" value={linkEndDate} onChange={e => setLinkEndDate(e.target.value)} />
+                            </div>
+                          </div>
+                          {(() => {
+                            const juz = parseFloat(linkJuz) || 0;
+                            const extra = parseInt(linkExtraPages) || 0;
+                            const pages = juzToPages(juz, extra);
+                            const days = planDurationDays(linkStartDate, linkEndDate);
+                            const daily = computeDailyPages(pages, linkStartDate, linkEndDate);
+                            if (!pages) return null;
+                            return (
+                              <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/40 rounded p-2">
+                                <div><span className="block text-muted-foreground">إجمالي</span><b>{pages} وجه</b></div>
+                                <div><span className="block text-muted-foreground">مدة الخطة</span><b>{days} يوم</b></div>
+                                <div><span className="block text-muted-foreground">الحد اليومي</span><b className="text-primary">{daily} وجه/يوم</b></div>
+                              </div>
+                            );
+                          })()}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">المسار (اختياري)</Label>
+                              <Select value={linkPlanTrack} onValueChange={setLinkPlanTrack}>
                                 <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
                                 <SelectContent>
-                                  {linkPlanType !== "none" && PLAN_TRACKS[linkPlanType].map(t => (
+                                  {currentMaqra?.plan_category && PLAN_TRACKS[currentMaqra.plan_category].map(t => (
                                     <SelectItem key={t} value={t}>{t}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                             </div>
-                          </div>
-                          <div>
-                            <Label className="text-xs">المقرئ المرافق</Label>
-                            <Input value={linkReciter} onChange={e => setLinkReciter(e.target.value)} placeholder="اسم المقرئ (اختياري)" disabled={linkPlanType === "none"} />
+                            <div>
+                              <Label className="text-xs">المقرئ المرافق</Label>
+                              <Input value={linkReciter} onChange={e => setLinkReciter(e.target.value)} placeholder="اختياري" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -387,33 +466,51 @@ export default function SummerPrograms() {
                   </Dialog>
                 </div>
                 <div className="border rounded-lg divide-y">
-                  {summerStudents.map(s => (
-                    <div key={s.id} className="flex items-center justify-between gap-2 p-3 flex-wrap">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="font-medium">{studentNameMap[s.student_id] || "—"}</span>
-                        {s.plan_type ? (
-                          <Badge variant="outline" className={s.plan_type === "hifz" ? "border-rose-400 text-rose-700 dark:text-rose-300" : "border-amber-400 text-amber-700 dark:text-amber-300"}>
-                            {s.plan_type === "hifz" ? "حفظ" : "تعاهد"}{s.plan_track ? ` — ${s.plan_track}` : ""}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">بدون خطة</Badge>
+                  {summerStudents.map(s => {
+                    const covered = programRecords
+                      .filter((r: any) => r.summer_student_id === s.id)
+                      .reduce((a: number, r: any) => a + (r.link_pages_count || 0), 0);
+                    const target = s.pages_target || 0;
+                    const pct = target > 0 ? Math.min(100, Math.round((covered / target) * 100)) : 0;
+                    return (
+                      <div key={s.id} className="p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
+                            <span className="font-medium">{studentNameMap[s.student_id] || "—"}</span>
+                            {s.plan_type ? (
+                              <Badge variant="outline" className={s.plan_type === "hifz" ? "border-rose-400 text-rose-700 dark:text-rose-300" : "border-amber-400 text-amber-700 dark:text-amber-300"}>
+                                {s.plan_type === "hifz" ? "حفظ" : "إتقان"}{s.plan_track ? ` — ${s.plan_track}` : ""}
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">بدون خطة</Badge>
+                            )}
+                            {target > 0 && (
+                              <Badge variant="outline" className="gap-1"><Target className="w-3 h-3" />{target} وجه · {s.daily_pages || 0}/يوم</Badge>
+                            )}
+                            {s.assigned_reciter && <span className="text-xs text-muted-foreground">المقرئ: {s.assigned_reciter}</span>}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="outline" size="sm" onClick={() => setPlanTarget(s)}>
+                              <BookOpen className="w-3.5 h-3.5 ml-1" />الخطة
+                            </Button>
+                            <Button variant="default" size="sm" disabled={!s.plan_type} onClick={() => setDailyTarget(s)}>
+                              <ClipboardList className="w-3.5 h-3.5 ml-1" />سجل يومي
+                            </Button>
+                            <Button variant="outline" size="icon" title="نقل إلى مقرأة أخرى" onClick={() => { setTransferTarget(s); setTransferMaqraId(""); }}>
+                              <ArrowRightLeft className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
+                          </div>
+                        </div>
+                        {target > 0 && (
+                          <div className="flex items-center gap-2">
+                            <Progress value={pct} className="flex-1 h-2" />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{covered} / {target} · {pct}%</span>
+                          </div>
                         )}
-                        {s.assigned_reciter && <span className="text-xs text-muted-foreground">المقرئ: {s.assigned_reciter}</span>}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="outline" size="sm" onClick={() => setPlanTarget(s)}>
-                          <BookOpen className="w-3.5 h-3.5 ml-1" />الخطة
-                        </Button>
-                        <Button variant="default" size="sm" disabled={!s.plan_type} onClick={() => setDailyTarget(s)}>
-                          <ClipboardList className="w-3.5 h-3.5 ml-1" />سجل يومي
-                        </Button>
-                        <Button variant="outline" size="icon" title="نقل إلى مقرأة أخرى" onClick={() => { setTransferTarget(s); setTransferMaqraId(""); }}>
-                          <ArrowRightLeft className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {!summerStudents.length && <p className="p-4 text-center text-muted-foreground">لا يوجد طلاب.</p>}
                 </div>
               </TabsContent>
@@ -483,6 +580,108 @@ export default function SummerPrograms() {
                     </tbody>
                   </table>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="stats" className="space-y-4">
+                {(() => {
+                  const totalStudents = programStudents.length;
+                  const hifzStudents = programStudents.filter(s => s.plan_type === "hifz").length;
+                  const taahudStudents = programStudents.filter(s => s.plan_type === "taahud").length;
+                  const totalPages = programStudents.reduce((a, s) => a + (s.pages_target || 0), 0);
+                  const coveredMap: Record<string, number> = {};
+                  programRecords.forEach((r: any) => { coveredMap[r.summer_student_id] = (coveredMap[r.summer_student_id] || 0) + (r.link_pages_count || 0); });
+                  const totalCovered = Object.values(coveredMap).reduce((a, b) => a + b, 0);
+                  const overallPct = totalPages > 0 ? Math.min(100, Math.round((totalCovered / totalPages) * 100)) : 0;
+
+                  // Per maqra
+                  const perMaqra = maqare.map(m => {
+                    const stu = programStudents.filter(s => s.maqra_id === m.id);
+                    const tgt = stu.reduce((a, s) => a + (s.pages_target || 0), 0);
+                    const cov = stu.reduce((a, s) => a + (coveredMap[s.id] || 0), 0);
+                    const scores = programRecords.filter((r: any) => stu.some(x => x.id === r.summer_student_id)).map((r: any) => Number(r.total_score) || 0);
+                    const avgScore = scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : 0;
+                    return { m, count: stu.length, target: tgt, covered: cov, pct: tgt > 0 ? Math.round((cov / tgt) * 100) : 0, avgScore };
+                  }).sort((a, b) => b.count - a.count);
+
+                  // Source halaqa distribution
+                  const halaqaCounts: Record<string, number> = {};
+                  programStudents.forEach(s => { if (s.source_halaqa_id) halaqaCounts[s.source_halaqa_id] = (halaqaCounts[s.source_halaqa_id] || 0) + 1; });
+                  const sourceRanking = Object.entries(halaqaCounts)
+                    .map(([hid, count]) => ({ halaqa: halaqat.find(h => h.id === hid), count }))
+                    .filter(x => x.halaqa)
+                    .sort((a, b) => b.count - a.count);
+                  const maxSourceCount = sourceRanking[0]?.count || 1;
+
+                  return (
+                    <>
+                      <div className="grid gap-3 md:grid-cols-4">
+                        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">إجمالي الطلاب</p><p className="text-2xl font-bold">{totalStudents}</p></CardContent></Card>
+                        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">طلاب الحفظ</p><p className="text-2xl font-bold text-rose-600">{hifzStudents}</p></CardContent></Card>
+                        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">طلاب الإتقان</p><p className="text-2xl font-bold text-amber-600">{taahudStudents}</p></CardContent></Card>
+                        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">التقدم الكلي</p><p className="text-2xl font-bold text-primary">{overallPct}%</p><Progress value={overallPct} className="h-1.5 mt-2" /><p className="text-xs text-muted-foreground mt-1">{totalCovered} / {totalPages} وجه</p></CardContent></Card>
+                      </div>
+
+                      <Card>
+                        <CardHeader><CardTitle className="text-base flex items-center gap-2"><BarChart3 className="w-4 h-4" />تقدم المقارئ</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted/50">
+                                <tr>
+                                  <th className="p-2 text-right">المقرأة</th>
+                                  <th className="p-2 text-right">التصنيف</th>
+                                  <th className="p-2 text-right">الطلاب</th>
+                                  <th className="p-2 text-right">الهدف</th>
+                                  <th className="p-2 text-right">المُنجَز</th>
+                                  <th className="p-2 text-right">التقدم</th>
+                                  <th className="p-2 text-right">متوسط الأداء</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {perMaqra.map(x => (
+                                  <tr key={x.m.id} className="border-t">
+                                    <td className="p-2 font-medium">{x.m.name}</td>
+                                    <td className="p-2">
+                                      {x.m.plan_category === "hifz" ? <Badge className="bg-rose-600">حفظ</Badge> : x.m.plan_category === "taahud" ? <Badge className="bg-amber-600">إتقان</Badge> : <Badge variant="secondary">—</Badge>}
+                                    </td>
+                                    <td className="p-2">{x.count}</td>
+                                    <td className="p-2">{x.target}</td>
+                                    <td className="p-2">{x.covered}</td>
+                                    <td className="p-2 w-40"><div className="flex items-center gap-2"><Progress value={x.pct} className="flex-1 h-1.5" /><span className="text-xs">{x.pct}%</span></div></td>
+                                    <td className="p-2 font-semibold">{x.avgScore} / 40</td>
+                                  </tr>
+                                ))}
+                                {!perMaqra.length && <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">لا توجد مقارئ.</td></tr>}
+                              </tbody>
+                            </table>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center gap-2"><Users className="w-4 h-4" />حصر الطلاب حسب الحلقة المصدر</CardTitle>
+                          <p className="text-xs text-muted-foreground">يوضح الحلقات الأكثر التزامًا والأكثر إسهامًا بالطلاب في البرنامج الصيفي.</p>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {sourceRanking.map((r, i) => (
+                              <div key={r.halaqa!.id} className="flex items-center gap-3">
+                                <span className="text-xs w-6 text-center font-bold text-muted-foreground">#{i + 1}</span>
+                                <span className="flex-1 text-sm">{r.halaqa!.name}</span>
+                                <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                                  <div className="h-full bg-primary" style={{ width: `${(r.count / maxSourceCount) * 100}%` }} />
+                                </div>
+                                <span className="text-sm font-bold w-14 text-left">{r.count} طالب</span>
+                              </div>
+                            ))}
+                            {!sourceRanking.length && <p className="text-center text-muted-foreground">لا توجد بيانات.</p>}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </>
+                  );
+                })()}
               </TabsContent>
             </Tabs>
           </CardContent>

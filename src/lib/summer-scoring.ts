@@ -61,3 +61,31 @@ export const PLAN_TRACKS: Record<PlanType, string[]> = {
   hifz: ["حفظ وجه", "حفظ وجهين"],
   taahud: ["إتقان وجهين", "إتقان 3 أوجه", "إتقان 4 أوجه", "إتقان 5 أوجه", "إتقان جزء"],
 };
+
+// Standard Madinah mushaf: 1 juz ≈ 20 wajh (pages/faces).
+export const WAJH_PER_JUZ = 20;
+
+export const juzToPages = (juz: number, extraPages = 0): number =>
+  Math.max(0, Math.round(juz * WAJH_PER_JUZ + extraPages));
+
+/** Distribute a page target across the plan duration (min 1 wajh/day). */
+export const computeDailyPages = (
+  pagesTarget: number,
+  startDate: string | null,
+  endDate: string | null
+): number => {
+  if (!pagesTarget || !startDate || !endDate) return 0;
+  const s = new Date(startDate);
+  const e = new Date(endDate);
+  if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return 0;
+  const days = Math.max(1, Math.floor((e.getTime() - s.getTime()) / 86400000) + 1);
+  return Math.max(1, Math.round((pagesTarget / days) * 100) / 100);
+};
+
+export const planDurationDays = (start: string | null, end: string | null): number => {
+  if (!start || !end) return 0;
+  const s = new Date(start);
+  const e = new Date(end);
+  if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return 0;
+  return Math.floor((e.getTime() - s.getTime()) / 86400000) + 1;
+};
