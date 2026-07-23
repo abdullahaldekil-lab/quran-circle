@@ -43,6 +43,8 @@ import {
   QrCode,
   Brain,
   type LucideIcon,
+  Sun,
+  Library,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
@@ -234,6 +236,16 @@ const navGroups: NavGroup[] = [
       { to: "/staff-tasks", icon: Target, label: "المهام" },
       { to: "/staff-tasks-analytics", icon: BarChart3, label: "تحليلات المهام" },
       { to: "/internal-requests", icon: ScrollText, label: "الطلبات الداخلية" },
+    ],
+  },
+  {
+    id: "summer",
+    label: "البرنامج الصيفي والمواد",
+    icon: Sun,
+    color: "text-amber-400",
+    items: [
+      { to: "/summer-programs", icon: Sun, label: "البرامج الصيفية" },
+      { to: "/program-materials", icon: Library, label: "مواد البرامج" },
     ],
   },
   {
