@@ -21,8 +21,8 @@ const NazemExport = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.from("halaqat").select("id, name, type, teacher_id").eq("active", true).then(({ data }) => {
-      setHalaqat(filterTahfeezOnly(data || []));
+    supabase.from("halaqat").select("id, name, teacher_id, talqeen_curriculum_id").eq("active", true).then(({ data }) => {
+      setHalaqat(filterTahfeezOnly((data as any[]) || []));
     });
   }, []);
 
