@@ -24,7 +24,7 @@ const statusLabels: Record<string, string> = {
   present: "حاضر",
   absent: "غائب",
   late: "متأخر",
-  excused: "معذور",
+  excused: "مستأذن",
 };
 
 const statusVariant = (status: string): "default" | "destructive" | "secondary" | "outline" => {
