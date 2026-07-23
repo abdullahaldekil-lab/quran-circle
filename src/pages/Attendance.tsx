@@ -382,13 +382,15 @@ const Attendance = () => {
   const statusIcons: Record<AttendanceStatus, any> = {
     present: <Check className="w-4 h-4" />, absent: <X className="w-4 h-4" />,
     late: <Clock className="w-4 h-4" />, excused: <AlertCircle className="w-4 h-4" />,
+    late_excused: <Clock className="w-4 h-4" />,
   };
-  const statusLabels: Record<AttendanceStatus, string> = { present: "حاضر", absent: "غائب", late: "متأخر", excused: "معذور" };
+  const statusLabels: Record<AttendanceStatus, string> = { present: "حاضر", absent: "غائب", late: "متأخر", excused: "مستأذن", late_excused: "متأخر بإذن" };
   const statusColors: Record<AttendanceStatus, string> = {
     present: "bg-success/10 text-success border-success/30",
     absent: "bg-destructive/10 text-destructive border-destructive/30",
     late: "bg-warning/10 text-warning border-warning/30",
     excused: "bg-info/10 text-info border-info/30",
+    late_excused: "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950/30 dark:text-purple-300",
   };
 
   const TEACHER_WINDOW_MAP: Record<TeacherWindowStatus, { label: string; color: string; icon: any }> = {
