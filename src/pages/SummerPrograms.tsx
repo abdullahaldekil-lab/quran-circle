@@ -47,6 +47,7 @@ export default function SummerPrograms() {
   useEffect(() => { if (selectedProgram) loadMaqare(selectedProgram); }, [selectedProgram]);
   useEffect(() => { if (selectedMaqra) loadSummerStudents(selectedMaqra); }, [selectedMaqra]);
   useEffect(() => { if (selectedMaqra) loadAttendance(); }, [selectedMaqra, attDate]);
+  useEffect(() => { if (selectedMaqra && tab === "records") loadRecords(selectedMaqra); }, [selectedMaqra, tab]);
 
   async function loadPrograms() {
     const { data } = await supabase.from("summer_programs").select("*").order("start_date", { ascending: false });
