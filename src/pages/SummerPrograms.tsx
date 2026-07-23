@@ -924,7 +924,12 @@ export default function SummerPrograms() {
             plan_track: planTarget.plan_track,
             plan_goal: planTarget.plan_goal,
             assigned_reciter: planTarget.assigned_reciter,
+            juz_from: (planTarget as any).juz_from,
+            juz_to: (planTarget as any).juz_to,
+            plan_start_date: planTarget.plan_start_date,
+            plan_end_date: planTarget.plan_end_date,
           }}
+          holidays={holidays}
           onSaved={() => selectedMaqra && loadSummerStudents(selectedMaqra)}
         />
       )}
