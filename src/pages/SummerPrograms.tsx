@@ -265,6 +265,10 @@ export default function SummerPrograms() {
     const { data } = await supabase.from("halaqat").select("id, name").order("name");
     setHalaqat((data || []) as any);
   }
+  async function loadHolidays() {
+    const { data } = await supabase.from("holidays").select("start_date, end_date");
+    setHolidays((data || []) as any);
+  }
   async function loadProgramAggregate(pid: string) {
     // pull all maqare, then their students + records for stats
     const { data: mList } = await supabase.from("summer_maqare").select("id").eq("program_id", pid);
