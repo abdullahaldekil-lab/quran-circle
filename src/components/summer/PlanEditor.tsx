@@ -70,6 +70,21 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
     setReciter(initial.assigned_reciter || "");
   }, [summerStudentId, open]);
 
+  useEffect(() => {
+    if (!open || !summerStudentId) return;
+    setLoadingLogs(true);
+    supabase
+      .from("summer_plan_change_log" as any)
+      .select("*")
+      .eq("summer_student_id", summerStudentId)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        setLogs((data as any) || []);
+        setLoadingLogs(false);
+      });
+  }, [summerStudentId, open]);
+
   const tracks = PLAN_TRACKS[planType];
 
   const save = async () => {
