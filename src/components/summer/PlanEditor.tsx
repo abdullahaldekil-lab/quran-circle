@@ -11,6 +11,7 @@ import {
   computeDailyPagesWorking,
   computeWorkingDays,
   juzRangeToPages,
+  planDaysNeeded,
   type HolidayRange,
   type PlanType,
 } from "@/lib/summer-scoring";
@@ -219,6 +220,12 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
                 <Badge variant="outline">إجمالي: {preview.pages} وجه</Badge>
                 <Badge variant="outline">أيام العمل: {preview.workingDays}</Badge>
                 <Badge variant="secondary">الحد اليومي: {preview.daily} وجه/يوم</Badge>
+                {(() => {
+                  const needed = planDaysNeeded(preview.pages, preview.daily);
+                  return needed > 0 && needed < preview.workingDays
+                    ? <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400">تكتمل في {needed} يوم عمل</Badge>
+                    : null;
+                })()}
                 {juzChanged && <Badge className="bg-primary text-primary-foreground">سيُعاد توليد الجدول عند الحفظ</Badge>}
               </div>
             )}

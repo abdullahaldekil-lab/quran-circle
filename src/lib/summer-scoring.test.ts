@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   calcNewScore, calcLinkScore, calcTotalScore,
-  juzRangeToPages, computeWorkingDays, computeDailyPagesWorking,
+  juzRangeToPages, computeWorkingDays, computeDailyPagesWorking, planDaysNeeded,
   type DailyRecordInput,
 } from "./summer-scoring";
 
@@ -83,5 +83,15 @@ describe("summer-plan (Madinah mushaf distribution)", () => {
     expect(computeDailyPagesWorking(10, 40)).toBe(1);    // minimum one wajh/day
     expect(computeDailyPagesWorking(600, 10)).toBe(20);  // capped at 20 wajh/day
     expect(computeDailyPagesWorking(140, 0)).toBe(0);    // no working days -> no plan
+  });
+
+  it("daily wajh is always a whole number, rounded up", () => {
+    expect(computeDailyPagesWorking(140, 45)).toBe(4);   // 3.11 -> 4 (never fractional)
+    expect(computeDailyPagesWorking(100, 7)).toBe(15);   // 14.28 -> 15
+    expect(computeDailyPagesWorking(20, 6)).toBe(4);     // 3.33 -> 4
+    // rounding up finishes the plan earlier than the available days
+    expect(planDaysNeeded(140, 4)).toBe(35);             // 35 days < 45 available
+    expect(planDaysNeeded(100, 15)).toBe(7);             // last day carries the remainder (10)
+    expect(planDaysNeeded(0, 5)).toBe(0);
   });
 });

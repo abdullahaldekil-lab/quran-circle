@@ -14,7 +14,7 @@ import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, A
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
-import { PLAN_TRACKS, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
+import { PLAN_TRACKS, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, planDaysNeeded, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
 import { formatDateHijriOnly, getWeekdayArabic } from "@/lib/hijri";
 import { Progress } from "@/components/ui/progress";
 
@@ -104,7 +104,7 @@ export default function SummerPrograms() {
     const { data: ss } = await supabase.from("summer_students").select("id").eq("maqra_id", mid);
     const ids = (ss || []).map((r: any) => r.id);
     if (!ids.length) { setRecords([]); return; }
-    const { data } = await supabase.from("summer_daily_records").select("*").in("summer_student_id", ids).order("record_date", { ascending: false }).limit(200);
+    const { data } = await supabase.from("summer_daily_records").select("*").in("summer_student_id", ids).order("record_date", { ascending: false }).limit(2000);
     setRecords((data || []) as any);
   }
 
@@ -569,6 +569,7 @@ export default function SummerPrograms() {
                             const daily = computeDailyPagesWorking(pages, workDays);
                             if (!pages) return null;
                             const rawDaily = workDays > 0 ? pages / workDays : 0;
+                            const needed = planDaysNeeded(pages, daily);
                             return (
                               <>
                                 <div className="grid grid-cols-4 gap-2 text-center text-xs bg-muted/40 rounded p-2">
@@ -577,6 +578,9 @@ export default function SummerPrograms() {
                                   <div><span className="block text-muted-foreground">أيام العمل</span><b>{workDays} يوم</b></div>
                                   <div><span className="block text-muted-foreground">الحد اليومي</span><b className="text-primary">{daily} وجه/يوم</b></div>
                                 </div>
+                                {needed > 0 && needed < workDays && (
+                                  <p className="text-xs text-green-700 dark:text-green-400">تكتمل الخطة في {needed} يوم عمل من أصل {workDays} يومًا متاحًا.</p>
+                                )}
                                 {rawDaily > 20 && (
                                   <p className="text-xs text-destructive">المطلوب فعليًا {Math.round(rawDaily * 10) / 10} وجه/يوم يتجاوز الحد الأقصى (20). قلّل الأجزاء أو مدّد الفترة.</p>
                                 )}
@@ -742,29 +746,32 @@ export default function SummerPrograms() {
                   const start = new Date(s.plan_start_date!);
                   const end = new Date(s.plan_end_date!);
                   const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
-                  const daily = s.daily_pages || 0;
+                  // الحد اليومي عدد صحيح من الأوجه (تقريب لأعلى) — خطط قديمة قد تكون كسرية
+                  const daily = Math.max(1, Math.ceil(s.daily_pages || 0));
                   const target = s.pages_target || 0;
                   // group records by record_date for this student
                   const byDate: Record<string, number> = {};
                   records.filter((r: any) => r.summer_student_id === s.id).forEach((r: any) => {
                     byDate[r.record_date] = (byDate[r.record_date] || 0) + (r.link_pages_count || 0);
                   });
-                  // build rows for WORKING days only (Sun–Thu, no holidays)
+                  // build rows for WORKING days only (Sun–Thu, no holidays);
+                  // the schedule stops once the target completes — possibly before the end date
                   const rows: { idx: number; date: string; weekday: string; hijri: string; target: number; targetCum: number; actual: number }[] = [];
                   let cum = 0;
                   let idx = 0;
-                  for (let i = 0; i < totalDays; i++) {
+                  for (let i = 0; i < totalDays && cum < target; i++) {
                     const d = new Date(start.getTime() + i * 86400000);
                     if (!isWorkingDay(d, holidays)) continue;
                     idx += 1;
                     const key = d.toISOString().slice(0, 10);
-                    cum = Math.min(target, Math.round((cum + daily) * 100) / 100);
+                    const dayTarget = Math.min(daily, target - cum);
+                    cum += dayTarget;
                     rows.push({
                       idx,
                       date: key,
                       weekday: getWeekdayArabic(d),
                       hijri: formatDateHijriOnly(d),
-                      target: daily,
+                      target: dayTarget,
                       targetCum: cum,
                       actual: byDate[key] || 0,
                     });

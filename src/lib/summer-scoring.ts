@@ -113,31 +113,22 @@ export const computeWorkingDays = (
   return count;
 };
 
-/** Daily wajh across working days only. Clamped between 1 and 20. */
+/**
+ * Daily wajh across working days only: whole pages, rounded UP, clamped 1..20.
+ * Rounding up means the plan may complete before the predetermined end date
+ * (the schedule then spans fewer days than the available working days).
+ */
 export const computeDailyPagesWorking = (
   pagesTarget: number,
   workingDays: number
 ): number => {
   if (!pagesTarget || workingDays <= 0) return 0;
-  const raw = pagesTarget / workingDays;
-  const clamped = Math.max(1, Math.min(20, raw));
-  return Math.round(clamped * 100) / 100;
+  return Math.max(1, Math.min(20, Math.ceil(pagesTarget / workingDays)));
 };
 
-/** Legacy: distribute pages across calendar days, min 1/day, max 20/day. */
-export const computeDailyPages = (
-  pagesTarget: number,
-  startDate: string | null,
-  endDate: string | null
-): number => {
-  if (!pagesTarget || !startDate || !endDate) return 0;
-  const s = new Date(startDate);
-  const e = new Date(endDate);
-  if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return 0;
-  const days = Math.max(1, Math.floor((e.getTime() - s.getTime()) / 86400000) + 1);
-  const raw = pagesTarget / days;
-  return Math.max(1, Math.min(20, Math.round(raw * 100) / 100));
-};
+/** Working days actually needed at the given whole daily rate. */
+export const planDaysNeeded = (pagesTarget: number, dailyPages: number): number =>
+  pagesTarget > 0 && dailyPages > 0 ? Math.ceil(pagesTarget / dailyPages) : 0;
 
 export const planDurationDays = (start: string | null, end: string | null): number => {
   if (!start || !end) return 0;
