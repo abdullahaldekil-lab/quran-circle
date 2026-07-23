@@ -128,6 +128,36 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
           </div>
           <div><Label>المقرئ المرافق</Label><Input value={reciter} onChange={(e) => setReciter(e.target.value)} placeholder="اسم المقرئ" /></div>
           <div><Label>هدف الدورة</Label><Textarea value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="سأضبط ..." /></div>
+
+          <div className="border-t pt-3 mt-2">
+            <div className="flex items-center gap-2 mb-2">
+              <History className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">سجل تغييرات الخطة</span>
+              {logs.length > 0 && <Badge variant="outline" className="text-xs">{logs.length}</Badge>}
+            </div>
+            {loadingLogs ? (
+              <p className="text-xs text-muted-foreground text-center py-2">جارٍ التحميل...</p>
+            ) : logs.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">لا يوجد تغييرات سابقة</p>
+            ) : (
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                {logs.map((log) => (
+                  <div key={log.id} className="bg-muted/30 rounded-md p-2 space-y-1">
+                    {fieldRow("النوع", log.old_plan_type ? PLAN_LABEL[log.old_plan_type] || log.old_plan_type : null, log.new_plan_type ? PLAN_LABEL[log.new_plan_type] || log.new_plan_type : null)}
+                    {fieldRow("المسار", log.old_plan_track, log.new_plan_track)}
+                    {fieldRow("المقرئ", log.old_assigned_reciter, log.new_assigned_reciter)}
+                    {fieldRow("الهدف", log.old_plan_goal, log.new_plan_goal)}
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground pt-1">
+                      <User className="w-3 h-3" />
+                      <span>{log.changed_by_name || "النظام"}</span>
+                      <span>•</span>
+                      <span>{formatDateTimeSmart(log.created_at)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter><Button onClick={save} disabled={saving}>{saving ? "جارٍ الحفظ..." : "حفظ"}</Button></DialogFooter>
       </DialogContent>
