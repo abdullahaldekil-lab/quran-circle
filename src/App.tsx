@@ -99,6 +99,7 @@ import ExternalReviewer from "./pages/ExternalReviewer";
 import StudentPortal from "./pages/StudentPortal";
 import SummerPrograms from "./pages/SummerPrograms";
 import ProgramMaterials from "./pages/ProgramMaterials";
+import NazemExport from "./pages/NazemExport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -241,6 +242,8 @@ const AppRoutes = () => {
 
       <Route path="/summer-programs" element={<ProtectedRoute path="/summer-programs"><SummerPrograms /></ProtectedRoute>} />
       <Route path="/program-materials" element={<ProtectedRoute path="/program-materials"><ProgramMaterials /></ProtectedRoute>} />
+      <Route path="/nazem-export" element={<ProtectedRoute path="/nazem-export"><NazemExport /></ProtectedRoute>} />
+
 
       <Route path="/not-authorized" element={<NotAuthorized />} />
       <Route path="/" element={<Navigate to="/auth" replace />} />
