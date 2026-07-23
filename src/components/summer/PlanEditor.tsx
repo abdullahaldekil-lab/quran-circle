@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -6,11 +6,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PLAN_TRACKS, type PlanType } from "@/lib/summer-scoring";
+import {
+  PLAN_TRACKS,
+  computeDailyPagesWorking,
+  computeWorkingDays,
+  juzRangeToPages,
+  type HolidayRange,
+  type PlanType,
+} from "@/lib/summer-scoring";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatDateTimeSmart } from "@/lib/hijri";
-import { History, ArrowLeft, User } from "lucide-react";
+import { formatDateTimeSmart, formatDateHijriOnly } from "@/lib/hijri";
+import { History, ArrowLeft, User, RefreshCw } from "lucide-react";
 
 interface ChangeLog {
   id: string;
@@ -50,15 +57,24 @@ interface Props {
     plan_track?: string | null;
     plan_goal?: string | null;
     assigned_reciter?: string | null;
+    juz_from?: number | null;
+    juz_to?: number | null;
+    plan_start_date?: string | null;
+    plan_end_date?: string | null;
   };
+  holidays?: HolidayRange[];
   onSaved: () => void;
 }
 
-export default function PlanEditor({ open, onOpenChange, summerStudentId, studentName, initial, onSaved }: Props) {
+export default function PlanEditor({ open, onOpenChange, summerStudentId, studentName, initial, holidays = [], onSaved }: Props) {
   const [planType, setPlanType] = useState<PlanType>(initial.plan_type || "hifz");
   const [track, setTrack] = useState(initial.plan_track || "");
   const [goal, setGoal] = useState(initial.plan_goal || "");
   const [reciter, setReciter] = useState(initial.assigned_reciter || "");
+  const [juzFrom, setJuzFrom] = useState<string>(initial.juz_from ? String(initial.juz_from) : "");
+  const [juzTo, setJuzTo] = useState<string>(initial.juz_to ? String(initial.juz_to) : "");
+  const [startDate, setStartDate] = useState<string>(initial.plan_start_date || "");
+  const [endDate, setEndDate] = useState<string>(initial.plan_end_date || "");
   const [saving, setSaving] = useState(false);
   const [logs, setLogs] = useState<ChangeLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -68,6 +84,10 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
     setTrack(initial.plan_track || "");
     setGoal(initial.plan_goal || "");
     setReciter(initial.assigned_reciter || "");
+    setJuzFrom(initial.juz_from ? String(initial.juz_from) : "");
+    setJuzTo(initial.juz_to ? String(initial.juz_to) : "");
+    setStartDate(initial.plan_start_date || "");
+    setEndDate(initial.plan_end_date || "");
   }, [summerStudentId, open]);
 
   useEffect(() => {
@@ -87,24 +107,53 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
 
   const tracks = PLAN_TRACKS[planType];
 
+  const jf = parseInt(juzFrom) || 0;
+  const jt = parseInt(juzTo) || 0;
+  const preview = useMemo(() => {
+    const pages = juzRangeToPages(jf, jt);
+    const wd = computeWorkingDays(startDate || null, endDate || null, holidays);
+    const daily = computeDailyPagesWorking(pages, wd);
+    return { pages, workingDays: wd, daily };
+  }, [jf, jt, startDate, endDate, holidays]);
+
+  const juzChanged =
+    jf !== (initial.juz_from || 0) ||
+    jt !== (initial.juz_to || 0) ||
+    (startDate || "") !== (initial.plan_start_date || "") ||
+    (endDate || "") !== (initial.plan_end_date || "");
+
   const save = async () => {
     setSaving(true);
-    const { error } = await supabase.from("summer_students").update({
+    const patch: any = {
       plan_type: planType,
       plan_track: track || null,
       plan_goal: goal || null,
       assigned_reciter: reciter || null,
-    }).eq("id", summerStudentId);
+    };
+    if (jf > 0 && jt >= jf) {
+      patch.juz_from = jf;
+      patch.juz_to = jt;
+      patch.plan_start_date = startDate || null;
+      patch.plan_end_date = endDate || null;
+      patch.pages_target = preview.pages;
+      patch.working_days = preview.workingDays || null;
+      patch.daily_pages = preview.daily;
+    }
+    const { error } = await supabase.from("summer_students").update(patch).eq("id", summerStudentId);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("تم حفظ الخطة");
+    toast.success(
+      juzChanged && preview.pages > 0
+        ? `تم الحفظ — ${preview.pages} وجه · ${preview.workingDays} يوم عمل · ${preview.daily} وجه/يوم`
+        : "تم حفظ الخطة"
+    );
     onOpenChange(false);
     onSaved();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl">
+      <DialogContent dir="rtl" className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>خطة الطالب — {studentName}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
@@ -128,6 +177,44 @@ export default function PlanEditor({ open, onOpenChange, summerStudentId, studen
           </div>
           <div><Label>المقرئ المرافق</Label><Input value={reciter} onChange={(e) => setReciter(e.target.value)} placeholder="اسم المقرئ" /></div>
           <div><Label>هدف الدورة</Label><Textarea value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="سأضبط ..." /></div>
+
+          <div className="border-t pt-3 mt-2">
+            <div className="flex items-center gap-2 mb-2">
+              <RefreshCw className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">نطاق الحفظ (الأجزاء) — يعيد توليد الخطة والجدول اليومي</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">من الجزء</Label>
+                <Input type="number" min={1} max={30} value={juzFrom} onChange={(e) => setJuzFrom(e.target.value)} placeholder="1" />
+              </div>
+              <div>
+                <Label className="text-xs">إلى الجزء</Label>
+                <Input type="number" min={1} max={30} value={juzTo} onChange={(e) => setJuzTo(e.target.value)} placeholder="7" />
+              </div>
+              <div>
+                <Label className="text-xs">تاريخ بداية الخطة</Label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                {startDate && <p className="text-[11px] text-muted-foreground mt-1">{formatDateHijriOnly(startDate)}</p>}
+              </div>
+              <div>
+                <Label className="text-xs">تاريخ نهاية الخطة</Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                {endDate && <p className="text-[11px] text-muted-foreground mt-1">{formatDateHijriOnly(endDate)}</p>}
+              </div>
+            </div>
+            {preview.pages > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2 bg-muted/40 rounded-md p-2 text-xs">
+                <Badge variant="outline">إجمالي: {preview.pages} وجه</Badge>
+                <Badge variant="outline">أيام العمل: {preview.workingDays}</Badge>
+                <Badge variant="secondary">الحد اليومي: {preview.daily} وجه/يوم</Badge>
+                {juzChanged && <Badge className="bg-primary text-primary-foreground">سيُعاد توليد الجدول عند الحفظ</Badge>}
+              </div>
+            )}
+            {preview.pages > 0 && preview.workingDays === 0 && (
+              <p className="text-[11px] text-destructive mt-1">حدد تاريخي بداية ونهاية صالحين لحساب أيام العمل.</p>
+            )}
+          </div>
 
           <div className="border-t pt-3 mt-2">
             <div className="flex items-center gap-2 mb-2">
