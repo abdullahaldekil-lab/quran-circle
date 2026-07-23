@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOpen } from "lucide-react";
+import { Sun, Plus, MapPin, Users, CheckSquare, X, Trash2, ClipboardList, BookOpen, Pencil, ArrowRightLeft } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
 import type { PlanType } from "@/lib/summer-scoring";
