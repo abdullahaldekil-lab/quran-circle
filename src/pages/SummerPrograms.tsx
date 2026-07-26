@@ -10,13 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, ArrowRightLeft, BarChart3, Target, Printer } from "lucide-react";
+import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, ArrowRightLeft, BarChart3, Target, Printer, BookOpenCheck } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
+import MushafViewer from "@/components/mushaf/MushafViewer";
+import { juzRangeToPageBounds } from "@/lib/mushaf";
 import { PLAN_TRACKS, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, planDaysNeeded, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
 import { buildScheduleRows, openSchedulePrint, STATUS_LABELS } from "@/lib/summer-schedule-print";
 import { formatDateHijriOnly, getWeekdayArabic } from "@/lib/hijri";
+
 
 import { Progress } from "@/components/ui/progress";
 
