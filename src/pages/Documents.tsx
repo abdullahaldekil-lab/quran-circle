@@ -239,7 +239,7 @@ const Documents = () => {
                   <CardTitle className="text-base">{doc.title}</CardTitle>
                 </div>
                 {isManager && (
-                  <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => deleteMutation.mutate(doc)}>
+                  <Button aria-label="حذف" variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => deleteMutation.mutate(doc)}>
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </Button>
                 )}

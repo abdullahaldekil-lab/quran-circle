@@ -154,10 +154,10 @@ export default function ProgramMaterials() {
                   </div>
                   {canManage && (
                     <div className="flex flex-col gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditing(m); setDialogOpen(true); }}>
+                      <Button aria-label="تعديل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditing(m); setDialogOpen(true); }}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove(m)}>
+                      <Button aria-label="حذف" variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove(m)}>
                         <Trash2 className="w-3.5 h-3.5 text-destructive" />
                       </Button>
                     </div>

@@ -918,7 +918,7 @@ export default function QuranNarration() {
                         </div>
                         <div className="flex gap-1">
                           {canWrite && (
-                            <Button
+                            <Button aria-label="تعديل"
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
@@ -941,7 +941,7 @@ export default function QuranNarration() {
                           {isManager && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                                <Button aria-label="حذف" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                               </AlertDialogTrigger>

@@ -416,8 +416,8 @@ const MadarijEnrollment = () => {
                       {canEdit && (
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDp(dp)}><Pencil className="w-3.5 h-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteDpId(dp.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                            <Button aria-label="تعديل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDp(dp)}><Pencil className="w-3.5 h-3.5" /></Button>
+                            <Button aria-label="حذف" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteDpId(dp.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                           </div>
                         </TableCell>
                       )}
@@ -462,8 +462,8 @@ const MadarijEnrollment = () => {
                       {canEdit && (
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditMistake(m)}><Pencil className="w-3.5 h-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteMistakeId(m.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                            <Button aria-label="تعديل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditMistake(m)}><Pencil className="w-3.5 h-3.5" /></Button>
+                            <Button aria-label="حذف" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteMistakeId(m.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                           </div>
                         </TableCell>
                       )}

@@ -577,7 +577,7 @@ export default function NarrationSession() {
       {/* رأس الصفحة */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/quran-narration")} className="shrink-0">
+          <Button aria-label="رجوع" variant="ghost" size="icon" onClick={() => navigate("/quran-narration")} className="shrink-0">
             <ArrowRight className="w-4 h-4" />
           </Button>
           <div className="flex items-center gap-2">

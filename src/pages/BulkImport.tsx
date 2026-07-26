@@ -202,7 +202,7 @@ const BulkImport = () => {
                     return (
                       <div key={globalIndex} className="flex items-center justify-between px-3 py-2">
                         <span className="text-sm">{s.name}</span>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemove(globalIndex)}>
+                        <Button aria-label="حذف" variant="ghost" size="icon" onClick={() => handleRemove(globalIndex)}>
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       </div>

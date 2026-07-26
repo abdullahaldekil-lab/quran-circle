@@ -130,9 +130,9 @@ const AttendanceCalendar = ({ halaqaId, selectedDate, onSelectDate }: Attendance
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={nextMonth}><ChevronRight className="w-4 h-4" /></Button>
+        <Button aria-label="التالي" variant="ghost" size="icon" onClick={nextMonth}><ChevronRight className="w-4 h-4" /></Button>
         <span className="font-bold text-sm">{monthLabel}</span>
-        <Button variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft className="w-4 h-4" /></Button>
+        <Button aria-label="السابق" variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft className="w-4 h-4" /></Button>
       </div>
 
       {/* Day headers */}

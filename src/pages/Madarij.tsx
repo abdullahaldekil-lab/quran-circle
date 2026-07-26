@@ -166,10 +166,10 @@ const Madarij = () => {
                   <CardTitle className="text-base">{track.name}</CardTitle>
                   {isManager && (
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditTrack(track)}>
+                      <Button aria-label="تعديل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditTrack(track)}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTrackId(track.id)}>
+                      <Button aria-label="حذف" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTrackId(track.id)}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
@@ -219,7 +219,7 @@ const Madarij = () => {
                     <TableCell className="text-xs">{p.end_date || "—"}</TableCell>
                     <TableCell>{p.total_target_pages ?? "—"}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/student-annual-plan/${p.student_id}`)}>
+                      <Button aria-label="عرض التفاصيل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/student-annual-plan/${p.student_id}`)}>
                         <Eye className="w-4 h-4" />
                       </Button>
                     </TableCell>
@@ -264,7 +264,7 @@ const Madarij = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/madarij/${e.id}`)}>
+                      <Button aria-label="عرض التفاصيل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/madarij/${e.id}`)}>
                         <Eye className="w-4 h-4" />
                       </Button>
                     </TableCell>

@@ -22,7 +22,7 @@ const FollowUpPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onCl
     <div className="bg-background min-h-screen">
       {/* Controls - hidden on print */}
       <div className="print:hidden flex items-center gap-2 p-4 border-b sticky top-0 bg-background z-10">
-        <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="icon" aria-label="إغلاق" onClick={onClose}><X className="w-4 h-4" /></Button>
         <Button onClick={handlePrint}>طباعة</Button>
       </div>
 

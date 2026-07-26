@@ -345,11 +345,11 @@ export default function TalqeenStudentTests({ studentId, studentName: studentNam
                   </div>
                   {t && canEdit && (
                     <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(t)}>
+                      <Button aria-label="تعديل" size="icon" variant="ghost" onClick={() => openEdit(t)}>
                         <Pencil className="w-4 h-4" />
                       </Button>
                       {canDelete && (
-                        <Button size="icon" variant="ghost" onClick={() => handleDelete(t.id)}>
+                        <Button aria-label="حذف" size="icon" variant="ghost" onClick={() => handleDelete(t.id)}>
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       )}

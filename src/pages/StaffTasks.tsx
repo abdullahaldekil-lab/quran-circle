@@ -483,11 +483,11 @@ const StaffTasks = ({ embedded = false }: StaffTasksProps = {}) => {
             <div className="space-y-4">
               {/* Calendar header */}
               <div className="flex items-center justify-between">
-                <Button variant="ghost" size="icon" onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>
+                <Button aria-label="التالي" variant="ghost" size="icon" onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
                 <span className="font-semibold">{formatDateSmart(calendarMonth)}</span>
-                <Button variant="ghost" size="icon" onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>
+                <Button aria-label="السابق" variant="ghost" size="icon" onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </div>
@@ -707,7 +707,7 @@ const StaffTasks = ({ embedded = false }: StaffTasksProps = {}) => {
                   </ScrollArea>
                   <div className="flex gap-2">
                     <Input placeholder="أضف تعليقاً..." value={newComment} onChange={e => setNewComment(e.target.value)} onKeyDown={e => e.key === "Enter" && addComment.mutate()} />
-                    <Button size="icon" variant="ghost" onClick={() => addComment.mutate()} disabled={!newComment.trim()}>
+                    <Button aria-label="إرسال" size="icon" variant="ghost" onClick={() => addComment.mutate()} disabled={!newComment.trim()}>
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>

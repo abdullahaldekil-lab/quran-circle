@@ -234,7 +234,7 @@ export default function NarrationReports() {
   return (
     <div className="space-y-5" dir="rtl">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/quran-narration")}>
+        <Button aria-label="رجوع" variant="ghost" size="icon" onClick={() => navigate("/quran-narration")}>
           <ArrowRight className="w-4 h-4" />
         </Button>
         <div className="flex items-center gap-2">

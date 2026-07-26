@@ -410,7 +410,7 @@ const StrategicPlan = () => {
                           </div>
                           {objectives.filter(o => o.goal_id === goal.id).map(obj => (
                             <div key={obj.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
-                              <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedObjective(expandedObjective === obj.id ? null : obj.id)}>
+                              <div role="button" tabIndex={0} aria-expanded={expandedObjective === obj.id} className="flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded" onClick={() => setExpandedObjective(expandedObjective === obj.id ? null : obj.id)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedObjective(expandedObjective === obj.id ? null : obj.id); } }}>
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-medium text-sm text-foreground">{obj.title}</span>
                                   <Badge className={`text-xs ${STATUS_MAP[obj.status]?.color}`}>{STATUS_MAP[obj.status]?.label}</Badge>

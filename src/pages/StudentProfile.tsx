@@ -289,10 +289,10 @@ const StudentProfile = () => {
             </div>
             {isManager && (
               <div className="flex flex-col gap-2 shrink-0">
-                <Button variant="outline" size="icon" onClick={openEdit}>
+                <Button aria-label="تعديل" variant="outline" size="icon" onClick={openEdit}>
                   <Pencil className="w-4 h-4" />
                 </Button>
-                <Button variant="outline" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
+                <Button aria-label="حذف" variant="outline" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -760,7 +760,7 @@ const AudioTab = ({ studentId }: { studentId: string }) => {
                   </p>
                   <p className="text-xs text-muted-foreground">{formatDateHijriOnly(r.record_date)}</p>
                 </div>
-                <Button
+                <Button aria-label="تشغيل"
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"

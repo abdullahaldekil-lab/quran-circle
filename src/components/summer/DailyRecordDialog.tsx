@@ -182,13 +182,14 @@ export default function DailyRecordDialog({ open, onOpenChange, summerStudentId,
           )}
 
           <div>
-            <Label>ملاحظات</Label>
-            <Textarea value={state.notes} onChange={(e) => set("notes", e.target.value)} />
+            <Label htmlFor="summer-notes">ملاحظات</Label>
+            <Textarea id="summer-notes" value={state.notes} onChange={(e) => set("notes", e.target.value)} />
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/30">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/30" role="status" aria-live="polite" aria-atomic="true">
             <span className="font-bold">مجموع الدرجات</span>
-            <span className="text-2xl font-bold text-primary">{total} / 40</span>
+            <span className="text-2xl font-bold text-primary" aria-hidden="true">{total} / 40</span>
+            <span className="sr-only">{total} من 40</span>
           </div>
         </div>
 
