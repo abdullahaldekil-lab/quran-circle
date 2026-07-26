@@ -733,51 +733,29 @@ export default function SummerPrograms() {
                   <p className="text-sm text-muted-foreground">
                     توزيع الأوجه المستهدفة على أيام الخطة لكل طالب، مع مقارنة بما تم تسميعه فعلياً في كل تاريخ.
                   </p>
-                  <Button size="sm" variant="outline" onClick={seedDemoRecords}>
-                    <ClipboardList className="w-4 h-4 ml-1" />سجلات تجريبية (7 أيام)
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => printSchedule()}>
+                      <Printer className="w-4 h-4 ml-1" />طباعة / PDF للمقرأة
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={seedDemoRecords}>
+                      <ClipboardList className="w-4 h-4 ml-1" />سجلات تجريبية (7 أيام)
+                    </Button>
+                  </div>
                 </div>
-                {summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0).length === 0 && (
+                {plannedStudents.length === 0 && (
                   <p className="p-6 text-center text-muted-foreground border rounded-lg">
                     لا يوجد طلاب لديهم خطة محددة بتواريخ. حدّد الأجزاء وتاريخ البدء والانتهاء عند إضافة الطلاب أو من زر «الخطة».
                   </p>
                 )}
-                {summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0).map(s => {
+                {plannedStudents.map(s => {
                   const start = new Date(s.plan_start_date!);
                   const end = new Date(s.plan_end_date!);
                   const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
                   // الحد اليومي عدد صحيح من الأوجه (تقريب لأعلى) — خطط قديمة قد تكون كسرية
                   const daily = Math.max(1, Math.ceil(s.daily_pages || 0));
                   const target = s.pages_target || 0;
-                  // group records by record_date for this student
-                  const byDate: Record<string, number> = {};
-                  records.filter((r: any) => r.summer_student_id === s.id).forEach((r: any) => {
-                    byDate[r.record_date] = (byDate[r.record_date] || 0) + (r.link_pages_count || 0);
-                  });
-                  // build rows for WORKING days only (Sun–Thu, no holidays);
-                  // the schedule stops once the target completes — possibly before the end date
-                  const rows: { idx: number; date: string; weekday: string; hijri: string; target: number; targetCum: number; actual: number }[] = [];
-                  let cum = 0;
-                  let idx = 0;
-                  for (let i = 0; i < totalDays && cum < target; i++) {
-                    const d = new Date(start.getTime() + i * 86400000);
-                    if (!isWorkingDay(d, holidays)) continue;
-                    idx += 1;
-                    const key = d.toISOString().slice(0, 10);
-                    const dayTarget = Math.min(daily, target - cum);
-                    cum += dayTarget;
-                    rows.push({
-                      idx,
-                      date: key,
-                      weekday: getWeekdayArabic(d),
-                      hijri: formatDateHijriOnly(d),
-                      target: dayTarget,
-                      targetCum: cum,
-                      actual: byDate[key] || 0,
-                    });
-                  }
+                  const rows = buildScheduleRows(s, actualByDateFor(s.id), holidays);
                   const workingDays = rows.length;
-                  let actualCum = 0;
                   const today = new Date().toISOString().slice(0, 10);
                   return (
                     <Card key={s.id}>
@@ -792,8 +770,13 @@ export default function SummerPrograms() {
                               <Badge variant="outline">الأجزاء {s.juz_from}–{s.juz_to}</Badge>
                             )}
                           </span>
-                          <span className="text-xs font-normal text-muted-foreground">
-                            {formatDateHijriOnly(s.plan_start_date!)} → {formatDateHijriOnly(s.plan_end_date!)} · {workingDays} يوم عمل / {totalDays} يوم · {daily} وجه/يوم · الهدف {target} وجه
+                          <span className="flex items-center gap-2">
+                            <span className="text-xs font-normal text-muted-foreground">
+                              {formatDateHijriOnly(s.plan_start_date!)} → {formatDateHijriOnly(s.plan_end_date!)} · {workingDays} يوم عمل / {totalDays} يوم · {daily} وجه/يوم · الهدف {target} وجه
+                            </span>
+                            <Button size="sm" variant="ghost" onClick={() => printSchedule(s.id)}>
+                              <Printer className="w-4 h-4 ml-1" />طباعة
+                            </Button>
                           </span>
                         </CardTitle>
                       </CardHeader>
@@ -814,13 +797,11 @@ export default function SummerPrograms() {
                             </thead>
                             <tbody>
                               {rows.map(r => {
-                                actualCum = Math.round((actualCum + r.actual) * 100) / 100;
-                                const isFuture = r.date > today;
-                                let status: { label: string; cls: string };
-                                if (isFuture) status = { label: "قادم", cls: "text-muted-foreground" };
-                                else if (r.actual >= r.target) status = { label: "منجز", cls: "text-green-600 dark:text-green-400" };
-                                else if (r.actual > 0) status = { label: "جزئي", cls: "text-amber-600 dark:text-amber-400" };
-                                else status = { label: "متأخر", cls: "text-red-600 dark:text-red-400" };
+                                const cls =
+                                  r.status === "future" ? "text-muted-foreground"
+                                  : r.status === "done" ? "text-green-600 dark:text-green-400"
+                                  : r.status === "partial" ? "text-amber-600 dark:text-amber-400"
+                                  : "text-red-600 dark:text-red-400";
                                 return (
                                   <tr key={r.date} className={`border-t ${r.date === today ? "bg-primary/5" : ""}`}>
                                     <td className="p-2">{r.idx}</td>
@@ -829,8 +810,8 @@ export default function SummerPrograms() {
                                     <td className="p-2">{r.target}</td>
                                     <td className="p-2 text-muted-foreground">{r.targetCum}</td>
                                     <td className="p-2 font-semibold">{r.actual || "—"}</td>
-                                    <td className="p-2 text-muted-foreground">{actualCum}</td>
-                                    <td className={`p-2 font-semibold ${status.cls}`}>{status.label}</td>
+                                    <td className="p-2 text-muted-foreground">{r.actualCum}</td>
+                                    <td className={`p-2 font-semibold ${cls}`}>{STATUS_LABELS[r.status]}</td>
                                   </tr>
                                 );
                               })}
@@ -842,6 +823,7 @@ export default function SummerPrograms() {
                   );
                 })}
               </TabsContent>
+
 
               <TabsContent value="stats" className="space-y-4">
                 {(() => {
