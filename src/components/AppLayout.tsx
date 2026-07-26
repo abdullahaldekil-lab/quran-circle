@@ -372,7 +372,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     .filter((group) => group.items.length > 0 || (group.subGroups && group.subGroups.length > 0));
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-dvh flex">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -383,7 +383,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 h-screen w-64 gradient-sidebar z-50 transition-transform duration-300 flex flex-col ${
+        className={`fixed lg:sticky top-0 h-dvh w-64 gradient-sidebar z-50 transition-transform duration-300 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
         }`}
       >
@@ -570,7 +570,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-h-screen">
+      <main className="flex-1 min-h-dvh">
         {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
