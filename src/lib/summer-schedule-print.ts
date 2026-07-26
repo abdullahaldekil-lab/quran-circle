@@ -53,6 +53,7 @@ export const buildScheduleRows = (
   const end = new Date(plan.plan_end_date);
   const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
   const daily = Math.max(1, Math.ceil(plan.daily_pages || 0));
+  const bounds = juzRangeToPageBounds(plan.juz_from, plan.juz_to);
 
   const rows: ScheduleRow[] = [];
   let cum = 0;
@@ -64,6 +65,9 @@ export const buildScheduleRows = (
     idx += 1;
     const key = d.toISOString().slice(0, 10);
     const dayTarget = Math.min(daily, target - cum);
+    // Mushaf-order pages: continue exactly where the previous day ended.
+    const pageFrom = bounds ? Math.min(bounds.end, bounds.start + cum) : null;
+    const pageTo = bounds && pageFrom ? Math.min(bounds.end, pageFrom + dayTarget - 1) : null;
     cum += dayTarget;
     const actual = actualByDate[key] || 0;
     actualCum = Math.round((actualCum + actual) * 100) / 100;
@@ -78,9 +82,12 @@ export const buildScheduleRows = (
       targetCum: cum,
       actual,
       actualCum,
+      pageFrom,
+      pageTo,
       status,
     });
   }
+
   return rows;
 };
 
