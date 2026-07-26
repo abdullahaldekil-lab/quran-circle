@@ -36,3 +36,27 @@ export const filterTahfeezOnly = <T extends { talqeen_curriculum_id?: any; name?
 export const filterTalqeenOnly = <T extends { talqeen_curriculum_id?: any; name?: string | null }>(
   list: T[] | null | undefined
 ): T[] => (list || []).filter((h) => isTalqeenHalaqa(h));
+
+/**
+ * Halaqat a *new* student may be enrolled into. Talqeen halaqat are excluded:
+ * enrolment there goes through the Talqeen module, never through student intake
+ * (التسجيل المسبق / طلبات الالتحاق / إضافة طالب / الإضافة الجماعية).
+ *
+ * Use this for the halaqa picker on any student-creation form. Do NOT use it for
+ * read-only filters — staff still need to filter and report on talqeen halaqat.
+ */
+export const assignableForNewStudent = filterTahfeezOnly;
+
+/** Minimal shape needed to tell a talqeen halaqa from a tahfeez one. */
+export interface HalaqaTypeFields {
+  talqeen_curriculum_id?: string | null;
+  name?: string | null;
+}
+
+/** Guard for a single halaqa on a student-creation path. */
+export const canEnrolNewStudent = (h: HalaqaTypeFields | null | undefined): boolean =>
+  !isTalqeenHalaqa(h);
+
+/** Message shown when a new student is aimed at a talqeen halaqa. */
+export const TALQEEN_ENROLMENT_BLOCKED_MSG =
+  "لا يمكن إسناد طالب جديد إلى حلقة تلقين — التسجيل في التلقين يتم من قسم التلقين";

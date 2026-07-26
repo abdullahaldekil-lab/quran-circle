@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Upload, FileText, AlertCircle, CheckCircle2, X } from "lucide-react";
+import { canEnrolNewStudent, TALQEEN_ENROLMENT_BLOCKED_MSG } from "@/lib/halaqaType";
 
 interface ParsedRow {
   student_name: string;
@@ -75,9 +76,13 @@ const CsvBulkImport = ({ open, onOpenChange, onComplete }: CsvBulkImportProps) =
       return;
     }
 
-    // Fetch halaqat for matching
-    const { data: halaqat } = await supabase.from("halaqat").select("id, name").eq("active", true);
-    const halaqaMap = new Map((halaqat || []).map((h) => [h.name.trim(), h.id]));
+    // Fetch halaqat for matching. Talqeen halaqat are loaded too — so a row naming
+    // one gets a precise error instead of the misleading "الحلقة غير موجودة".
+    const { data: halaqat } = await supabase
+      .from("halaqat")
+      .select("id, name, talqeen_curriculum_id")
+      .eq("active", true);
+    const halaqaMap = new Map((halaqat || []).map((h) => [h.name.trim(), h]));
 
     const rows: ParsedRow[] = [];
     for (let i = 1; i < lines.length; i++) {
@@ -92,8 +97,14 @@ const CsvBulkImport = ({ open, onOpenChange, onComplete }: CsvBulkImportProps) =
       let error: string | null = null;
 
       if (halaqaName) {
-        halaqaId = halaqaMap.get(halaqaName) || null;
-        if (!halaqaId) error = `الحلقة "${halaqaName}" غير موجودة`;
+        const halaqa = halaqaMap.get(halaqaName);
+        if (!halaqa) {
+          error = `الحلقة "${halaqaName}" غير موجودة`;
+        } else if (!canEnrolNewStudent(halaqa)) {
+          error = `الحلقة "${halaqaName}" حلقة تلقين — ${TALQEEN_ENROLMENT_BLOCKED_MSG}`;
+        } else {
+          halaqaId = halaqa.id;
+        }
       }
 
       const validStatuses = ["active", "inactive", "graduated", "suspended"];
