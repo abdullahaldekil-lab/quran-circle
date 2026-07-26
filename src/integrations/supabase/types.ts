@@ -6249,10 +6249,21 @@ export type Database = {
           student_full_name: string
         }[]
       }
+      get_external_narration_token: { Args: { _token: string }; Returns: Json }
       get_staff_role: { Args: { _user_id: string }; Returns: string }
       get_student_portal_data: { Args: { _code: string }; Returns: Json }
       has_permission: {
         Args: { _permission_name: string; _user_id: string }
+        Returns: boolean
+      }
+      is_guardian_of: { Args: { _student_id: string }; Returns: boolean }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
+      submit_external_narration_review: {
+        Args: {
+          _reviewer_name: string
+          _reviewer_phone: string
+          _token: string
+        }
         Returns: boolean
       }
     }
