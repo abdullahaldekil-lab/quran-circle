@@ -29,7 +29,9 @@ const Recitation = () => {
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [planRefresh, setPlanRefresh] = useState(0);
   const [audioUrl, setAudioUrl] = useState("");
+
   // New per-section error structure: { error, lahn, warning } × { memorization, review, linking }
   const emptyBreakdown = () => sharedEmptyBreakdown();
   const [form, setForm] = useState({
@@ -172,7 +174,12 @@ const Recitation = () => {
     if (currentIndex < students.length - 1) {
       setCurrentIndex(currentIndex + 1);
       resetForm();
+    } else {
+      resetForm();
     }
+    // إعادة حساب بداية/نهاية الجزء تلقائياً بعد تسجيل تقدم اليوم
+    setPlanRefresh((n) => n + 1);
+
   };
 
   /** Advance student to next part/branch/level automatically */
@@ -277,11 +284,13 @@ const Recitation = () => {
             </CardContent>
           </Card>
 
-          {/* Annual Plan Target */}
+          {/* Annual Plan Target — auto-selected mushaf range from daily progress */}
           <StudentAnnualPlanCard
+            key={`plan-${currentStudent.id}-${planRefresh}`}
             studentId={currentStudent.id}
             onApply={(from, to) => setForm(prev => ({ ...prev, memorized_from: from, memorized_to: to }))}
           />
+
 
           {/* Student Recitation History */}
           <StudentHistory studentId={currentStudent.id} />
