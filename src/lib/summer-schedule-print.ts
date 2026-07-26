@@ -139,7 +139,7 @@ export const buildSchedulePrintHtml = (
         <table>
           <thead>
             <tr>
-              <th>#</th><th>اليوم</th><th>التاريخ الهجري</th><th>المطلوب</th>
+              <th>#</th><th>اليوم</th><th>التاريخ الهجري</th><th>الصفحات (مصحف المدينة)</th><th>المطلوب</th>
               <th>تراكمي مطلوب</th><th>المسمَّع</th><th>تراكمي فعلي</th><th>الحالة</th>
             </tr>
           </thead>
@@ -148,13 +148,15 @@ export const buildSchedulePrintHtml = (
               .map(
                 (r) => `<tr>
               <td>${r.idx}</td><td>${esc(r.weekday)}</td><td>${esc(r.hijri)}</td>
+              <td>${r.pageFrom && r.pageTo ? (r.pageFrom === r.pageTo ? r.pageFrom : `${r.pageFrom} – ${r.pageTo}`) : "—"}</td>
               <td>${r.target}</td><td>${r.targetCum}</td><td>${r.actual || "—"}</td>
               <td>${r.actualCum}</td>
               <td style="color:${statusColor[r.status]};font-weight:600">${STATUS_LABELS[r.status]}</td>
             </tr>`,
               )
               .join("")}
-            ${s.rows.length ? "" : `<tr><td colspan="8">لا توجد خطة بتواريخ.</td></tr>`}
+            ${s.rows.length ? "" : `<tr><td colspan="9">لا توجد خطة بتواريخ.</td></tr>`}
+
           </tbody>
         </table>
       </section>`;
