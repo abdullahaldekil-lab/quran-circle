@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ArrowLeft, Check } from "lucide-react";
+import { BookOpen, ArrowLeft, Check, BookOpenCheck } from "lucide-react";
+import MushafViewer from "@/components/mushaf/MushafViewer";
+
 
 interface Props {
   studentId: string;
@@ -14,6 +16,8 @@ const StudentAnnualPlanCard = ({ studentId, onApply }: Props) => {
   const [lastRecord, setLastRecord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applied, setApplied] = useState(false);
+  const [mushafOpen, setMushafOpen] = useState(false);
+
 
   useEffect(() => {
     setApplied(false);
@@ -51,6 +55,9 @@ const StudentAnnualPlanCard = ({ studentId, onApply }: Props) => {
 
   const dailyTarget = Number(plan.daily_target_pages) || 0.5;
   const startFrom = lastRecord?.memorized_to || "بداية المقرر";
+  // موضع الطالب في المصحف: رقم الصفحة إن كان آخر تسميع مسجلاً برقم صفحة
+  const lastPage = parseInt(String(lastRecord?.memorized_to || "").match(/\d+/)?.[0] || "", 10);
+  const currentPage = Number.isFinite(lastPage) && lastPage >= 1 && lastPage <= 604 ? lastPage : 1;
 
   const handleApply = () => {
     const from = lastRecord?.memorized_to || "";
@@ -75,19 +82,33 @@ const StudentAnnualPlanCard = ({ studentId, onApply }: Props) => {
               </p>
             </div>
           </div>
-          <Button
-            size="sm"
-            variant={applied ? "secondary" : "default"}
-            className="shrink-0 text-xs h-7"
-            onClick={handleApply}
-            disabled={applied}
-          >
-            {applied ? <><Check className="w-3 h-3 ml-1" />تم</> : "تطبيق"}
-          </Button>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setMushafOpen(true)}>
+              <BookOpenCheck className="w-3 h-3 ml-1" />المصحف
+            </Button>
+            <Button
+              size="sm"
+              variant={applied ? "secondary" : "default"}
+              className="text-xs h-7"
+              onClick={handleApply}
+              disabled={applied}
+            >
+              {applied ? <><Check className="w-3 h-3 ml-1" />تم</> : "تطبيق"}
+            </Button>
+          </div>
         </div>
       </CardContent>
+      <MushafViewer
+        open={mushafOpen}
+        onOpenChange={setMushafOpen}
+        title="المصحف — الخطة السنوية"
+        currentPage={currentPage}
+        todayFrom={currentPage}
+        todayTo={Math.min(604, currentPage + Math.max(1, Math.ceil(dailyTarget)) - 1)}
+      />
     </Card>
   );
+
 };
 
 export default StudentAnnualPlanCard;

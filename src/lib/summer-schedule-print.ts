@@ -3,6 +3,7 @@
 
 import { isWorkingDay, type HolidayRange } from "./summer-scoring";
 import { formatDateHijriOnly, getWeekdayArabic } from "./hijri";
+import { juzRangeToPageBounds } from "./mushaf";
 
 export interface ScheduleRow {
   idx: number;
@@ -13,8 +14,12 @@ export interface ScheduleRow {
   targetCum: number;
   actual: number;
   actualCum: number;
+  /** Mushaf-order page range for the day (Madinah mushaf), when the juz range is known. */
+  pageFrom: number | null;
+  pageTo: number | null;
   status: "done" | "partial" | "late" | "future";
 }
+
 
 export interface SchedulePlan {
   plan_start_date: string | null;
@@ -48,6 +53,7 @@ export const buildScheduleRows = (
   const end = new Date(plan.plan_end_date);
   const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
   const daily = Math.max(1, Math.ceil(plan.daily_pages || 0));
+  const bounds = juzRangeToPageBounds(plan.juz_from, plan.juz_to);
 
   const rows: ScheduleRow[] = [];
   let cum = 0;
@@ -59,6 +65,9 @@ export const buildScheduleRows = (
     idx += 1;
     const key = d.toISOString().slice(0, 10);
     const dayTarget = Math.min(daily, target - cum);
+    // Mushaf-order pages: continue exactly where the previous day ended.
+    const pageFrom = bounds ? Math.min(bounds.end, bounds.start + cum) : null;
+    const pageTo = bounds && pageFrom ? Math.min(bounds.end, pageFrom + dayTarget - 1) : null;
     cum += dayTarget;
     const actual = actualByDate[key] || 0;
     actualCum = Math.round((actualCum + actual) * 100) / 100;
@@ -73,9 +82,12 @@ export const buildScheduleRows = (
       targetCum: cum,
       actual,
       actualCum,
+      pageFrom,
+      pageTo,
       status,
     });
   }
+
   return rows;
 };
 
@@ -127,7 +139,7 @@ export const buildSchedulePrintHtml = (
         <table>
           <thead>
             <tr>
-              <th>#</th><th>اليوم</th><th>التاريخ الهجري</th><th>المطلوب</th>
+              <th>#</th><th>اليوم</th><th>التاريخ الهجري</th><th>الصفحات (مصحف المدينة)</th><th>المطلوب</th>
               <th>تراكمي مطلوب</th><th>المسمَّع</th><th>تراكمي فعلي</th><th>الحالة</th>
             </tr>
           </thead>
@@ -136,13 +148,15 @@ export const buildSchedulePrintHtml = (
               .map(
                 (r) => `<tr>
               <td>${r.idx}</td><td>${esc(r.weekday)}</td><td>${esc(r.hijri)}</td>
+              <td>${r.pageFrom && r.pageTo ? (r.pageFrom === r.pageTo ? r.pageFrom : `${r.pageFrom} – ${r.pageTo}`) : "—"}</td>
               <td>${r.target}</td><td>${r.targetCum}</td><td>${r.actual || "—"}</td>
               <td>${r.actualCum}</td>
               <td style="color:${statusColor[r.status]};font-weight:600">${STATUS_LABELS[r.status]}</td>
             </tr>`,
               )
               .join("")}
-            ${s.rows.length ? "" : `<tr><td colspan="8">لا توجد خطة بتواريخ.</td></tr>`}
+            ${s.rows.length ? "" : `<tr><td colspan="9">لا توجد خطة بتواريخ.</td></tr>`}
+
           </tbody>
         </table>
       </section>`;
