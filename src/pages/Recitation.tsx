@@ -29,7 +29,9 @@ const Recitation = () => {
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [planRefresh, setPlanRefresh] = useState(0);
   const [audioUrl, setAudioUrl] = useState("");
+
   // New per-section error structure: { error, lahn, warning } × { memorization, review, linking }
   const emptyBreakdown = () => sharedEmptyBreakdown();
   const [form, setForm] = useState({
