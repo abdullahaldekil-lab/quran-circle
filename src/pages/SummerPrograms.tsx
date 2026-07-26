@@ -15,7 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
 import { PLAN_TRACKS, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, planDaysNeeded, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
+import { buildScheduleRows, openSchedulePrint, STATUS_LABELS } from "@/lib/summer-schedule-print";
 import { formatDateHijriOnly, getWeekdayArabic } from "@/lib/hijri";
+
 import { Progress } from "@/components/ui/progress";
 
 type Program = { id: string; name: string; description: string | null; start_date: string; end_date: string; status: string };
