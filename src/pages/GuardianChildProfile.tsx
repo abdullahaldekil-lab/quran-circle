@@ -16,6 +16,15 @@ import {
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { gregorianToHijri, formatDateHijriOnly } from "@/lib/hijri";
+import {
+  ATTENDANCE_STATUS,
+  ATTENDANCE_STATUS_ORDER,
+  attendanceRate,
+  countByStatus,
+  isAttended,
+  statusLabel,
+  statusMeta,
+} from "@/lib/attendanceStatus";
 
 const GuardianChildProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -139,8 +148,8 @@ const GuardianChildProfile = () => {
   const avgMistakes = records.length
     ? Math.round(records.reduce((s, r) => s + (r.mistakes_count || 0), 0) / records.length)
     : 0;
-  const attendancePresent = attendance.filter(a => a.status === "present" || a.status === "late").length;
-  const attendancePercent = attendance.length ? Math.round((attendancePresent / attendance.length) * 100) : 0;
+  const attendancePresent = attendance.filter(a => isAttended(a.status)).length;
+  const attendancePercent = attendanceRate(attendance, attendance.length);
   const progressPercent = Math.min(100, Math.round(((student.total_memorized_pages || 0) / 604) * 100));
 
   const statusIcon = (status: string) => {
@@ -148,18 +157,9 @@ const GuardianChildProfile = () => {
       case "present": return <CheckCircle2 className="w-4 h-4 text-success" />;
       case "absent": return <XCircle className="w-4 h-4 text-destructive" />;
       case "late": return <Clock className="w-4 h-4 text-warning" />;
+      case "late_excused": return <Clock className="w-4 h-4 text-purple-600" />;
       case "excused": return <AlertTriangle className="w-4 h-4 text-info" />;
       default: return null;
-    }
-  };
-
-  const statusLabel = (status: string) => {
-    switch (status) {
-      case "present": return "حاضر";
-      case "absent": return "غائب";
-      case "late": return "متأخر";
-      case "excused": return "مستأذن";
-      default: return status;
     }
   };
 
@@ -435,39 +435,21 @@ const GuardianChildProfile = () => {
                     .filter(d => { const dw = getDay(d); return dw !== 5 && dw !== 6; });
                   const map: Record<string, string> = {};
                   monthAttendance.forEach((a: any) => { map[a.attendance_date] = a.status; });
-                  const counts = { present: 0, absent: 0, late: 0, excused: 0 };
-                  days.forEach(d => {
-                    const s = map[format(d, "yyyy-MM-dd")];
-                    if (s && s in counts) (counts as any)[s]++;
-                  });
+                  const counts = countByStatus(days.map(d => ({ status: map[format(d, "yyyy-MM-dd")] })));
                   return (
                     <>
-                      <div className="grid grid-cols-4 gap-2 mb-3">
-                        <div className="bg-success/10 p-2 rounded text-center">
-                          <p className="text-lg font-bold text-success">{counts.present}</p>
-                          <p className="text-[10px]">حاضر</p>
-                        </div>
-                        <div className="bg-destructive/10 p-2 rounded text-center">
-                          <p className="text-lg font-bold text-destructive">{counts.absent}</p>
-                          <p className="text-[10px]">غائب</p>
-                        </div>
-                        <div className="bg-warning/10 p-2 rounded text-center">
-                          <p className="text-lg font-bold text-warning">{counts.late}</p>
-                          <p className="text-[10px]">متأخر</p>
-                        </div>
-                        <div className="bg-muted p-2 rounded text-center">
-                          <p className="text-lg font-bold">{counts.excused}</p>
-                          <p className="text-[10px]">مستأذن</p>
-                        </div>
+                      <div className="grid grid-cols-5 gap-2 mb-3">
+                        {ATTENDANCE_STATUS_ORDER.map(key => (
+                          <div key={key} className={`p-2 rounded text-center ${ATTENDANCE_STATUS[key].cellClass}`}>
+                            <p className="text-lg font-bold">{counts[key]}</p>
+                            <p className="text-[10px]">{ATTENDANCE_STATUS[key].label}</p>
+                          </div>
+                        ))}
                       </div>
                       <div className="grid grid-cols-7 gap-1 text-center">
                         {days.map(d => {
                           const s = map[format(d, "yyyy-MM-dd")];
-                          const cls = s === "present" ? "bg-success/20 text-success"
-                            : s === "absent" ? "bg-destructive/20 text-destructive"
-                            : s === "late" ? "bg-warning/20 text-warning"
-                            : s === "excused" ? "bg-muted text-muted-foreground"
-                            : "bg-card border";
+                          const cls = statusMeta(s)?.cellClass ?? "bg-card border";
                           return (
                             <div key={d.toISOString()} className={`text-[10px] p-1 rounded ${cls}`}>
                               {format(d, "d")}

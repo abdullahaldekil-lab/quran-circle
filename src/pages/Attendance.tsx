@@ -15,6 +15,12 @@ import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import { sendNotification } from "@/utils/sendNotification";
 import { formatDateHijriOnly, formatDateSmart, getCurrentFullDateHeader } from "@/lib/hijri";
+import {
+  ATTENDANCE_STATUS,
+  ATTENDANCE_STATUS_ORDER,
+  attendanceRate as computeAttendanceRate,
+  countByStatus,
+} from "@/lib/attendanceStatus";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
@@ -275,8 +281,10 @@ const Attendance = () => {
         sessionId = created.id;
       }
 
+      // talqeen_session_attendance carries a narrower status set. A student who
+      // arrived late with permission was still present — map to "late", not "absent".
       const toTalqeenStatus = (s: AttendanceStatus): "present" | "absent" | "late" =>
-        s === "present" ? "present" : s === "late" ? "late" : "absent";
+        s === "present" ? "present" : s === "late" || s === "late_excused" ? "late" : "absent";
 
       const rows = Object.entries(finalAttendance).map(([student_id, status]) => ({
         session_id: sessionId,
@@ -384,7 +392,11 @@ const Attendance = () => {
     late: <Clock className="w-4 h-4" />, excused: <AlertCircle className="w-4 h-4" />,
     late_excused: <Clock className="w-4 h-4" />,
   };
-  const statusLabels: Record<AttendanceStatus, string> = { present: "حاضر", absent: "غائب", late: "متأخر", excused: "مستأذن", late_excused: "متأخر بإذن" };
+  // Labels come from the shared module (src/lib/attendanceStatus.ts) so reports,
+  // the guardian view and the student portal can never drift from this page again.
+  const statusLabels = Object.fromEntries(
+    ATTENDANCE_STATUS_ORDER.map((k) => [k, ATTENDANCE_STATUS[k].label]),
+  ) as Record<AttendanceStatus, string>;
   const statusColors: Record<AttendanceStatus, string> = {
     present: "bg-success/10 text-success border-success/30",
     absent: "bg-destructive/10 text-destructive border-destructive/30",
@@ -671,18 +683,22 @@ const Attendance = () => {
               </Badge>
             </div>
             {(() => {
-              const presentCount = Object.values(originalAttendance).filter(s => s === "present").length;
-              const lateCount = Object.values(originalAttendance).filter(s => s === "late").length;
-              const absentCount = Object.values(originalAttendance).filter(s => s === "absent").length;
-              const excusedCount = Object.values(originalAttendance).filter(s => s === "excused").length;
-              const totalRecords = Object.keys(originalAttendance).length;
-              const attendanceRate = totalRecords > 0 ? Math.round(((presentCount + lateCount) / totalRecords) * 100) : 0;
+              const savedRows = Object.values(originalAttendance).map(status => ({ status }));
+              const counts = countByStatus(savedRows);
+              const presentCount = counts.present;
+              const lateCount = counts.late;
+              const lateExcusedCount = counts.late_excused;
+              const absentCount = counts.absent;
+              const excusedCount = counts.excused;
+              const totalRecords = savedRows.length;
+              const attendanceRate = computeAttendanceRate(savedRows, totalRecords);
               return (
                 <div className="space-y-2">
                   <div className="flex items-center gap-1">
                     <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden flex">
                       {presentCount > 0 && <div className="h-full bg-green-500" style={{ width: `${(presentCount / totalRecords) * 100}%` }} />}
                       {lateCount > 0 && <div className="h-full bg-yellow-500" style={{ width: `${(lateCount / totalRecords) * 100}%` }} />}
+                      {lateExcusedCount > 0 && <div className="h-full bg-purple-500" style={{ width: `${(lateExcusedCount / totalRecords) * 100}%` }} />}
                       {excusedCount > 0 && <div className="h-full bg-blue-500" style={{ width: `${(excusedCount / totalRecords) * 100}%` }} />}
                       {absentCount > 0 && <div className="h-full bg-red-500" style={{ width: `${(absentCount / totalRecords) * 100}%` }} />}
                     </div>
@@ -692,6 +708,7 @@ const Attendance = () => {
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> حاضر: {presentCount}</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" /> متأخر: {lateCount}</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> غائب: {absentCount}</span>
+                    {lateExcusedCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500" /> متأخر بإذن: {lateExcusedCount}</span>}
                     {excusedCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> مستأذن: {excusedCount}</span>}
                   </div>
                 </div>

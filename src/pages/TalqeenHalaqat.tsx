@@ -1307,6 +1307,7 @@ const TalqeenHalaqat = () => {
                             <SelectItem value="present">حاضر</SelectItem>
                             <SelectItem value="absent">غائب</SelectItem>
                             <SelectItem value="late">متأخر</SelectItem>
+                            <SelectItem value="late_excused">متأخر بإذن</SelectItem>
                             <SelectItem value="excused">مستأذن</SelectItem>
                           </SelectContent>
                         </Select>

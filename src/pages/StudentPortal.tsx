@@ -12,13 +12,19 @@ import {
   BookOpen, Loader2, Calendar, MapPin, Award, ScrollText,
   CheckSquare, GraduationCap, ClipboardList, Home, X, ExternalLink,
 } from "lucide-react";
+import {
+  ATTENDANCE_STATUS,
+  ATTENDANCE_STATUS_ORDER,
+  attendanceRate as computeAttendanceRate,
+  countByStatus,
+} from "@/lib/attendanceStatus";
 
-const statusLabel: Record<string, { label: string; cls: string }> = {
-  present: { label: "حاضر", cls: "bg-green-100 text-green-800 border-green-300" },
-  absent: { label: "غائب", cls: "bg-red-100 text-red-800 border-red-300" },
-  late: { label: "متأخر", cls: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-  excused: { label: "مستأذن", cls: "bg-blue-100 text-blue-800 border-blue-300" },
-};
+const statusLabel: Record<string, { label: string; cls: string }> = Object.fromEntries(
+  ATTENDANCE_STATUS_ORDER.map((key) => [
+    key,
+    { label: ATTENDANCE_STATUS[key].label, cls: ATTENDANCE_STATUS[key].cellClass },
+  ]),
+);
 
 export default function StudentPortal() {
   const { code } = useParams<{ code?: string }>();
@@ -86,10 +92,12 @@ export default function StudentPortal() {
     setShowExternal(true);
   };
 
-  const presentCount = attendance.filter(a => a.status === "present").length;
-  const lateCount = attendance.filter(a => a.status === "late").length;
+  const attendanceCounts = countByStatus(attendance);
+  const presentCount = attendanceCounts.present;
+  // متأخر بإذن يُعرض ضمن التأخر
+  const lateCount = attendanceCounts.late + attendanceCounts.late_excused;
   const totalDays = attendance.length;
-  const attendanceRate = totalDays ? Math.round(((presentCount + lateCount) / totalDays) * 100) : 0;
+  const attendanceRate = computeAttendanceRate(attendance, totalDays);
 
   const totalMemorized = progress.reduce((sum, p) => sum + (Number(p.actual_memorization) || 0), 0);
   const totalReviewed = progress.reduce((sum, p) => sum + (Number(p.actual_review) || 0), 0);

@@ -15,13 +15,21 @@ import { Printer, Download, Users, Clock, UserX, FileText } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import StudentNameLink from "@/components/StudentNameLink";
 import PageDateHeader from "@/components/PageDateHeader";
+import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_ORDER, attendanceRate, countByStatus } from "@/lib/attendanceStatus";
 
-const STATUS_LABELS: Record<string, { label: string; color: string; symbol: string }> = {
-  present: { label: "حاضر", color: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300", symbol: "✓" },
-  absent: { label: "غائب", color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300", symbol: "✗" },
-  late: { label: "متأخر", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300", symbol: "⏰" },
-  excused: { label: "مستأذن", color: "bg-muted text-muted-foreground", symbol: "≡" },
-};
+// Labels/colours come from the shared module so every status in the DB enum
+// (including متأخر بإذن) is rendered here without a per-page map to forget.
+const STATUS_LABELS: Record<string, { label: string; color: string; symbol: string }> =
+  Object.fromEntries(
+    ATTENDANCE_STATUS_ORDER.map((key) => [
+      key,
+      {
+        label: ATTENDANCE_STATUS[key].label,
+        color: ATTENDANCE_STATUS[key].cellClass,
+        symbol: ATTENDANCE_STATUS[key].symbol,
+      },
+    ]),
+  );
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => ({
   value: i,
@@ -113,13 +121,18 @@ const StudentAttendanceReport = () => {
   const studentSummary = useMemo(() => {
     return students.map(s => {
       const recs = attendance.filter(a => a.student_id === s.id);
-      const present = recs.filter(a => a.status === "present").length;
-      const late = recs.filter(a => a.status === "late").length;
-      const absent = recs.filter(a => a.status === "absent").length;
-      const excused = recs.filter(a => a.status === "excused").length;
-      const total = monthDays.length;
-      const pct = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
-      return { ...s, present, late, absent, excused, pct };
+      const counts = countByStatus(recs);
+      // متأخر بإذن يُحتسب حضورًا، وأيام الاستئذان تُستبعد من المقام
+      const pct = attendanceRate(recs, monthDays.length);
+      return {
+        ...s,
+        present: counts.present,
+        late: counts.late,
+        lateExcused: counts.late_excused,
+        absent: counts.absent,
+        excused: counts.excused,
+        pct,
+      };
     });
   }, [students, attendance, monthDays]);
 
@@ -169,7 +182,7 @@ const StudentAttendanceReport = () => {
         doc.text(`الشهر: ${HIJRI_MONTHS[toHijri(dateObj).month - 1]} ${toHijri(dateObj).year} هـ`, 105, 37, { align: "center" });
 
         doc.setFontSize(10);
-        doc.text(`Present: ${selectedStudent.present} | Late: ${selectedStudent.late} | Absent: ${selectedStudent.absent} | Excused: ${selectedStudent.excused} | Rate: ${selectedStudent.pct}%`, 105, 47, { align: "center" });
+        doc.text(`Present: ${selectedStudent.present} | Late: ${selectedStudent.late} | Late(exc): ${selectedStudent.lateExcused} | Absent: ${selectedStudent.absent} | Excused: ${selectedStudent.excused} | Rate: ${selectedStudent.pct}%`, 105, 47, { align: "center" });
 
         const tableData = monthDays.map(day => {
           const dateStr = format(day, "yyyy-MM-dd");
@@ -311,7 +324,8 @@ const StudentAttendanceReport = () => {
                   <Button variant="outline" size="sm" onClick={() => {
                     import("xlsx-js-style").then((XLSX) => {
                       const rows = studentSummary.map(s => ({
-                        "الطالب": s.full_name, "حضور": s.present, "تأخر": s.late, "غياب": s.absent, "مستأذن": s.excused, "نسبة %": s.pct,
+                        "الطالب": s.full_name, "حضور": s.present, "تأخر": s.late, "متأخر بإذن": s.lateExcused,
+                        "غياب": s.absent, "مستأذن": s.excused, "نسبة %": s.pct,
                       }));
                       const ws = XLSX.utils.json_to_sheet(rows);
                       const wb = XLSX.utils.book_new();
@@ -330,6 +344,7 @@ const StudentAttendanceReport = () => {
                     <TableHead className="text-center">أيام الحضور</TableHead>
                     <TableHead className="text-center">أيام الغياب</TableHead>
                     <TableHead className="text-center">أيام التأخر</TableHead>
+                    <TableHead className="text-center">متأخر بإذن</TableHead>
                     <TableHead className="text-center">مستأذن</TableHead>
                     <TableHead className="text-center">نسبة الحضور</TableHead>
                   </TableRow>
@@ -344,6 +359,7 @@ const StudentAttendanceReport = () => {
                       <TableCell className="text-center font-bold text-emerald-600">{s.present}</TableCell>
                       <TableCell className="text-center font-bold text-destructive">{s.absent}</TableCell>
                       <TableCell className="text-center font-bold text-amber-600">{s.late}</TableCell>
+                      <TableCell className="text-center font-bold text-purple-600">{s.lateExcused}</TableCell>
                       <TableCell className="text-center text-muted-foreground">{s.excused}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={s.pct >= 90 ? "default" : s.pct >= 70 ? "secondary" : "destructive"}>{s.pct}%</Badge>
@@ -388,10 +404,11 @@ const StudentAttendanceReport = () => {
               </div>
 
               {/* Summary cards */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                 <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-emerald-600">{selectedStudent.present}</p><p className="text-xs text-muted-foreground">حضور</p></CardContent></Card>
                 <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-destructive">{selectedStudent.absent}</p><p className="text-xs text-muted-foreground">غياب</p></CardContent></Card>
                 <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-amber-600">{selectedStudent.late}</p><p className="text-xs text-muted-foreground">تأخر</p></CardContent></Card>
+                <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-purple-600">{selectedStudent.lateExcused}</p><p className="text-xs text-muted-foreground">متأخر بإذن</p></CardContent></Card>
                 <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold text-muted-foreground">{selectedStudent.excused}</p><p className="text-xs text-muted-foreground">مستأذن</p></CardContent></Card>
                 <Card><CardContent className="p-3 text-center"><p className="text-xl font-bold">{selectedStudent.pct}%</p><p className="text-xs text-muted-foreground">نسبة الحضور</p></CardContent></Card>
               </div>

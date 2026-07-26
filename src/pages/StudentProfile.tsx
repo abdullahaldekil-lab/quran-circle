@@ -27,6 +27,7 @@ import TalqeenStudentTests from "@/components/talqeen/TalqeenStudentTests";
 import TalqeenStudentDailyLog from "@/components/talqeen/TalqeenStudentDailyLog";
 import StudentStatusManager from "@/components/student/StudentStatusManager";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
+import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_ORDER, attendanceRate, countByStatus } from "@/lib/attendanceStatus";
 
 const PAGE_SIZE = 20;
 
@@ -826,18 +827,22 @@ const AttendanceTabContent = ({ attRecords, trendData, hijriMonth, hijriYear, se
   const attMap: Record<string, string> = {};
   attRecords.forEach((r: any) => { attMap[r.attendance_date] = r.status; });
 
-  const present = attRecords.filter((r: any) => r.status === "present").length;
-  const absent = attRecords.filter((r: any) => r.status === "absent").length;
-  const late = attRecords.filter((r: any) => r.status === "late").length;
-  const excused = attRecords.filter((r: any) => r.status === "excused").length;
-  const pct = monthDays.length > 0 ? Math.round(((present + late) / monthDays.length) * 100) : 0;
+  const counts = countByStatus(attRecords as { status: string }[]);
+  const { present, absent, late, excused } = counts;
+  const lateExcused = counts.late_excused;
+  const pct = attendanceRate(attRecords as { status: string }[], monthDays.length);
 
-  const STATUS_MAP: Record<string, { label: string; color: string; badge: "default" | "secondary" | "destructive" | "outline" }> = {
-    present: { label: "حاضر ✓", color: "bg-emerald-100 dark:bg-emerald-900/30", badge: "default" },
-    absent: { label: "غائب ✗", color: "bg-red-100 dark:bg-red-900/30", badge: "destructive" },
-    late: { label: "متأخر ⏰", color: "bg-amber-100 dark:bg-amber-900/30", badge: "secondary" },
-    excused: { label: "مستأذن", color: "bg-muted", badge: "outline" },
-  };
+  const STATUS_MAP: Record<string, { label: string; color: string; badge: "default" | "secondary" | "destructive" | "outline" }> =
+    Object.fromEntries(
+      ATTENDANCE_STATUS_ORDER.map((key) => [
+        key,
+        {
+          label: `${ATTENDANCE_STATUS[key].label} ${ATTENDANCE_STATUS[key].symbol}`,
+          color: ATTENDANCE_STATUS[key].cellClass,
+          badge: ATTENDANCE_STATUS[key].badge,
+        },
+      ]),
+    );
 
   const hijriMonthOptions = HIJRI_MONTHS.map((name, i) => ({ value: i + 1, label: name }));
   const hijriYears = Array.from({ length: 5 }, (_, i) => hijriYear - 2 + i);
@@ -855,10 +860,11 @@ const AttendanceTabContent = ({ attRecords, trendData, hijriMonth, hijriYear, se
         </Select>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-emerald-600">{present}</p><p className="text-[10px] text-muted-foreground">حضور</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-destructive">{absent}</p><p className="text-[10px] text-muted-foreground">غياب</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-amber-600">{late}</p><p className="text-[10px] text-muted-foreground">تأخر</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-purple-600">{lateExcused}</p><p className="text-[10px] text-muted-foreground">متأخر بإذن</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-muted-foreground">{excused}</p><p className="text-[10px] text-muted-foreground">مستأذن</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold">{pct}%</p><p className="text-[10px] text-muted-foreground">النسبة</p></CardContent></Card>
       </div>
