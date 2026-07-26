@@ -16,6 +16,8 @@ const StudentAnnualPlanCard = ({ studentId, onApply }: Props) => {
   const [lastRecord, setLastRecord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applied, setApplied] = useState(false);
+  const [mushafOpen, setMushafOpen] = useState(false);
+
 
   useEffect(() => {
     setApplied(false);
