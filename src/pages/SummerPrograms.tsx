@@ -354,6 +354,37 @@ export default function SummerPrograms() {
   const currentProgram = programs.find(p => p.id === selectedProgram);
   const currentMaqra = maqare.find(m => m.id === selectedMaqra);
 
+  // ===== الجدول اليومي: بناء الصفوف + التصدير/الطباعة PDF =====
+  const plannedStudents = useMemo(
+    () => summerStudents.filter(s => s.plan_start_date && s.plan_end_date && (s.pages_target || 0) > 0),
+    [summerStudents]
+  );
+  const actualByDateFor = (summerStudentId: string) => {
+    const map: Record<string, number> = {};
+    records.filter((r: any) => r.summer_student_id === summerStudentId).forEach((r: any) => {
+      map[r.record_date] = (map[r.record_date] || 0) + (r.link_pages_count || 0);
+    });
+    return map;
+  };
+  const printSchedule = (summerStudentId?: string) => {
+    const list = summerStudentId ? plannedStudents.filter(s => s.id === summerStudentId) : plannedStudents;
+    if (!list.length) { toast.error("لا توجد خطط بتواريخ للطباعة"); return; }
+    const sections = list.map(s => ({
+      studentName: studentNameMap[s.student_id] || "—",
+      plan: s,
+      rows: buildScheduleRows(s, actualByDateFor(s.id), holidays),
+    }));
+    const title = summerStudentId
+      ? `الجدول اليومي — ${sections[0].studentName}`
+      : `الجدول اليومي — مقرأة ${currentMaqra?.name || ""}`;
+    const subtitle = `${currentProgram?.name || "البرنامج الصيفي"}${currentMaqra ? ` · مقرأة ${currentMaqra.name}` : ""} · عدد الطلاب: ${sections.length}`;
+    if (!openSchedulePrint(title, subtitle, sections)) {
+      toast.error("تعذّر فتح نافذة الطباعة — يرجى السماح بالنوافذ المنبثقة");
+    }
+  };
+
+
+
   return (
     <div className="p-6 space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-3">
