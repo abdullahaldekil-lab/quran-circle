@@ -795,6 +795,10 @@ export default function SummerPrograms() {
                   const rows = buildScheduleRows(s, actualByDateFor(s.id), holidays);
                   const workingDays = rows.length;
                   const today = new Date().toISOString().slice(0, 10);
+                  const bounds = juzRangeToPageBounds(s.juz_from, s.juz_to);
+                  const doneTotal = rows.filter(r => r.date <= today).reduce((a, r) => a + r.actual, 0);
+                  const todayRow = rows.find(r => r.date === today) || rows.find(r => r.date > today);
+                  const currentPage = bounds ? Math.min(bounds.end, bounds.start + Math.round(doneTotal)) : null;
                   return (
                     <Card key={s.id}>
                       <CardHeader className="pb-2">
@@ -807,11 +811,30 @@ export default function SummerPrograms() {
                             {s.juz_from && s.juz_to && (
                               <Badge variant="outline">الأجزاء {s.juz_from}–{s.juz_to}</Badge>
                             )}
+                            {bounds && (
+                              <Badge variant="secondary">الصفحات {bounds.start}–{bounds.end}</Badge>
+                            )}
                           </span>
                           <span className="flex items-center gap-2">
                             <span className="text-xs font-normal text-muted-foreground">
                               {formatDateHijriOnly(s.plan_start_date!)} → {formatDateHijriOnly(s.plan_end_date!)} · {workingDays} يوم عمل / {totalDays} يوم · {daily} وجه/يوم · الهدف {target} وجه
                             </span>
+                            {bounds && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setMushafTarget({
+                                  name: studentNameMap[s.student_id] || "—",
+                                  from: bounds.start,
+                                  to: bounds.end,
+                                  current: currentPage || bounds.start,
+                                  todayFrom: todayRow?.pageFrom ?? null,
+                                  todayTo: todayRow?.pageTo ?? null,
+                                })}
+                              >
+                                <BookOpenCheck className="w-4 h-4 ml-1" />المصحف
+                              </Button>
+                            )}
                             <Button size="sm" variant="ghost" onClick={() => printSchedule(s.id)}>
                               <Printer className="w-4 h-4 ml-1" />طباعة
                             </Button>
@@ -826,6 +849,7 @@ export default function SummerPrograms() {
                                 <th className="p-2 text-right">#</th>
                                 <th className="p-2 text-right">اليوم</th>
                                 <th className="p-2 text-right">التاريخ الهجري</th>
+                                <th className="p-2 text-right">الصفحات (مصحف المدينة)</th>
                                 <th className="p-2 text-right">المطلوب اليومي</th>
                                 <th className="p-2 text-right">تراكمي مطلوب</th>
                                 <th className="p-2 text-right">المسمَّع فعلاً</th>
@@ -845,6 +869,24 @@ export default function SummerPrograms() {
                                     <td className="p-2">{r.idx}</td>
                                     <td className="p-2">{r.weekday}</td>
                                     <td className="p-2">{r.hijri}</td>
+                                    <td className="p-2">
+                                      {r.pageFrom && r.pageTo ? (
+                                        <button
+                                          type="button"
+                                          className="text-primary hover:underline"
+                                          onClick={() => setMushafTarget({
+                                            name: studentNameMap[s.student_id] || "—",
+                                            from: bounds!.start,
+                                            to: bounds!.end,
+                                            current: r.pageFrom!,
+                                            todayFrom: r.pageFrom,
+                                            todayTo: r.pageTo,
+                                          })}
+                                        >
+                                          {r.pageFrom === r.pageTo ? r.pageFrom : `${r.pageFrom} – ${r.pageTo}`}
+                                        </button>
+                                      ) : "—"}
+                                    </td>
                                     <td className="p-2">{r.target}</td>
                                     <td className="p-2 text-muted-foreground">{r.targetCum}</td>
                                     <td className="p-2 font-semibold">{r.actual || "—"}</td>
@@ -853,6 +895,7 @@ export default function SummerPrograms() {
                                   </tr>
                                 );
                               })}
+
                             </tbody>
                           </table>
                         </div>
