@@ -194,7 +194,7 @@ const TalqeenCurricula = () => {
                               <TableCell className="text-xs">{d.educational || "—"}</TableCell>
                               {canEdit && (
                                 <TableCell>
-                                  <Button variant="ghost" size="icon" onClick={() => setEditDay(d)}><Pencil className="w-3 h-3" /></Button>
+                                  <Button aria-label="تعديل" variant="ghost" size="icon" onClick={() => setEditDay(d)}><Pencil className="w-3 h-3" /></Button>
                                 </TableCell>
                               )}
                             </TableRow>

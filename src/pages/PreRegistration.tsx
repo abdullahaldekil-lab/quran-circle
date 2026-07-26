@@ -348,7 +348,7 @@ const PreRegistration = () => {
                               {r.converted_student_id && (
                                 <Badge variant="secondary" className="text-xs">تم التحويل</Badge>
                               )}
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleDelete(r.id)}>
+                              <Button aria-label="حذف" size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleDelete(r.id)}>
                                 <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>

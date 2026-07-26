@@ -886,10 +886,10 @@ const TalqeenHalaqat = () => {
                   )}
                   {isManager && (
                     <>
-                      <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
+                      <Button aria-label="تعديل" variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
                         <Pencil className="w-3 h-3" />
                       </Button>
-                      <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => { setDeleteId(h.id); setDeleteOpen(true); }}>
+                      <Button aria-label="حذف" variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => { setDeleteId(h.id); setDeleteOpen(true); }}>
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </>
@@ -1223,10 +1223,10 @@ const TalqeenHalaqat = () => {
                       <Settings2 className="w-3 h-3 ml-1" />
                       إدارة
                     </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => editPlanSession(s)}>
+                    <Button aria-label="تعديل" variant="outline" size="icon" className="h-8 w-8" onClick={() => editPlanSession(s)}>
                       <Pencil className="w-3 h-3" />
                     </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deletePlanSession(s.id)}>
+                    <Button aria-label="حذف" variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deletePlanSession(s.id)}>
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>

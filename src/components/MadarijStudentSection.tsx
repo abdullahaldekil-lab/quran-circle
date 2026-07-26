@@ -201,15 +201,15 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
                   </Badge>
                   {isManager && en.status === "active" && (
                     <>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(en)}>
+                      <Button aria-label="تعديل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(en)}>
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(en.id)}>
+                      <Button aria-label="حذف" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(en.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </>
                   )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/madarij/${en.id}`)}>
+                  <Button aria-label="عرض التفاصيل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/madarij/${en.id}`)}>
                     <Eye className="w-4 h-4" />
                   </Button>
                 </div>

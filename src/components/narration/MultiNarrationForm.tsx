@@ -110,7 +110,7 @@ export default function MultiNarrationForm({ ranges, onChange, pagesPerHizb }: P
                     <Badge variant="secondary" className="text-xs whitespace-nowrap">
                       {calcRangeHizbCount(r.from_hizb, r.to_hizb)} حزب
                     </Badge>
-                    <Button
+                    <Button aria-label="حذف"
                       type="button"
                       variant="ghost"
                       size="icon"

@@ -457,10 +457,10 @@ const Halaqat = () => {
                   </Button>
                   {isManager && (
                     <>
-                      <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
+                      <Button aria-label="تعديل" variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
                         <Pencil className="w-3 h-3" />
                       </Button>
-                      <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => { setDeleteId(h.id); setDeleteOpen(true); }}>
+                      <Button aria-label="حذف" variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => { setDeleteId(h.id); setDeleteOpen(true); }}>
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </>

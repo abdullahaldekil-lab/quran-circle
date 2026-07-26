@@ -270,14 +270,14 @@ const Recitation = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <Button variant="ghost" size="icon" disabled={currentIndex >= students.length - 1} onClick={() => { setCurrentIndex(currentIndex + 1); resetForm(); }}>
+                <Button aria-label="التالي" variant="ghost" size="icon" disabled={currentIndex >= students.length - 1} onClick={() => { setCurrentIndex(currentIndex + 1); resetForm(); }}>
                   <ChevronRight className="w-5 h-5" />
                 </Button>
                 <div className="text-center">
                   <h2 className="text-lg font-bold"><StudentNameLink studentId={currentStudent.id} studentName={currentStudent.full_name} /></h2>
                   <p className="text-sm text-muted-foreground">{currentIndex + 1} من {students.length}</p>
                 </div>
-                <Button variant="ghost" size="icon" disabled={currentIndex <= 0} onClick={() => { setCurrentIndex(currentIndex - 1); resetForm(); }}>
+                <Button aria-label="السابق" variant="ghost" size="icon" disabled={currentIndex <= 0} onClick={() => { setCurrentIndex(currentIndex - 1); resetForm(); }}>
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
               </div>
@@ -353,11 +353,11 @@ const Recitation = () => {
                               <div key={cat.key} className="flex items-center justify-between gap-2 bg-white dark:bg-background rounded-md px-2 py-1 border">
                                 <span className={`text-xs font-medium ${cat.color}`}>{cat.label}</span>
                                 <div className="flex items-center gap-1">
-                                  <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCount(sec.key, cat.key, -1)}>
+                                  <Button aria-label="إنقاص" type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCount(sec.key, cat.key, -1)}>
                                     <Minus className="w-3 h-3" />
                                   </Button>
                                   <span className="text-sm font-bold w-5 text-center">{val}</span>
-                                  <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCount(sec.key, cat.key, +1)}>
+                                  <Button aria-label="زيادة" type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => updateCount(sec.key, cat.key, +1)}>
                                     <Plus className="w-3 h-3" />
                                   </Button>
                                 </div>
