@@ -174,7 +174,12 @@ const Recitation = () => {
     if (currentIndex < students.length - 1) {
       setCurrentIndex(currentIndex + 1);
       resetForm();
+    } else {
+      resetForm();
     }
+    // إعادة حساب بداية/نهاية الجزء تلقائياً بعد تسجيل تقدم اليوم
+    setPlanRefresh((n) => n + 1);
+
   };
 
   /** Advance student to next part/branch/level automatically */
