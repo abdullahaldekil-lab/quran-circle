@@ -76,7 +76,7 @@ export const nextDailyMushafRange = (
   const endBound = bounds?.end ?? MUSHAF_TOTAL_PAGES;
   const last = parsePageRef(lastMemorizedTo);
   const from = Math.min(endBound, Math.max(startBound, last != null ? last + 1 : startBound));
-  const step = Math.max(1, Math.ceil((Number(dailyPages) || 1) / 2));
+  const step = pagesStep(dailyPages);
   const to = Math.min(endBound, from + step - 1);
   return {
     from,
@@ -87,4 +87,76 @@ export const nextDailyMushafRange = (
     toLabel: formatPageRef(to),
     completed: last != null && last >= endBound,
   };
+};
+
+/** أوجه → صفحات (2 أوجه = صفحة). Always at least one page. */
+export const pagesStep = (dailyPages: number): number =>
+  Math.max(1, Math.ceil((Number(dailyPages) || 1) / 2));
+
+const buildRange = (from: number, to: number, completed = false): DailyMushafRange => ({
+  from,
+  to,
+  juzFrom: pageToJuz(from),
+  juzTo: pageToJuz(to),
+  fromLabel: formatPageRef(from),
+  toLabel: formatPageRef(to),
+  completed,
+});
+
+export interface ReviewMushafRange extends DailyMushafRange {
+  /** true when the sweep reached the end of the memorized portion and restarted. */
+  wrapped: boolean;
+}
+
+/**
+ * Next review (مراجعة) range. Review sweeps forward through what the student has
+ * already memorized and wraps back to the beginning once it reaches the end, so the
+ * whole memorized portion keeps circulating.
+ *
+ * `memorized` is the portion available to review — from the start of the student's
+ * plan to the last page they have memorized.
+ */
+export const nextReviewMushafRange = (
+  lastReviewTo: string | null | undefined,
+  dailyReviewPages: number,
+  memorized: { start: number; end: number },
+): ReviewMushafRange | null => {
+  const start = Math.max(1, memorized.start);
+  const end = Math.min(MUSHAF_TOTAL_PAGES, memorized.end);
+  if (end < start) return null; // nothing memorized yet — nothing to review
+
+  const step = pagesStep(dailyReviewPages);
+  const last = parsePageRef(lastReviewTo);
+
+  let from: number;
+  let wrapped = false;
+  if (last == null || last >= end || last < start) {
+    from = start;
+    wrapped = last != null && last >= end;
+  } else {
+    from = last + 1;
+  }
+
+  const to = Math.min(end, from + step - 1);
+  return { ...buildRange(from, to), wrapped };
+};
+
+/**
+ * Next linking (الربط) range. Linking joins the end of what came before to today's
+ * new memorization, so it is the pages immediately preceding today's new portion.
+ */
+export const nextLinkingMushafRange = (
+  todayMemorizedFrom: number | null | undefined,
+  dailyLinkingPages: number,
+  bounds?: { start: number; end: number } | null,
+): DailyMushafRange | null => {
+  const startBound = Math.max(1, bounds?.start ?? 1);
+  if (todayMemorizedFrom == null) return null;
+
+  const step = pagesStep(dailyLinkingPages);
+  const to = todayMemorizedFrom - 1;
+  if (to < startBound) return null; // today's portion is the very beginning
+
+  const from = Math.max(startBound, to - step + 1);
+  return buildRange(from, to);
 };

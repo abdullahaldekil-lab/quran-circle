@@ -17,6 +17,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { aggregateActuals, commitmentPercentage, progressStatus } from "@/lib/planProgress";
+import { activePlanFor, termLabel } from "@/lib/planTerm";
 
 const PLAN_LABELS: Record<string, string> = {
   silver: "🥈 المسار الفضي",
@@ -32,6 +34,8 @@ const StudentAnnualPlan = () => {
   const printRef = useRef<HTMLDivElement>(null);
 
   const [plan, setPlan] = useState<any>(null);
+  const [availablePlans, setAvailablePlans] = useState<any[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [student, setStudent] = useState<any>(null);
   const [progress, setProgress] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,16 +53,21 @@ const StudentAnnualPlan = () => {
     if (!studentId) return;
     setLoading(true);
 
-    // Get the active plan for this student
+    // A student may now hold several active plans at once (an annual one and a term
+    // one, say), so load them all and default to the one covering today.
     const { data: plans } = await supabase
       .from("student_annual_plans")
       .select("*")
       .eq("student_id", studentId)
       .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(1);
+      .order("created_at", { ascending: false });
 
-    const activePlan = plans?.[0];
+    const allPlans = (plans as any[]) || [];
+    setAvailablePlans(allPlans);
+
+    const today = new Date().toISOString().split("T")[0];
+    const activePlan =
+      allPlans.find((p) => p.id === selectedPlanId) || activePlanFor(allPlans, today);
     if (!activePlan) {
       setLoading(false);
       return;
@@ -93,7 +102,7 @@ const StudentAnnualPlan = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [studentId]);
+  useEffect(() => { fetchData(); }, [studentId, selectedPlanId]);
 
   const totalActual = progress.reduce((s, p) => s + (p.actual_pages || 0), 0);
   const totalTarget = plan?.total_target_pages || 0;
@@ -173,40 +182,41 @@ const StudentAnnualPlan = () => {
     if (!plan || !studentId) return;
     setSyncing(true);
 
+    // Filter on record_date (a DATE), not created_at (a TIMESTAMPTZ compared against a
+    // DATE) — the old bounds silently dropped records saved late on the closing day.
     const { data: records } = await supabase
       .from("recitation_records")
-      .select("created_at, memorized_from, memorized_to, review_from, review_to, linking_from, linking_to")
+      .select("record_date, memorized_from, memorized_to, review_from, review_to, linking_from, linking_to")
       .eq("student_id", studentId)
-      .gte("created_at", plan.start_date)
-      .lte("created_at", plan.end_date || new Date().toISOString());
+      .gte("record_date", plan.start_date)
+      .lte("record_date", plan.end_date || new Date().toISOString().split("T")[0]);
 
     if (!records) { setSyncing(false); return; }
 
-    const planStart = new Date(plan.start_date);
-    const groups: Record<number, { mem: number; rev: number; link: number }> = {};
-
-    for (const rec of records) {
-      const recDate = new Date(rec.created_at);
-      const diff = (recDate.getFullYear() - planStart.getFullYear()) * 12 + (recDate.getMonth() - planStart.getMonth());
-      const mn = Math.max(1, diff + 1);
-      if (!groups[mn]) groups[mn] = { mem: 0, rev: 0, link: 0 };
-      if (rec.memorized_from && rec.memorized_to) groups[mn].mem += Number(plan.daily_memorization_pages) || 0;
-      if (rec.review_from && rec.review_to) groups[mn].rev += Number(plan.daily_review_pages) || 0;
-      if (rec.linking_from && rec.linking_to) groups[mn].link += Number(plan.daily_linking_pages) || 0;
-    }
+    // Actual pages recited, not the planned daily figure. The previous version credited
+    // `daily_memorization_pages` for any record with a filled range, so the "منجَز"
+    // column reproduced the plan instead of measuring against it.
+    const groups = aggregateActuals(records as any[], plan.start_date);
 
     for (const [mnStr, data] of Object.entries(groups)) {
       const mn = Number(mnStr);
-      const totalPages = data.mem + data.rev + data.link;
       const targetPages = progress.find((p) => p.month_number === mn)?.target_pages || 0;
-      const pct = targetPages > 0 ? Math.round((totalPages / targetPages) * 100) : 0;
-      const rowStatus = pct >= 100 ? "ahead" : pct >= 70 ? "on_track" : "behind";
+      const pct = commitmentPercentage(data.mem, targetPages);
 
       await supabase
         .from("student_plan_progress")
-        .update({ actual_pages: totalPages, actual_memorization: data.mem, actual_review: data.rev, actual_linking: data.link, commitment_percentage: pct, status: rowStatus })
-        .eq("plan_id", plan.id)
-        .eq("month_number", mn);
+        .upsert({
+          plan_id: plan.id,
+          student_id: studentId,
+          month_number: mn,
+          target_pages: targetPages,
+          actual_pages: data.mem,
+          actual_memorization: data.mem,
+          actual_review: data.rev,
+          actual_linking: data.link,
+          commitment_percentage: pct,
+          status: progressStatus(pct),
+        }, { onConflict: "plan_id,month_number" });
     }
 
     toast.success("تم مزامنة التقدم من سجلات التسميع");
@@ -306,7 +316,9 @@ const StudentAnnualPlan = () => {
       {/* Header */}
       <div className="flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-2xl font-bold">الخطة السنوية</h1>
+          <h1 className="text-2xl font-bold">
+            {plan.term && plan.term !== "annual" ? "خطة الطالب الفصلية" : "الخطة السنوية"}
+          </h1>
           <p className="text-sm text-muted-foreground">{student?.full_name} — {(student?.halaqat as any)?.name}</p>
         </div>
         <div className="flex gap-2">
@@ -341,9 +353,26 @@ const StudentAnnualPlan = () => {
       )}
 
       {/* Summary Cards */}
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-3 mb-2 flex-wrap">
         <Badge variant="secondary" className="text-sm">{PLAN_LABELS[plan.plan_type]}</Badge>
         <Badge variant="outline" className="text-sm">{plan.academic_year}</Badge>
+        <Badge className="text-sm bg-primary/10 text-primary hover:bg-primary/10">
+          {plan.term_label || termLabel(plan.term)}
+        </Badge>
+        {availablePlans.length > 1 && (
+          <select
+            className="h-8 rounded-md border bg-background px-2 text-xs print:hidden"
+            value={plan.id}
+            onChange={(e) => setSelectedPlanId(e.target.value)}
+            aria-label="اختر الخطة"
+          >
+            {availablePlans.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.term_label || termLabel(p.term)} — {p.academic_year}
+              </option>
+            ))}
+          </select>
+        )}
         <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${status.bg} ${status.color}`}>
           {status.icon}
           {status.label}

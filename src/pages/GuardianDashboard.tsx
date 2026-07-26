@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { User, BookOpen, ChevronLeft, Clock, Plus } from "lucide-react";
+import { memorizedPercent } from "@/lib/memorization";
 
 const GuardianDashboard = () => {
   const navigate = useNavigate();
@@ -111,7 +112,7 @@ const GuardianDashboard = () => {
         ) : (
           <div className="space-y-3">
             {children.map((child) => {
-              const progress = Math.min(100, Math.round(((child.total_memorized_pages || 0) / 604) * 100));
+              const progress = memorizedPercent(child.total_memorized_pages);
               return (
                 <Card key={child.id} className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => navigate(`/guardian/child/${child.id}`)}>

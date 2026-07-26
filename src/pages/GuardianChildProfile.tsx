@@ -25,6 +25,8 @@ import {
   statusLabel,
   statusMeta,
 } from "@/lib/attendanceStatus";
+import { memorizedPercent } from "@/lib/memorization";
+import { MUSHAF_TOTAL_PAGES } from "@/lib/mushaf";
 
 const GuardianChildProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -150,7 +152,7 @@ const GuardianChildProfile = () => {
     : 0;
   const attendancePresent = attendance.filter(a => isAttended(a.status)).length;
   const attendancePercent = attendanceRate(attendance, attendance.length);
-  const progressPercent = Math.min(100, Math.round(((student.total_memorized_pages || 0) / 604) * 100));
+  const progressPercent = memorizedPercent(student.total_memorized_pages);
 
   const statusIcon = (status: string) => {
     switch (status) {
@@ -254,7 +256,7 @@ const GuardianChildProfile = () => {
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
                 <span>{student.total_memorized_pages || 0} صفحة</span>
-                <span className="text-muted-foreground">من 604</span>
+                <span className="text-muted-foreground">من {MUSHAF_TOTAL_PAGES}</span>
               </div>
               <Progress value={progressPercent} className="h-3" />
               <p className="text-xs text-muted-foreground text-center">{progressPercent}%</p>

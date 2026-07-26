@@ -28,6 +28,9 @@ import TalqeenStudentDailyLog from "@/components/talqeen/TalqeenStudentDailyLog"
 import StudentStatusManager from "@/components/student/StudentStatusManager";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_ORDER, attendanceRate, countByStatus } from "@/lib/attendanceStatus";
+import MemorizedAmountDialog from "@/components/student/MemorizedAmountDialog";
+import { juzEquivalent, memorizedPercent } from "@/lib/memorization";
+import { MUSHAF_TOTAL_PAGES } from "@/lib/mushaf";
 
 const PAGE_SIZE = 20;
 
@@ -35,7 +38,7 @@ const StudentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
-  const { isManager } = useRole();
+  const { isManager, isSupervisor } = useRole();
   const [student, setStudent] = useState<any>(null);
   const [halaqaStudents, setHalaqaStudents] = useState<{id: string; full_name: string}[]>([]);
   const [records, setRecords] = useState<any[]>([]);
@@ -44,6 +47,7 @@ const StudentProfile = () => {
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, total: 0 });
   const [activeTab, setActiveTab] = useState("records");
   const [editOpen, setEditOpen] = useState(false);
+  const [memorizedDialogOpen, setMemorizedDialogOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [levels, setLevels] = useState<any[]>([]);
@@ -195,7 +199,7 @@ const StudentProfile = () => {
   const avgMistakes = records.length
     ? Math.round(records.reduce((sum, r) => sum + (r.mistakes_count || 0), 0) / records.length)
     : 0;
-  const progressPercent = Math.min(100, Math.round(((student.total_memorized_pages || 0) / 604) * 100));
+  const progressPercent = memorizedPercent(student.total_memorized_pages);
   const recordsTotalPages = Math.ceil(recordsTotal / PAGE_SIZE);
 
   return (
@@ -333,19 +337,37 @@ const StudentProfile = () => {
             {/* Progress */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                  تقدم الحفظ
+                <CardTitle className="text-base flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    تقدم الحفظ
+                  </span>
+                  {(isManager || isSupervisor) && (
+                    <Button variant="ghost" size="sm" className="text-xs h-7"
+                      onClick={() => setMemorizedDialogOpen(true)}>
+                      <Pencil className="w-3 h-3 ml-1" />تعديل المحفوظ
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>{student.total_memorized_pages || 0} صفحة</span>
-                    <span className="text-muted-foreground">من 604 صفحة</span>
+                    <span>
+                      {student.total_memorized_pages || 0} صفحة
+                      <span className="text-muted-foreground text-xs mr-1">
+                        (≈ {juzEquivalent(student.total_memorized_pages)} جزء)
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground">من {MUSHAF_TOTAL_PAGES} صفحة</span>
                   </div>
                   <Progress value={progressPercent} className="h-3" />
                   <p className="text-xs text-muted-foreground text-center">{progressPercent}% مكتمل</p>
+                  {student.memorization_amount && (
+                    <p className="text-[11px] text-muted-foreground text-center">
+                      المحفوظ عند التسجيل: {student.memorization_amount}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -509,6 +531,26 @@ const StudentProfile = () => {
         );
       })()}
     </div>
+
+      {/* Memorized amount */}
+      {student && (
+        <MemorizedAmountDialog
+          open={memorizedDialogOpen}
+          onOpenChange={setMemorizedDialogOpen}
+          studentId={student.id}
+          studentName={student.full_name}
+          memorizationAmount={student.memorization_amount}
+          currentPages={student.total_memorized_pages}
+          onSaved={async () => {
+            const { data } = await supabase
+              .from("students")
+              .select("*, halaqat(name, talqeen_curriculum_id)")
+              .eq("id", id!)
+              .maybeSingle();
+            setStudent(data);
+          }}
+        />
+      )}
 
       {/* Edit Student Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
