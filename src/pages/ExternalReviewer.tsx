@@ -19,15 +19,12 @@ export default function ExternalReviewer() {
   useEffect(() => {
     if (!token) return;
     (supabase as any)
-      .from('narration_external_tokens')
-      .select('*, narration_sessions(id, session_date)')
-      .eq('token', token)
-      .maybeSingle()
+      .rpc('get_external_narration_token', { _token: token })
       .then(({ data }: { data: any }) => {
         if (!data || new Date(data.expires_at) < new Date()) {
           setStep('done');
         } else {
-          setTokenData(data);
+          setTokenData({ ...data, narration_sessions: { session_date: data.session_date } });
         }
       });
   }, [token]);
@@ -41,16 +38,13 @@ export default function ExternalReviewer() {
   };
 
   const handleSave = async () => {
-    const { error } = await (supabase as any)
-      .from('narration_external_tokens')
-      .update({
-        reviewer_name: reviewerName,
-        reviewer_phone: reviewerPhone,
-        used_at: new Date().toISOString(),
-      })
-      .eq('token', token);
+    const { data, error } = await (supabase as any).rpc('submit_external_narration_review', {
+      _token: token,
+      _reviewer_name: reviewerName,
+      _reviewer_phone: reviewerPhone,
+    });
 
-    if (error) {
+    if (error || data !== true) {
       toast({ title: 'فشل حفظ التقييم', variant: 'destructive' });
       return;
     }
@@ -58,6 +52,7 @@ export default function ExternalReviewer() {
     setStep('done');
     toast({ title: '✅ تم حفظ التقييم بنجاح' });
   };
+
 
   if (step === 'done') {
     return (
