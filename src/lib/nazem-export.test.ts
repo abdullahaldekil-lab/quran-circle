@@ -1,5 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { buildNazemRow } from "./nazem-export";
+import { buildNazemRow, type NazemRecord } from "./nazem-export";
+import type { Database } from "@/integrations/supabase/types";
+
+// Compile-time guard: every field NazemRecord declares must be a real column on
+// `recitation_records`, because those field names are what the page passes to
+// PostgREST `.select()`. Selecting a non-existent column fails at runtime with no
+// type error — that is exactly how this export stayed broken (it asked for
+// `memorization_grade`, which lives on `madarij_hizb_exams`, not here).
+type RecitationRow = Database["public"]["Tables"]["recitation_records"]["Row"];
+type KeysExistOn<T, Source> = keyof T extends keyof Source ? true : never;
+const _everyFieldIsARealColumn: KeysExistOn<NazemRecord, RecitationRow> = true;
+void _everyFieldIsARealColumn;
 
 const students = new Map([
   ["s1", { id: "s1", full_name: "أديب الحميد", national_id: "1234567890", student_code: "HW37794" }],
@@ -20,7 +31,7 @@ describe("nazem export row builder", () => {
         record_date: "2026-05-01",
         memorized_from: "البقرة 1",
         memorized_to: "البقرة 5",
-        memorization_grade: 92,
+        total_score: 92,
         notes: "أداء جيد",
         mistakes_breakdown: { memorization: { error: 1, lahn: 2, warning: 3 } },
       },
@@ -52,7 +63,7 @@ describe("nazem export row builder", () => {
         student_id: "s1",
         halaqa_id: "h1",
         record_date: "2026-05-02",
-        memorization_grade: 100,
+        total_score: 100,
         mistakes_breakdown: {
           memorization: { error: 0, lahn: 0, warning: 0 },
           review: { error: 9, lahn: 9, warning: 9 },

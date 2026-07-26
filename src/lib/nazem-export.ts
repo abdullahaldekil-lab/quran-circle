@@ -1,10 +1,15 @@
 // Helpers for building the "ناظم" Excel export rows from recitation records.
 
+/**
+ * Shape of a `recitation_records` row as selected for the Nazem export.
+ * Keep the field names aligned with the real table columns — there is no
+ * `memorization_grade` column on `recitation_records`; the grade is `total_score`.
+ */
 export interface NazemRecord {
   record_date: string;
   memorized_from?: string | null;
   memorized_to?: string | null;
-  memorization_grade?: number | null;
+  total_score?: number | null;
   mistakes_breakdown?: any;
   notes?: string | null;
   student_id: string;
@@ -46,7 +51,7 @@ export const buildNazemRow = (
     "المعلم": t.full_name || "",
     "من": r.memorized_from || "",
     "إلى": r.memorized_to || "",
-    "الدرجة": r.memorization_grade ?? "",
+    "الدرجة": r.total_score ?? "",
     "أخطاء": mb.error || 0,
     "لحن": mb.lahn || 0,
     "تنبيه": mb.warning || 0,

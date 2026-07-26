@@ -1,17 +1,20 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileSpreadsheet } from "lucide-react";
+import { Download, FileSpreadsheet, CalendarCheck, History } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
 import { buildNazemRow } from "@/lib/nazem-export";
+import { formatDateTimeSmart } from "@/lib/hijri";
 
 const NazemExport = () => {
+  const { user } = useAuth();
   const today = new Date().toISOString().split("T")[0];
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
 
@@ -20,6 +23,7 @@ const NazemExport = () => {
   const [from, setFrom] = useState(monthAgo);
   const [to, setTo] = useState(today);
   const [loading, setLoading] = useState(false);
+  const [log, setLog] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.from("halaqat").select("id, name, teacher_id, talqeen_curriculum_id").eq("active", true).then(({ data }) => {
@@ -27,14 +31,25 @@ const NazemExport = () => {
     });
   }, []);
 
-  const handleExport = async () => {
+  const loadLog = useCallback(async () => {
+    const { data } = await (supabase as any)
+      .from("nazem_export_log")
+      .select("id, exported_at, date_from, date_to, halaqa_id, rows_count")
+      .order("exported_at", { ascending: false })
+      .limit(5);
+    setLog((data as any[]) || []);
+  }, []);
+
+  useEffect(() => { loadLog(); }, [loadLog]);
+
+  const runExport = async (rangeFrom: string, rangeTo: string) => {
     setLoading(true);
     try {
       let query = supabase
         .from("recitation_records")
-        .select("record_date, memorized_from, memorized_to, memorization_grade, mistakes_breakdown, notes, student_id, halaqa_id")
-        .gte("record_date", from)
-        .lte("record_date", to)
+        .select("record_date, memorized_from, memorized_to, total_score, mistakes_breakdown, notes, student_id, halaqa_id")
+        .gte("record_date", rangeFrom)
+        .lte("record_date", rangeTo)
         .not("memorized_to", "is", null)
         .order("record_date", { ascending: true });
 
@@ -89,8 +104,19 @@ const NazemExport = () => {
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "تسميع - ناظم");
-      const filename = `nazem-export-${from}_to_${to}.xlsx`;
+      const filename = `nazem-export-${rangeFrom}_to_${rangeTo}.xlsx`;
       XLSX.writeFile(wb, filename);
+
+      // Record the export so the same period is not sent twice by mistake.
+      await (supabase as any).from("nazem_export_log").insert({
+        exported_by: user?.id ?? null,
+        date_from: rangeFrom,
+        date_to: rangeTo,
+        halaqa_id: halaqaId === "all" ? null : halaqaId,
+        rows_count: rows.length,
+      });
+      loadLog();
+
       toast.success(`تم التصدير: ${rows.length} سجل`);
     } catch (e: any) {
       console.error(e);
@@ -100,8 +126,11 @@ const NazemExport = () => {
     }
   };
 
+  const halaqaName = (id: string | null) =>
+    id ? (halaqat.find((h) => h.id === id)?.name ?? "حلقة محذوفة") : "جميع الحلقات";
+
   return (
-    <div className="container mx-auto p-4 max-w-3xl" dir="rtl">
+    <div className="container mx-auto p-4 max-w-3xl space-y-4" dir="rtl">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -135,10 +164,50 @@ const NazemExport = () => {
               </Select>
             </div>
           </div>
-          <Button onClick={handleExport} disabled={loading} className="w-full">
-            <Download className="w-4 h-4 ml-2" />
-            {loading ? "جارٍ التصدير..." : "تصدير Excel"}
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button onClick={() => runExport(from, to)} disabled={loading} className="w-full">
+              <Download className="w-4 h-4 ml-2" />
+              {loading ? "جارٍ التصدير..." : "تصدير الفترة المحددة"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => runExport(today, today)}
+              disabled={loading}
+              className="w-full"
+            >
+              <CalendarCheck className="w-4 h-4 ml-2" />
+              تصدير نتائج اليوم
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <History className="w-4 h-4 text-muted-foreground" />
+            آخر عمليات التصدير
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {log.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-3">لا توجد عمليات تصدير سابقة.</p>
+          ) : (
+            <div className="space-y-2">
+              {log.map((l) => (
+                <div key={l.id} className="flex items-center justify-between gap-2 text-sm border rounded-lg px-3 py-2">
+                  <div>
+                    <p className="font-medium">{l.date_from} → {l.date_to}</p>
+                    <p className="text-xs text-muted-foreground">{halaqaName(l.halaqa_id)}</p>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold">{l.rows_count} سجل</p>
+                    <p className="text-xs text-muted-foreground">{formatDateTimeSmart(l.exported_at)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
