@@ -371,7 +371,7 @@ export default function Excellence() {
                   {(isManager || !isSupervisor) && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button
+                        <Button aria-label="حذف"
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"

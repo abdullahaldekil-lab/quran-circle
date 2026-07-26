@@ -289,7 +289,7 @@ const Rewards = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{formatDateSmart(sb.awarded_at)}</span>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                          <Button aria-label="تعديل" variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
                             const newNote = prompt("تعديل الملاحظة:", sb.note || "");
                             if (newNote === null) return;
                             const { error } = await supabase.from("student_badges").update({ note: newNote }).eq("id", sb.id);
@@ -298,7 +298,7 @@ const Rewards = () => {
                           }}>
                             <Pencil className="w-3 h-3" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={async () => {
+                          <Button aria-label="حذف" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={async () => {
                             if (!confirm("هل تريد حذف هذه الشارة؟")) return;
                             const { error } = await supabase.from("student_badges").delete().eq("id", sb.id);
                             if (error) toast({ title: "خطأ", description: error.message, variant: "destructive" });
@@ -406,7 +406,7 @@ const Rewards = () => {
                       <Badge variant={statusVariants[n.status]}>{statusLabels[n.status]}</Badge>
                       {n.status === "pending" && (
                         <>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => handleApproveNomination(n.id, "approved")}>
+                          <Button aria-label="تأكيد" size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => handleApproveNomination(n.id, "approved")}>
                             <Check className="w-4 h-4" />
                           </Button>
                           <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleApproveNomination(n.id, "rejected")}>

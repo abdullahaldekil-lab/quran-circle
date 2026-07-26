@@ -541,11 +541,11 @@ const PermissionsManagement = () => {
                       {role.is_system && <Badge variant="secondary" className="text-xs mt-1">نظام</Badge>}
                     </div>
                     <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); openEditRoleDialog(role); }}>
+                      <Button aria-label="تعديل" size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); openEditRoleDialog(role); }}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
                       {!role.is_system && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); deleteRole(role); }}>
+                        <Button aria-label="حذف" size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); deleteRole(role); }}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       )}

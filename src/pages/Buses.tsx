@@ -236,10 +236,10 @@ const Buses = () => {
                 <div className="flex gap-1">
                   {canManage && (
                     <>
-                      <Button variant="ghost" size="icon" onClick={() => { setSelectedBusId(bus.id); resetAssignDialog(); setAssignDialogOpen(true); }}>
+                      <Button aria-label="إضافة" variant="ghost" size="icon" onClick={() => { setSelectedBusId(bus.id); resetAssignDialog(); setAssignDialogOpen(true); }}>
                         <UserPlus className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteBusMutation.mutate(bus.id)}>
+                      <Button aria-label="حذف" variant="ghost" size="icon" onClick={() => deleteBusMutation.mutate(bus.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </>
@@ -293,7 +293,7 @@ const Buses = () => {
                           </TableCell>
                           {canManage && (
                             <TableCell>
-                              <Button variant="ghost" size="icon" onClick={() => unassignMutation.mutate(a.id)}>
+                              <Button aria-label="إزالة" variant="ghost" size="icon" onClick={() => unassignMutation.mutate(a.id)}>
                                 <UserMinus className="w-4 h-4 text-destructive" />
                               </Button>
                             </TableCell>

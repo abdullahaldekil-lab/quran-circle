@@ -349,10 +349,10 @@ const FollowUpFormTab = ({ enrollment, dailyProgress, mistakes, exams, canEdit, 
                     {canEdit && (
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDp(dp)}>
+                          <Button aria-label="تعديل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDp(dp)}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteDpId(dp.id)}>
+                          <Button aria-label="حذف" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteDpId(dp.id)}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -464,7 +464,7 @@ const FollowUpFormTab = ({ enrollment, dailyProgress, mistakes, exams, canEdit, 
                       <TableCell className="text-xs">{m.ayah}</TableCell>
                       {canEdit && (
                         <TableCell>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setDeleteMistakeId(m.id)}>
+                          <Button aria-label="حذف" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setDeleteMistakeId(m.id)}>
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </TableCell>

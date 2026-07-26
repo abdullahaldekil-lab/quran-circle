@@ -442,7 +442,7 @@ const EnrollmentRequests = () => {
                                 </Button>
                               )}
                               {(r.status === "pending" || r.status === "waiting_list") && !r.converted_student_id && (
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditDialog(r)}>
+                                <Button aria-label="تعديل" size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditDialog(r)}>
                                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                                 </Button>
                               )}
@@ -459,13 +459,13 @@ const EnrollmentRequests = () => {
                               {r.converted_student_id && (
                                 <Badge variant="secondary" className="text-xs">تم التحويل</Badge>
                               )}
-                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
+                              <Button aria-label="مراسلة" size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
                                 const phone = r.guardian_phone.replace(/^0/, "966");
                                 window.open(`https://wa.me/${phone}`, "_blank");
                               }}>
                                 <MessageCircle className="w-3.5 h-3.5 text-green-600" />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(r.id)}>
+                              <Button aria-label="حذف" size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(r.id)}>
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
                               </Button>
                             </div>

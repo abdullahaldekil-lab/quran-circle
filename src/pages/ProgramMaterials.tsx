@@ -108,7 +108,7 @@ export default function ProgramMaterials() {
                       <Badge variant="outline" className="mt-2">{meta.label}</Badge>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => remove(m.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button aria-label="حذف" variant="ghost" size="icon" onClick={() => remove(m.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </div>
                 {m.url && (
                   <a href={m.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline">
