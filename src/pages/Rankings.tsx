@@ -9,8 +9,9 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Trophy, TrendingUp, CheckCircle, Medal, Award, Star } from "lucide-react";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
+import { MUSHAF_TOTAL_PAGES } from "@/lib/mushaf";
 
-const TOTAL_PAGES = 604;
+const TOTAL_PAGES = MUSHAF_TOTAL_PAGES;
 const INITIAL_SHOW = 20;
 const LOAD_MORE_SIZE = 20;
 

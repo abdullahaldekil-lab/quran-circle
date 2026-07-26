@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ClipboardList, Search } from "lucide-react";
 import { formatDateTimeSmart, formatDateHijriOnly } from "@/lib/hijri";
+import { statusLabel, statusMeta } from "@/lib/attendanceStatus";
 
 interface AuditEntry {
   id: string;
@@ -20,22 +21,9 @@ interface AuditEntry {
   editor_name?: string;
 }
 
-const statusLabels: Record<string, string> = {
-  present: "حاضر",
-  absent: "غائب",
-  late: "متأخر",
-  excused: "مستأذن",
-};
-
-const statusVariant = (status: string): "default" | "destructive" | "secondary" | "outline" => {
-  switch (status) {
-    case "present": return "default";
-    case "absent": return "destructive";
-    case "late": return "secondary";
-    case "excused": return "outline";
-    default: return "outline";
-  }
-};
+// "unknown" is written by Attendance.tsx when a record had no previous status.
+const statusVariant = (status: string): "default" | "destructive" | "secondary" | "outline" =>
+  statusMeta(status)?.badge ?? "outline";
 
 const AttendanceAuditLog = () => {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
@@ -142,12 +130,12 @@ const AttendanceAuditLog = () => {
                     <TableCell className="text-right">{formatDateHijriOnly(entry.attendance_date)}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant={statusVariant(entry.old_status)}>
-                        {statusLabels[entry.old_status] || entry.old_status}
+                        {statusLabel(entry.old_status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant={statusVariant(entry.new_status)}>
-                        {statusLabels[entry.new_status] || entry.new_status}
+                        {statusLabel(entry.new_status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{entry.editor_name}</TableCell>

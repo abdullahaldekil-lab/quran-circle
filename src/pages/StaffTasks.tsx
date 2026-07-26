@@ -52,7 +52,12 @@ type Task = {
 
 type Comment = { id: string; task_id: string; from_user_id: string; body: string; created_at: string };
 
-const StaffTasks = () => {
+interface StaffTasksProps {
+  /** Rendered inside the work hub, which supplies the page header itself. */
+  embedded?: boolean;
+}
+
+const StaffTasks = ({ embedded = false }: StaffTasksProps = {}) => {
   const { session, profile } = useAuth();
   const { isManager, isSupervisor, role } = useRole();
   const queryClient = useQueryClient();
@@ -448,7 +453,7 @@ const StaffTasks = () => {
 
   return (
     <div className="space-y-4" dir="rtl">
-      <PageDateHeader />
+      {!embedded && <PageDateHeader />}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center justify-between flex-wrap gap-2">

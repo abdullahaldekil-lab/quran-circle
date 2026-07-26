@@ -1,159 +1,185 @@
-// Monitors staff attendance and sends tardiness/absence notifications
-// Runs periodically (via cron). Uses preparation_config.tardiness_minutes & absent_minutes
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Staff tardiness / absence monitoring.
+//
+// Runs on a schedule. Uses `preparation_config.tardiness_minutes` and `absent_minutes`
+// against the start of the working day (base prayer + offset).
+//
+// Two defects fixed here:
+//   - `hhmmToDateToday` used `Date.setHours` on a UTC runtime, so a Riyadh prayer time
+//     was interpreted three hours off. It never showed because nothing was scheduled.
+//   - Idempotency was done by appending emoji sentinels into the free-text `notes`
+//     column and substring-matching them, so any manual edit of the notes either
+//     re-fired the notification or silenced it for good. Now a unique key does it.
+
+// deno-lint-ignore-file no-explicit-any
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { dispatchNotification, isAuthorizedCronCall } from "../_shared/notify.ts";
+import {
+  getPrayerTimes,
+  isWeekend,
+  minutesSince,
+  prepStartFor,
+  riyadhToday,
+} from "../_shared/prayer.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
-function hhmmToDateToday(hhmm: string): Date {
-  const [h, m] = hhmm.split(':').map(Number);
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d;
-}
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  if (!isAuthorizedCronCall(req)) return json({ error: "Unauthorized" }, 401);
 
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    let dryRun = false;
+    try {
+      const body = await req.json();
+      dryRun = body?.dryRun === true;
+    } catch {
+      // no body is fine
+    }
+
     const now = new Date();
-    const dow = now.getDay();
-    // Skip weekend (Fri=5, Sat=6)
-    if (dow === 5 || dow === 6) {
-      return new Response(JSON.stringify({ skipped: 'weekend' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const today = riyadhToday(now);
 
-    const today = now.toISOString().split('T')[0];
+    if (isWeekend(now)) return json({ skipped: "weekend", today });
 
-    // Skip holidays
     const { data: holiday } = await supabase
-      .from('holidays').select('id')
-      .lte('start_date', today).gte('end_date', today).limit(1).maybeSingle();
-    if (holiday) {
-      return new Response(JSON.stringify({ skipped: 'holiday' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+      .from("holidays")
+      .select("id")
+      .lte("start_date", today)
+      .gte("end_date", today)
+      .limit(1)
+      .maybeSingle();
+    if (holiday) return json({ skipped: "holiday", today });
 
     const { data: config } = await supabase
-      .from('preparation_config').select('*').limit(1).maybeSingle();
-    if (!config) throw new Error('preparation_config missing');
+      .from("preparation_config")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+    if (!config) return json({ error: "preparation_config missing" }, 500);
 
     const tardinessMin = config.tardiness_minutes ?? 70;
-    const absentMin = config.absent_minutes ?? 100;
+    const absentMin = Math.max(tardinessMin, config.absent_minutes ?? 100);
 
-    // Resolve preparation start time
-    let prepStart: Date;
-    if (config.auto_sync_asr) {
-      const { data: prayer } = await supabase.functions.invoke('prayer-times');
-      const asr = (prayer as any)?.asr;
-      if (!asr) throw new Error('asr time unavailable');
-      prepStart = hhmmToDateToday(asr);
-      prepStart.setMinutes(prepStart.getMinutes() + (config.offset_minutes ?? 0));
-    } else {
-      // Fallback: use configured offset from midnight (best effort)
-      prepStart = hhmmToDateToday('16:00');
+    const times = await getPrayerTimes(supabase, today);
+    const prepStart = prepStartFor(config, times, today);
+    const elapsed = minutesSince(prepStart, now);
+
+    if (elapsed < tardinessMin) {
+      return json({ skipped: "too_early", elapsed, prepStart: prepStart.toISOString(), today });
     }
 
-    const minutesSinceStart = Math.floor((now.getTime() - prepStart.getTime()) / 60000);
-    if (minutesSinceStart < tardinessMin) {
-      return new Response(JSON.stringify({ skipped: 'too_early', minutesSinceStart, prepStart: prepStart.toISOString() }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const stage: "late" | "absent" = elapsed >= absentMin ? "absent" : "late";
 
-    // All active staff
     const { data: staff } = await supabase
-      .from('profiles')
-      .select('id, full_name, phone')
-      .eq('is_staff', true)
-      .eq('active', true);
+      .from("profiles")
+      .select("id, full_name")
+      .eq("is_staff", true)
+      .eq("active", true);
 
-    // Today's attendance
+    if (!staff?.length) return json({ stage, elapsed, processed: 0, results: [] });
+
     const { data: records } = await supabase
-      .from('staff_attendance')
-      .select('staff_id, check_in_time, status, notes')
-      .eq('attendance_date', today);
+      .from("staff_attendance")
+      .select("staff_id, check_in_time, status")
+      .eq("attendance_date", today);
     const recMap = new Map((records || []).map((r: any) => [r.staff_id, r]));
 
-    const stage: 'tardiness' | 'absent' = minutesSinceStart >= absentMin ? 'absent' : 'tardiness';
-    const results: any[] = [];
+    const { data: priorMarks } = await supabase
+      .from("staff_attendance_auto_marks")
+      .select("staff_id, stage")
+      .eq("attendance_date", today);
+    const done = new Set((priorMarks || []).map((m: any) => `${m.staff_id}:${m.stage}`));
 
-    for (const s of staff || []) {
-      const rec: any = recMap.get(s.id);
+    const results: Record<string, unknown>[] = [];
+
+    for (const member of staff) {
+      if (done.has(`${member.id}:${stage}`)) continue;
+
+      const rec: any = recMap.get(member.id);
       if (rec?.check_in_time) continue; // already checked in
-      if (rec?.status === 'leave' || rec?.status === 'excused' || rec?.status === 'late_excused') continue;
+      if (rec && ["leave", "excused", "late_excused"].includes(rec.status)) continue;
 
-      const flagField = stage === 'tardiness' ? '⏰_tardiness_notified' : '⛔_absent_marked';
-      const notes = rec?.notes || '';
-      if (notes.includes(flagField)) continue;
+      if (dryRun) {
+        results.push({ staff: member.full_name, action: `would_${stage}` });
+        continue;
+      }
 
-      if (stage === 'absent') {
-        // Mark absent
-        const payload = {
-          staff_id: s.id,
+      // Claim first — a concurrent tick loses the race and skips.
+      const { data: claim } = await supabase
+        .from("staff_attendance_auto_marks")
+        .insert({
+          staff_id: member.id,
           attendance_date: today,
-          status: 'absent',
+          stage,
+          minutes_after_start: elapsed,
+        })
+        .select("id")
+        .maybeSingle();
+      if (!claim) continue;
+
+      if (stage === "absent") {
+        const payload = {
+          staff_id: member.id,
+          attendance_date: today,
+          status: "absent",
           late_minutes: 0,
           early_leave_minutes: 0,
           total_work_minutes: 0,
-          notes: `${notes} ${flagField}`.trim(),
         };
         if (rec) {
-          await supabase.from('staff_attendance').update(payload).eq('staff_id', s.id).eq('attendance_date', today);
+          await supabase
+            .from("staff_attendance")
+            .update(payload)
+            .eq("staff_id", member.id)
+            .eq("attendance_date", today);
         } else {
-          await supabase.from('staff_attendance').insert(payload);
+          await supabase.from("staff_attendance").insert(payload);
         }
-        await supabase.from('notifications').insert({
-          user_id: s.id,
-          title: 'تم تسجيل غياب',
-          body: `تم تسجيل غيابك تلقائياً لعدم تسجيل الحضور خلال ${absentMin} دقيقة من بداية الدوام`,
-          channel: 'inApp',
-          status: 'sent',
-          sent_at: now.toISOString(),
+        await dispatchNotification(supabase, {
+          templateCode: "STAFF_ABSENT",
+          recipientIds: [member.id],
+          variables: {
+            staffName: member.full_name,
+            date: today,
+            minutes: String(absentMin),
+          },
+          metaData: { auto: true, stage },
         });
-        results.push({ staff: s.full_name, action: 'marked_absent' });
+        results.push({ staff: member.full_name, action: "marked_absent" });
       } else {
-        // Tardiness reminder
-        const payload = {
-          staff_id: s.id,
-          attendance_date: today,
-          status: rec?.status || 'absent',
-          notes: `${notes} ${flagField}`.trim(),
-        };
-        if (rec) {
-          await supabase.from('staff_attendance').update({ notes: payload.notes }).eq('staff_id', s.id).eq('attendance_date', today);
-        } else {
-          await supabase.from('staff_attendance').insert(payload);
-        }
-        await supabase.from('notifications').insert({
-          user_id: s.id,
-          title: 'تذكير بتسجيل الحضور',
-          body: `مضى ${minutesSinceStart} دقيقة على بداية الدوام دون تسجيل حضورك. يرجى المبادرة قبل احتساب الغياب`,
-          channel: 'inApp',
-          status: 'sent',
-          sent_at: now.toISOString(),
+        await dispatchNotification(supabase, {
+          templateCode: "STAFF_LATE",
+          recipientIds: [member.id],
+          variables: {
+            staffName: member.full_name,
+            date: today,
+            minutes: String(elapsed),
+          },
+          metaData: { auto: true, stage },
         });
-        results.push({ staff: s.full_name, action: 'tardiness_reminder' });
+        results.push({ staff: member.full_name, action: "tardiness_reminder" });
       }
     }
 
-    return new Response(JSON.stringify({ stage, minutesSinceStart, processed: results.length, results }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ stage, elapsed, dryRun, processed: results.length, results, today });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error("staff-attendance-monitor error:", error);
+    return json({ error: (error as Error).message }, 500);
   }
 });

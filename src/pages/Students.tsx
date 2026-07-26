@@ -17,6 +17,11 @@ import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import CsvBulkImport from "@/components/CsvBulkImport";
 import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import StudentNameLink from "@/components/StudentNameLink";
+import {
+  assignableForNewStudent,
+  canEnrolNewStudent,
+  TALQEEN_ENROLMENT_BLOCKED_MSG,
+} from "@/lib/halaqaType";
 
 const PAGE_SIZE = 20;
 
@@ -276,6 +281,16 @@ const Students = () => {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // New students never go into a talqeen halaqa — that enrolment runs through
+    // the Talqeen module. The picker already hides them; this is the save-time guard.
+    if (form.halaqa_id) {
+      const target = halaqat.find((h) => h.id === form.halaqa_id);
+      if (!canEnrolNewStudent(target)) {
+        toast.error(TALQEEN_ENROLMENT_BLOCKED_MSG);
+        return;
+      }
+    }
+
     // Check halaqa capacity before adding
     if (form.halaqa_id) {
       const { count } = await supabase
@@ -391,7 +406,8 @@ const Students = () => {
                 <Select value={form.halaqa_id} onValueChange={(v) => setForm({ ...form, halaqa_id: v })}>
                   <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
                   <SelectContent>
-                    {halaqat.map((h) => (
+                    {/* حلقات التحفيظ فقط — التسجيل في التلقين يتم من قسم التلقين */}
+                    {assignableForNewStudent(halaqat).map((h) => (
                       <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
                     ))}
                   </SelectContent>

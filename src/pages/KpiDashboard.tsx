@@ -10,6 +10,7 @@ import {
   TrendingUp, TrendingDown, Users, BookOpen, CheckCircle, AlertTriangle,
   Target, Award, DollarSign, BarChart3, Activity, Clock, Star,
 } from "lucide-react";
+import { MUSHAF_TOTAL_PAGES } from "@/lib/mushaf";
 
 // --- Types ---
 interface KpiCard {
@@ -226,7 +227,7 @@ const KpiDashboard = () => {
     const scores = recs.map((r) => Number(r.total_score)).filter(Boolean);
     const highPerformers = scores.filter((s) => s >= 90).length;
     const highRatio = scores.length ? Math.round((highPerformers / scores.length) * 100) : 0;
-    const khatmStudents = filtered.students.filter((s) => (s.total_memorized_pages || 0) >= 604).length;
+    const khatmStudents = filtered.students.filter((s) => (s.total_memorized_pages || 0) >= MUSHAF_TOTAL_PAGES).length;
 
     return [
       {

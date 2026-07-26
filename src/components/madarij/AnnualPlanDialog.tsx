@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Target, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { PLAN_TERMS, TERM_LABELS, type PlanTerm } from "@/lib/planTerm";
+import { filterTahfeezOnly } from "@/lib/halaqaType";
 
 interface Props {
   open: boolean;
@@ -49,6 +51,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
   const [planType, setPlanType] = useState("silver");
+  const [term, setTerm] = useState<PlanTerm>("annual");
   const [customDaily, setCustomDaily] = useState(1);
 
   // Step 2
@@ -84,8 +87,13 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   }, [startDate, endDate, workingDays, planType, customDaily, holidays]);
 
   const fetchHalaqat = async () => {
-    const { data } = await supabase.from("halaqat").select("id, name").eq("active", true).order("name");
-    setHalaqat(data || []);
+    // Memorization plans apply to tahfeez halaqat only — talqeen follows its own curriculum.
+    const { data } = await supabase
+      .from("halaqat")
+      .select("id, name, talqeen_curriculum_id")
+      .eq("active", true)
+      .order("name");
+    setHalaqat(filterTahfeezOnly(data || []));
   };
 
   const fetchStudents = async () => {
@@ -205,11 +213,14 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
 
   const handleSave = async () => {
     // Check for existing active plan
-    const { data: existingPlans } = await supabase
+    // Scoped to the same term: creating a summer plan must not be blocked by, or
+    // silently replace, the student's annual plan.
+    const { data: existingPlans } = await (supabase as any)
       .from("student_annual_plans")
       .select("id")
       .eq("student_id", selectedStudent)
-      .eq("status", "active");
+      .eq("status", "active")
+      .eq("term", term);
 
     if (existingPlans && existingPlans.length > 0) {
       setConfirmReplace(true);
@@ -222,20 +233,22 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const doSave = async () => {
     setSaving(true);
     try {
-      // Suspend any existing active plans
-      await supabase
+      // Suspend only the plan for the same term — other terms stay active.
+      await (supabase as any)
         .from("student_annual_plans")
         .update({ status: "suspended" })
         .eq("student_id", selectedStudent)
-        .eq("status", "active");
+        .eq("status", "active")
+        .eq("term", term);
 
-      const { data: plan, error: planError } = await supabase
+      const { data: plan, error: planError } = await (supabase as any)
         .from("student_annual_plans")
         .insert({
           student_id: selectedStudent,
           halaqa_id: selectedHalaqa,
           academic_year: (() => { const h = toHijri(startDate); return `${h.year}-${h.year + 1}`; })(),
           plan_type: planType,
+          term,
           start_date: startDate,
           end_date: endDate,
           total_target_pages: summary.totalPages,
@@ -269,11 +282,13 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
       }));
 
       if (progressRows.length > 0) {
-        const { error: progressError } = await supabase.from("student_plan_progress").insert(progressRows);
+        const { error: progressError } = await supabase
+          .from("student_plan_progress")
+          .upsert(progressRows, { onConflict: "plan_id,month_number" });
         if (progressError) throw progressError;
       }
 
-      toast.success("تم حفظ الخطة السنوية بنجاح");
+      toast.success(`تم حفظ ${TERM_LABELS[term] === "سنوي" ? "الخطة السنوية" : "الخطة الفصلية"} بنجاح`);
       onOpenChange(false);
       onSaved();
     } catch (error: any) {
@@ -330,6 +345,21 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
                   {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>مدى الخطة</Label>
+              <Select value={term} onValueChange={(v) => setTerm(v as PlanTerm)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PLAN_TERMS.map((t) => (
+                    <SelectItem key={t} value={t}>{TERM_LABELS[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                يمكن أن تكون للطالب خطة سنوية وخطة فصلية نشطتان معًا — إنشاء خطة فصل لا يوقف الخطة السنوية.
+              </p>
             </div>
 
             <div className="space-y-2">

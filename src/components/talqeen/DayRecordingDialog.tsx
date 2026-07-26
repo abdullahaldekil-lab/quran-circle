@@ -17,12 +17,28 @@ interface Props {
   halaqaId: string;
   halaqaName: string;
   students: Array<{ id: string; full_name: string }>;
+  /** Managers/supervisors may open and correct earlier days; teachers stay on today. */
+  canEditPastDays?: boolean;
 }
 
-export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName, students }: Props) {
+export default function DayRecordingDialog({
+  open,
+  onClose,
+  halaqaId,
+  halaqaName,
+  students,
+  canEditPastDays = false,
+}: Props) {
   const { user } = useAuth();
-  const today = new Date().toISOString().split("T")[0];
+  const todayStr = new Date().toISOString().split("T")[0];
+  const [today, setToday] = useState(todayStr);
   const dateHijri = formatDateHijriOnly(today);
+
+  // Reopening the dialog always starts on today, so a correction made to an earlier
+  // day never becomes the default target for the next recording.
+  useEffect(() => {
+    if (open) setToday(todayStr);
+  }, [open, todayStr]);
 
   const [todaySession, setTodaySession] = useState<any | null>(null);
   const [todayLesson, setTodayLesson] = useState<any | null>(null);
@@ -225,6 +241,27 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
     }
   };
 
+  /** Undo a confirmation so the day can be re-recorded. Answers of individual
+   *  students are kept — only the "done" flag is cleared. */
+  const unconfirm = async (what: "attendance" | "homework") => {
+    if (!todaySession?.id) return;
+    const updates = what === "attendance"
+      ? { attendance_done: false, attendance_done_at: null }
+      : { homework_checked: false, homework_checked_at: null };
+    const { error } = await supabase
+      .from("talqeen_sessions")
+      .update(updates)
+      .eq("id", todaySession.id);
+    if (error) {
+      toast.error(`خطأ: ${error.message}`);
+      return;
+    }
+    toast.success("تم إلغاء التأكيد — يمكنك التعديل الآن");
+    if (what === "attendance") setShowAttendanceSheet(false);
+    else setShowHomeworkSheet(false);
+    await refetchTodaySession();
+  };
+
   const saveHomework = async () => {
     if (Object.keys(homeworkStatus).length === 0) {
       toast.error("لم يتم تحديد حالة لأي طالب");
@@ -233,10 +270,13 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
     setSavingHw(true);
     try {
       const session = await ensureSession();
+      // `attendance` mirrors what is stored for this session, so reusing it here keeps
+      // the recorded status intact. "present" is only ever used for a student who has
+      // no row yet — in that case there is nothing to overwrite.
       const rows = Object.entries(homeworkStatus).map(([sid, hw]) => ({
         session_id: session.id,
         student_id: sid,
-        status: attendance[sid] || "present",
+        status: attendance[sid] ?? "present",
         homework_status: hw,
       }));
       const { error } = await (supabase as any)
@@ -281,6 +321,26 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
               </p>
             )}
             <h2 className="text-lg font-bold text-foreground">{halaqaName}</h2>
+            {canEditPastDays && (
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <input
+                  type="date"
+                  value={today}
+                  max={todayStr}
+                  onChange={(e) => setToday(e.target.value || todayStr)}
+                  className="h-8 rounded-md border bg-background px-2 text-xs"
+                  aria-label="تاريخ التسجيل"
+                />
+                {today !== todayStr && (
+                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setToday(todayStr)}>
+                    اليوم
+                  </Button>
+                )}
+              </div>
+            )}
+            {today !== todayStr && (
+              <p className="mt-1 text-[11px] text-amber-600">تعديل يوم سابق</p>
+            )}
           </div>
 
           {/* 4 بطاقات */}
@@ -300,7 +360,7 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
               </div>
               <p className="font-bold text-sm text-foreground">الحضور</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {todaySession?.attendance_done ? "تم التسجيل" : "اضغط للتسجيل"}
+                {todaySession?.attendance_done ? "تم التسجيل — اضغط للتعديل" : "اضغط للتسجيل"}
               </p>
               {syncedFromMain && (
                 <p className="text-[10px] text-blue-600 mt-1">مزامن من صفحة الحضور ✓</p>
@@ -325,6 +385,9 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
               <p className="text-xs text-muted-foreground mt-1 truncate">
                 {todayLesson?.title || "اضغط عند الإتمام"}
               </p>
+              {todaySession?.lesson_done && (
+                <p className="text-[10px] text-amber-600 mt-1">اضغط للتراجع</p>
+              )}
             </button>
 
             {/* التربوي */}
@@ -345,6 +408,9 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
               <p className="text-xs text-muted-foreground mt-1">
                 {todaySession?.tarbia_done ? "تم الإتمام" : "اضغط عند الإتمام"}
               </p>
+              {todaySession?.tarbia_done && (
+                <p className="text-[10px] text-amber-600 mt-1">اضغط للتراجع</p>
+              )}
             </button>
 
             {/* الواجبات */}
@@ -362,7 +428,7 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
               </div>
               <p className="font-bold text-sm text-foreground">الواجبات</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {todaySession?.homework_checked ? "تم المراجعة" : "اضغط للتسجيل"}
+                {todaySession?.homework_checked ? "تم المراجعة — اضغط للتعديل" : "اضغط للتسجيل"}
               </p>
             </button>
           </div>
@@ -385,7 +451,12 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
           <SheetHeader>
             <SheetTitle>تسجيل الحضور — {halaqaName}</SheetTitle>
           </SheetHeader>
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-between gap-2 mt-2">
+            {todaySession?.attendance_done ? (
+              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => unconfirm("attendance")}>
+                إلغاء التأكيد
+              </Button>
+            ) : <span />}
             <Button
               size="sm"
               variant="outline"
@@ -435,6 +506,13 @@ export default function DayRecordingDialog({ open, onClose, halaqaId, halaqaName
           <SheetHeader>
             <SheetTitle>مراجعة الواجبات — {halaqaName}</SheetTitle>
           </SheetHeader>
+          {todaySession?.homework_checked && (
+            <div className="flex justify-start mt-2">
+              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => unconfirm("homework")}>
+                إلغاء التأكيد
+              </Button>
+            </div>
+          )}
           <div className="space-y-2 mt-3 overflow-y-auto flex-1">
             {students.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">لا يوجد طلاب</p>

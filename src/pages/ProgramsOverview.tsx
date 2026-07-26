@@ -1,26 +1,42 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Trophy, BookOpen, ScrollText, Users, TrendingUp, CalendarDays } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
 import PageDateHeader from "@/components/PageDateHeader";
+import ProgramCard, { type ProgramMetric } from "@/components/programs/ProgramCard";
+import { PROGRAMS, type ProgramKey } from "@/lib/programs";
+
+/** Rows for the two tables whose supervisor_id is newer than the generated types. */
+interface SupervisedProgramRow {
+  id: string;
+  name?: string;
+  status?: string;
+  supervisor_id: string | null;
+}
+
+interface ProgramSummary {
+  metrics: ProgramMetric[];
+  footnote?: string;
+  supervisorName?: string | null;
+}
 
 const ProgramsOverview = () => {
-  const navigate = useNavigate();
+  const { hasAccess } = useRole();
   const [loading, setLoading] = useState(true);
-  const [excellence, setExcellence] = useState({ students: 0, avgScore: 0, lastSession: "" });
-  const [madarij, setMadarij] = useState({ silver: 0, gold: 0, completedHizb: 0, passRate: 0 });
-  const [narration, setNarration] = useState({ sessions: 0, totalHizb: 0, passRate: 0 });
+  const [summaries, setSummaries] = useState<Partial<Record<ProgramKey, ProgramSummary>>>({});
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+      const today = now.toISOString().split("T")[0];
 
-      const [eliteRes, sessionsRes, perfRes, enrollRes, examsRes, narrSessionsRes, narrAttemptsRes] = await Promise.all([
+      const [
+        eliteRes, sessionsRes, perfRes,
+        enrollRes, examsRes,
+        narrSessionsRes, narrAttemptsRes,
+        summerProgramRes, talqeenCurriculaRes, talqeenSessionsRes,
+      ] = await Promise.all([
         supabase.from("excellence_elite_students").select("id", { count: "exact", head: true }),
         supabase.from("excellence_sessions").select("session_date").order("session_date", { ascending: false }).limit(1),
         supabase.from("excellence_performance").select("total_score").gte("created_at", monthStart + "T00:00:00"),
@@ -28,38 +44,113 @@ const ProgramsOverview = () => {
         supabase.from("madarij_hizb_exams").select("passed").gte("created_at", monthStart + "T00:00:00"),
         supabase.from("narration_sessions" as any).select("id").gte("session_date", monthStart),
         supabase.from("narration_attempts").select("status, total_hizb_count").gte("created_at", monthStart + "T00:00:00"),
+        (supabase as any).from("summer_programs").select("id, name, status, supervisor_id, start_date, end_date")
+          .order("start_date", { ascending: false }).limit(1),
+        (supabase as any).from("talqeen_curricula").select("id, supervisor_id").eq("active", true),
+        supabase.from("talqeen_sessions")
+          .select("attendance_done, lesson_done, tarbia_done, homework_checked")
+          .gte("session_date", monthStart).lte("session_date", today),
       ]);
+
+      const next: Partial<Record<ProgramKey, ProgramSummary>> = {};
 
       // Excellence
       const perfArr = perfRes.data || [];
-      const avgScore = perfArr.length ? Math.round(perfArr.reduce((s, p) => s + Number(p.total_score || 0), 0) / perfArr.length) : 0;
-      setExcellence({
-        students: eliteRes.count || 0,
-        avgScore,
-        lastSession: sessionsRes.data?.[0]?.session_date || "—",
-      });
+      const avgScore = perfArr.length
+        ? Math.round(perfArr.reduce((s, p) => s + Number(p.total_score || 0), 0) / perfArr.length)
+        : 0;
+      next.excellence = {
+        metrics: [
+          { value: eliteRes.count || 0, label: "طالب متميز" },
+          { value: avgScore, label: "متوسط الدرجة" },
+        ],
+        footnote: `آخر جلسة: ${sessionsRes.data?.[0]?.session_date || "—"}`,
+      };
 
       // Madarij
-      const enrollments = enrollRes.data || [];
       const examsArr = examsRes.data || [];
-      const passedExams = examsArr.filter((e: any) => e.passed).length;
-      setMadarij({
-        silver: enrollments.length,
-        gold: 0,
-        completedHizb: passedExams,
-        passRate: examsArr.length ? Math.round((passedExams / examsArr.length) * 100) : 0,
-      });
+      const passedExams = examsArr.filter((e) => e.passed).length;
+      next.madarij = {
+        metrics: [
+          { value: (enrollRes.data || []).length, label: "مسجّل نشط" },
+          { value: passedExams, label: "أحزاب مكتملة" },
+        ],
+        footnote: `نسبة الاجتياز: ${examsArr.length ? Math.round((passedExams / examsArr.length) * 100) : 0}%`,
+      };
 
       // Narration
       const narrAttempts = narrAttemptsRes.data || [];
-      const narrPassed = narrAttempts.filter((a: any) => a.status === "pass" || a.status === "passed").length;
-      const totalHizb = narrAttempts.reduce((s: number, a: any) => s + (a.total_hizb_count || 0), 0);
-      setNarration({
-        sessions: (narrSessionsRes.data || []).length,
-        totalHizb,
-        passRate: narrAttempts.length ? Math.round((narrPassed / narrAttempts.length) * 100) : 0,
-      });
+      const narrPassed = narrAttempts.filter((a) => a.status === "pass" || a.status === "passed").length;
+      next.narration = {
+        metrics: [
+          { value: (narrSessionsRes.data || []).length, label: "جلسة هذا الشهر" },
+          { value: narrAttempts.reduce((sum, a) => sum + (a.total_hizb_count || 0), 0), label: "إجمالي الأحزاب" },
+        ],
+        footnote: `نسبة الاجتياز: ${narrAttempts.length ? Math.round((narrPassed / narrAttempts.length) * 100) : 0}%`,
+      };
 
+      // Summer — the latest programme, with its maqare and enrolled students
+      const summerProgram = (summerProgramRes.data as SupervisedProgramRow[] | null)?.[0];
+      let summerMaqare = 0;
+      let summerStudents = 0;
+      if (summerProgram) {
+        const { data: maqare } = await supabase
+          .from("summer_maqare").select("id").eq("program_id", summerProgram.id);
+        summerMaqare = (maqare || []).length;
+        const mIds = (maqare || []).map((m) => m.id);
+        if (mIds.length) {
+          const { count } = await supabase
+            .from("summer_students")
+            .select("id", { count: "exact", head: true })
+            .in("maqra_id", mIds)
+            .eq("active", true);
+          summerStudents = count || 0;
+        }
+      }
+      next.summer = {
+        metrics: [
+          { value: summerMaqare, label: "مقرأة" },
+          { value: summerStudents, label: "طالب مسجّل" },
+        ],
+        footnote: summerProgram
+          ? `${summerProgram.name} — ${summerProgram.status === "active" ? "جارٍ" : "غير نشط"}`
+          : "لا يوجد برنامج صيفي",
+      };
+
+      // Talqeen — active halaqat and how many days were fully executed this month
+      const { count: talqeenHalaqat } = await (supabase as any)
+        .from("halaqat_talqeen_only").select("id", { count: "exact", head: true }).eq("active", true);
+      const talqeenSessions = talqeenSessionsRes.data || [];
+      const fullyDone = talqeenSessions.filter(
+        (s) => s.attendance_done && s.lesson_done && s.tarbia_done && s.homework_checked,
+      ).length;
+      next.talqeen = {
+        metrics: [
+          { value: talqeenHalaqat || 0, label: "حلقة تلقين" },
+          { value: talqeenSessions.length, label: "يوم مسجّل" },
+        ],
+        footnote: `اكتمال التنفيذ: ${talqeenSessions.length ? Math.round((fullyDone / talqeenSessions.length) * 100) : 0}%`,
+      };
+
+      // Resolve supervisor names for the programmes that carry one
+      const supervisorIds = [
+        summerProgram?.supervisor_id,
+        ...((talqeenCurriculaRes.data as SupervisedProgramRow[] | null) || []).map((c) => c.supervisor_id),
+      ].filter(Boolean);
+      if (supervisorIds.length) {
+        const { data: profiles } = await supabase
+          .from("profiles").select("id, full_name").in("id", supervisorIds as string[]);
+        const byId = new Map((profiles || []).map((p) => [p.id, p.full_name]));
+        if (summerProgram?.supervisor_id) {
+          next.summer!.supervisorName = byId.get(summerProgram.supervisor_id) ?? null;
+        }
+        const talqeenSupervisor = ((talqeenCurriculaRes.data as SupervisedProgramRow[] | null) || []).find((c) => c.supervisor_id);
+        if (talqeenSupervisor?.supervisor_id) {
+          next.talqeen!.supervisorName = byId.get(talqeenSupervisor.supervisor_id) ?? null;
+        }
+      }
+
+      setSummaries(next);
       setLoading(false);
     };
     fetchAll();
@@ -73,102 +164,37 @@ const ProgramsOverview = () => {
     );
   }
 
+  // Only show programmes the current role can actually open.
+  const visible = PROGRAMS.filter((p) => hasAccess(p.route));
+
   return (
     <div className="space-y-6 animate-fade-in" dir="rtl">
       <PageDateHeader />
       <div>
         <h1 className="text-2xl font-bold">إشراف البرامج</h1>
-        <p className="text-muted-foreground text-sm">نظرة عامة على جميع البرامج الأكاديمية</p>
+        <p className="text-muted-foreground text-sm">
+          نظرة عامة على كل برنامج على حدة، مع المشرف المسؤول ورابط مواده الإثرائية
+        </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Excellence */}
-        <Card className="border-amber-200 bg-amber-50/30 dark:bg-amber-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-600" />
-              مسار التميّز
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-background rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-amber-600">{excellence.students}</p>
-                <p className="text-xs text-muted-foreground">طالب متميز</p>
-              </div>
-              <div className="bg-background rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-amber-600">{excellence.avgScore}</p>
-                <p className="text-xs text-muted-foreground">متوسط الدرجة</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <CalendarDays className="w-3 h-3" />
-              آخر جلسة: {excellence.lastSession}
-            </div>
-            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/excellence")}>
-              عرض التفاصيل
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Madarij */}
-        <Card className="border-emerald-200 bg-emerald-50/30 dark:bg-emerald-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-emerald-600" />
-              برنامج مدارج
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-background rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-emerald-600">{madarij.silver}</p>
-                <p className="text-xs text-muted-foreground">مسجّل نشط</p>
-              </div>
-              <div className="bg-background rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-emerald-600">{madarij.completedHizb}</p>
-                <p className="text-xs text-muted-foreground">أحزاب مكتملة</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <TrendingUp className="w-3 h-3" />
-              نسبة الاجتياز: {madarij.passRate}%
-            </div>
-            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/madarij")}>
-              عرض التفاصيل
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Narration */}
-        <Card className="border-blue-200 bg-blue-50/30 dark:bg-blue-950/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ScrollText className="w-5 h-5 text-blue-600" />
-              يوم السرد القرآني
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-background rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-blue-600">{narration.sessions}</p>
-                <p className="text-xs text-muted-foreground">جلسة هذا الشهر</p>
-              </div>
-              <div className="bg-background rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-blue-600">{narration.totalHizb}</p>
-                <p className="text-xs text-muted-foreground">إجمالي الأحزاب</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <TrendingUp className="w-3 h-3" />
-              نسبة الاجتياز: {narration.passRate}%
-            </div>
-            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/quran-narration")}>
-              عرض التفاصيل
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {visible.map((program) => {
+          const summary = summaries[program.key];
+          return (
+            <ProgramCard
+              key={program.key}
+              program={program}
+              metrics={summary?.metrics ?? []}
+              footnote={summary?.footnote}
+              supervisorName={summary?.supervisorName}
+            />
+          );
+        })}
       </div>
+
+      {visible.length === 0 && (
+        <p className="text-center text-muted-foreground py-8">لا توجد برامج متاحة لصلاحيتك.</p>
+      )}
     </div>
   );
 };

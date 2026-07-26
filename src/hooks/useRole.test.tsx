@@ -103,4 +103,31 @@ describe("useRole route access matrix", () => {
     expect(hasAccess("/students/abc-123")).toBe(true);
     expect(hasAccess("/admin/guardian-messages")).toBe(true);
   });
+
+  it("every role that could open tasks or requests can open the merged work hub", () => {
+    // /staff-tasks and /internal-requests now redirect to /work-hub. A role missing
+    // the new entry would be bounced to "غير مصرّح" instead of the page it had before.
+    for (const role of [
+      "manager",
+      "supervisor",
+      "assistant_supervisor",
+      "secretary",
+      "admin_staff",
+      "teacher",
+      "assistant_teacher",
+      "custom_1775663809732", // مشرف التلقين
+    ]) {
+      const { hasAccess } = withRole(role);
+      if (hasAccess("/staff-tasks") || hasAccess("/internal-requests")) {
+        expect(hasAccess("/work-hub"), `${role} → /work-hub`).toBe(true);
+      }
+    }
+  });
+
+  it("keeps the old task and request routes reachable so their redirects run", () => {
+    const { hasAccess } = withRole("teacher");
+    expect(hasAccess("/staff-tasks")).toBe(true);
+    expect(hasAccess("/internal-requests")).toBe(true);
+    expect(hasAccess("/work-hub")).toBe(true);
+  });
 });

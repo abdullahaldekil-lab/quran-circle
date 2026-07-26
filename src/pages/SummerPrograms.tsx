@@ -14,6 +14,7 @@ import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, A
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
+import SummerStatsTab from "@/components/summer/SummerStatsTab";
 import MushafViewer from "@/components/mushaf/MushafViewer";
 import { juzRangeToPageBounds } from "@/lib/mushaf";
 import { PLAN_TRACKS, computeDailyPagesWorking, computeWorkingDays, isWorkingDay, juzRangeToPages, planDaysNeeded, planDurationDays, type HolidayRange, type PlanType } from "@/lib/summer-scoring";
@@ -68,6 +69,11 @@ export default function SummerPrograms() {
   const [maqraCounts, setMaqraCounts] = useState<Record<string, number>>({});
   const [programRecords, setProgramRecords] = useState<any[]>([]);
   const [programStudents, setProgramStudents] = useState<SummerStudent[]>([]);
+  const [programAttendance, setProgramAttendance] = useState<any[]>([]);
+  const [halaqaSizes, setHalaqaSizes] = useState<Record<string, number>>({});
+  const [statsDate, setStatsDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [statsView, setStatsView] = useState<"daily" | "weekly" | "overall">("overall");
+  const [studentSearch, setStudentSearch] = useState("");
 
   useEffect(() => { loadPrograms(); loadStudents(); loadTeachers(); loadHalaqat(); loadHolidays(); }, []);
   useEffect(() => { if (selectedProgram) { loadMaqare(selectedProgram); loadMaqraCounts(selectedProgram); loadProgramAggregate(selectedProgram); } }, [selectedProgram]);
@@ -280,16 +286,55 @@ export default function SummerPrograms() {
     setHolidays((data || []) as any);
   }
   async function loadProgramAggregate(pid: string) {
-    // pull all maqare, then their students + records for stats
+    // pull all maqare, then their students + records + attendance for stats
     const { data: mList } = await supabase.from("summer_maqare").select("id").eq("program_id", pid);
     const mIds = (mList || []).map((r: any) => r.id);
-    if (!mIds.length) { setProgramStudents([]); setProgramRecords([]); return; }
+    if (!mIds.length) {
+      setProgramStudents([]); setProgramRecords([]); setProgramAttendance([]); setHalaqaSizes({});
+      return;
+    }
     const { data: ss } = await supabase.from("summer_students").select("*").in("maqra_id", mIds).eq("active", true);
     setProgramStudents((ss || []) as any);
     const sIds = (ss || []).map((r: any) => r.id);
-    if (!sIds.length) { setProgramRecords([]); return; }
-    const { data: rec } = await supabase.from("summer_daily_records").select("summer_student_id, link_pages_count, total_score, record_date").in("summer_student_id", sIds);
-    setProgramRecords((rec || []) as any);
+    if (!sIds.length) { setProgramRecords([]); setProgramAttendance([]); setHalaqaSizes({}); return; }
+
+    // `.in()` goes into the URL, so a large programme has to be fetched in batches.
+    const CHUNK = 200;
+    const chunks: string[][] = [];
+    for (let i = 0; i < sIds.length; i += CHUNK) chunks.push(sIds.slice(i, i + CHUNK));
+
+    const [recBatches, attBatches] = await Promise.all([
+      Promise.all(chunks.map((ids) =>
+        supabase
+          .from("summer_daily_records")
+          .select("summer_student_id, link_pages_count, total_score, record_date")
+          .in("summer_student_id", ids),
+      )),
+      Promise.all(chunks.map((ids) =>
+        supabase
+          .from("summer_attendance")
+          .select("summer_student_id, attendance_date, status")
+          .in("summer_student_id", ids),
+      )),
+    ]);
+
+    setProgramRecords(recBatches.flatMap((b) => (b.data || [])) as any);
+    setProgramAttendance(attBatches.flatMap((b) => (b.data || [])) as any);
+
+    // Active roll of each source halaqa, so participation can be a share not a count.
+    const sourceIds = [...new Set((ss || []).map((s: any) => s.source_halaqa_id).filter(Boolean))];
+    if (sourceIds.length) {
+      const { data: roll } = await supabase
+        .from("students")
+        .select("halaqa_id")
+        .in("halaqa_id", sourceIds as string[])
+        .eq("status", "active");
+      const sizes: Record<string, number> = {};
+      (roll || []).forEach((r: any) => { sizes[r.halaqa_id] = (sizes[r.halaqa_id] || 0) + 1; });
+      setHalaqaSizes(sizes);
+    } else {
+      setHalaqaSizes({});
+    }
   }
   async function addStudents() {
     if (!selectedMaqra || !pickStudents.length) return;
@@ -907,105 +952,16 @@ export default function SummerPrograms() {
 
 
               <TabsContent value="stats" className="space-y-4">
-                {(() => {
-                  const totalStudents = programStudents.length;
-                  const hifzStudents = programStudents.filter(s => s.plan_type === "hifz").length;
-                  const taahudStudents = programStudents.filter(s => s.plan_type === "taahud").length;
-                  const totalPages = programStudents.reduce((a, s) => a + (s.pages_target || 0), 0);
-                  const coveredMap: Record<string, number> = {};
-                  programRecords.forEach((r: any) => { coveredMap[r.summer_student_id] = (coveredMap[r.summer_student_id] || 0) + (r.link_pages_count || 0); });
-                  const totalCovered = Object.values(coveredMap).reduce((a, b) => a + b, 0);
-                  const overallPct = totalPages > 0 ? Math.min(100, Math.round((totalCovered / totalPages) * 100)) : 0;
-
-                  // Per maqra
-                  const perMaqra = maqare.map(m => {
-                    const stu = programStudents.filter(s => s.maqra_id === m.id);
-                    const tgt = stu.reduce((a, s) => a + (s.pages_target || 0), 0);
-                    const cov = stu.reduce((a, s) => a + (coveredMap[s.id] || 0), 0);
-                    const scores = programRecords.filter((r: any) => stu.some(x => x.id === r.summer_student_id)).map((r: any) => Number(r.total_score) || 0);
-                    const avgScore = scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : 0;
-                    return { m, count: stu.length, target: tgt, covered: cov, pct: tgt > 0 ? Math.round((cov / tgt) * 100) : 0, avgScore };
-                  }).sort((a, b) => b.count - a.count);
-
-                  // Source halaqa distribution
-                  const halaqaCounts: Record<string, number> = {};
-                  programStudents.forEach(s => { if (s.source_halaqa_id) halaqaCounts[s.source_halaqa_id] = (halaqaCounts[s.source_halaqa_id] || 0) + 1; });
-                  const sourceRanking = Object.entries(halaqaCounts)
-                    .map(([hid, count]) => ({ halaqa: halaqat.find(h => h.id === hid), count }))
-                    .filter(x => x.halaqa)
-                    .sort((a, b) => b.count - a.count);
-                  const maxSourceCount = sourceRanking[0]?.count || 1;
-
-                  return (
-                    <>
-                      <div className="grid gap-3 md:grid-cols-4">
-                        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">إجمالي الطلاب</p><p className="text-2xl font-bold">{totalStudents}</p></CardContent></Card>
-                        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">طلاب الحفظ</p><p className="text-2xl font-bold text-rose-600">{hifzStudents}</p></CardContent></Card>
-                        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">طلاب الإتقان</p><p className="text-2xl font-bold text-amber-600">{taahudStudents}</p></CardContent></Card>
-                        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">التقدم الكلي</p><p className="text-2xl font-bold text-primary">{overallPct}%</p><Progress value={overallPct} className="h-1.5 mt-2" /><p className="text-xs text-muted-foreground mt-1">{totalCovered} / {totalPages} وجه</p></CardContent></Card>
-                      </div>
-
-                      <Card>
-                        <CardHeader><CardTitle className="text-base flex items-center gap-2"><BarChart3 className="w-4 h-4" />تقدم المقارئ</CardTitle></CardHeader>
-                        <CardContent>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead className="bg-muted/50">
-                                <tr>
-                                  <th className="p-2 text-right">المقرأة</th>
-                                  <th className="p-2 text-right">التصنيف</th>
-                                  <th className="p-2 text-right">الطلاب</th>
-                                  <th className="p-2 text-right">الهدف</th>
-                                  <th className="p-2 text-right">المُنجَز</th>
-                                  <th className="p-2 text-right">التقدم</th>
-                                  <th className="p-2 text-right">متوسط الأداء</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {perMaqra.map(x => (
-                                  <tr key={x.m.id} className="border-t">
-                                    <td className="p-2 font-medium">{x.m.name}</td>
-                                    <td className="p-2">
-                                      {x.m.plan_category === "hifz" ? <Badge className="bg-rose-600">حفظ</Badge> : x.m.plan_category === "taahud" ? <Badge className="bg-amber-600">إتقان</Badge> : <Badge variant="secondary">—</Badge>}
-                                    </td>
-                                    <td className="p-2">{x.count}</td>
-                                    <td className="p-2">{x.target}</td>
-                                    <td className="p-2">{x.covered}</td>
-                                    <td className="p-2 w-40"><div className="flex items-center gap-2"><Progress value={x.pct} className="flex-1 h-1.5" /><span className="text-xs">{x.pct}%</span></div></td>
-                                    <td className="p-2 font-semibold">{x.avgScore} / 40</td>
-                                  </tr>
-                                ))}
-                                {!perMaqra.length && <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">لا توجد مقارئ.</td></tr>}
-                              </tbody>
-                            </table>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base flex items-center gap-2"><Users className="w-4 h-4" />حصر الطلاب حسب الحلقة المصدر</CardTitle>
-                          <p className="text-xs text-muted-foreground">يوضح الحلقات الأكثر التزامًا والأكثر إسهامًا بالطلاب في البرنامج الصيفي.</p>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            {sourceRanking.map((r, i) => (
-                              <div key={r.halaqa!.id} className="flex items-center gap-3">
-                                <span className="text-xs w-6 text-center font-bold text-muted-foreground">#{i + 1}</span>
-                                <span className="flex-1 text-sm">{r.halaqa!.name}</span>
-                                <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
-                                  <div className="h-full bg-primary" style={{ width: `${(r.count / maxSourceCount) * 100}%` }} />
-                                </div>
-                                <span className="text-sm font-bold w-14 text-left">{r.count} طالب</span>
-                              </div>
-                            ))}
-                            {!sourceRanking.length && <p className="text-center text-muted-foreground">لا توجد بيانات.</p>}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </>
-                  );
-                })()}
+                <SummerStatsTab
+                  students={programStudents as any}
+                  records={programRecords as any}
+                  attendance={programAttendance as any}
+                  maqare={maqare as any}
+                  halaqat={halaqat as any}
+                  halaqaSizes={halaqaSizes}
+                  holidays={holidays}
+                  studentNames={studentNameMap}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>

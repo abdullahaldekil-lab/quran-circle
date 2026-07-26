@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatHijriArabic } from "@/lib/hijri";
 import { ClipboardCheck, AlertCircle, Users, Clock, UserX, Briefcase, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { attendanceRate, countByStatus } from "@/lib/attendanceStatus";
 
 interface HalaqaAttendance {
   halaqaId: string;
@@ -110,10 +111,12 @@ const DailyAttendanceSummary = () => {
           const halaqaAtt = attByHalaqa[h.id];
 
           if (halaqaAtt && halaqaAtt.length > 0) {
-            const present = halaqaAtt.filter((a: any) => a.status === "present").length;
-            const late = halaqaAtt.filter((a: any) => a.status === "late").length;
-            const absent = halaqaAtt.filter((a: any) => a.status === "absent").length;
-            const pct = totalStudents > 0 ? Math.round(((present + late) / totalStudents) * 100) : 0;
+            const counts = countByStatus(halaqaAtt as { status: string }[]);
+            const present = counts.present;
+            // المتأخر بإذن يُعرض ضمن التأخر — كلاهما وصل بعد الوقت
+            const late = counts.late + counts.late_excused;
+            const absent = counts.absent;
+            const pct = attendanceRate(halaqaAtt as { status: string }[], totalStudents);
 
             marked.push({
               halaqaId: h.id,

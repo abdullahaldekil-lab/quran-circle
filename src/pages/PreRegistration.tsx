@@ -16,6 +16,8 @@ import {
   UserPlus, Upload, FileText, Users, CheckCircle2, XCircle,
   Clock, AlertCircle, Eye, Trash2, ArrowRightLeft
 } from "lucide-react";
+import { canEnrolNewStudent, TALQEEN_ENROLMENT_BLOCKED_MSG } from "@/lib/halaqaType";
+import RegistrationQrDialog from "@/components/enrollment/RegistrationQrDialog";
 
 type PreRegStatus = "new" | "under_review" | "approved" | "rejected" | "waiting_list";
 
@@ -132,11 +134,25 @@ const PreRegistration = () => {
   const handleConvert = async (rec: PreReg) => {
     if (rec.converted_student_id) { toast.info("تم تحويل هذا السجل مسبقاً"); return; }
 
-    // Find halaqa if requested
+    // Find halaqa if requested. `halaqat` holds tahfeez halaqat only, so a request
+    // naming a talqeen halaqa finds nothing — say so explicitly instead of silently
+    // converting the student with no halaqa at all.
     let halaqaId: string | null = null;
     if (rec.requested_halaqa) {
       const match = halaqat.find((h) => h.name === rec.requested_halaqa);
-      if (match) halaqaId = match.id;
+      if (match) {
+        halaqaId = match.id;
+      } else {
+        const { data: requested } = await supabase
+          .from("halaqat")
+          .select("id, name, talqeen_curriculum_id")
+          .eq("name", rec.requested_halaqa)
+          .maybeSingle();
+        if (requested && !canEnrolNewStudent(requested)) {
+          toast.error(TALQEEN_ENROLMENT_BLOCKED_MSG);
+          return;
+        }
+      }
     }
 
     // Check capacity if halaqa assigned
@@ -250,7 +266,8 @@ const PreRegistration = () => {
           <p className="text-muted-foreground text-sm">استيراد بيانات الطلاب وأولياء الأمور قبل التفعيل</p>
         </div>
         {canManage && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <RegistrationQrDialog />
             <Button variant="outline" onClick={() => setShowCsv(true)}>
               <Upload className="w-4 h-4 ml-2" />استيراد CSV
             </Button>

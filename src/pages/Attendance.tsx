@@ -15,16 +15,25 @@ import { useAcademicCalendar } from "@/hooks/useAcademicCalendar";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import { sendNotification } from "@/utils/sendNotification";
 import { formatDateHijriOnly, formatDateSmart, getCurrentFullDateHeader } from "@/lib/hijri";
+import {
+  ATTENDANCE_STATUS,
+  ATTENDANCE_STATUS_ORDER,
+  attendanceRate as computeAttendanceRate,
+  countByStatus,
+} from "@/lib/attendanceStatus";
+import {
+  resolveWindow,
+  type TeacherWindowStatus,
+  type WindowConfig,
+} from "@/lib/attendanceWindow";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
-// Teacher permission window & status thresholds (minutes relative to Asr adhan)
+// نافذة تحضير المعلم وعتبات الحالة (بالدقائق من أذان العصر).
+// القيم تأتي من preparation_config حتى لا تختلف الشاشة عن المراقب التلقائي؛
+// الافتراضيات في src/lib/attendanceWindow.ts.
 const TEACHER_WINDOW_OPEN = 0;      // تفتح عند أذان العصر بالضبط
-const TEACHER_WINDOW_CLOSE = 105;   // العصر + 105 دقيقة
-const ON_TIME_THRESHOLD = 70;       // العصر + 70 دقيقة = حد التأخر
 const COUNTDOWN_RED_THRESHOLD = 10; // آخر 10 دقائق = أحمر
-
-type TeacherWindowStatus = "before_open" | "open" | "closed";
 
 const formatTo12h = (time24: string): string => {
   const [h, m] = time24.split(":").map(Number);
@@ -46,6 +55,7 @@ const Attendance = () => {
   const [markedTimes, setMarkedTimes] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [asrTime, setAsrTime] = useState<string | null>(null);
+  const [windowConfig, setWindowConfig] = useState<WindowConfig | null>(null);
   const [hijriDate, setHijriDate] = useState<string | null>(null);
   const [teacherWindow, setTeacherWindow] = useState<TeacherWindowStatus>("before_open");
   const [countdown, setCountdown] = useState("");
@@ -82,6 +92,19 @@ const Attendance = () => {
     }
   }, []);
 
+  // Thresholds are configured by the manager in /preparation and are the same values
+  // the scheduled monitor uses, so the countdown here matches when messages go out.
+  useEffect(() => {
+    supabase
+      .from("preparation_config")
+      .select("tardiness_minutes, absent_minutes, teacher_window_close_minutes")
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setWindowConfig((data as WindowConfig) ?? null));
+  }, []);
+
+  const attWindow = resolveWindow(windowConfig);
+
   useEffect(() => {
     if (isToday && calendar.status === "active") fetchPrayerTimes();
   }, [isToday, calendar.status, fetchPrayerTimes]);
@@ -100,10 +123,10 @@ const Attendance = () => {
     openTime.setHours(h, m + TEACHER_WINDOW_OPEN, 0, 0);
 
     const closeTime = new Date();
-    closeTime.setHours(h, m + TEACHER_WINDOW_CLOSE, 0, 0);
+    closeTime.setHours(h, m + attWindow.windowCloseMinutes, 0, 0);
 
     const lateThreshold = new Date();
-    lateThreshold.setHours(h, m + ON_TIME_THRESHOLD, 0, 0);
+    lateThreshold.setHours(h, m + attWindow.tardinessMinutes, 0, 0);
 
     const nowMs = now.getTime();
 
@@ -129,7 +152,7 @@ const Attendance = () => {
       setCountdown("");
       setCountdownColor("text-primary");
     }
-  }, [now, asrTime, isToday, calendar.status]);
+  }, [now, asrTime, isToday, calendar.status, attWindow.windowCloseMinutes, attWindow.tardinessMinutes]);
 
   const formatCountdown = (ms: number) => {
     const t = Math.floor(ms / 1000);
@@ -152,7 +175,7 @@ const Attendance = () => {
     if (!asrTime) return "present";
     const [h, m] = asrTime.split(":").map(Number);
     const lateThreshold = new Date();
-    lateThreshold.setHours(h, m + ON_TIME_THRESHOLD, 0, 0);
+    lateThreshold.setHours(h, m + attWindow.tardinessMinutes, 0, 0);
 
     if (now.getTime() >= lateThreshold.getTime()) return "late";
     return "present";
@@ -275,8 +298,10 @@ const Attendance = () => {
         sessionId = created.id;
       }
 
+      // talqeen_session_attendance carries a narrower status set. A student who
+      // arrived late with permission was still present — map to "late", not "absent".
       const toTalqeenStatus = (s: AttendanceStatus): "present" | "absent" | "late" =>
-        s === "present" ? "present" : s === "late" ? "late" : "absent";
+        s === "present" ? "present" : s === "late" || s === "late_excused" ? "late" : "absent";
 
       const rows = Object.entries(finalAttendance).map(([student_id, status]) => ({
         session_id: sessionId,
@@ -333,37 +358,55 @@ const Attendance = () => {
       }
     }
 
-    // Send automatic notifications for absent/late students
+    // Send notifications for absent/late students.
+    // Students the scheduled monitor already messaged today are skipped, otherwise
+    // saving the sheet afterwards would send the guardian a second copy.
     let notificationsSent = 0;
     try {
-      const absentStudents = Object.entries(finalAttendance).filter(([, s]) => s === "absent");
-      const lateStudents = Object.entries(finalAttendance).filter(([, s]) => s === "late");
+      const byStage: Record<"absent" | "late", string[]> = { absent: [], late: [] };
+      Object.entries(finalAttendance).forEach(([sid, status]) => {
+        if (status === "absent" || status === "late") byStage[status].push(sid);
+      });
+      const targetIds = [...byStage.absent, ...byStage.late];
 
-      for (const [sid] of absentStudents) {
-        const student = students.find((s: any) => s.id === sid);
-        if (!student) continue;
-        const { data: links } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", sid).eq("active", true);
-        if (links && links.length > 0) {
-          await sendNotification({
-            templateCode: "STUDENT_ABSENT",
-            recipientIds: links.map((l: any) => l.guardian_id),
-            variables: { studentName: student.full_name, date: selectedDate },
-          });
-          notificationsSent += links.length;
-        }
-      }
+      if (targetIds.length > 0) {
+        const [autoRes, guardianRes] = await Promise.all([
+          (supabase as any)
+            .from("attendance_auto_marks")
+            .select("student_id, stage")
+            .eq("attendance_date", selectedDate)
+            .in("student_id", targetIds),
+          // One query for every guardian link instead of one per student
+          supabase
+            .from("guardian_students")
+            .select("student_id, guardian_id")
+            .in("student_id", targetIds)
+            .eq("active", true),
+        ]);
 
-      for (const [sid] of lateStudents) {
-        const student = students.find((s: any) => s.id === sid);
-        if (!student) continue;
-        const { data: links } = await supabase.from("guardian_students").select("guardian_id").eq("student_id", sid).eq("active", true);
-        if (links && links.length > 0) {
-          await sendNotification({
-            templateCode: "STUDENT_LATE",
-            recipientIds: links.map((l: any) => l.guardian_id),
-            variables: { studentName: student.full_name, date: selectedDate },
-          });
-          notificationsSent += links.length;
+        const alreadySent = new Set(
+          ((autoRes.data as any[]) || []).map((m) => `${m.student_id}:${m.stage}`),
+        );
+        const guardiansByStudent = new Map<string, string[]>();
+        ((guardianRes.data as any[]) || []).forEach((l) => {
+          const list = guardiansByStudent.get(l.student_id) || [];
+          list.push(l.guardian_id);
+          guardiansByStudent.set(l.student_id, list);
+        });
+
+        for (const stage of ["absent", "late"] as const) {
+          for (const sid of byStage[stage]) {
+            if (alreadySent.has(`${sid}:${stage}`)) continue;
+            const student = students.find((s: any) => s.id === sid);
+            const recipients = guardiansByStudent.get(sid) || [];
+            if (!student || recipients.length === 0) continue;
+            await sendNotification({
+              templateCode: stage === "absent" ? "STUDENT_ABSENT" : "STUDENT_LATE",
+              recipientIds: recipients,
+              variables: { studentName: student.full_name, date: selectedDate },
+            });
+            notificationsSent += recipients.length;
+          }
         }
       }
     } catch (notifErr) {
@@ -384,7 +427,11 @@ const Attendance = () => {
     late: <Clock className="w-4 h-4" />, excused: <AlertCircle className="w-4 h-4" />,
     late_excused: <Clock className="w-4 h-4" />,
   };
-  const statusLabels: Record<AttendanceStatus, string> = { present: "حاضر", absent: "غائب", late: "متأخر", excused: "مستأذن", late_excused: "متأخر بإذن" };
+  // Labels come from the shared module (src/lib/attendanceStatus.ts) so reports,
+  // the guardian view and the student portal can never drift from this page again.
+  const statusLabels = Object.fromEntries(
+    ATTENDANCE_STATUS_ORDER.map((k) => [k, ATTENDANCE_STATUS[k].label]),
+  ) as Record<AttendanceStatus, string>;
   const statusColors: Record<AttendanceStatus, string> = {
     present: "bg-success/10 text-success border-success/30",
     absent: "bg-destructive/10 text-destructive border-destructive/30",
@@ -595,11 +642,11 @@ const Attendance = () => {
               </div>
               <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
                 <p className="text-xs text-muted-foreground">حد التأخر (العصر+70د)</p>
-                <p className="text-sm font-bold">{formatTimeFromAsr(ON_TIME_THRESHOLD)}</p>
+                <p className="text-sm font-bold">{formatTimeFromAsr(attWindow.tardinessMinutes)}</p>
               </div>
               <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20">
                 <p className="text-xs text-muted-foreground">إغلاق النافذة (العصر+105د)</p>
-                <p className="text-sm font-bold">{formatTimeFromAsr(TEACHER_WINDOW_CLOSE)}</p>
+                <p className="text-sm font-bold">{formatTimeFromAsr(attWindow.windowCloseMinutes)}</p>
               </div>
             </div>
 
@@ -633,7 +680,7 @@ const Attendance = () => {
               <span className="text-sm font-bold">{formatTo12h(asrTime)}</span>
             </div>
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-              <span>حد التأخر (العصر+70د): {formatTimeFromAsr(ON_TIME_THRESHOLD)}</span>
+              <span>حد التأخر (العصر+{attWindow.tardinessMinutes}د): {formatTimeFromAsr(attWindow.tardinessMinutes)}</span>
               <span>•</span>
               <Badge variant="outline" className="text-xs">وصول إداري – بلا قيود زمنية</Badge>
             </div>
@@ -671,18 +718,22 @@ const Attendance = () => {
               </Badge>
             </div>
             {(() => {
-              const presentCount = Object.values(originalAttendance).filter(s => s === "present").length;
-              const lateCount = Object.values(originalAttendance).filter(s => s === "late").length;
-              const absentCount = Object.values(originalAttendance).filter(s => s === "absent").length;
-              const excusedCount = Object.values(originalAttendance).filter(s => s === "excused").length;
-              const totalRecords = Object.keys(originalAttendance).length;
-              const attendanceRate = totalRecords > 0 ? Math.round(((presentCount + lateCount) / totalRecords) * 100) : 0;
+              const savedRows = Object.values(originalAttendance).map(status => ({ status }));
+              const counts = countByStatus(savedRows);
+              const presentCount = counts.present;
+              const lateCount = counts.late;
+              const lateExcusedCount = counts.late_excused;
+              const absentCount = counts.absent;
+              const excusedCount = counts.excused;
+              const totalRecords = savedRows.length;
+              const attendanceRate = computeAttendanceRate(savedRows, totalRecords);
               return (
                 <div className="space-y-2">
                   <div className="flex items-center gap-1">
                     <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden flex">
                       {presentCount > 0 && <div className="h-full bg-green-500" style={{ width: `${(presentCount / totalRecords) * 100}%` }} />}
                       {lateCount > 0 && <div className="h-full bg-yellow-500" style={{ width: `${(lateCount / totalRecords) * 100}%` }} />}
+                      {lateExcusedCount > 0 && <div className="h-full bg-purple-500" style={{ width: `${(lateExcusedCount / totalRecords) * 100}%` }} />}
                       {excusedCount > 0 && <div className="h-full bg-blue-500" style={{ width: `${(excusedCount / totalRecords) * 100}%` }} />}
                       {absentCount > 0 && <div className="h-full bg-red-500" style={{ width: `${(absentCount / totalRecords) * 100}%` }} />}
                     </div>
@@ -692,6 +743,7 @@ const Attendance = () => {
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> حاضر: {presentCount}</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" /> متأخر: {lateCount}</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> غائب: {absentCount}</span>
+                    {lateExcusedCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500" /> متأخر بإذن: {lateExcusedCount}</span>}
                     {excusedCount > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> مستأذن: {excusedCount}</span>}
                   </div>
                 </div>
@@ -706,7 +758,7 @@ const Attendance = () => {
           {/* Status note for teachers */}
           {!isAdmin && isToday && asrTime && teacherWindow === "open" && (
             <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 text-center">
-              {now.getTime() >= (() => { const [h,m] = asrTime.split(":").map(Number); const d = new Date(); d.setHours(h, m + ON_TIME_THRESHOLD, 0, 0); return d.getTime(); })()
+              {now.getTime() >= (() => { const [h,m] = asrTime.split(":").map(Number); const d = new Date(); d.setHours(h, m + attWindow.tardinessMinutes, 0, 0); return d.getTime(); })()
                 ? "⚠️ الوقت الحالي بعد حد التأخر — الضغط على الطالب سيسجله «متأخر» مع الوقت الفعلي"
                 : "✅ اضغط على بطاقة الطالب عند حضوره لتسجيل وقته الفعلي"
               }

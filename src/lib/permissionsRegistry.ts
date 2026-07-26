@@ -130,7 +130,12 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "manage_trips",        name_ar: "إدارة الرحلات",   category: "operations", defaultRoles: ["manager", "secretary", "admin_staff", "teacher"] },
 
   // ===== البرامج =====
-  { name: "view_programs_overview", name_ar: "عرض نظرة البرامج", category: "programs", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "view_programs_overview",   name_ar: "عرض نظرة البرامج",      category: "programs", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "view_program_materials",   name_ar: "عرض مواد البرامج",      category: "programs", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher", "assistant_teacher"] },
+  { name: "manage_program_materials", name_ar: "إدارة مواد البرامج",    category: "programs", defaultRoles: ["manager", "supervisor"] },
+  { name: "view_summer_programs",     name_ar: "عرض البرامج الصيفية",   category: "programs", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
+  { name: "manage_summer_programs",   name_ar: "إدارة البرامج الصيفية", category: "programs", defaultRoles: ["manager", "supervisor"] },
+  { name: "nazem_export",             name_ar: "تصدير ناظم",            category: "programs", defaultRoles: ["manager", "supervisor"] },
 
   // ===== الاختبارات =====
   { name: "manage_quizzes",     name_ar: "إدارة الاختبارات",      category: "quizzes", defaultRoles: ["manager", "supervisor"] },
@@ -157,6 +162,7 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "manage_staff_tasks",          name_ar: "إدارة المهام",        category: "staff", defaultRoles: ["manager", "supervisor"] },
   { name: "view_staff_tasks_analytics",  name_ar: "عرض تحليلات المهام",  category: "staff", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
   { name: "manage_internal_requests",    name_ar: "إدارة الطلبات الداخلية", category: "staff", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
+  { name: "view_work_hub",               name_ar: "عرض المهام والطلبات",  category: "staff", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
 
   // ===== الطلاب =====
   { name: "view_students",   name_ar: "عرض الطلاب",   category: "students", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },

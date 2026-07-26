@@ -1,13 +1,21 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { dispatchNotification, isAuthorizedCronCall } from '../_shared/notify.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
 };
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  if (!isAuthorizedCronCall(req)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -68,14 +76,19 @@ Deno.serve(async (req) => {
           .select('guardian_id')
           .eq('student_id', student.id);
 
-        for (const g of guardians || []) {
-          await supabase.from('notifications').insert({
-            user_id: g.guardian_id,
-            title: `إنذار غياب ${labels[newLevel]}`,
-            body: `الطالب ${student.full_name} غاب ${absent} أيام هذا الشهر`,
-            channel: 'inApp',
-            status: 'sent',
-            sent_at: now.toISOString()
+        // Through the shared dispatcher: the direct insert used to skip the
+        // ABSENCE_WARNING template's WhatsApp channel and user preferences entirely.
+        const recipientIds = (guardians || []).map((g: any) => g.guardian_id).filter(Boolean);
+        if (recipientIds.length) {
+          await dispatchNotification(supabase, {
+            templateCode: 'ABSENCE_WARNING',
+            recipientIds,
+            variables: {
+              studentName: student.full_name,
+              level: labels[newLevel],
+              count: String(absent),
+            },
+            metaData: { auto: true, warning_level: newLevel },
           });
         }
 

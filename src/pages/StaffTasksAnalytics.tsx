@@ -33,7 +33,12 @@ const DONUT_COLORS = [
   "hsl(210, 70%, 50%)", "hsl(30, 80%, 55%)", "hsl(150, 60%, 45%)",
 ];
 
-const StaffTasksAnalytics = () => {
+interface StaffTasksAnalyticsProps {
+  /** Rendered inside the work hub, which supplies the page header itself. */
+  embedded?: boolean;
+}
+
+const StaffTasksAnalytics = ({ embedded = false }: StaffTasksAnalyticsProps = {}) => {
   const [period, setPeriod] = useState("month");
 
   const periodStart = useMemo(() => {
@@ -215,10 +220,12 @@ const StaffTasksAnalytics = () => {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">تحليلات المهام</h1>
-          <PageDateHeader />
-        </div>
+        {embedded ? <span /> : (
+          <div>
+            <h1 className="text-2xl font-bold">تحليلات المهام</h1>
+            <PageDateHeader />
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <div>
             <Label className="text-xs">الفترة</Label>

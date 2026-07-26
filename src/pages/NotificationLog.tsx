@@ -152,9 +152,9 @@ const NotificationLog = () => {
     const requestId = n.meta_data?.request_id as string;
     const taskId = n.meta_data?.task_id as string;
     if (requestId) return navigate("/internal-requests", { state: { openRequestId: requestId } });
-    if (taskId) return navigate("/staff-tasks");
-    if (code.includes("TASK") || n.title?.includes("مهمة")) return navigate("/staff-tasks");
-    if (code.includes("REQUEST") || n.title?.includes("طلب")) return navigate("/internal-requests");
+    if (taskId) return navigate("/work-hub?tab=tasks");
+    if (code.includes("TASK") || n.title?.includes("مهمة")) return navigate("/work-hub?tab=tasks");
+    if (code.includes("REQUEST") || n.title?.includes("طلب")) return navigate("/work-hub?tab=requests");
     if (code.includes("ABSENT") || n.title?.includes("غياب")) return navigate("/attendance");
     if (code.includes("NARRATION")) return navigate("/quran-narration");
   };

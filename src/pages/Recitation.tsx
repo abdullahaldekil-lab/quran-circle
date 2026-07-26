@@ -20,6 +20,9 @@ import StudentAnnualPlanCard from "@/components/recitation/StudentAnnualPlanCard
 import { filterTahfeezOnly } from "@/lib/halaqaType";
 import { emptyBreakdown as sharedEmptyBreakdown, aggregateCounts as sharedAggregate, calcScore as sharedCalcScore } from "@/lib/recitation-scoring";
 import { saveRecitationRecord } from "@/lib/recitation-save";
+import { MUSHAF_TOTAL_PAGES, parsePageRef } from "@/lib/mushaf";
+import { actualPagesFromRecord, commitmentPercentage, monthNumberFor, progressStatus } from "@/lib/planProgress";
+import { activePlanFor } from "@/lib/planTerm";
 
 const Recitation = () => {
   const { user } = useAuth();
@@ -116,43 +119,11 @@ const Recitation = () => {
     }
 
 
-    // تحديث الخطة السنوية للطالب
-    if (form.memorized_from && form.memorized_to) {
-      const { data: plans } = await supabase
-        .from('student_annual_plans')
-        .select('id, start_date, daily_memorization_pages, daily_review_pages, daily_linking_pages')
-        .eq('student_id', currentStudent.id)
-        .eq('status', 'active')
-        .limit(1);
+    // تحديث خطة الطالب بما سُمِّع فعلاً
+    await updatePlanProgress(currentStudent.id, form);
 
-      if (plans?.[0]) {
-        const planId = plans[0].id;
-        const today = new Date();
-        const planStart = new Date(plans[0].start_date);
-        const monthsDiff = (today.getFullYear() - planStart.getFullYear()) * 12 + (today.getMonth() - planStart.getMonth());
-        const monthNumber = Math.max(1, monthsDiff + 1);
-
-        const { data: monthRow } = await supabase
-          .from('student_plan_progress')
-          .select('id, actual_pages, actual_memorization, actual_review, actual_linking')
-          .eq('plan_id', planId)
-          .eq('month_number', monthNumber)
-          .maybeSingle();
-
-        if (monthRow) {
-          const memPages = Number(plans[0].daily_memorization_pages) || 0;
-          const revPages = Number(plans[0].daily_review_pages) || 0;
-          const linkPages = Number(plans[0].daily_linking_pages) || 0;
-
-          await supabase.from('student_plan_progress').update({
-            actual_pages:        (monthRow.actual_pages || 0) + memPages,
-            actual_memorization: (monthRow.actual_memorization || 0) + memPages,
-            actual_review:       (monthRow.actual_review || 0) + revPages,
-            actual_linking:      (monthRow.actual_linking || 0) + linkPages,
-          }).eq('id', monthRow.id);
-        }
-      }
-    }
+    // تحديث المحفوظ التراكمي للطالب
+    await updateTotalMemorized(currentStudent.id, form);
 
     // Auto-progress: advance student level if score >= 80
     if (totalScore >= 80) {
@@ -180,6 +151,91 @@ const Recitation = () => {
     // إعادة حساب بداية/نهاية الجزء تلقائياً بعد تسجيل تقدم اليوم
     setPlanRefresh((n) => n + 1);
 
+  };
+
+  /**
+   * Credit the student's plan with the pages ACTUALLY recited.
+   *
+   * This used to add the planned daily figure on every save regardless of what was
+   * recited, so a student who recited half a page got full credit and one who recited
+   * three got one. It also silently did nothing when the month row was missing.
+   */
+  const updatePlanProgress = async (studentId: string, recited: typeof form) => {
+    const pages = actualPagesFromRecord(recited);
+    if (pages.total <= 0) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    const { data: plans } = await supabase
+      .from("student_annual_plans")
+      .select("id, start_date, end_date, status, term, daily_target_pages, working_days_per_week")
+      .eq("student_id", studentId)
+      .eq("status", "active");
+
+    const plan = activePlanFor((plans as any[]) || [], today);
+    if (!plan) return;
+
+    const monthNumber = monthNumberFor(plan.start_date, today);
+
+    const { data: monthRow } = await supabase
+      .from("student_plan_progress")
+      .select("id, target_pages, actual_pages, actual_memorization, actual_review, actual_linking")
+      .eq("plan_id", plan.id)
+      .eq("month_number", monthNumber)
+      .maybeSingle();
+
+    const actualPages = (monthRow?.actual_pages || 0) + pages.mem;
+    const targetPages = monthRow?.target_pages || 0;
+    const pct = commitmentPercentage(actualPages, targetPages);
+
+    const payload = {
+      plan_id: plan.id,
+      student_id: studentId,
+      month_number: monthNumber,
+      target_pages: targetPages,
+      actual_pages: actualPages,
+      actual_memorization: (monthRow?.actual_memorization || 0) + pages.mem,
+      actual_review: (monthRow?.actual_review || 0) + pages.rev,
+      actual_linking: (monthRow?.actual_linking || 0) + pages.link,
+      commitment_percentage: pct,
+      status: progressStatus(pct),
+    };
+
+    // Upsert rather than update-if-exists: the month row may not have been created
+    // when the plan was drawn up, and the old code silently skipped that case.
+    await supabase
+      .from("student_plan_progress")
+      .upsert(payload, { onConflict: "plan_id,month_number" });
+  };
+
+  /**
+   * Keep `students.total_memorized_pages` current. Nothing wrote to it before, so every
+   * "X / 604" bar and the ختم counter were permanently zero.
+   */
+  const updateTotalMemorized = async (studentId: string, recited: typeof form) => {
+    const newEnd = parsePageRef(recited.memorized_to);
+    if (newEnd == null) return;
+
+    const [{ data: student }, { data: baseline }] = await Promise.all([
+      supabase.from("students").select("total_memorized_pages").eq("id", studentId).maybeSingle(),
+      (supabase as any)
+        .from("student_memorization_baseline")
+        .select("baseline_pages, baseline_up_to_page")
+        .eq("student_id", studentId)
+        .maybeSingle(),
+    ]);
+
+    const basePages = Number(baseline?.baseline_pages) || 0;
+    const baseUpTo = Number(baseline?.baseline_up_to_page) || 0;
+    // Pages up to the newly recited position, counted once: the baseline covers
+    // everything up to its own position, and the rest is what lies beyond it.
+    const derived = basePages + Math.max(0, newEnd - Math.max(baseUpTo, 0));
+    const next = Math.min(MUSHAF_TOTAL_PAGES, derived);
+
+    // Never move the total backwards — a teacher revisiting an earlier page is
+    // reviewing, not un-memorizing.
+    if (next <= (student?.total_memorized_pages || 0)) return;
+
+    await supabase.from("students").update({ total_memorized_pages: next }).eq("id", studentId);
   };
 
   /** Advance student to next part/branch/level automatically */
@@ -288,7 +344,19 @@ const Recitation = () => {
           <StudentAnnualPlanCard
             key={`plan-${currentStudent.id}-${planRefresh}`}
             studentId={currentStudent.id}
-            onApply={(from, to) => setForm(prev => ({ ...prev, memorized_from: from, memorized_to: to }))}
+            onApply={(ranges) =>
+              setForm(prev => ({
+                ...prev,
+                memorized_from: ranges.memorized_from,
+                memorized_to: ranges.memorized_to,
+                // Only fill review/linking when the plan actually suggests them, so an
+                // empty suggestion never wipes what the teacher already typed.
+                review_from: ranges.review_from || prev.review_from,
+                review_to: ranges.review_to || prev.review_to,
+                linking_from: ranges.linking_from || prev.linking_from,
+                linking_to: ranges.linking_to || prev.linking_to,
+              }))
+            }
           />
 
 

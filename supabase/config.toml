@@ -12,8 +12,24 @@ verify_jwt = false
 [functions.send-bulk-email]
 verify_jwt = false
 
+# Scheduled functions (pg_cron). A cron call carries no user JWT, so verify_jwt is off
+# and access is gated inside each function by the CRON_SECRET shared secret
+# (isAuthorizedCronCall in functions/_shared/notify.ts).
 [functions.check-absence-warnings]
 verify_jwt = false
 
 [functions.award-monthly-badges]
 verify_jwt = false
+
+[functions.student-attendance-monitor]
+verify_jwt = false
+
+[functions.staff-attendance-monitor]
+verify_jwt = false
+
+[functions.task-reminders]
+verify_jwt = false
+
+# staff-qr-checkin authenticates the staff member themselves — keep the JWT check.
+[functions.staff-qr-checkin]
+verify_jwt = true

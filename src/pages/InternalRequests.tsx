@@ -36,7 +36,12 @@ const PRIORITY_COLORS: Record<RequestPriority, string> = {
   "منخفض": "text-muted-foreground",
 };
 
-const InternalRequests = () => {
+interface InternalRequestsProps {
+  /** Rendered inside the work hub, which supplies the page header itself. */
+  embedded?: boolean;
+}
+
+const InternalRequests = ({ embedded = false }: InternalRequestsProps = {}) => {
   const { user } = useAuth();
   const { isManager, isSupervisor, role } = useRole();
   const location = useLocation();
@@ -299,10 +304,12 @@ const InternalRequests = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">الطلبات الداخلية</h1>
-          <p className="text-sm text-muted-foreground">إرسال واستقبال الطلبات والأوامر بين الموظفين</p>
-        </div>
+        {embedded ? <span /> : (
+          <div>
+            <h1 className="text-2xl font-bold">الطلبات الداخلية</h1>
+            <p className="text-sm text-muted-foreground">إرسال واستقبال الطلبات والأوامر بين الموظفين</p>
+          </div>
+        )}
         <Button onClick={() => setNewDialogOpen(true)}>
           <Plus className="w-4 h-4 ml-1" />
           طلب جديد

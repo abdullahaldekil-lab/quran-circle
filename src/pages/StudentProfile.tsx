@@ -27,6 +27,10 @@ import TalqeenStudentTests from "@/components/talqeen/TalqeenStudentTests";
 import TalqeenStudentDailyLog from "@/components/talqeen/TalqeenStudentDailyLog";
 import StudentStatusManager from "@/components/student/StudentStatusManager";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
+import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_ORDER, attendanceRate, countByStatus } from "@/lib/attendanceStatus";
+import MemorizedAmountDialog from "@/components/student/MemorizedAmountDialog";
+import { juzEquivalent, memorizedPercent } from "@/lib/memorization";
+import { MUSHAF_TOTAL_PAGES } from "@/lib/mushaf";
 
 const PAGE_SIZE = 20;
 
@@ -34,7 +38,7 @@ const StudentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
-  const { isManager } = useRole();
+  const { isManager, isSupervisor } = useRole();
   const [student, setStudent] = useState<any>(null);
   const [halaqaStudents, setHalaqaStudents] = useState<{id: string; full_name: string}[]>([]);
   const [records, setRecords] = useState<any[]>([]);
@@ -43,6 +47,7 @@ const StudentProfile = () => {
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, total: 0 });
   const [activeTab, setActiveTab] = useState("records");
   const [editOpen, setEditOpen] = useState(false);
+  const [memorizedDialogOpen, setMemorizedDialogOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [levels, setLevels] = useState<any[]>([]);
@@ -194,7 +199,7 @@ const StudentProfile = () => {
   const avgMistakes = records.length
     ? Math.round(records.reduce((sum, r) => sum + (r.mistakes_count || 0), 0) / records.length)
     : 0;
-  const progressPercent = Math.min(100, Math.round(((student.total_memorized_pages || 0) / 604) * 100));
+  const progressPercent = memorizedPercent(student.total_memorized_pages);
   const recordsTotalPages = Math.ceil(recordsTotal / PAGE_SIZE);
 
   return (
@@ -332,19 +337,37 @@ const StudentProfile = () => {
             {/* Progress */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                  تقدم الحفظ
+                <CardTitle className="text-base flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    تقدم الحفظ
+                  </span>
+                  {(isManager || isSupervisor) && (
+                    <Button variant="ghost" size="sm" className="text-xs h-7"
+                      onClick={() => setMemorizedDialogOpen(true)}>
+                      <Pencil className="w-3 h-3 ml-1" />تعديل المحفوظ
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>{student.total_memorized_pages || 0} صفحة</span>
-                    <span className="text-muted-foreground">من 604 صفحة</span>
+                    <span>
+                      {student.total_memorized_pages || 0} صفحة
+                      <span className="text-muted-foreground text-xs mr-1">
+                        (≈ {juzEquivalent(student.total_memorized_pages)} جزء)
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground">من {MUSHAF_TOTAL_PAGES} صفحة</span>
                   </div>
                   <Progress value={progressPercent} className="h-3" />
                   <p className="text-xs text-muted-foreground text-center">{progressPercent}% مكتمل</p>
+                  {student.memorization_amount && (
+                    <p className="text-[11px] text-muted-foreground text-center">
+                      المحفوظ عند التسجيل: {student.memorization_amount}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -508,6 +531,26 @@ const StudentProfile = () => {
         );
       })()}
     </div>
+
+      {/* Memorized amount */}
+      {student && (
+        <MemorizedAmountDialog
+          open={memorizedDialogOpen}
+          onOpenChange={setMemorizedDialogOpen}
+          studentId={student.id}
+          studentName={student.full_name}
+          memorizationAmount={student.memorization_amount}
+          currentPages={student.total_memorized_pages}
+          onSaved={async () => {
+            const { data } = await supabase
+              .from("students")
+              .select("*, halaqat(name, talqeen_curriculum_id)")
+              .eq("id", id!)
+              .maybeSingle();
+            setStudent(data);
+          }}
+        />
+      )}
 
       {/* Edit Student Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -826,18 +869,22 @@ const AttendanceTabContent = ({ attRecords, trendData, hijriMonth, hijriYear, se
   const attMap: Record<string, string> = {};
   attRecords.forEach((r: any) => { attMap[r.attendance_date] = r.status; });
 
-  const present = attRecords.filter((r: any) => r.status === "present").length;
-  const absent = attRecords.filter((r: any) => r.status === "absent").length;
-  const late = attRecords.filter((r: any) => r.status === "late").length;
-  const excused = attRecords.filter((r: any) => r.status === "excused").length;
-  const pct = monthDays.length > 0 ? Math.round(((present + late) / monthDays.length) * 100) : 0;
+  const counts = countByStatus(attRecords as { status: string }[]);
+  const { present, absent, late, excused } = counts;
+  const lateExcused = counts.late_excused;
+  const pct = attendanceRate(attRecords as { status: string }[], monthDays.length);
 
-  const STATUS_MAP: Record<string, { label: string; color: string; badge: "default" | "secondary" | "destructive" | "outline" }> = {
-    present: { label: "حاضر ✓", color: "bg-emerald-100 dark:bg-emerald-900/30", badge: "default" },
-    absent: { label: "غائب ✗", color: "bg-red-100 dark:bg-red-900/30", badge: "destructive" },
-    late: { label: "متأخر ⏰", color: "bg-amber-100 dark:bg-amber-900/30", badge: "secondary" },
-    excused: { label: "مستأذن", color: "bg-muted", badge: "outline" },
-  };
+  const STATUS_MAP: Record<string, { label: string; color: string; badge: "default" | "secondary" | "destructive" | "outline" }> =
+    Object.fromEntries(
+      ATTENDANCE_STATUS_ORDER.map((key) => [
+        key,
+        {
+          label: `${ATTENDANCE_STATUS[key].label} ${ATTENDANCE_STATUS[key].symbol}`,
+          color: ATTENDANCE_STATUS[key].cellClass,
+          badge: ATTENDANCE_STATUS[key].badge,
+        },
+      ]),
+    );
 
   const hijriMonthOptions = HIJRI_MONTHS.map((name, i) => ({ value: i + 1, label: name }));
   const hijriYears = Array.from({ length: 5 }, (_, i) => hijriYear - 2 + i);
@@ -855,10 +902,11 @@ const AttendanceTabContent = ({ attRecords, trendData, hijriMonth, hijriYear, se
         </Select>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-emerald-600">{present}</p><p className="text-[10px] text-muted-foreground">حضور</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-destructive">{absent}</p><p className="text-[10px] text-muted-foreground">غياب</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-amber-600">{late}</p><p className="text-[10px] text-muted-foreground">تأخر</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-purple-600">{lateExcused}</p><p className="text-[10px] text-muted-foreground">متأخر بإذن</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold text-muted-foreground">{excused}</p><p className="text-[10px] text-muted-foreground">مستأذن</p></CardContent></Card>
         <Card><CardContent className="p-3 text-center"><p className="text-lg font-bold">{pct}%</p><p className="text-[10px] text-muted-foreground">النسبة</p></CardContent></Card>
       </div>

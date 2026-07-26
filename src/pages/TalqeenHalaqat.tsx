@@ -67,7 +67,7 @@ interface Teacher {
 }
 
 const TalqeenHalaqat = () => {
-  const { isManager, isTalqeenSupervisor } = useRole();
+  const { isManager, isSupervisor, isTalqeenSupervisor } = useRole();
   const { user } = useAuth();
   const canChangeCurriculum = isManager || isTalqeenSupervisor;
   const [halaqat, setHalaqat] = useState<any[]>([]);
@@ -909,6 +909,7 @@ const TalqeenHalaqat = () => {
           halaqaId={dayRecHalaqaId}
           halaqaName={halaqat.find((h) => h.id === dayRecHalaqaId)?.name || ""}
           students={(studentsByHalaqa[dayRecHalaqaId] || []).map((s: any) => ({ id: s.id, full_name: s.full_name }))}
+          canEditPastDays={isManager || isSupervisor || isTalqeenSupervisor}
         />
       )}
 
@@ -1307,6 +1308,7 @@ const TalqeenHalaqat = () => {
                             <SelectItem value="present">حاضر</SelectItem>
                             <SelectItem value="absent">غائب</SelectItem>
                             <SelectItem value="late">متأخر</SelectItem>
+                            <SelectItem value="late_excused">متأخر بإذن</SelectItem>
                             <SelectItem value="excused">مستأذن</SelectItem>
                           </SelectContent>
                         </Select>
