@@ -1,28 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, ArrowLeft, Check, BookOpenCheck } from "lucide-react";
 import MushafViewer from "@/components/mushaf/MushafViewer";
-
+import { nextDailyMushafRange, pageToJuz, parsePageRef } from "@/lib/mushaf";
 
 interface Props {
   studentId: string;
   onApply: (from: string, to: string) => void;
+  /** Auto-fill the recitation form with the computed daily range (default: true). */
+  autoApply?: boolean;
 }
 
-const StudentAnnualPlanCard = ({ studentId, onApply }: Props) => {
+const StudentAnnualPlanCard = ({ studentId, onApply, autoApply = true }: Props) => {
   const [plan, setPlan] = useState<any>(null);
   const [lastRecord, setLastRecord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applied, setApplied] = useState(false);
   const [mushafOpen, setMushafOpen] = useState(false);
-
+  const autoAppliedFor = useRef<string>("");
 
   useEffect(() => {
     setApplied(false);
     setLoading(true);
-    
+
     const fetchData = async () => {
       // Fetch active annual plan
       const { data: plans } = await supabase
@@ -51,17 +53,33 @@ const StudentAnnualPlanCard = ({ studentId, onApply }: Props) => {
     fetchData();
   }, [studentId]);
 
-  if (loading || !plan) return null;
+  const dailyTarget = Number(plan?.daily_memorization_pages ?? plan?.daily_target_pages) || 1;
 
-  const dailyTarget = Number(plan.daily_target_pages) || 0.5;
-  const startFrom = lastRecord?.memorized_to || "بداية المقرر";
-  // موضع الطالب في المصحف: رقم الصفحة إن كان آخر تسميع مسجلاً برقم صفحة
-  const lastPage = parseInt(String(lastRecord?.memorized_to || "").match(/\d+/)?.[0] || "", 10);
-  const currentPage = Number.isFinite(lastPage) && lastPage >= 1 && lastPage <= 604 ? lastPage : 1;
+  /** آخر موضع للطالب: آخر تسميع، وإلا نهاية المحفوظ السابق في الخطة */
+  const lastRef: string | null =
+    lastRecord?.memorized_to || plan?.previous_memorized_to || null;
+
+  const range = useMemo(
+    () => (plan ? nextDailyMushafRange(lastRef, dailyTarget) : null),
+    [plan, lastRef, dailyTarget],
+  );
+
+  // تحديد بداية ونهاية الجزء تلقائياً في الخطة اليومية
+  useEffect(() => {
+    if (!autoApply || !range || applied) return;
+    const key = `${studentId}:${range.from}-${range.to}`;
+    if (autoAppliedFor.current === key) return;
+    autoAppliedFor.current = key;
+    onApply(range.fromLabel, range.toLabel);
+    setApplied(true);
+  }, [autoApply, range, applied, studentId, onApply]);
+
+  if (loading || !plan || !range) return null;
+
+  const currentPage = parsePageRef(lastRef) ?? range.from;
 
   const handleApply = () => {
-    const from = lastRecord?.memorized_to || "";
-    onApply(from, `+${dailyTarget} وجه`);
+    onApply(range.fromLabel, range.toLabel);
     setApplied(true);
   };
 
@@ -74,11 +92,21 @@ const StudentAnnualPlanCard = ({ studentId, onApply }: Props) => {
             <div className="text-sm min-w-0">
               <p className="font-semibold text-green-800 dark:text-green-300">
                 الهدف اليوم: {dailyTarget} وجه
+                {range.juzFrom === range.juzTo
+                  ? ` — الجزء ${range.juzFrom}`
+                  : ` — الأجزاء ${range.juzFrom} إلى ${range.juzTo}`}
               </p>
               <p className="text-xs text-green-700 dark:text-green-400 truncate">
-                من: {startFrom}
+                من: {range.fromLabel}
                 <ArrowLeft className="w-3 h-3 inline mx-1" />
-                إلى: +{dailyTarget} وجه
+                إلى: {range.toLabel}
+              </p>
+              <p className="text-[11px] text-green-600 dark:text-green-500">
+                {range.completed
+                  ? "أتم الطالب نطاق الخطة"
+                  : `تم التحديد تلقائياً بناءً على آخر تسميع (${
+                      lastRef ? `الجزء ${pageToJuz(currentPage)}` : "بداية المقرر"
+                    })`}
               </p>
             </div>
           </div>
@@ -102,13 +130,12 @@ const StudentAnnualPlanCard = ({ studentId, onApply }: Props) => {
         open={mushafOpen}
         onOpenChange={setMushafOpen}
         title="المصحف — الخطة السنوية"
-        currentPage={currentPage}
-        todayFrom={currentPage}
-        todayTo={Math.min(604, currentPage + Math.max(1, Math.ceil(dailyTarget)) - 1)}
+        currentPage={range.from}
+        todayFrom={range.from}
+        todayTo={range.to}
       />
     </Card>
   );
-
 };
 
 export default StudentAnnualPlanCard;
