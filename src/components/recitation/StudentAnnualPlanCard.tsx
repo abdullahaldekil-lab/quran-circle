@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ArrowLeft, Check } from "lucide-react";
+import { BookOpen, ArrowLeft, Check, BookOpenCheck } from "lucide-react";
+import MushafViewer from "@/components/mushaf/MushafViewer";
+
 
 interface Props {
   studentId: string;
