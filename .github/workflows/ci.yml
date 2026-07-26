@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# دفعة جديدة على نفس الفرع تُلغي التشغيل السابق، فلا تتراكم نتائج متضاربة.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: فحص الأنواع والاختبارات والبناء
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          # المستودع يحوي bun.lock و bun.lockb أيضًا، و bun.lockb متأخر عن
+          # package.json. التحديد الصريح يمنع اختيار ملف قفل خاطئ للتخزين المؤقت.
+          cache-dependency-path: package-lock.json
+
+      # package-lock.json هو مرجع الـ CI: متزامن، lockfileVersion 3، وبلا postinstall.
+      - name: تثبيت الحزم
+        run: npm ci
+
+      # ‏vite build يجرّد الأنواع عبر SWC ولا يفحصها، فبدون هذه الخطوة لا يلتقط
+      # الـ CI أخطاء TypeScript إطلاقًا.
+      - name: فحص الأنواع
+        run: npm run typecheck
+
+      - name: الاختبارات
+        run: npm test
+
+      # متغيرات VITE_ تأتي من ملف .env المُتتبَّع في المستودع — لا secrets مطلوبة.
+      - name: البناء
+        run: npm run build
