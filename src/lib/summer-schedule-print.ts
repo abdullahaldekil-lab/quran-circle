@@ -3,6 +3,7 @@
 
 import { isWorkingDay, type HolidayRange } from "./summer-scoring";
 import { formatDateHijriOnly, getWeekdayArabic } from "./hijri";
+import { juzRangeToPageBounds } from "./mushaf";
 
 export interface ScheduleRow {
   idx: number;
@@ -13,8 +14,12 @@ export interface ScheduleRow {
   targetCum: number;
   actual: number;
   actualCum: number;
+  /** Mushaf-order page range for the day (Madinah mushaf), when the juz range is known. */
+  pageFrom: number | null;
+  pageTo: number | null;
   status: "done" | "partial" | "late" | "future";
 }
+
 
 export interface SchedulePlan {
   plan_start_date: string | null;
