@@ -682,7 +682,7 @@ export default function SummerPrograms() {
                             <Button variant="outline" size="icon" title="نقل إلى مقرأة أخرى" onClick={() => { setTransferTarget(s); setTransferMaqraId(""); }}>
                               <ArrowRightLeft className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
+                            <Button variant="ghost" size="icon" aria-label="إزالة الطالب" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
                           </div>
                         </div>
                         {target > 0 && (

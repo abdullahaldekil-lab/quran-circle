@@ -409,7 +409,7 @@ const Rewards = () => {
                           <Button aria-label="تأكيد" size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => handleApproveNomination(n.id, "approved")}>
                             <Check className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleApproveNomination(n.id, "rejected")}>
+                          <Button size="icon" variant="ghost" aria-label="رفض الترشيح" className="h-8 w-8 text-destructive" onClick={() => handleApproveNomination(n.id, "rejected")}>
                             <X className="w-4 h-4" />
                           </Button>
                         </>
