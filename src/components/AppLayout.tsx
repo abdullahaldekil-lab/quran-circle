@@ -50,6 +50,7 @@ import {
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
 import NotificationBell from "@/components/NotificationBell";
+import { combinedBadgeCount, combinedBadgeTitle } from "@/lib/workHub";
 
 interface NavItem {
   to: string;
@@ -235,9 +236,7 @@ const navGroups: NavGroup[] = [
       { to: "/staff-shifts", icon: Clock, label: "جداول الدوام" },
       { to: "/staff-qr-management", icon: ShieldCheck, label: "نقاط بصمة QR" },
       { to: "/staff-qr-checkin", icon: CheckSquare, label: "بصمة الحضور (QR)" },
-      { to: "/staff-tasks", icon: Target, label: "المهام" },
-      { to: "/staff-tasks-analytics", icon: BarChart3, label: "تحليلات المهام" },
-      { to: "/internal-requests", icon: ScrollText, label: "الطلبات الداخلية" },
+      { to: "/work-hub", icon: Target, label: "المهام والطلبات" },
     ],
   },
   {
@@ -472,14 +471,14 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                       >
                         <item.icon className="w-4 h-4" />
                         <span className="flex-1">{item.label}</span>
-                        {item.to === "/internal-requests" && pendingRequestsCount > 0 && (
-                          <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                            {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
-                          </span>
-                        )}
-                        {item.to === "/staff-tasks" && urgentTasksCount > 0 && (
-                          <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                            {urgentTasksCount > 9 ? "9+" : urgentTasksCount}
+                        {item.to === "/work-hub" && combinedBadgeCount(pendingRequestsCount, urgentTasksCount) > 0 && (
+                          <span
+                            className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+                            title={combinedBadgeTitle(pendingRequestsCount, urgentTasksCount)}
+                          >
+                            {combinedBadgeCount(pendingRequestsCount, urgentTasksCount) > 9
+                              ? "9+"
+                              : combinedBadgeCount(pendingRequestsCount, urgentTasksCount)}
                           </span>
                         )}
                       </NavLink>

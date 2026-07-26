@@ -39,16 +39,16 @@ const NotificationBell = () => {
     const requestId = n.meta_data?.request_id as string;
     const taskId = n.meta_data?.task_id as string;
 
-    if (requestId) return navigate("/internal-requests", { state: { openRequestId: requestId } });
-    if (taskId) return navigate("/staff-tasks");
+    if (requestId) return navigate("/work-hub?tab=requests", { state: { openRequestId: requestId, tab: "requests" } });
+    if (taskId) return navigate("/work-hub?tab=tasks");
     if (code.includes("ABSENT") || code.includes("ABSENCE") || code.includes("LATE")) return navigate("/attendance");
     if (code.includes("RECITATION")) return navigate("/recitation");
-    if (code.includes("TASK")) return navigate("/staff-tasks");
+    if (code.includes("TASK")) return navigate("/work-hub?tab=tasks");
     if (code.includes("NARRATION")) return navigate("/quran-narration");
     if (code.includes("BADGE") || code.includes("REWARD")) return navigate("/rewards");
     // Fallback: check title
-    if (n.title?.includes("طلب")) return navigate("/internal-requests");
-    if (n.title?.includes("مهمة")) return navigate("/staff-tasks");
+    if (n.title?.includes("طلب")) return navigate("/work-hub?tab=requests");
+    if (n.title?.includes("مهمة")) return navigate("/work-hub?tab=tasks");
   };
 
   return (

@@ -84,6 +84,7 @@ import MadarijReport from "@/pages/MadarijReport";
 import StaffTasks from "@/pages/StaffTasks";
 import StaffTasksAnalytics from "@/pages/StaffTasksAnalytics";
 import ProgramsOverview from "@/pages/ProgramsOverview";
+import WorkHub from "@/pages/WorkHub";
 import EnrollmentForm from "./pages/EnrollmentForm";
 import VerifyCertificate from "./pages/VerifyCertificate";
 import GuardianMessages from "./pages/guardian/GuardianMessages";
@@ -223,9 +224,12 @@ const AppRoutes = () => {
       <Route path="/staff-shifts" element={<ProtectedRoute path="/staff-shifts"><StaffShiftManagement /></ProtectedRoute>} />
       <Route path="/staff-qr-management" element={<ProtectedRoute path="/staff-qr-management"><StaffQrManagement /></ProtectedRoute>} />
       <Route path="/staff-qr-checkin" element={<ProtectedRoute path="/staff-qr-checkin"><StaffQrCheckin /></ProtectedRoute>} />
-      <Route path="/internal-requests" element={<ProtectedRoute path="/internal-requests"><InternalRequests /></ProtectedRoute>} />
-      <Route path="/staff-tasks" element={<ProtectedRoute path="/staff-tasks"><StaffTasks /></ProtectedRoute>} />
-      <Route path="/staff-tasks-analytics" element={<ProtectedRoute path="/staff-tasks-analytics"><StaffTasksAnalytics /></ProtectedRoute>} />
+      {/* المهام والطلبات في إطار واحد. المسارات القديمة تُبقى وتعيد التوجيه، فتظل
+          الروابط المحفوظة وتنقّلات جرس الإشعارات تعمل بلا تعديل. */}
+      <Route path="/work-hub" element={<ProtectedRoute path="/work-hub"><WorkHub /></ProtectedRoute>} />
+      <Route path="/internal-requests" element={<ProtectedRoute path="/internal-requests"><Navigate to="/work-hub?tab=requests" replace /></ProtectedRoute>} />
+      <Route path="/staff-tasks" element={<ProtectedRoute path="/staff-tasks"><Navigate to="/work-hub?tab=tasks" replace /></ProtectedRoute>} />
+      <Route path="/staff-tasks-analytics" element={<ProtectedRoute path="/staff-tasks-analytics"><Navigate to="/work-hub?tab=analytics" replace /></ProtectedRoute>} />
       <Route path="/programs-overview" element={<ProtectedRoute path="/programs-overview"><ProgramsOverview /></ProtectedRoute>} />
       <Route path="/enrollment-form/:studentId" element={<ProtectedRoute path="/enrollment-form"><EnrollmentForm /></ProtectedRoute>} />
 
