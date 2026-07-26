@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Clock, Settings, Sun, Moon, Sunrise, Sunset, CloudSun } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useRole } from "@/hooks/useRole";
+import { DEFAULT_WINDOW } from "@/lib/attendanceWindow";
 
 /** Calculate preparation start = asr - 5 minutes */
 export const calcPreparationStart = (asr: string) => {
@@ -306,6 +307,82 @@ const Preparation = () => {
                 </span>
                 <Button size="sm" variant="outline"
                   onClick={() => updateConfig({ late_tolerance_minutes: (config?.late_tolerance_minutes ?? 10) + 5 })}>+</Button>
+              </div>
+            </div>
+
+            {/* Automatic student late/absent marking */}
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">التسجيل التلقائي لتأخر الطلاب وغيابهم</p>
+                <p className="text-xs text-muted-foreground">
+                  عند إيقافه لا تُرسَل رسائل التأخر والغياب تلقائياً لأولياء الأمور
+                </p>
+              </div>
+              <Switch
+                checked={config?.attendance_auto_mark_enabled ?? true}
+                onCheckedChange={(v) => updateConfig({ attendance_auto_mark_enabled: v })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">مهلة التأخر (الطلاب)</p>
+                <p className="text-xs text-muted-foreground">
+                  بعدها بـ {config?.tardiness_minutes ?? DEFAULT_WINDOW.tardinessMinutes} دقيقة من الأذان يُسجَّل الطالب متأخراً وتُرسَل رسالة لولي الأمر
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({ tardiness_minutes: Math.max(0, (config?.tardiness_minutes ?? DEFAULT_WINDOW.tardinessMinutes) - 5) })}>−</Button>
+                <span className="w-16 text-center text-sm font-mono">
+                  {config?.tardiness_minutes ?? DEFAULT_WINDOW.tardinessMinutes} دقيقة
+                </span>
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({ tardiness_minutes: (config?.tardiness_minutes ?? DEFAULT_WINDOW.tardinessMinutes) + 5 })}>+</Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">مهلة الغياب (الطلاب)</p>
+                <p className="text-xs text-muted-foreground">
+                  بعدها يُسجَّل الطالب غائباً وتُرسَل رسالة الغياب. لا يمكن أن تقل عن مهلة التأخر
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({
+                    absent_minutes: Math.max(
+                      config?.tardiness_minutes ?? DEFAULT_WINDOW.tardinessMinutes,
+                      (config?.absent_minutes ?? DEFAULT_WINDOW.absentMinutes) - 5,
+                    ),
+                  })}>−</Button>
+                <span className="w-16 text-center text-sm font-mono">
+                  {config?.absent_minutes ?? DEFAULT_WINDOW.absentMinutes} دقيقة
+                </span>
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({ absent_minutes: (config?.absent_minutes ?? DEFAULT_WINDOW.absentMinutes) + 5 })}>+</Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">إغلاق نافذة تحضير المعلم</p>
+                <p className="text-xs text-muted-foreground">بعدها لا يستطيع المعلم تعديل حضور اليوم</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({
+                    teacher_window_close_minutes: Math.max(
+                      config?.absent_minutes ?? DEFAULT_WINDOW.absentMinutes,
+                      (config?.teacher_window_close_minutes ?? DEFAULT_WINDOW.windowCloseMinutes) - 5,
+                    ),
+                  })}>−</Button>
+                <span className="w-16 text-center text-sm font-mono">
+                  {config?.teacher_window_close_minutes ?? DEFAULT_WINDOW.windowCloseMinutes} دقيقة
+                </span>
+                <Button size="sm" variant="outline"
+                  onClick={() => updateConfig({ teacher_window_close_minutes: (config?.teacher_window_close_minutes ?? DEFAULT_WINDOW.windowCloseMinutes) + 5 })}>+</Button>
               </div>
             </div>
 
