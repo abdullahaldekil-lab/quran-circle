@@ -1063,6 +1063,20 @@ export default function SummerPrograms() {
           <DialogFooter><Button onClick={transferStudent} disabled={!transferMaqraId}>نقل</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {mushafTarget && (
+        <MushafViewer
+          open={!!mushafTarget}
+          onOpenChange={(v) => !v && setMushafTarget(null)}
+          title={`المصحف — ${mushafTarget.name}`}
+          pageFrom={mushafTarget.from}
+          pageTo={mushafTarget.to}
+          currentPage={mushafTarget.current}
+          todayFrom={mushafTarget.todayFrom}
+          todayTo={mushafTarget.todayTo}
+        />
+      )}
     </div>
+
   );
 }
