@@ -376,17 +376,19 @@ const Recitation = () => {
 
               {/* ملاحظات */}
               <div className="flex items-start gap-3 px-1 py-3">
-                <span className="w-20 shrink-0 text-sm font-semibold text-foreground pt-2">ملاحظات</span>
-                <Textarea placeholder="أضف ملاحظاتك هنا..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="flex-1 text-sm" />
+                <span className="w-20 shrink-0 text-sm font-semibold text-foreground pt-2" id="recitation-notes-label">ملاحظات</span>
+                <Textarea aria-labelledby="recitation-notes-label" placeholder="أضف ملاحظاتك هنا..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="flex-1 text-sm" />
               </div>
 
               <div className="p-4 space-y-4">
                 {/* الدرجة النهائية */}
-                <div className="text-center py-4 bg-card rounded-xl border">
+                <div className="text-center py-4 bg-card rounded-xl border" role="status" aria-live="polite" aria-atomic="true">
                   <p className="text-sm text-muted-foreground">الدرجة النهائية</p>
-                  <p className={`text-4xl font-bold ${scoreColor}`}>{totalScore}</p>
-                  <p className="text-xs text-muted-foreground">من 100</p>
+                  <p className={`text-4xl font-bold ${scoreColor}`} aria-hidden="true">{totalScore}</p>
+                  <p className="text-xs text-muted-foreground" aria-hidden="true">من 100</p>
+                  <span className="sr-only">{totalScore} من 100</span>
                 </div>
+
 
                 {/* Audio Recording */}
                 <div className="space-y-2">
