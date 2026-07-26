@@ -17,6 +17,7 @@ import {
   Clock, AlertCircle, Eye, Trash2, ArrowRightLeft
 } from "lucide-react";
 import { canEnrolNewStudent, TALQEEN_ENROLMENT_BLOCKED_MSG } from "@/lib/halaqaType";
+import RegistrationQrDialog from "@/components/enrollment/RegistrationQrDialog";
 
 type PreRegStatus = "new" | "under_review" | "approved" | "rejected" | "waiting_list";
 
@@ -265,7 +266,8 @@ const PreRegistration = () => {
           <p className="text-muted-foreground text-sm">استيراد بيانات الطلاب وأولياء الأمور قبل التفعيل</p>
         </div>
         {canManage && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <RegistrationQrDialog />
             <Button variant="outline" onClick={() => setShowCsv(true)}>
               <Upload className="w-4 h-4 ml-2" />استيراد CSV
             </Button>

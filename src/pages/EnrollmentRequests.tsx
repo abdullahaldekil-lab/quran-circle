@@ -18,6 +18,8 @@ import {
   ArrowRightLeft, Trash2, MessageCircle, Copy, Users, Pencil, Printer
 } from "lucide-react";
 import EnrollmentCombinedPrint from "@/components/enrollment/EnrollmentCombinedPrint";
+import RegistrationQrDialog from "@/components/enrollment/RegistrationQrDialog";
+import { enrollUrl } from "@/lib/enrollLink";
 import { Input } from "@/components/ui/input";
 
 type ReqStatus = "pending" | "approved" | "rejected" | "waiting_list";
@@ -304,13 +306,15 @@ const EnrollmentRequests = () => {
           <h1 className="text-2xl font-bold">طلبات الالتحاق</h1>
           <p className="text-muted-foreground text-sm">مراجعة وإدارة طلبات التسجيل الواردة عبر رمز QR</p>
         </div>
-        <Button variant="outline" onClick={() => {
-          const url = `${window.location.origin}/enroll`;
-          navigator.clipboard.writeText(url);
-          toast.success("تم نسخ رابط التسجيل");
-        }}>
-          <Copy className="w-4 h-4 ml-2" />نسخ رابط التسجيل
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => {
+            navigator.clipboard.writeText(enrollUrl(window.location.origin));
+            toast.success("تم نسخ رابط التسجيل");
+          }}>
+            <Copy className="w-4 h-4 ml-2" />نسخ رابط التسجيل
+          </Button>
+          <RegistrationQrDialog />
+        </div>
       </div>
 
       {/* Stats */}
