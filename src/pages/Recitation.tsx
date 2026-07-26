@@ -342,8 +342,8 @@ const Recitation = () => {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className={`text-sm font-medium ${sec.chipColor}`}>تصنيف الأخطاء</span>
-                          <span className="text-xs text-muted-foreground">
-                            المجموع: <span className="font-bold text-destructive">{(secCounts.error || 0) + (secCounts.lahn || 0) + (secCounts.warning || 0)}</span>
+                          <span className="text-xs text-muted-foreground" role="status" aria-live="polite" aria-atomic="true">
+                            {sec.title} — مجموع الأخطاء: <span className="font-bold text-destructive">{(secCounts.error || 0) + (secCounts.lahn || 0) + (secCounts.warning || 0)}</span>
                           </span>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
