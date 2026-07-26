@@ -277,11 +277,13 @@ const Recitation = () => {
             </CardContent>
           </Card>
 
-          {/* Annual Plan Target */}
+          {/* Annual Plan Target — auto-selected mushaf range from daily progress */}
           <StudentAnnualPlanCard
+            key={`plan-${currentStudent.id}-${planRefresh}`}
             studentId={currentStudent.id}
             onApply={(from, to) => setForm(prev => ({ ...prev, memorized_from: from, memorized_to: to }))}
           />
+
 
           {/* Student Recitation History */}
           <StudentHistory studentId={currentStudent.id} />
