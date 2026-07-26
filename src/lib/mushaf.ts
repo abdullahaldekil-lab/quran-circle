@@ -39,3 +39,52 @@ export const mushafPageImage = (page: number): string =>
 
 export const formatPageRange = (from?: number | null, to?: number | null): string =>
   from && to ? (from === to ? `صفحة ${from}` : `${from} – ${to}`) : "—";
+
+/** Extract a mushaf page number from a free-text reference such as "صفحة 42 (الجزء 3)". */
+export const parsePageRef = (text?: string | null): number | null => {
+  const m = String(text ?? "").match(/\d+/);
+  if (!m) return null;
+  const n = parseInt(m[0], 10);
+  return Number.isFinite(n) && n >= 1 && n <= MUSHAF_TOTAL_PAGES ? n : null;
+};
+
+/** Human label of a page including its juz, e.g. "صفحة 42 (الجزء 3)". */
+export const formatPageRef = (page: number): string =>
+  `صفحة ${page} (الجزء ${pageToJuz(page)})`;
+
+export interface DailyMushafRange {
+  from: number;
+  to: number;
+  juzFrom: number;
+  juzTo: number;
+  fromLabel: string;
+  toLabel: string;
+  /** true when the student already reached the end of the plan range. */
+  completed: boolean;
+}
+
+/**
+ * Next daily range in mushaf order, derived from the student's last memorized
+ * page. `dailyPages` is in "أوجه" (half pages): 2 أوجه = صفحة كاملة.
+ */
+export const nextDailyMushafRange = (
+  lastMemorizedTo: string | null | undefined,
+  dailyPages: number,
+  bounds?: { start: number; end: number } | null,
+): DailyMushafRange => {
+  const startBound = bounds?.start ?? 1;
+  const endBound = bounds?.end ?? MUSHAF_TOTAL_PAGES;
+  const last = parsePageRef(lastMemorizedTo);
+  const from = Math.min(endBound, Math.max(startBound, last != null ? last + 1 : startBound));
+  const step = Math.max(1, Math.ceil((Number(dailyPages) || 1) / 2));
+  const to = Math.min(endBound, from + step - 1);
+  return {
+    from,
+    to,
+    juzFrom: pageToJuz(from),
+    juzTo: pageToJuz(to),
+    fromLabel: formatPageRef(from),
+    toLabel: formatPageRef(to),
+    completed: last != null && last >= endBound,
+  };
+};
