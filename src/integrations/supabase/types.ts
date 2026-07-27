@@ -4624,20 +4624,29 @@ export type Database = {
           link_mistakes_lahn: number
           link_notifications: number
           link_pages_count: number
+          link_passed: boolean
+          link_peer_name: string | null
+          link_peer_score: number
           link_reciter: string | null
           link_score: number
           link_time_per_page: string | null
           link_to: string | null
+          listening_count: number
+          listening_score: number
           new_from: string | null
           new_listening_done: boolean
           new_mistakes_lahn: number
           new_notifications: number
+          new_passed: boolean
           new_repetitions_done: boolean
           new_score: number
           new_test_score: number
           new_to: string | null
           notes: string | null
+          reading_minutes: number | null
           record_date: string
+          repetition_score: number
+          repetitions_count: number
           summer_student_id: string
           total_score: number
           updated_at: string
@@ -4651,20 +4660,29 @@ export type Database = {
           link_mistakes_lahn?: number
           link_notifications?: number
           link_pages_count?: number
+          link_passed?: boolean
+          link_peer_name?: string | null
+          link_peer_score?: number
           link_reciter?: string | null
           link_score?: number
           link_time_per_page?: string | null
           link_to?: string | null
+          listening_count?: number
+          listening_score?: number
           new_from?: string | null
           new_listening_done?: boolean
           new_mistakes_lahn?: number
           new_notifications?: number
+          new_passed?: boolean
           new_repetitions_done?: boolean
           new_score?: number
           new_test_score?: number
           new_to?: string | null
           notes?: string | null
+          reading_minutes?: number | null
           record_date?: string
+          repetition_score?: number
+          repetitions_count?: number
           summer_student_id: string
           total_score?: number
           updated_at?: string
@@ -4678,20 +4696,29 @@ export type Database = {
           link_mistakes_lahn?: number
           link_notifications?: number
           link_pages_count?: number
+          link_passed?: boolean
+          link_peer_name?: string | null
+          link_peer_score?: number
           link_reciter?: string | null
           link_score?: number
           link_time_per_page?: string | null
           link_to?: string | null
+          listening_count?: number
+          listening_score?: number
           new_from?: string | null
           new_listening_done?: boolean
           new_mistakes_lahn?: number
           new_notifications?: number
+          new_passed?: boolean
           new_repetitions_done?: boolean
           new_score?: number
           new_test_score?: number
           new_to?: string | null
           notes?: string | null
+          reading_minutes?: number | null
           record_date?: string
+          repetition_score?: number
+          repetitions_count?: number
           summer_student_id?: string
           total_score?: number
           updated_at?: string
@@ -4842,6 +4869,53 @@ export type Database = {
         }
         Relationships: []
       }
+      summer_rooted_mistakes: {
+        Row: {
+          ayah_number: string | null
+          correction: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          mistake_type: string
+          resolved: boolean
+          summer_student_id: string
+          surah: string
+          updated_at: string
+        }
+        Insert: {
+          ayah_number?: string | null
+          correction?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mistake_type?: string
+          resolved?: boolean
+          summer_student_id: string
+          surah: string
+          updated_at?: string
+        }
+        Update: {
+          ayah_number?: string | null
+          correction?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mistake_type?: string
+          resolved?: boolean
+          summer_student_id?: string
+          surah?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summer_rooted_mistakes_summer_student_id_fkey"
+            columns: ["summer_student_id"]
+            isOneToOne: false
+            referencedRelation: "summer_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       summer_students: {
         Row: {
           active: boolean | null
@@ -4853,6 +4927,7 @@ export type Database = {
           juz_from: number | null
           juz_to: number | null
           maqra_id: string
+          mastered_juz: number[]
           pages_target: number
           plan_end_date: string | null
           plan_goal: string | null
@@ -4873,6 +4948,7 @@ export type Database = {
           juz_from?: number | null
           juz_to?: number | null
           maqra_id: string
+          mastered_juz?: number[]
           pages_target?: number
           plan_end_date?: string | null
           plan_goal?: string | null
@@ -4893,6 +4969,7 @@ export type Database = {
           juz_from?: number | null
           juz_to?: number | null
           maqra_id?: string
+          mastered_juz?: number[]
           pages_target?: number
           plan_end_date?: string | null
           plan_goal?: string | null

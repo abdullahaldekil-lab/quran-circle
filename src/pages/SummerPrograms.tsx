@@ -14,6 +14,8 @@ import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, A
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
+import RootedMistakesDialog from "@/components/summer/RootedMistakesDialog";
+
 import SummerStatsTab from "@/components/summer/SummerStatsTab";
 import MushafViewer from "@/components/mushaf/MushafViewer";
 import { juzRangeToPageBounds } from "@/lib/mushaf";
@@ -63,6 +65,8 @@ export default function SummerPrograms() {
   const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
   const [dailyTarget, setDailyTarget] = useState<SummerStudent | null>(null);
+  const [mistakesTarget, setMistakesTarget] = useState<SummerStudent | null>(null);
+
   const [mushafTarget, setMushafTarget] = useState<{ name: string; from: number; to: number; current: number; todayFrom: number | null; todayTo: number | null } | null>(null);
 
   const [records, setRecords] = useState<any[]>([]);
@@ -724,7 +728,11 @@ export default function SummerPrograms() {
                             <Button variant="default" size="sm" disabled={!s.plan_type} onClick={() => setDailyTarget(s)}>
                               <ClipboardList className="w-3.5 h-3.5 ml-1" />سجل يومي
                             </Button>
+                            <Button variant="outline" size="sm" onClick={() => setMistakesTarget(s)}>
+                              <BookOpenCheck className="w-3.5 h-3.5 ml-1" />الأخطاء المتأصلة
+                            </Button>
                             <Button variant="outline" size="icon" title="نقل إلى مقرأة أخرى" onClick={() => { setTransferTarget(s); setTransferMaqraId(""); }}>
+
                               <ArrowRightLeft className="w-4 h-4" />
                             </Button>
                             <Button variant="ghost" size="icon" aria-label="إزالة الطالب" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
@@ -784,7 +792,10 @@ export default function SummerPrograms() {
                         <th className="p-2 text-right">النوع</th>
                         <th className="p-2 text-right">الجديد</th>
                         <th className="p-2 text-right">الربط</th>
-                        <th className="p-2 text-right">أميل</th>
+                        <th className="p-2 text-right">التكرار / الاستماع</th>
+                        <th className="p-2 text-right">زميل</th>
+                        <th className="p-2 text-right">الحالة</th>
+
                         <th className="p-2 text-right">المجموع</th>
                       </tr>
                     </thead>
@@ -798,13 +809,22 @@ export default function SummerPrograms() {
                             <td className="p-2">{stu?.plan_type === "hifz" ? "حفظ" : stu?.plan_type === "taahud" ? "تعاهد" : "—"}</td>
                             <td className="p-2">{r.new_score}</td>
                             <td className="p-2">{r.link_score}</td>
-                            <td className="p-2">{r.amyal_score}</td>
+                            <td className="p-2">{Number(r.repetition_score || 0)} / {Number(r.listening_score || 0)}</td>
+                            <td className="p-2">{Number(r.link_peer_score || 0)}</td>
+                            <td className="p-2">
+                              {r.new_passed === false || r.link_passed === false ? (
+                                <Badge variant="destructive">إعادة</Badge>
+                              ) : (
+                                <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400">ناجح</Badge>
+                              )}
+                            </td>
+
                             <td className="p-2 font-bold text-primary">{r.total_score} / 40</td>
                           </tr>
                         );
                       })}
                       {!records.length && (
-                        <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">لا توجد سجلات بعد.</td></tr>
+                        <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">لا توجد سجلات بعد.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -1001,6 +1021,15 @@ export default function SummerPrograms() {
           onSaved={() => selectedMaqra && loadRecords(selectedMaqra)}
         />
       )}
+      {mistakesTarget && (
+        <RootedMistakesDialog
+          open={!!mistakesTarget}
+          onOpenChange={(v) => !v && setMistakesTarget(null)}
+          summerStudentId={mistakesTarget.id}
+          studentName={studentNameMap[mistakesTarget.student_id] || ""}
+        />
+      )}
+
 
       <Dialog open={!!transferTarget} onOpenChange={(v) => { if (!v) { setTransferTarget(null); setTransferMaqraId(""); } }}>
         <DialogContent dir="rtl">
