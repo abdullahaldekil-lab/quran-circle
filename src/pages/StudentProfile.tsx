@@ -331,8 +331,9 @@ const StudentProfile = () => {
             {/* Madarij Section */}
             <MadarijStudentSection studentId={id!} isManager={isManager} />
 
-            {/* Annual Plan Summary */}
+            {/* Annual Plan Summary — or a prompt to create one */}
             <AnnualPlanSummaryCard studentId={id!} />
+            <StudentPlanGate studentId={id!} studentName={student.full_name} />
 
             {/* Progress */}
             <Card>
