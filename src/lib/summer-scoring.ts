@@ -1,66 +1,195 @@
-// Pure scoring helpers for the summer maqra daily card.
-// Two plan types share the same 40-point structure but differ in bonuses.
-//   hifz   = new(15) + link(15) + listening(5) + repetitions(5)      = 40
-//   taahud = new(15) + link(15) + test(5)      + amyal(5)            = 40
+// Scoring + mechanics for the printed summer maqra cards.
+//
+// Source of truth = the two official cards:
+//   بطاقة الحفظ (hifz)   : المقدار الجديد 15 + الربط على مقرئ 15 + الاستماع 5 + التكرار 5 = 40
+//   دورة تعاهد (taahud)  : المقدار الجديد 15 + الربط على مقرئ 15 + الربط على زميل 5 + التكرار 5 = 40
+//
+// Deductions in both cards: خطأ/لحن = -3 درجات ، تنبيه = -1 درجة.
+// hifz  : يُحتسب اللحن والتنبيه من أول مرة.
+// taahud: يُحتسب اللحن من أول مرة ويُحتسب التنبيه من الثالث.
 
 export type PlanType = "hifz" | "taahud";
 
+export const MISTAKE_PENALTY = 3;
+export const NOTIFICATION_PENALTY = 1;
+/** ما يعادل الخطأ الواحد من تنبيهات. */
+export const NOTIFICATIONS_PER_MISTAKE = 3;
+/** أقل زمن لقراءة الحزب الواحد (دقائق) — أقل من ذلك تلزم الإعادة. */
+export const MIN_HIZB_MINUTES = 12;
+/** التأني: زمن الوجه الواحد لكل نوع خطة. */
+export const PACE_PER_WAJH: Record<PlanType, string> = {
+  hifz: "1:15",
+  taahud: "1:30",
+};
+/** التخلف عن البرنامج هذا العدد من الأيام (ولو غير متتابعة) يعرّض للاستبعاد. */
+export const ABSENCE_LIMIT = 3;
+
 export interface DailyRecordInput {
   plan_type: PlanType;
-  // new portion
+  // المقدار الجديد
   new_notifications: number;
   new_mistakes_lahn: number;
-  new_listening_done: boolean;   // hifz only bonus
-  new_repetitions_done: boolean; // hifz only bonus
-  new_test_score: number;        // taahud only bonus (0..5)
-  // linking on reciter
+  // الربط على مقرئ
   link_notifications: number;
   link_mistakes_lahn: number;
-  // amyal
-  amyal_score: number;           // taahud only (0..5)
+  // الاستماع والتكرار (حسب المسار)
+  listening_count: number;
+  repetitions_count: number;
+  plan_track?: string | null;
+  /** الربط على زميل (تعاهد فقط، 0..5). */
+  link_peer_score: number;
 }
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+const round1 = (n: number) => Math.round(n * 10) / 10;
 
-// The "raw" 10-point base within a 15-point section, penalized by
-// notifications (0.5 each) and mistakes/lahn (1 each). Then + bonuses = 15.
-const sectionBase = (notifications: number, mistakes: number) =>
-  clamp(10 - (notifications * 0.5) - mistakes, 0, 10);
-
-export const calcNewScore = (r: DailyRecordInput): number => {
-  const base = sectionBase(r.new_notifications, r.new_mistakes_lahn);
-  const bonus =
-    r.plan_type === "hifz"
-      ? (r.new_listening_done ? 2.5 : 0) + (r.new_repetitions_done ? 2.5 : 0)
-      : clamp(r.new_test_score, 0, 5);
-  return Math.round(clamp(base + bonus, 0, 15) * 10) / 10;
+/** التنبيهات المحتسبة فعلياً: في التعاهد تبدأ من التنبيه الثالث. */
+export const effectiveNotifications = (planType: PlanType, notifications: number): number => {
+  const n = Math.max(0, Math.round(notifications || 0));
+  return planType === "taahud" ? Math.max(0, n - 2) : n;
 };
 
-export const calcLinkScore = (r: DailyRecordInput): number => {
-  // Link section: 15 points, no built-in bonuses beyond the section base
-  // (scaled from 10 -> 15 by adding a fixed 5 execution credit when the row
-  // is entered — matches the printed card where "المقرئ" filling implies 5).
-  const base = sectionBase(r.link_notifications, r.link_mistakes_lahn);
-  return Math.round(clamp(base + 5, 0, 15) * 10) / 10;
+/** قسم من 15 درجة يُخصم منه 3 لكل خطأ/لحن ودرجة لكل تنبيه محتسب. */
+export const sectionScore = (
+  planType: PlanType,
+  notifications: number,
+  mistakes: number
+): number => {
+  const n = effectiveNotifications(planType, notifications);
+  const m = Math.max(0, Math.round(mistakes || 0));
+  return round1(clamp(15 - n * NOTIFICATION_PENALTY - m * MISTAKE_PENALTY, 0, 15));
 };
 
-export const calcAmyalScore = (r: DailyRecordInput): number =>
-  r.plan_type === "taahud" ? clamp(r.amyal_score, 0, 5) : 0;
+export const calcNewScore = (r: DailyRecordInput): number =>
+  sectionScore(r.plan_type, r.new_notifications, r.new_mistakes_lahn);
 
-// Total is always out of 40:
-//   hifz   = new(0..15) + link(0..15) + engagement(10, day completion)
-//   taahud = new(0..15) + link(0..15) + link_execution(5) + amyal(0..5)
-export const calcTotalScore = (r: DailyRecordInput): number => {
-  const n = calcNewScore(r);
-  const l = calcLinkScore(r);
-  const tail = r.plan_type === "hifz" ? 10 : 5 + clamp(r.amyal_score, 0, 5);
-  return Math.round(clamp(n + l + tail, 0, 40) * 10) / 10;
-};
+export const calcLinkScore = (r: DailyRecordInput): number =>
+  sectionScore(r.plan_type, r.link_notifications, r.link_mistakes_lahn);
+
+// ---------------------------------------------------------------- المسارات
 
 export const PLAN_TRACKS: Record<PlanType, string[]> = {
   hifz: ["حفظ وجه", "حفظ وجهين"],
-  taahud: ["إتقان وجهين", "إتقان 3 أوجه", "إتقان 4 أوجه", "إتقان 5 أوجه", "إتقان جزء"],
+  taahud: ["إتقان وجهين", "إتقان 3 أوجه", "إتقان 4 أوجه", "إتقان 5 أوجه", "إتقان 6 أوجه"],
 };
+
+/** متطلبات المسار: عدد مرات التكرار وعدد مرات الاستماع لكل وجه. */
+export interface TrackRequirement {
+  repetitions: number;
+  listening: number;
+}
+
+const HIFZ_REQ: Record<string, TrackRequirement> = {
+  "حفظ وجه": { repetitions: 25, listening: 3 },
+  "حفظ وجهين": { repetitions: 25, listening: 3 },
+};
+
+const TAAHUD_REQ: Record<string, TrackRequirement> = {
+  "إتقان وجهين": { repetitions: 15, listening: 1 },
+  "إتقان 3 أوجه": { repetitions: 10, listening: 1 },
+  "إتقان 4 أوجه": { repetitions: 10, listening: 1 },
+  "إتقان 5 أوجه": { repetitions: 7, listening: 1 },
+  "إتقان 6 أوجه": { repetitions: 7, listening: 1 },
+};
+
+export const trackRequirement = (
+  planType: PlanType,
+  track?: string | null
+): TrackRequirement => {
+  const table = planType === "hifz" ? HIFZ_REQ : TAAHUD_REQ;
+  const fallback: TrackRequirement =
+    planType === "hifz" ? { repetitions: 25, listening: 3 } : { repetitions: 10, listening: 1 };
+  return (track && table[track]) || fallback;
+};
+
+// ---------------------------------------------------------------- الدرجات الفرعية
+
+/** التكرار = 5 درجات كاملة عند بلوغ العدد المطلوب، وإلا نسبةً منه. */
+export const calcRepetitionScore = (r: DailyRecordInput): number => {
+  const req = trackRequirement(r.plan_type, r.plan_track).repetitions;
+  const done = Math.max(0, Number(r.repetitions_count) || 0);
+  if (req <= 0) return 0;
+  return round1(clamp((done / req) * 5, 0, 5));
+};
+
+/** الاستماع = 5 درجات (بطاقة الحفظ فقط) عند بلوغ عدد مرات الاستماع المطلوبة. */
+export const calcListeningScore = (r: DailyRecordInput): number => {
+  if (r.plan_type !== "hifz") return 0;
+  const req = trackRequirement(r.plan_type, r.plan_track).listening;
+  const done = Math.max(0, Number(r.listening_count) || 0);
+  if (req <= 0) return 0;
+  return round1(clamp((done / req) * 5, 0, 5));
+};
+
+/** الربط على زميل = 5 درجات (دورة التعاهد فقط). */
+export const calcPeerLinkScore = (r: DailyRecordInput): number =>
+  r.plan_type === "taahud" ? round1(clamp(Number(r.link_peer_score) || 0, 0, 5)) : 0;
+
+/** مجموع البطاقة من 40 درجة. */
+export const calcTotalScore = (r: DailyRecordInput): number => {
+  const tail =
+    r.plan_type === "hifz" ? calcListeningScore(r) : calcPeerLinkScore(r);
+  return round1(
+    clamp(calcNewScore(r) + calcLinkScore(r) + calcRepetitionScore(r) + tail, 0, 40)
+  );
+};
+
+// ---------------------------------------------------------------- النجاح والرسوب
+
+export interface SectionOutcome {
+  passed: boolean;
+  reason: string | null;
+}
+
+/**
+ * المقدار الجديد:
+ *  - الحفظ : يتوقف ويعيد عند الخطأ/اللحن الثاني، أو خطأ + ثلاث تنبيهات، أو التنبيه السادس.
+ *  - التعاهد: يرسب عند الخطأ/اللحن الثالث أو ما يعادله من تنبيهات (تنبيه محتسب من الثالث).
+ */
+export const evaluateNewPortion = (
+  planType: PlanType,
+  notifications: number,
+  mistakes: number
+): SectionOutcome => {
+  const m = Math.max(0, Math.round(mistakes || 0));
+  const n = effectiveNotifications(planType, notifications);
+
+  if (planType === "hifz") {
+    if (m >= 2) return { passed: false, reason: "بلغ الخطأ/اللحن الثاني — يعيد الحفظ" };
+    if (m >= 1 && n >= 3) return { passed: false, reason: "خطأ مع ثلاث تنبيهات — يعيد الحفظ" };
+    if (n >= 6) return { passed: false, reason: "بلغ التنبيه السادس — يعيد الحفظ" };
+    return { passed: true, reason: null };
+  }
+
+  const weight = m + n / NOTIFICATIONS_PER_MISTAKE;
+  if (weight >= 3) return { passed: false, reason: "بلغ الخطأ/اللحن الثالث أو ما يعادله — راسب في المقدار" };
+  return { passed: true, reason: null };
+};
+
+/** الربط: راسب عند الخطأ/اللحن الرابع أو ما يعادله من تنبيهات (في البطاقتين). */
+export const evaluateLink = (
+  planType: PlanType,
+  notifications: number,
+  mistakes: number
+): SectionOutcome => {
+  const m = Math.max(0, Math.round(mistakes || 0));
+  const n = effectiveNotifications(planType, notifications);
+  const weight = m + n / NOTIFICATIONS_PER_MISTAKE;
+  if (weight >= 4) return { passed: false, reason: "بلغ الخطأ/اللحن الرابع أو ما يعادله — راسب في الربط" };
+  return { passed: true, reason: null };
+};
+
+/** خطة المعالجة عند إخفاق المقدار الجديد، كما في آلية كل بطاقة. */
+export const remedialPlan = (planType: PlanType): string =>
+  planType === "hifz"
+    ? "يعيد التكرار خمس مرات تلاوة وخمس مرات حفظاً ثم يسمع على المقرئ"
+    : "يعيد التكرار مرة تلاوة ومرتين حفظاً ثم يسمع على المقرئ";
+
+/** هل زمن قراءة الحزب مقبول (لا يقل عن 12 دقيقة). */
+export const isHizbTimeValid = (minutes: number | null | undefined): boolean =>
+  minutes == null ? true : Number(minutes) >= MIN_HIZB_MINUTES;
+
+// ---------------------------------------------------------------- توزيع الخطة
 
 // Standard Madinah mushaf: 1 juz = 20 wajh (pages/faces).
 export const WAJH_PER_JUZ = 20;
