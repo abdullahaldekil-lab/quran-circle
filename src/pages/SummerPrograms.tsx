@@ -792,7 +792,10 @@ export default function SummerPrograms() {
                         <th className="p-2 text-right">النوع</th>
                         <th className="p-2 text-right">الجديد</th>
                         <th className="p-2 text-right">الربط</th>
-                        <th className="p-2 text-right">أميل</th>
+                        <th className="p-2 text-right">التكرار / الاستماع</th>
+                        <th className="p-2 text-right">زميل</th>
+                        <th className="p-2 text-right">الحالة</th>
+
                         <th className="p-2 text-right">المجموع</th>
                       </tr>
                     </thead>
