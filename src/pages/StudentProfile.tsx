@@ -474,6 +474,11 @@ const StudentProfile = () => {
                 <History className="w-4 h-4 ml-1" />
                 الحالات
               </TabsTrigger>
+              <TabsTrigger value="plan_log">
+                <ClipboardList className="w-4 h-4 ml-1" />
+                سجل الخطة
+              </TabsTrigger>
+
             </TabsList>
 
             <TabsContent value="records">
