@@ -824,7 +824,7 @@ export default function SummerPrograms() {
                         );
                       })}
                       {!records.length && (
-                        <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">لا توجد سجلات بعد.</td></tr>
+                        <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">لا توجد سجلات بعد.</td></tr>
                       )}
                     </tbody>
                   </table>
