@@ -453,7 +453,7 @@ const StudentProfile = () => {
         }
         return (
           <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-            <TabsList className="grid grid-cols-5 w-full">
+            <TabsList className="grid grid-cols-6 w-full">
               <TabsTrigger value="records">
                 <TrendingUp className="w-4 h-4 ml-1" />
                 التسميعات
