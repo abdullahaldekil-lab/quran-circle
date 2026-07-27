@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare, Printer, Copy, QrCode } from "lucide-react";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare, Printer, Copy, QrCode, ClipboardList } from "lucide-react";
 import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian, formatDateSmart, toHijri, toMiladi, HIJRI_MONTHS, getWeekdayArabic, formatDateHijriOnly } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
@@ -27,6 +27,7 @@ import TalqeenStudentTests from "@/components/talqeen/TalqeenStudentTests";
 import TalqeenStudentDailyLog from "@/components/talqeen/TalqeenStudentDailyLog";
 import StudentStatusManager from "@/components/student/StudentStatusManager";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
+import StudentPlanChangeLog from "@/components/student/StudentPlanChangeLog";
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_ORDER, attendanceRate, countByStatus } from "@/lib/attendanceStatus";
 import MemorizedAmountDialog from "@/components/student/MemorizedAmountDialog";
 import { juzEquivalent, memorizedPercent } from "@/lib/memorization";
@@ -453,7 +454,7 @@ const StudentProfile = () => {
         }
         return (
           <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-            <TabsList className="grid grid-cols-5 w-full">
+            <TabsList className="grid grid-cols-6 w-full">
               <TabsTrigger value="records">
                 <TrendingUp className="w-4 h-4 ml-1" />
                 التسميعات
@@ -474,6 +475,11 @@ const StudentProfile = () => {
                 <History className="w-4 h-4 ml-1" />
                 الحالات
               </TabsTrigger>
+              <TabsTrigger value="plan_log">
+                <ClipboardList className="w-4 h-4 ml-1" />
+                سجل الخطة
+              </TabsTrigger>
+
             </TabsList>
 
             <TabsContent value="records">
@@ -536,6 +542,10 @@ const StudentProfile = () => {
 
             <TabsContent value="status_log">
               <StudentStatusLog studentId={id!} />
+            </TabsContent>
+
+            <TabsContent value="plan_log">
+              <StudentPlanChangeLog studentId={id!} />
             </TabsContent>
           </Tabs>
         );
