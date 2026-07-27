@@ -103,8 +103,14 @@ const Recitation = () => {
 
   const currentStudent = students[currentIndex];
 
+  const { hasPlan, loading: planLoading } = useStudentPlan(currentStudent?.id, planRefresh);
+
   const handleSave = async () => {
     if (!currentStudent) return;
+    if (!hasPlan) {
+      toast.error("لا يمكن تسجيل التسميع: الطالب غير مربوط بخطة حفظ");
+      return;
+    }
     setSaving(true);
     const totalScore = calcScore();
     const result = await saveRecitationRecord(supabase as any, {
