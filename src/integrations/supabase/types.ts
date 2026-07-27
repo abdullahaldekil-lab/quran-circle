@@ -4154,6 +4154,45 @@ export type Database = {
           },
         ]
       }
+      student_plan_change_log: {
+        Row: {
+          action: string
+          changed_by: string | null
+          changed_by_name: string | null
+          created_at: string
+          field_name: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          plan_id: string | null
+          student_id: string
+        }
+        Insert: {
+          action?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          plan_id?: string | null
+          student_id: string
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          plan_id?: string | null
+          student_id?: string
+        }
+        Relationships: []
+      }
       student_plan_progress: {
         Row: {
           actual_linking: number | null
