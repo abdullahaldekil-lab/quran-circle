@@ -1021,6 +1021,15 @@ export default function SummerPrograms() {
           onSaved={() => selectedMaqra && loadRecords(selectedMaqra)}
         />
       )}
+      {mistakesTarget && (
+        <RootedMistakesDialog
+          open={!!mistakesTarget}
+          onOpenChange={(v) => !v && setMistakesTarget(null)}
+          summerStudentId={mistakesTarget.id}
+          studentName={studentNameMap[mistakesTarget.student_id] || ""}
+        />
+      )}
+
 
       <Dialog open={!!transferTarget} onOpenChange={(v) => { if (!v) { setTransferTarget(null); setTransferMaqraId(""); } }}>
         <DialogContent dir="rtl">
