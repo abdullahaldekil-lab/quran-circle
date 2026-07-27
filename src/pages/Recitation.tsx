@@ -103,7 +103,7 @@ const Recitation = () => {
 
   const currentStudent = students[currentIndex];
 
-  const { hasPlan, loading: planLoading } = useStudentPlan(currentStudent?.id, planRefresh);
+  const { hasPlan, track, loading: planLoading } = useStudentPlan(currentStudent?.id, planRefresh);
 
   const handleSave = async () => {
     if (!currentStudent) return;
@@ -342,7 +342,14 @@ const Recitation = () => {
                   <p className="text-sm text-muted-foreground">{currentIndex + 1} من {students.length}</p>
                   {!planLoading && !hasPlan && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
-                      <AlertCircle className="h-3 w-3" />غير مربوط بخطة
+                      <AlertCircle className="h-3 w-3" />غير مربوط بمسار حفظ
+                    </span>
+                  )}
+                  {!planLoading && track && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                      مسار الحفظ: {track.track_name || "—"}
+                      {track.branch_name ? ` • ${track.branch_name}` : ""}
+                      {track.part_number ? ` • الجزء ${track.part_number}` : ""}
                     </span>
                   )}
                 </div>
