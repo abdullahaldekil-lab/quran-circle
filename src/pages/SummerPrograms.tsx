@@ -809,7 +809,16 @@ export default function SummerPrograms() {
                             <td className="p-2">{stu?.plan_type === "hifz" ? "حفظ" : stu?.plan_type === "taahud" ? "تعاهد" : "—"}</td>
                             <td className="p-2">{r.new_score}</td>
                             <td className="p-2">{r.link_score}</td>
-                            <td className="p-2">{r.amyal_score}</td>
+                            <td className="p-2">{Number(r.repetition_score || 0)} / {Number(r.listening_score || 0)}</td>
+                            <td className="p-2">{Number(r.link_peer_score || 0)}</td>
+                            <td className="p-2">
+                              {r.new_passed === false || r.link_passed === false ? (
+                                <Badge variant="destructive">إعادة</Badge>
+                              ) : (
+                                <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400">ناجح</Badge>
+                              )}
+                            </td>
+
                             <td className="p-2 font-bold text-primary">{r.total_score} / 40</td>
                           </tr>
                         );
