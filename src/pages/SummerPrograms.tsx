@@ -65,6 +65,8 @@ export default function SummerPrograms() {
   const [transferMaqraId, setTransferMaqraId] = useState<string>("");
   const [planTarget, setPlanTarget] = useState<SummerStudent | null>(null);
   const [dailyTarget, setDailyTarget] = useState<SummerStudent | null>(null);
+  const [mistakesTarget, setMistakesTarget] = useState<SummerStudent | null>(null);
+
   const [mushafTarget, setMushafTarget] = useState<{ name: string; from: number; to: number; current: number; todayFrom: number | null; todayTo: number | null } | null>(null);
 
   const [records, setRecords] = useState<any[]>([]);
