@@ -728,7 +728,11 @@ export default function SummerPrograms() {
                             <Button variant="default" size="sm" disabled={!s.plan_type} onClick={() => setDailyTarget(s)}>
                               <ClipboardList className="w-3.5 h-3.5 ml-1" />سجل يومي
                             </Button>
+                            <Button variant="outline" size="sm" onClick={() => setMistakesTarget(s)}>
+                              <BookOpenCheck className="w-3.5 h-3.5 ml-1" />الأخطاء المتأصلة
+                            </Button>
                             <Button variant="outline" size="icon" title="نقل إلى مقرأة أخرى" onClick={() => { setTransferTarget(s); setTransferMaqraId(""); }}>
+
                               <ArrowRightLeft className="w-4 h-4" />
                             </Button>
                             <Button variant="ghost" size="icon" aria-label="إزالة الطالب" onClick={() => removeStudent(s.id)}><X className="w-4 h-4 text-destructive" /></Button>
