@@ -23,6 +23,8 @@ import { saveRecitationRecord } from "@/lib/recitation-save";
 import { MUSHAF_TOTAL_PAGES, parsePageRef } from "@/lib/mushaf";
 import { actualPagesFromRecord, commitmentPercentage, monthNumberFor, progressStatus } from "@/lib/planProgress";
 import { activePlanFor } from "@/lib/planTerm";
+import { useStudentPlan } from "@/hooks/useStudentPlan";
+import NoPlanNotice from "@/components/recitation/NoPlanNotice";
 
 const Recitation = () => {
   const { user } = useAuth();
@@ -101,8 +103,14 @@ const Recitation = () => {
 
   const currentStudent = students[currentIndex];
 
+  const { hasPlan, loading: planLoading } = useStudentPlan(currentStudent?.id, planRefresh);
+
   const handleSave = async () => {
     if (!currentStudent) return;
+    if (!hasPlan) {
+      toast.error("لا يمكن تسجيل التسميع: الطالب غير مربوط بخطة حفظ");
+      return;
+    }
     setSaving(true);
     const totalScore = calcScore();
     const result = await saveRecitationRecord(supabase as any, {
@@ -332,6 +340,11 @@ const Recitation = () => {
                 <div className="text-center">
                   <h2 className="text-lg font-bold"><StudentNameLink studentId={currentStudent.id} studentName={currentStudent.full_name} /></h2>
                   <p className="text-sm text-muted-foreground">{currentIndex + 1} من {students.length}</p>
+                  {!planLoading && !hasPlan && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                      <AlertCircle className="h-3 w-3" />غير مربوط بخطة
+                    </span>
+                  )}
                 </div>
                 <Button aria-label="السابق" variant="ghost" size="icon" disabled={currentIndex <= 0} onClick={() => { setCurrentIndex(currentIndex - 1); resetForm(); }}>
                   <ChevronLeft className="w-5 h-5" />
@@ -340,6 +353,12 @@ const Recitation = () => {
             </CardContent>
           </Card>
 
+          {!planLoading && !hasPlan && (
+            <NoPlanNotice studentId={currentStudent.id} studentName={currentStudent.full_name} blocking />
+          )}
+
+          {hasPlan && (
+          <>
           {/* Annual Plan Target — auto-selected mushaf range from daily progress */}
           <StudentAnnualPlanCard
             key={`plan-${currentStudent.id}-${planRefresh}`}
@@ -479,6 +498,8 @@ const Recitation = () => {
               </div>
             </CardContent>
           </Card>
+          </>
+          )}
         </>
       )}
 
