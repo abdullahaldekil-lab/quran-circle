@@ -31,6 +31,15 @@ import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_ORDER, attendanceRate, countByStat
 import MemorizedAmountDialog from "@/components/student/MemorizedAmountDialog";
 import { juzEquivalent, memorizedPercent } from "@/lib/memorization";
 import { MUSHAF_TOTAL_PAGES } from "@/lib/mushaf";
+import NoPlanNotice from "@/components/recitation/NoPlanNotice";
+import { useStudentPlan } from "@/hooks/useStudentPlan";
+
+/** Shows the "no memorization plan" prompt when the student has none. */
+const StudentPlanGate = ({ studentId, studentName }: { studentId: string; studentName?: string }) => {
+  const { hasPlan, loading } = useStudentPlan(studentId);
+  if (loading || hasPlan) return null;
+  return <NoPlanNotice studentId={studentId} studentName={studentName} />;
+};
 
 const PAGE_SIZE = 20;
 
