@@ -14,6 +14,8 @@ import { Sun, Plus, MapPin, Users, X, Trash2, ClipboardList, BookOpen, Pencil, A
 import { Checkbox } from "@/components/ui/checkbox";
 import PlanEditor from "@/components/summer/PlanEditor";
 import DailyRecordDialog from "@/components/summer/DailyRecordDialog";
+import RootedMistakesDialog from "@/components/summer/RootedMistakesDialog";
+
 import SummerStatsTab from "@/components/summer/SummerStatsTab";
 import MushafViewer from "@/components/mushaf/MushafViewer";
 import { juzRangeToPageBounds } from "@/lib/mushaf";
