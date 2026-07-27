@@ -23,6 +23,8 @@ import { saveRecitationRecord } from "@/lib/recitation-save";
 import { MUSHAF_TOTAL_PAGES, parsePageRef } from "@/lib/mushaf";
 import { actualPagesFromRecord, commitmentPercentage, monthNumberFor, progressStatus } from "@/lib/planProgress";
 import { activePlanFor } from "@/lib/planTerm";
+import { useStudentPlan } from "@/hooks/useStudentPlan";
+import NoPlanNotice from "@/components/recitation/NoPlanNotice";
 
 const Recitation = () => {
   const { user } = useAuth();
