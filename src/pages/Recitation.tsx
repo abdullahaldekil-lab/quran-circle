@@ -103,7 +103,7 @@ const Recitation = () => {
 
   const currentStudent = students[currentIndex];
 
-  const { hasPlan, loading: planLoading } = useStudentPlan(currentStudent?.id, planRefresh);
+  const { hasPlan, track, loading: planLoading } = useStudentPlan(currentStudent?.id, planRefresh);
 
   const handleSave = async () => {
     if (!currentStudent) return;
