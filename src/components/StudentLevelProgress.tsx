@@ -148,10 +148,53 @@ const StudentLevelProgress = ({ studentId, isManager }: Props) => {
     fetchData();
   };
 
+  const overlaps = (aStart: string, aEnd: string | null, bStart: string, bEnd: string | null) => {
+    const s1 = aStart, e1 = aEnd || "9999-12-31";
+    const s2 = bStart, e2 = bEnd || "9999-12-31";
+    return s1 <= e2 && s2 <= e1;
+  };
+
   const handleSaveLevel = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editForm.level_track_id) return;
+
+    const startDate = editForm.start_date || today();
+    if (editForm.end_date && editForm.end_date < startDate) {
+      toast.error("تاريخ النهاية لا يمكن أن يسبق تاريخ البداية");
+      return;
+    }
+
     setSaving(true);
+
+    // تحقق لحظي من قاعدة البيانات: لا يُسمح بأكثر من مسار نشط واحد لنفس الطالب
+    const { data: activeRows, error: checkErr } = await supabase
+      .from("student_levels")
+      .select("id, start_date, end_date, academic_year")
+      .eq("student_id", studentId)
+      .eq("status", "active");
+
+    if (checkErr) {
+      setSaving(false);
+      toast.error("تعذّر التحقق من مسارات الطالب الحالية");
+      return;
+    }
+
+    const others = (activeRows || []).filter((r: any) => !(mode === "edit" && studentLevel && r.id === studentLevel.id));
+    if (others.length > 0 && mode === "edit") {
+      setSaving(false);
+      toast.error("يوجد مسار حفظ نشط آخر لهذا الطالب — أوقفه أولاً قبل التعديل");
+      return;
+    }
+
+    // تحقق من تعارض الفترات مع المسارات السابقة (المؤرشفة)
+    const conflict = history.find((h: any) =>
+      h.start_date && overlaps(startDate, editForm.end_date || null, h.start_date, h.end_date)
+    );
+    if (conflict && mode !== "edit") {
+      setSaving(false);
+      toast.error("تعارض في الفترة: يوجد مسار سابق لنفس الطالب يغطي هذه الفترة (يبدأ " + conflict.start_date + ")");
+      return;
+    }
 
     const payload: any = {
       student_id: studentId,
@@ -160,7 +203,7 @@ const StudentLevelProgress = ({ studentId, isManager }: Props) => {
       part_number: editForm.part_number || 1,
       track_kind: editForm.track_kind,
       academic_year: editForm.academic_year || null,
-      start_date: editForm.start_date || today(),
+      start_date: startDate,
       end_date: editForm.end_date || null,
       notes: editForm.notes || null,
       status: "active",
@@ -170,7 +213,14 @@ const StudentLevelProgress = ({ studentId, isManager }: Props) => {
     if (mode === "edit" && studentLevel) {
       const { error } = await supabase.from("student_levels").update(payload).eq("id", studentLevel.id);
       setSaving(false);
-      if (error) { toast.error("حدث خطأ أثناء التحديث"); return; }
+      if (error) {
+        toast.error(
+          (error as any).code === "23505"
+            ? "لا يمكن وجود أكثر من مسار حفظ نشط لنفس الطالب"
+            : "حدث خطأ أثناء التحديث"
+        );
+        return;
+      }
       toast.success("تم تحديث مسار الحفظ");
     } else {
       // إيقاف المسار السابق أولاً ثم اعتماد المسار الجديد
@@ -187,13 +237,22 @@ const StudentLevelProgress = ({ studentId, isManager }: Props) => {
       }
       const { error } = await supabase.from("student_levels").insert({ ...payload, progress_percentage: 0 });
       setSaving(false);
-      if (error) { toast.error("حدث خطأ أثناء اعتماد المسار الجديد"); return; }
+      if (error) {
+        toast.error(
+          (error as any).code === "23505"
+            ? "الطالب لديه مسار حفظ نشط بالفعل — أوقفه أو استخدم زر «استبدال»"
+            : "حدث خطأ أثناء اعتماد المسار الجديد"
+        );
+        fetchData();
+        return;
+      }
       toast.success("تم اعتماد مسار الحفظ الجديد");
     }
 
     setEditOpen(false);
     fetchData();
   };
+
 
   if (!loaded) return null;
 
