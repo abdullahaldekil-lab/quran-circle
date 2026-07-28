@@ -4092,41 +4092,59 @@ export type Database = {
       }
       student_levels: {
         Row: {
+          academic_year: string | null
           branch_id: string | null
           completion_date: string | null
           created_at: string
+          end_date: string | null
           id: string
           level_track_id: string
+          notes: string | null
           part_number: number
           progress_percentage: number
           start_date: string
+          status: string
           student_id: string
+          suspend_reason: string | null
+          track_kind: string
           updated_at: string
           updated_by_manager: boolean
         }
         Insert: {
+          academic_year?: string | null
           branch_id?: string | null
           completion_date?: string | null
           created_at?: string
+          end_date?: string | null
           id?: string
           level_track_id: string
+          notes?: string | null
           part_number?: number
           progress_percentage?: number
           start_date?: string
+          status?: string
           student_id: string
+          suspend_reason?: string | null
+          track_kind?: string
           updated_at?: string
           updated_by_manager?: boolean
         }
         Update: {
+          academic_year?: string | null
           branch_id?: string | null
           completion_date?: string | null
           created_at?: string
+          end_date?: string | null
           id?: string
           level_track_id?: string
+          notes?: string | null
           part_number?: number
           progress_percentage?: number
           start_date?: string
+          status?: string
           student_id?: string
+          suspend_reason?: string | null
+          track_kind?: string
           updated_at?: string
           updated_by_manager?: boolean
         }
@@ -4148,7 +4166,7 @@ export type Database = {
           {
             foreignKeyName: "student_levels_student_id_fkey"
             columns: ["student_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
