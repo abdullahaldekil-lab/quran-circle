@@ -122,6 +122,7 @@ const StudentQuiz = () => {
         .from("student_levels")
         .select("*, level_tracks(name, level_number)")
         .eq("student_id", selectedStudent)
+        .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();

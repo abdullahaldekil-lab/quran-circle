@@ -28,6 +28,12 @@ const FIELD_LABELS: Record<string, string> = {
   start_date: "تاريخ البداية",
   end_date: "تاريخ النهاية",
   halaqa_id: "الحلقة",
+  memorization_track: "مسار الحفظ",
+  level_track: "المستوى",
+  level_branch: "الفرع",
+  level_part: "الجزء",
+  track_status: "حالة المسار",
+  track_kind: "نوع المسار",
 };
 
 const VALUE_LABELS: Record<string, string> = {
@@ -38,6 +44,8 @@ const VALUE_LABELS: Record<string, string> = {
   suspended: "موقوفة",
   completed: "مكتملة",
   cancelled: "ملغاة",
+  annual: "سنوي",
+  continuous: "مستمر",
 };
 
 const pretty = (v: string | null) => {

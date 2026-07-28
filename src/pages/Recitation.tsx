@@ -249,7 +249,7 @@ const Recitation = () => {
   /** Advance student to next part/branch/level automatically */
   const advanceStudentLevel = async (studentId: string) => {
     try {
-      const { data: sl } = await supabase.from("student_levels").select("*").eq("student_id", studentId).maybeSingle();
+      const { data: sl } = await supabase.from("student_levels").select("*").eq("student_id", studentId).eq("status", "active").maybeSingle();
       if (!sl) return;
 
       const { data: allBranches } = await supabase.from("level_branches").select("*").eq("level_track_id", sl.level_track_id).order("sort_order");
