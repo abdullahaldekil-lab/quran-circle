@@ -40,8 +40,9 @@ export const useStudentPlan = (studentId?: string | null, refreshKey: number = 0
           .eq("status", "active"),
         supabase
           .from("student_levels")
-          .select("id, level_track_id, part_number, progress_percentage, branch_id")
+          .select("id, level_track_id, part_number, progress_percentage, branch_id, track_kind, status")
           .eq("student_id", studentId)
+          .eq("status", "active")
           .maybeSingle(),
       ]);
       if (!alive) return;
