@@ -23,7 +23,9 @@ interface Teacher {
 }
 
 const Halaqat = () => {
-  const { isManager } = useRole();
+  const { isManager, canWrite } = useRole();
+  // إدارة الحلقات (إضافة/تعديل/حذف) للمدير والسكرتير فقط
+  const canManageHalaqat = canWrite("halaqat");
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [reserveTeachers, setReserveTeachers] = useState<any[]>([]);
