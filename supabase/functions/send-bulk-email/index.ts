@@ -39,7 +39,23 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // Only a manager may send mass email — the frontend route guard is not enough.
+    const callerId = claimsData.claims.sub as string;
+    const { data: callerProfile } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("id", callerId)
+      .maybeSingle();
+    if (callerProfile?.role !== "manager") {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { recipientIds, subject, body } = await req.json();
+
 
     if (!recipientIds?.length || !subject || !body) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {

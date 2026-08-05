@@ -45,7 +45,17 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // Only staff may dispatch notifications to other users.
+    // Guardians and plain users must never be able to notify arbitrary accounts.
+    const callerId = claimsData.claims.sub as string;
+    const { data: isStaff } = await adminClient.rpc("is_staff", { _user_id: callerId });
+    if (!isStaff) {
+      return json({ error: "Forbidden" }, 403);
+    }
+
     const params = (await req.json()) as DispatchParams;
+
 
     const result = await dispatchNotification(adminClient, params);
 
