@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
@@ -28,6 +29,7 @@ import NoPlanNotice from "@/components/recitation/NoPlanNotice";
 
 const Recitation = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -74,8 +76,12 @@ const Recitation = () => {
         .eq("status", "active")
         .order("full_name")
         .then(({ data }) => {
-          setStudents(data || []);
-          setCurrentIndex(0);
+          const list = data || [];
+          setStudents(list);
+          // Deep link from the teacher dashboard: ?student=<id> opens that student directly
+          const target = searchParams.get("student");
+          const idx = target ? list.findIndex((s: any) => s.id === target) : -1;
+          setCurrentIndex(idx >= 0 ? idx : 0);
           resetForm();
         });
     }

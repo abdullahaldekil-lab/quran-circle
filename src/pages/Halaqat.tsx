@@ -23,7 +23,9 @@ interface Teacher {
 }
 
 const Halaqat = () => {
-  const { isManager } = useRole();
+  const { isManager, canWrite } = useRole();
+  // إدارة الحلقات (إضافة/تعديل/حذف) للمدير والسكرتير فقط
+  const canManageHalaqat = canWrite("halaqat");
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [reserveTeachers, setReserveTeachers] = useState<any[]>([]);
@@ -326,9 +328,11 @@ const Halaqat = () => {
           </div>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 ml-2" />إضافة حلقة</Button>
-          </DialogTrigger>
+          {canManageHalaqat && (
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 ml-2" />إضافة حلقة</Button>
+            </DialogTrigger>
+          )}
           <DialogContent>
             <DialogHeader><DialogTitle>إضافة حلقة جديدة</DialogTitle></DialogHeader>
             <form onSubmit={handleAdd} className="space-y-4">
@@ -455,7 +459,7 @@ const Halaqat = () => {
                     <User className="w-3 h-3 ml-1" />
                     عرض الطلاب ({count})
                   </Button>
-                  {isManager && (
+                  {canManageHalaqat && (
                     <>
                       <Button aria-label="تعديل" variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
                         <Pencil className="w-3 h-3" />

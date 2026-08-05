@@ -101,6 +101,7 @@ import StudentPortal from "./pages/StudentPortal";
 import SummerPrograms from "./pages/SummerPrograms";
 import ProgramMaterials from "./pages/ProgramMaterials";
 import NazemExport from "./pages/NazemExport";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -163,6 +164,7 @@ const AppRoutes = () => {
 
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute path="/dashboard"><Dashboard /></ProtectedRoute>} />
+      <Route path="/admin-dashboard" element={<ProtectedRoute path="/admin-dashboard"><AdminDashboard /></ProtectedRoute>} />
       <Route path="/students" element={<ProtectedRoute path="/students"><Students /></ProtectedRoute>} />
       <Route path="/students/:id" element={<ProtectedRoute path="/students"><StudentProfile /></ProtectedRoute>} />
       <Route path="/inactive-students" element={<ProtectedRoute path="/students"><InactiveStudents /></ProtectedRoute>} />
