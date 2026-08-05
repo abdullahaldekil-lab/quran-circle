@@ -13,6 +13,7 @@ import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
 import QuizAnalytics from "@/components/dashboard/QuizAnalytics";
 import DailyAttendanceSummary from "@/components/dashboard/DailyAttendanceSummary";
+import TeacherQuickPanel from "@/components/dashboard/TeacherQuickPanel";
 import PageDateHeader from "@/components/PageDateHeader";
 import { formatDateHijriOnly } from "@/lib/hijri";
 
