@@ -438,6 +438,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                     : combinedBadgeCount(pendingRequestsCount, urgentTasksCount)}
                 </span>
               )}
+            </NavLink>
           ))}
 
           {/* Grouped items */}
