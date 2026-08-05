@@ -427,8 +427,17 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               }
             >
               <item.icon className="w-5 h-5" />
-              {item.label}
-            </NavLink>
+              <span className="flex-1">{item.label}</span>
+              {item.to === "/work-hub" && combinedBadgeCount(pendingRequestsCount, urgentTasksCount) > 0 && (
+                <span
+                  className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+                  title={combinedBadgeTitle(pendingRequestsCount, urgentTasksCount)}
+                >
+                  {combinedBadgeCount(pendingRequestsCount, urgentTasksCount) > 9
+                    ? "9+"
+                    : combinedBadgeCount(pendingRequestsCount, urgentTasksCount)}
+                </span>
+              )}
           ))}
 
           {/* Grouped items */}
