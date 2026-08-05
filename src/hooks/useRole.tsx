@@ -41,7 +41,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/summer-programs", "/program-materials", "/nazem-export",
   ],
   supervisor: [
-    "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/admin-dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
@@ -66,7 +66,8 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/summer-programs", "/program-materials",
   ],
   secretary: [
-    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance",
+    "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance", "/attendance-audit",
+    "/instructions", "/notification-templates", "/send-notification", "/bulk-email", "/student-portal", "/documents",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log", "/staff-shifts", "/staff-qr-checkin",
@@ -77,7 +78,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-portal",
   ],
   admin_staff: [
-    "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance",
+    "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance", "/attendance-audit",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log", "/staff-qr-checkin",
@@ -125,7 +126,7 @@ const roleWritePermissions: Record<StaffRole, Resource[]> = {
     "strategic_tasks",
   ],
   secretary: [
-    "students", "attendance", "bulk_import", "trips",
+    "students", "halaqat", "attendance", "bulk_import", "trips",
   ],
   admin_staff: [
     "students", "attendance", "bulk_import", "trips",
