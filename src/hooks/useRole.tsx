@@ -139,7 +139,7 @@ const roleWritePermissions: Record<StaffRole, Resource[]> = {
   ],
   // مشرف التلقين — صلاحيات كتابة كاملة على قسم التلقين والطلاب والحلقات والحضور
   custom_1775663809732: [
-    "students", "halaqat", "recitation", "attendance",
+    "students", "recitation", "attendance",
     "bulk_import", "trips",
   ],
 };
