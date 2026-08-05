@@ -29,6 +29,7 @@ import NoPlanNotice from "@/components/recitation/NoPlanNotice";
 
 const Recitation = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
