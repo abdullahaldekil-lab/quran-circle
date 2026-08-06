@@ -30,6 +30,10 @@ export interface MaterialRow {
   program_key?: string | null;
   order_index: number | null;
   active: boolean | null;
+  /** Optional teaching metadata. */
+  segment_order?: string | null;
+  suggested_minutes?: number | null;
+  usage_notes?: string | null;
 }
 
 interface Props {
@@ -49,7 +53,11 @@ const emptyForm = {
   program_key: "",
   order_index: 0,
   active: true,
+  segment_order: "",
+  suggested_minutes: "",
+  usage_notes: "",
 };
+
 
 /** Add or edit an enrichment material, with a real file upload. */
 const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, onSaved }: Props) => {
