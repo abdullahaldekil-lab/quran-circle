@@ -236,7 +236,32 @@ export default function ProgramMaterials() {
                   )}
                 </div>
 
+                {(m.segment_order || m.suggested_minutes) && (
+                  <div className="flex flex-wrap gap-1">
+                    {m.segment_order && (
+                      <Badge variant="outline" className="text-[10px]">
+                        <ListOrdered className="w-3 h-3 ml-1" />{m.segment_order}
+                      </Badge>
+                    )}
+                    {m.suggested_minutes ? (
+                      <Badge variant="outline" className="text-[10px]">
+                        <Clock className="w-3 h-3 ml-1" />{m.suggested_minutes} دقيقة مقترحة
+                      </Badge>
+                    ) : null}
+                  </div>
+                )}
+
+                {m.usage_notes && (
+                  <div className="rounded-md bg-muted/50 p-2 text-[11px] leading-relaxed">
+                    <span className="flex items-center gap-1 font-semibold mb-1">
+                      <Info className="w-3 h-3" />إرشادات الاستخدام
+                    </span>
+                    <p className="whitespace-pre-wrap text-muted-foreground">{m.usage_notes}</p>
+                  </div>
+                )}
+
                 <MaterialPlayer materialId={m.id} materialType={type} url={m.url} filePath={m.file_path} title={m.title} />
+
 
                 {canManage && (
                   <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground pt-1">
