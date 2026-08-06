@@ -236,7 +236,18 @@ export default function ProgramMaterials() {
                   )}
                 </div>
 
-                <MaterialPlayer materialType={type} url={m.url} filePath={m.file_path} title={m.title} />
+                <MaterialPlayer materialId={m.id} materialType={type} url={m.url} filePath={m.file_path} title={m.title} />
+
+                {canManage && (
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground pt-1">
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{(stats[m.id]?.views ?? 0)} مشاهدة</span>
+                    <span className="flex items-center gap-1"><Play className="w-3 h-3" />{(stats[m.id]?.plays ?? 0)} تشغيل</span>
+                    <span className="flex items-center gap-1"><Users className="w-3 h-3" />{(stats[m.id]?.uniqueStudents ?? 0)} طالب</span>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{(stats[m.id]?.totalMinutes ?? 0)} د</span>
+                  </div>
+                )}
+
+
 
                 {canManage && (
                   <div className="flex items-center gap-1 pt-1 border-t">
