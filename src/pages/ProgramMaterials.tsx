@@ -46,6 +46,7 @@ export default function ProgramMaterials() {
   const programFilter = searchParams.get("program") || "all";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MaterialRow | null>(null);
+  const [stats, setStats] = useState<Record<string, MaterialStats>>({});
 
   const load = useCallback(async () => {
     const { data, error } = await (supabase as any)
@@ -57,7 +58,20 @@ export default function ProgramMaterials() {
     setMaterials((data || []) as MaterialRow[]);
   }, []);
 
+  // View tracking is readable by staff only; a failure here must not break the library.
+  const loadStats = useCallback(async () => {
+    const { data, error } = await (supabase as any)
+      .from("program_material_views")
+      .select("material_id,event_type,seconds_watched,completion_percent,student_id,student_code,viewed_at")
+      .order("viewed_at", { ascending: false })
+      .limit(5000);
+    if (error) return;
+    setStats(aggregateStats((data || []) as MaterialViewRow[]));
+  }, []);
+
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadStats(); }, [loadStats]);
+
 
   const setProgramFilter = (key: string) => {
     const next = new URLSearchParams(searchParams);
