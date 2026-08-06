@@ -20,9 +20,12 @@ export interface MaterialViewLog {
 /** Clamp helper: playback numbers arrive from the DOM and can be NaN/Infinity. */
 export const clampNumber = (value: unknown, min: number, max: number): number => {
   const n = Number(value);
-  if (!Number.isFinite(n)) return min;
+  if (Number.isNaN(n)) return min;
+  if (n === Infinity) return max;
+  if (n === -Infinity) return min;
   return Math.min(max, Math.max(min, Math.round(n)));
 };
+
 
 /** Percentage of a media element that was actually consumed. */
 export const completionPercent = (seconds: unknown, duration: unknown): number => {
