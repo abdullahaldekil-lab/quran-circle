@@ -2883,10 +2883,13 @@ export type Database = {
           created_by: string | null
           description: string | null
           file_path: string | null
+          file_size_bytes: number | null
           id: string
           material_type: string
+          mime_type: string | null
           order_index: number | null
           program_id: string | null
+          program_key: string | null
           title: string
           updated_at: string
           url: string | null
@@ -2897,10 +2900,13 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           file_path?: string | null
+          file_size_bytes?: number | null
           id?: string
           material_type?: string
+          mime_type?: string | null
           order_index?: number | null
           program_id?: string | null
+          program_key?: string | null
           title: string
           updated_at?: string
           url?: string | null
@@ -2911,10 +2917,13 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           file_path?: string | null
+          file_size_bytes?: number | null
           id?: string
           material_type?: string
+          mime_type?: string | null
           order_index?: number | null
           program_id?: string | null
+          program_key?: string | null
           title?: string
           updated_at?: string
           url?: string | null
