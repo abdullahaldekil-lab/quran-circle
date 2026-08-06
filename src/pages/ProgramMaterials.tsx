@@ -109,6 +109,12 @@ export default function ProgramMaterials() {
     return true;
   });
 
+  const filteredTotals = totalStats(
+    Object.fromEntries(filtered.map((m) => [m.id, stats[m.id] || emptyStats()])),
+  );
+
+
+
   return (
     <div className="p-6 space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-3">
