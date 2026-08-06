@@ -2876,6 +2876,63 @@ export type Database = {
           },
         ]
       }
+      program_material_views: {
+        Row: {
+          completion_percent: number
+          created_at: string
+          event_type: string
+          id: string
+          material_id: string
+          seconds_watched: number
+          student_code: string | null
+          student_id: string | null
+          updated_at: string
+          user_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          completion_percent?: number
+          created_at?: string
+          event_type?: string
+          id?: string
+          material_id: string
+          seconds_watched?: number
+          student_code?: string | null
+          student_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          completion_percent?: number
+          created_at?: string
+          event_type?: string
+          id?: string
+          material_id?: string
+          seconds_watched?: number
+          student_code?: string | null
+          student_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_material_views_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "program_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_material_views_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       program_materials: {
         Row: {
           active: boolean | null
