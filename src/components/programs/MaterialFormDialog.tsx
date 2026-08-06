@@ -243,6 +243,37 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>ترتيب المقاطع (اختياري)</Label>
+              <Input
+                value={form.segment_order}
+                onChange={(e) => setForm({ ...form, segment_order: e.target.value })}
+                placeholder="مثال: المقطع 1 ثم 3 ثم 5"
+              />
+            </div>
+            <div>
+              <Label>الوقت المقترح بالدقائق (اختياري)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={form.suggested_minutes}
+                onChange={(e) => setForm({ ...form, suggested_minutes: e.target.value })}
+                placeholder="مثال: 15"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>إرشادات الاستخدام (اختياري)</Label>
+            <Textarea
+              value={form.usage_notes}
+              onChange={(e) => setForm({ ...form, usage_notes: e.target.value })}
+              placeholder="كيف تُستخدم المادة داخل الحلقة أو البرنامج؟"
+            />
+          </div>
+
+
           <div className="grid grid-cols-2 gap-3 items-end">
             <div>
               <Label>الترتيب</Label>
