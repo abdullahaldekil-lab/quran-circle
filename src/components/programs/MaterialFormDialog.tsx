@@ -30,6 +30,10 @@ export interface MaterialRow {
   program_key?: string | null;
   order_index: number | null;
   active: boolean | null;
+  /** Optional teaching metadata. */
+  segment_order?: string | null;
+  suggested_minutes?: number | null;
+  usage_notes?: string | null;
 }
 
 interface Props {
@@ -49,7 +53,11 @@ const emptyForm = {
   program_key: "",
   order_index: 0,
   active: true,
+  segment_order: "",
+  suggested_minutes: "",
+  usage_notes: "",
 };
+
 
 /** Add or edit an enrichment material, with a real file upload. */
 const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, onSaved }: Props) => {
@@ -71,6 +79,10 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
             program_key: material.program_key ?? "",
             order_index: material.order_index ?? 0,
             active: material.active ?? true,
+            segment_order: material.segment_order ?? "",
+            suggested_minutes:
+              material.suggested_minutes == null ? "" : String(material.suggested_minutes),
+            usage_notes: material.usage_notes ?? "",
           }
         : { ...emptyForm, program_key: defaultProgramKey ?? "" },
     );
@@ -91,6 +103,8 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
 
     setSaving(true);
     try {
+      // Optional minutes: empty stays null instead of becoming 0.
+      const minutes = Number(form.suggested_minutes);
       const payload: Record<string, unknown> = {
         title: form.title.trim(),
         description: form.description.trim() || null,
@@ -99,7 +113,14 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
         program_key: form.program_key || null,
         order_index: form.order_index,
         active: form.active,
+        segment_order: form.segment_order.trim() || null,
+        suggested_minutes:
+          form.suggested_minutes.trim() && Number.isFinite(minutes) && minutes > 0
+            ? Math.round(minutes)
+            : null,
+        usage_notes: form.usage_notes.trim() || null,
       };
+
 
       let id = material?.id;
 
@@ -221,6 +242,37 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>ترتيب المقاطع (اختياري)</Label>
+              <Input
+                value={form.segment_order}
+                onChange={(e) => setForm({ ...form, segment_order: e.target.value })}
+                placeholder="مثال: المقطع 1 ثم 3 ثم 5"
+              />
+            </div>
+            <div>
+              <Label>الوقت المقترح بالدقائق (اختياري)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={form.suggested_minutes}
+                onChange={(e) => setForm({ ...form, suggested_minutes: e.target.value })}
+                placeholder="مثال: 15"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>إرشادات الاستخدام (اختياري)</Label>
+            <Textarea
+              value={form.usage_notes}
+              onChange={(e) => setForm({ ...form, usage_notes: e.target.value })}
+              placeholder="كيف تُستخدم المادة داخل الحلقة أو البرنامج؟"
+            />
+          </div>
+
 
           <div className="grid grid-cols-2 gap-3 items-end">
             <div>
