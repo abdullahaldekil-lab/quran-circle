@@ -6,11 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Book, Video, FileText, Link as LinkIcon, Plus, Trash2, Library, Pencil, EyeOff, Music } from "lucide-react";
+import { Book, Video, FileText, Link as LinkIcon, Plus, Trash2, Library, Pencil, EyeOff, Music, Eye, Play, Users, Clock } from "lucide-react";
 import MaterialFormDialog, { type MaterialRow } from "@/components/programs/MaterialFormDialog";
 import MaterialPlayer from "@/components/programs/MaterialPlayer";
 import { MATERIAL_LABELS, MATERIAL_TYPES, type MaterialType } from "@/lib/materialType";
+import {
+  aggregateStats,
+  emptyStats,
+  totalStats,
+  type MaterialStats,
+  type MaterialViewRow,
+} from "@/lib/materialViews";
 import { PROGRAMS, programLabel } from "@/lib/programs";
+
 
 const TYPE_ICON: Record<MaterialType, typeof Book> = {
   book: Book,
