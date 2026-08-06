@@ -79,6 +79,10 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
             program_key: material.program_key ?? "",
             order_index: material.order_index ?? 0,
             active: material.active ?? true,
+            segment_order: material.segment_order ?? "",
+            suggested_minutes:
+              material.suggested_minutes == null ? "" : String(material.suggested_minutes),
+            usage_notes: material.usage_notes ?? "",
           }
         : { ...emptyForm, program_key: defaultProgramKey ?? "" },
     );
@@ -99,6 +103,8 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
 
     setSaving(true);
     try {
+      // Optional minutes: empty stays null instead of becoming 0.
+      const minutes = Number(form.suggested_minutes);
       const payload: Record<string, unknown> = {
         title: form.title.trim(),
         description: form.description.trim() || null,
@@ -107,7 +113,14 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
         program_key: form.program_key || null,
         order_index: form.order_index,
         active: form.active,
+        segment_order: form.segment_order.trim() || null,
+        suggested_minutes:
+          form.suggested_minutes.trim() && Number.isFinite(minutes) && minutes > 0
+            ? Math.round(minutes)
+            : null,
+        usage_notes: form.usage_notes.trim() || null,
       };
+
 
       let id = material?.id;
 
