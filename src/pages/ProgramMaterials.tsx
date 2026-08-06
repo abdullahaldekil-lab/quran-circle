@@ -132,6 +132,50 @@ export default function ProgramMaterials() {
         )}
       </div>
 
+      {/* Usage summary — management only */}
+      {canManage && (
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="pt-4 flex items-center gap-3">
+              <Eye className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-xl font-bold">{filteredTotals.views}</p>
+                <p className="text-xs text-muted-foreground">إجمالي المشاهدات</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 flex items-center gap-3">
+              <Play className="w-5 h-5 text-emerald-500" />
+              <div>
+                <p className="text-xl font-bold">{filteredTotals.plays}</p>
+                <p className="text-xs text-muted-foreground">تشغيل صوت/فيديو</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 flex items-center gap-3">
+              <Users className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="text-xl font-bold">{filteredTotals.downloads}</p>
+                <p className="text-xs text-muted-foreground">عمليات التحميل</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 flex items-center gap-3">
+              <Clock className="w-5 h-5 text-amber-500" />
+              <div>
+                <p className="text-xl font-bold">{filteredTotals.totalMinutes}</p>
+                <p className="text-xs text-muted-foreground">دقائق الاستماع</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+
+
       {/* Programme filter */}
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant={programFilter === "all" ? "default" : "outline"} onClick={() => setProgramFilter("all")}>
