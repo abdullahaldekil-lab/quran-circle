@@ -1,0 +1,4 @@
+CREATE POLICY "staff read program materials files" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'program-materials' AND public.is_staff(auth.uid()));
+CREATE POLICY "managers upload program materials files" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'program-materials' AND public.get_staff_role(auth.uid()) IN ('manager','supervisor','assistant_supervisor','secretary'));
+CREATE POLICY "managers update program materials files" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'program-materials' AND public.get_staff_role(auth.uid()) IN ('manager','supervisor','assistant_supervisor','secretary'));
+CREATE POLICY "managers delete program materials files" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'program-materials' AND public.get_staff_role(auth.uid()) IN ('manager','supervisor','assistant_supervisor','secretary'));
