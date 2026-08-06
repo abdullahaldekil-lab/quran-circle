@@ -2947,9 +2947,12 @@ export type Database = {
           order_index: number | null
           program_id: string | null
           program_key: string | null
+          segment_order: string | null
+          suggested_minutes: number | null
           title: string
           updated_at: string
           url: string | null
+          usage_notes: string | null
         }
         Insert: {
           active?: boolean | null
@@ -2964,9 +2967,12 @@ export type Database = {
           order_index?: number | null
           program_id?: string | null
           program_key?: string | null
+          segment_order?: string | null
+          suggested_minutes?: number | null
           title: string
           updated_at?: string
           url?: string | null
+          usage_notes?: string | null
         }
         Update: {
           active?: boolean | null
@@ -2981,9 +2987,12 @@ export type Database = {
           order_index?: number | null
           program_id?: string | null
           program_key?: string | null
+          segment_order?: string | null
+          suggested_minutes?: number | null
           title?: string
           updated_at?: string
           url?: string | null
+          usage_notes?: string | null
         }
         Relationships: []
       }
