@@ -6,11 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Book, Video, FileText, Link as LinkIcon, Plus, Trash2, Library, Pencil, EyeOff, Music } from "lucide-react";
+import { Book, Video, FileText, Link as LinkIcon, Plus, Trash2, Library, Pencil, EyeOff, Music, Eye, Play, Users, Clock } from "lucide-react";
 import MaterialFormDialog, { type MaterialRow } from "@/components/programs/MaterialFormDialog";
 import MaterialPlayer from "@/components/programs/MaterialPlayer";
 import { MATERIAL_LABELS, MATERIAL_TYPES, type MaterialType } from "@/lib/materialType";
+import {
+  aggregateStats,
+  emptyStats,
+  totalStats,
+  type MaterialStats,
+  type MaterialViewRow,
+} from "@/lib/materialViews";
 import { PROGRAMS, programLabel } from "@/lib/programs";
+
 
 const TYPE_ICON: Record<MaterialType, typeof Book> = {
   book: Book,
@@ -38,6 +46,7 @@ export default function ProgramMaterials() {
   const programFilter = searchParams.get("program") || "all";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MaterialRow | null>(null);
+  const [stats, setStats] = useState<Record<string, MaterialStats>>({});
 
   const load = useCallback(async () => {
     const { data, error } = await (supabase as any)
@@ -49,7 +58,20 @@ export default function ProgramMaterials() {
     setMaterials((data || []) as MaterialRow[]);
   }, []);
 
+  // View tracking is readable by staff only; a failure here must not break the library.
+  const loadStats = useCallback(async () => {
+    const { data, error } = await (supabase as any)
+      .from("program_material_views")
+      .select("material_id,event_type,seconds_watched,completion_percent,student_id,student_code,viewed_at")
+      .order("viewed_at", { ascending: false })
+      .limit(5000);
+    if (error) return;
+    setStats(aggregateStats((data || []) as MaterialViewRow[]));
+  }, []);
+
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadStats(); }, [loadStats]);
+
 
   const setProgramFilter = (key: string) => {
     const next = new URLSearchParams(searchParams);
@@ -87,6 +109,12 @@ export default function ProgramMaterials() {
     return true;
   });
 
+  const filteredTotals = totalStats(
+    Object.fromEntries(filtered.map((m) => [m.id, stats[m.id] || emptyStats()])),
+  );
+
+
+
   return (
     <div className="p-6 space-y-6" dir="rtl">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -103,6 +131,50 @@ export default function ProgramMaterials() {
           </Button>
         )}
       </div>
+
+      {/* Usage summary — management only */}
+      {canManage && (
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="pt-4 flex items-center gap-3">
+              <Eye className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-xl font-bold">{filteredTotals.views}</p>
+                <p className="text-xs text-muted-foreground">إجمالي المشاهدات</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 flex items-center gap-3">
+              <Play className="w-5 h-5 text-emerald-500" />
+              <div>
+                <p className="text-xl font-bold">{filteredTotals.plays}</p>
+                <p className="text-xs text-muted-foreground">تشغيل صوت/فيديو</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 flex items-center gap-3">
+              <Users className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="text-xl font-bold">{filteredTotals.downloads}</p>
+                <p className="text-xs text-muted-foreground">عمليات التحميل</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 flex items-center gap-3">
+              <Clock className="w-5 h-5 text-amber-500" />
+              <div>
+                <p className="text-xl font-bold">{filteredTotals.totalMinutes}</p>
+                <p className="text-xs text-muted-foreground">دقائق الاستماع</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+
 
       {/* Programme filter */}
       <div className="flex flex-wrap gap-2">
@@ -164,7 +236,18 @@ export default function ProgramMaterials() {
                   )}
                 </div>
 
-                <MaterialPlayer materialType={type} url={m.url} filePath={m.file_path} title={m.title} />
+                <MaterialPlayer materialId={m.id} materialType={type} url={m.url} filePath={m.file_path} title={m.title} />
+
+                {canManage && (
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground pt-1">
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{(stats[m.id]?.views ?? 0)} مشاهدة</span>
+                    <span className="flex items-center gap-1"><Play className="w-3 h-3" />{(stats[m.id]?.plays ?? 0)} تشغيل</span>
+                    <span className="flex items-center gap-1"><Users className="w-3 h-3" />{(stats[m.id]?.uniqueStudents ?? 0)} طالب</span>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{(stats[m.id]?.totalMinutes ?? 0)} د</span>
+                  </div>
+                )}
+
+
 
                 {canManage && (
                   <div className="flex items-center gap-1 pt-1 border-t">
