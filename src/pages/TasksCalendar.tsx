@@ -58,7 +58,7 @@ export default function TasksCalendar() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
-  const { data: profiles } = { data: undefined } as { data: undefined };
+  
   const [staff, setStaff] = useState<{ id: string; full_name: string | null }[]>([]);
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").order("full_name")
