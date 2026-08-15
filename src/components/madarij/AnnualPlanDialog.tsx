@@ -349,15 +349,26 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
             </div>
 
             <div className="space-y-2">
-              <Label>مدى الخطة</Label>
-              <Select value={term} onValueChange={(v) => setTerm(v as PlanTerm)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Label>مدى الخطة <span className="text-destructive">*</span></Label>
+              <Select
+                value={term}
+                onValueChange={(v) => { setTerm(v as PlanTerm); setTermError(false); }}
+                aria-invalid={termError}
+              >
+                <SelectTrigger className={termError ? "border-destructive ring-1 ring-destructive" : ""}>
+                  <SelectValue placeholder="اختر الفصل" />
+                </SelectTrigger>
                 <SelectContent>
                   {PLAN_TERMS.map((t) => (
                     <SelectItem key={t} value={t}>{TERM_LABELS[t]}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {termError && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" /> يرجى اختيار الفصل قبل المتابعة
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 يمكن أن تكون للطالب خطة سنوية وخطة فصلية نشطتان معًا — إنشاء خطة فصل لا يوقف الخطة السنوية.
               </p>
