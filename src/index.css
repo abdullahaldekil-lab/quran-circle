@@ -115,7 +115,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-arabic antialiased selection:bg-amber-200 selection:text-emerald-950 dark:selection:bg-emerald-800 dark:selection:text-amber-100;
+    @apply bg-background text-foreground font-arabic antialiased;
   }
 }
 
@@ -151,9 +151,8 @@
 
   /* Islamic Arabesque Geometric Watermark Pattern */
   .bg-islamic-pattern {
-    background-color: transparent;
-    background-image: radial-gradient(hsl(var(--primary) / 0.07) 1px, transparent 1px),
-      radial-gradient(hsl(var(--accent) / 0.05) 1px, transparent 1px);
+    background-image: radial-gradient(hsl(var(--primary) / 0.05) 1px, transparent 1px),
+      radial-gradient(hsl(var(--accent) / 0.04) 1px, transparent 1px);
     background-size: 24px 24px;
     background-position: 0 0, 12px 12px;
   }

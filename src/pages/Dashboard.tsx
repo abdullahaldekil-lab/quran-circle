@@ -173,10 +173,10 @@ const Dashboard = () => {
   }, [authLoading, user, accessLoading, allowedHalaqatIds]);
 
   const cards = [
-    { title: "عدد الطلاب", value: stats.students, icon: Users, color: "text-primary", href: "/students" },
-    { title: "الحلقات", value: stats.halaqat, icon: BookOpen, color: "text-secondary", href: "/halaqat" },
-    { title: "تسميعات اليوم", value: stats.todayRecitations, icon: ClipboardList, color: "text-info", href: "/recitation" },
-    { title: "متوسط الدرجات", value: stats.avgScore, icon: TrendingUp, color: "text-success", href: "/quiz-results" },
+    { title: "عدد الطلاب", value: stats.students, icon: Users, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10", border: "from-emerald-500 via-emerald-600 to-teal-500", href: "/students" },
+    { title: "الحلقات", value: stats.halaqat, icon: BookOpen, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/10", border: "from-amber-500 via-amber-600 to-yellow-400", href: "/halaqat" },
+    { title: "تسميعات اليوم", value: stats.todayRecitations, icon: ClipboardList, color: "text-teal-700 dark:text-teal-400", bg: "bg-teal-500/10", border: "from-teal-500 via-emerald-600 to-cyan-500", href: "/recitation" },
+    { title: "متوسط الدرجات", value: stats.avgScore, icon: TrendingUp, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10", border: "from-emerald-600 via-teal-500 to-emerald-400", href: "/quiz-results" },
   ];
 
   if (authLoading) {
@@ -250,10 +250,10 @@ const Dashboard = () => {
                   className="islamic-card cursor-pointer group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
                   onClick={() => navigate(card.href)}
                 >
-                  <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-400 via-emerald-600 to-amber-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <div className={`absolute top-0 right-0 left-0 h-1 bg-gradient-to-r ${card.border} opacity-70 group-hover:opacity-100 transition-opacity`} />
                   <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
                     <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground font-cairo">{card.title}</CardTitle>
-                    <div className="p-1.5 rounded-lg bg-amber-500/10 dark:bg-emerald-950/50">
+                    <div className={`p-2 rounded-xl ${card.bg}`}>
                       <card.icon className={`w-4 h-4 ${card.color}`} />
                     </div>
                   </CardHeader>
@@ -272,11 +272,11 @@ const Dashboard = () => {
                   <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
                     <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground font-cairo">حضور الموظفين</CardTitle>
                     <div className="p-1.5 rounded-lg bg-emerald-500/10">
-                      <Briefcase className={`w-4 h-4 ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`} />
+                      <Briefcase className={`w-4 h-4 ${staffPct >= 90 ? 'text-emerald-600' : staffPct >= 70 ? 'text-amber-600' : 'text-rose-600'}`} />
                     </div>
                   </CardHeader>
                   <CardContent className="px-4 pb-4">
-                    <div className={`text-2xl lg:text-3xl font-extrabold font-cairo ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`}>
+                    <div className={`text-2xl lg:text-3xl font-extrabold font-cairo ${staffPct >= 90 ? 'text-emerald-600 dark:text-emerald-400' : staffPct >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`}>
                       {staffPct}%
                     </div>
                   </CardContent>

@@ -72,33 +72,33 @@ export function QuranicVerseHeader({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl p-5 md:p-6 text-white gradient-primary shadow-lg border border-emerald-700/40 dark:border-emerald-600/30",
-        "bg-islamic-pattern",
+        "relative overflow-hidden rounded-2xl p-5 md:p-6 text-white shadow-xl border border-amber-500/30",
+        "bg-gradient-to-l from-emerald-950 via-emerald-900 to-emerald-950",
         className
       )}
     >
       {/* Subtle decorative background stars */}
-      <div className="absolute top-2 right-4 opacity-10 pointer-events-none">
-        <EightPointStar className="w-28 h-28 text-amber-300" />
+      <div className="absolute top-2 right-4 opacity-15 pointer-events-none">
+        <EightPointStar className="w-32 h-32 text-amber-400" />
       </div>
-      <div className="absolute -bottom-6 -left-6 opacity-10 pointer-events-none">
-        <EightPointStar className="w-36 h-36 text-amber-300" />
+      <div className="absolute -bottom-8 -left-8 opacity-10 pointer-events-none">
+        <EightPointStar className="w-40 h-40 text-amber-400" />
       </div>
 
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/40 border border-amber-500/30 text-amber-300 text-xs mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>{subtitle}</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-semibold mb-2.5 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span className="font-cairo">{subtitle}</span>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold font-quran text-amber-100 drop-shadow-sm tracking-wide">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-amiri text-amber-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] tracking-wide leading-relaxed">
             {quote}
           </h2>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 text-xs text-emerald-100/80 bg-emerald-950/30 px-3.5 py-2 rounded-xl border border-emerald-600/30">
-          <Moon className="w-4 h-4 text-amber-300 shrink-0" />
-          <span className="font-amiri text-sm">«خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ»</span>
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-amber-100 bg-emerald-950/70 backdrop-blur-md px-4 py-2.5 rounded-xl border border-amber-400/30 shadow-md">
+          <Moon className="w-4 h-4 text-amber-400 shrink-0 fill-amber-400/20" />
+          <span className="font-amiri font-semibold text-sm sm:text-base text-amber-200">«خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ»</span>
         </div>
       </div>
     </div>
