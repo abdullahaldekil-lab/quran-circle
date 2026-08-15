@@ -201,6 +201,14 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/programs-overview", icon: LayoutDashboard, label: "إشراف البرامج" },
       { to: "/program-materials", icon: Library, label: "مواد البرامج" },
+      { to: "/tarbawi-programs", icon: HeartHandshake, label: "البرامج التربوية" },
+      { to: "/tarbawi-follow-up", icon: ClipboardCheck, label: "متابعة البرامج" },
+      { to: "/tarbawi-exams", icon: ClipboardList, label: "اختبارات البرامج" },
+      { to: "/tarbawi-leaderboard", icon: Trophy, label: "لوحة الصدارة" },
+      { to: "/tarbawi-reports", icon: FileText, label: "التقارير التربوية" },
+      { to: "/tarbawi-surveys", icon: ClipboardSignature, label: "استبيانات الأثر" },
+      { to: "/tarbawi-calendar", icon: CalendarDays, label: "تقويم البرامج" },
+      { to: "/tarbawi-history", icon: History, label: "السجل التربوي" },
     ],
   },
   {
