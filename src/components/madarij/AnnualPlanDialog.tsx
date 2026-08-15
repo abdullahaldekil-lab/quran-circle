@@ -64,9 +64,11 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [dailyMemorization, setDailyMemorization] = useState(0);
   const [dailyReview, setDailyReview] = useState(0);
   const [dailyLinking, setDailyLinking] = useState(0);
-  const [prevMemFrom, setPrevMemFrom] = useState("");
-  const [prevMemTo, setPrevMemTo] = useState("");
-  const [prevMemPages, setPrevMemPages] = useState(0);
+  // الحفظ السابق: عدة مواضع (الجزء + من / إلى + عدد الأوجه)
+  const [prevRanges, setPrevRanges] = useState<PrevRange[]>([]);
+  const prevMemPages = prevRanges.reduce((s, r) => s + (Number(r.pages) || 0), 0);
+  const prevMemFrom = prevRanges[0]?.from || "";
+  const prevMemTo = prevRanges[prevRanges.length - 1]?.to || "";
 
   // Step 3
   const [monthlyDistribution, setMonthlyDistribution] = useState<MonthRow[]>([]);
