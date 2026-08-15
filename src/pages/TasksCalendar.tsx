@@ -39,7 +39,21 @@ interface Holiday { id: string; title: string; start_date: string; end_date: str
 const emptyForm = {
   title: "", description: "", category: "عام", priority: "عادي", status: "pending",
   due_date: "", due_time: "", assigned_to: "", assigned_to_role: "",
+  reminder_value: "1", reminder_unit: "days" as "days" | "hours",
 };
+
+/** Reminder timestamp = due datetime minus the chosen lead time (null when disabled). */
+export const computeReminderAt = (
+  dueDate: string, dueTime: string, value: string, unit: "days" | "hours",
+): string | null => {
+  const n = Number(value);
+  if (!dueDate || !Number.isFinite(n) || n <= 0) return null;
+  const base = new Date(`${dueDate}T${dueTime || "08:00"}:00`);
+  if (Number.isNaN(base.getTime())) return null;
+  const ms = unit === "days" ? n * 86400000 : n * 3600000;
+  return new Date(base.getTime() - ms).toISOString();
+};
+
 
 export default function TasksCalendar() {
   const navigate = useNavigate();
@@ -188,7 +202,10 @@ export default function TasksCalendar() {
       assigned_to: form.assigned_to || null,
       assigned_to_role: form.assigned_to ? null : form.assigned_to_role || null,
       completed_at: form.status === "completed" ? new Date().toISOString() : null,
+      reminder_at: computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit),
+      reminder_sent: false,
     };
+
     const { data, error } = await supabase.from("staff_tasks").insert(payload as any).select("id").single();
     setSaving(false);
     if (error) { toast.error("تعذّر إضافة المهمة"); return; }
@@ -408,6 +425,32 @@ export default function TasksCalendar() {
                 <Label className="text-xs">الوقت</Label>
                 <Input type="time" value={form.due_time} onChange={(e) => setForm((f) => ({ ...f, due_time: e.target.value }))} />
               </div>
+              <div>
+                <Label className="text-xs">تذكير قبل الاستحقاق</Label>
+                <Input
+                  type="number" min={0} step={1}
+                  value={form.reminder_value}
+                  onChange={(e) => setForm((f) => ({ ...f, reminder_value: e.target.value }))}
+                  aria-label="عدد الأيام أو الساعات قبل تاريخ الاستحقاق"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">وحدة التذكير</Label>
+                <Select value={form.reminder_unit} onValueChange={(v) => setForm((f) => ({ ...f, reminder_unit: v as "days" | "hours" }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="days">أيام</SelectItem>
+                    <SelectItem value="hours">ساعات</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2 -mt-1 text-xs text-muted-foreground">
+                {computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)
+                  ? `سيُرسل التذكير في: ${formatDateSmart(computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)!.slice(0, 10))} - ${new Date(computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)!).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true })}`
+                  : "بدون تذكير (اجعل القيمة 0 لتعطيله)"}
+              </div>
+
+
               <div>
                 <Label className="text-xs">الحالة</Label>
                 <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
