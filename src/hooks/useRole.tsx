@@ -39,6 +39,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/teacher-evaluations", "/admin/guardian-approvals",
     "/student-portal", "/program-quiz",
     "/summer-programs", "/program-materials", "/nazem-export",
+    "/tarbawi-programs", "/tarbawi-follow-up", "/tarbawi-exams", "/tarbawi-leaderboard", "/tarbawi-reports", "/tarbawi-surveys", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
   ],
   supervisor: [
     "/dashboard", "/admin-dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
@@ -52,6 +53,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/admin/guardian-approvals",
     "/student-portal", "/program-quiz",
     "/summer-programs", "/program-materials", "/nazem-export",
+    "/tarbawi-programs", "/tarbawi-follow-up", "/tarbawi-exams", "/tarbawi-leaderboard", "/tarbawi-reports", "/tarbawi-surveys", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
   ],
   assistant_supervisor: [
     "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
@@ -64,6 +66,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/programs-overview", "/halaqa-performance",
     "/admin/guardian-approvals", "/program-quiz",
     "/summer-programs", "/program-materials",
+    "/tarbawi-programs", "/tarbawi-follow-up", "/tarbawi-exams", "/tarbawi-leaderboard", "/tarbawi-reports", "/tarbawi-surveys", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
   ],
   secretary: [
     "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance", "/attendance-audit",
@@ -95,6 +98,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/notification-preferences", "/internal-requests", "/work-hub", "/staff-tasks", "/staff-tasks-analytics",
     "/enrollment-form", "/program-quiz",
     "/summer-programs", "/program-materials",
+    "/tarbawi-follow-up", "/tarbawi-leaderboard", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
   ],
   assistant_teacher: [
     "/dashboard", "/students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/recitation", "/attendance",
@@ -102,6 +106,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/quran-narration",
     "/staff-attendance-log", "/staff-qr-checkin",
     "/notification-preferences", "/internal-requests", "/work-hub", "/staff-tasks", "/staff-tasks-analytics",
+    "/tarbawi-follow-up", "/tarbawi-leaderboard", "/tarbawi-calendar",
   ],
 };
 
@@ -156,6 +161,7 @@ const talqeenSupervisorRoutes = [
   "/notification-preferences", "/internal-requests", "/work-hub",
   "/programs-overview", "/halaqa-performance",
   "/documents", "/rankings", "/trips", "/buses",
+  "/tarbawi-follow-up", "/tarbawi-leaderboard", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
 ];
 
 // Routes hidden when an assistant_teacher works inside a Talqeen halaqa

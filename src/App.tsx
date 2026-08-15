@@ -100,6 +100,15 @@ import ExternalReviewer from "./pages/ExternalReviewer";
 import StudentPortal from "./pages/StudentPortal";
 import SummerPrograms from "./pages/SummerPrograms";
 import ProgramMaterials from "./pages/ProgramMaterials";
+import TarbawiPrograms from "./pages/TarbawiPrograms";
+import TarbawiFollowUp from "./pages/TarbawiFollowUp";
+import TarbawiExams from "./pages/TarbawiExams";
+import TarbawiLeaderboard from "./pages/TarbawiLeaderboard";
+import TarbawiReports from "./pages/TarbawiReports";
+import TarbawiSurveys from "./pages/TarbawiSurveys";
+import TarbawiCalendar from "./pages/TarbawiCalendar";
+import TarbawiStudentHistory from "./pages/TarbawiStudentHistory";
+import TarbawiPracticeQuiz from "./pages/TarbawiPracticeQuiz";
 import NazemExport from "./pages/NazemExport";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -248,6 +257,15 @@ const AppRoutes = () => {
 
       <Route path="/summer-programs" element={<ProtectedRoute path="/summer-programs"><SummerPrograms /></ProtectedRoute>} />
       <Route path="/program-materials" element={<ProtectedRoute path="/program-materials"><ProgramMaterials /></ProtectedRoute>} />
+      <Route path="/tarbawi-programs" element={<ProtectedRoute path="/tarbawi-programs"><TarbawiPrograms /></ProtectedRoute>} />
+      <Route path="/tarbawi-follow-up" element={<ProtectedRoute path="/tarbawi-follow-up"><TarbawiFollowUp /></ProtectedRoute>} />
+      <Route path="/tarbawi-exams" element={<ProtectedRoute path="/tarbawi-exams"><TarbawiExams /></ProtectedRoute>} />
+      <Route path="/tarbawi-leaderboard" element={<ProtectedRoute path="/tarbawi-leaderboard"><TarbawiLeaderboard /></ProtectedRoute>} />
+      <Route path="/tarbawi-reports" element={<ProtectedRoute path="/tarbawi-reports"><TarbawiReports /></ProtectedRoute>} />
+      <Route path="/tarbawi-surveys" element={<ProtectedRoute path="/tarbawi-surveys"><TarbawiSurveys /></ProtectedRoute>} />
+      <Route path="/tarbawi-calendar" element={<ProtectedRoute path="/tarbawi-calendar"><TarbawiCalendar /></ProtectedRoute>} />
+      <Route path="/tarbawi-practice-quiz" element={<ProtectedRoute path="/tarbawi-practice-quiz"><TarbawiPracticeQuiz /></ProtectedRoute>} />
+      <Route path="/tarbawi-history" element={<ProtectedRoute path="/tarbawi-history"><TarbawiStudentHistory /></ProtectedRoute>} />
       <Route path="/nazem-export" element={<ProtectedRoute path="/nazem-export"><NazemExport /></ProtectedRoute>} />
 
 
