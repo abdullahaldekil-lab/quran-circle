@@ -250,6 +250,11 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
       return;
     }
     setTermError(false);
+    if (!rangeValidation.valid) {
+      toast.error("يرجى تصحيح مواضع الحفظ السابق قبل الحفظ");
+      setStep(2);
+      return;
+    }
 
     // Check for existing active plan
     // Scoped to the same term: creating a summer plan must not be blocked by, or
