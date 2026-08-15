@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Printer } from "lucide-react";
+import { FileDown, FileText, Printer } from "lucide-react";
+import { toast } from "sonner";
 import { formatDateSmart } from "@/lib/hijri";
+import { openTarbawiReportPrint } from "@/lib/tarbawi-report-print";
 import {
   ATTENDANCE_LABELS, averageCommitment, gradeLabel, recordCommitment,
   scaleAverage, scorePercentage, sumAxes, weekStart,
