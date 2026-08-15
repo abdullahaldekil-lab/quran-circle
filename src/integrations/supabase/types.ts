@@ -2876,6 +2876,72 @@ export type Database = {
           },
         ]
       }
+      program_material_assignments: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          halaqa_id: string | null
+          id: string
+          material_id: string
+          tarbawi_program_id: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          halaqa_id?: string | null
+          id?: string
+          material_id: string
+          tarbawi_program_id?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          halaqa_id?: string | null
+          id?: string
+          material_id?: string
+          tarbawi_program_id?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_material_assignments_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_material_assignments_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_material_assignments_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_material_assignments_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "program_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_material_assignments_tarbawi_program_id_fkey"
+            columns: ["tarbawi_program_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       program_material_views: {
         Row: {
           completion_percent: number
@@ -5860,6 +5926,686 @@ export type Database = {
           },
         ]
       }
+      tarbawi_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_date: string
+          event_time: string | null
+          event_type: string
+          id: string
+          location: string | null
+          program_id: string | null
+          title: string
+          updated_at: string
+          visible_to_guardians: boolean
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date: string
+          event_time?: string | null
+          event_type?: string
+          id?: string
+          location?: string | null
+          program_id?: string | null
+          title: string
+          updated_at?: string
+          visible_to_guardians?: boolean
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string
+          event_time?: string | null
+          event_type?: string
+          id?: string
+          location?: string | null
+          program_id?: string | null
+          title?: string
+          updated_at?: string
+          visible_to_guardians?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_events_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_exam_scores: {
+        Row: {
+          created_at: string
+          exam_id: string
+          id: string
+          notes: string | null
+          recorded_by: string | null
+          score: number | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          id?: string
+          notes?: string | null
+          recorded_by?: string | null
+          score?: number | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          id?: string
+          notes?: string | null
+          recorded_by?: string | null
+          score?: number | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_exam_scores_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_exam_scores_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_exams: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          exam_date: string
+          exam_type: string
+          halaqa_id: string | null
+          id: string
+          max_score: number
+          notes: string | null
+          program_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          exam_date?: string
+          exam_type?: string
+          halaqa_id?: string | null
+          id?: string
+          max_score?: number
+          notes?: string | null
+          program_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          exam_date?: string
+          exam_type?: string
+          halaqa_id?: string | null
+          id?: string
+          max_score?: number
+          notes?: string | null
+          program_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_exams_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_exams_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_exams_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_exams_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_practice_attempts: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          quiz_id: string
+          score: number | null
+          student_id: string
+          submitted_at: string
+          total_questions: number | null
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          quiz_id: string
+          score?: number | null
+          student_id: string
+          submitted_at?: string
+          total_questions?: number | null
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          quiz_id?: string
+          score?: number | null
+          student_id?: string
+          submitted_at?: string
+          total_questions?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_practice_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_practice_quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_practice_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_practice_quizzes: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          difficulty: string
+          halaqa_id: string | null
+          id: string
+          material_id: string | null
+          program_id: string | null
+          question_type: string
+          questions: Json
+          title: string
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          halaqa_id?: string | null
+          id?: string
+          material_id?: string | null
+          program_id?: string | null
+          question_type?: string
+          questions?: Json
+          title: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          halaqa_id?: string | null
+          id?: string
+          material_id?: string | null
+          program_id?: string | null
+          question_type?: string
+          questions?: Json
+          title?: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_practice_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_practice_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_practice_quizzes_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_practice_quizzes_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "program_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_practice_quizzes_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_program_halaqat: {
+        Row: {
+          created_at: string
+          halaqa_id: string
+          id: string
+          notified_at: string | null
+          program_id: string
+        }
+        Insert: {
+          created_at?: string
+          halaqa_id: string
+          id?: string
+          notified_at?: string | null
+          program_id: string
+        }
+        Update: {
+          created_at?: string
+          halaqa_id?: string
+          id?: string
+          notified_at?: string | null
+          program_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_program_halaqat_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_program_halaqat_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_program_halaqat_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_program_halaqat_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_programs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          goal: string | null
+          id: string
+          name: string
+          session_weekday: number | null
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          name: string
+          session_weekday?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          name?: string
+          session_weekday?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tarbawi_survey_invites: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          respondent_type: string
+          student_id: string | null
+          survey_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          respondent_type?: string
+          student_id?: string | null
+          survey_id: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          respondent_type?: string
+          student_id?: string | null
+          survey_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_survey_invites_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_survey_invites_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_survey_questions: {
+        Row: {
+          created_at: string
+          id: string
+          options: Json
+          order_index: number
+          question_text: string
+          question_type: string
+          required: boolean
+          survey_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          options?: Json
+          order_index?: number
+          question_text: string
+          question_type?: string
+          required?: boolean
+          survey_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          options?: Json
+          order_index?: number
+          question_text?: string
+          question_type?: string
+          required?: boolean
+          survey_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_survey_questions_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_survey_responses: {
+        Row: {
+          answers: Json
+          id: string
+          invite_id: string | null
+          respondent_type: string
+          student_id: string | null
+          submitted_at: string
+          survey_id: string
+        }
+        Insert: {
+          answers?: Json
+          id?: string
+          invite_id?: string | null
+          respondent_type?: string
+          student_id?: string | null
+          submitted_at?: string
+          survey_id: string
+        }
+        Update: {
+          answers?: Json
+          id?: string
+          invite_id?: string | null
+          respondent_type?: string
+          student_id?: string | null
+          submitted_at?: string
+          survey_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_survey_responses_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_survey_invites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_survey_responses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_survey_responses_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_surveys: {
+        Row: {
+          audience: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          phase: string
+          program_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          phase?: string
+          program_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          phase?: string
+          program_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_surveys_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarbawi_weekly_records: {
+        Row: {
+          created_at: string
+          halaqa_id: string | null
+          id: string
+          listening_done: boolean | null
+          listening_minutes: number | null
+          memorization_amount: string | null
+          memorization_done: boolean | null
+          notes: string | null
+          program_id: string
+          reading_done: boolean | null
+          reading_pages: number | null
+          recorded_by: string | null
+          session_attendance: string | null
+          student_id: string
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          halaqa_id?: string | null
+          id?: string
+          listening_done?: boolean | null
+          listening_minutes?: number | null
+          memorization_amount?: string | null
+          memorization_done?: boolean | null
+          notes?: string | null
+          program_id: string
+          reading_done?: boolean | null
+          reading_pages?: number | null
+          recorded_by?: string | null
+          session_attendance?: string | null
+          student_id: string
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          halaqa_id?: string | null
+          id?: string
+          listening_done?: boolean | null
+          listening_minutes?: number | null
+          memorization_amount?: string | null
+          memorization_done?: boolean | null
+          notes?: string | null
+          program_id?: string
+          reading_done?: boolean | null
+          reading_pages?: number | null
+          recorded_by?: string | null
+          session_attendance?: string | null
+          student_id?: string
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarbawi_weekly_records_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_weekly_records_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_weekly_records_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_weekly_records_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "tarbawi_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarbawi_weekly_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_evaluations: {
         Row: {
           comment: string | null
@@ -6461,11 +7207,13 @@ export type Database = {
       get_external_narration_token: { Args: { _token: string }; Returns: Json }
       get_staff_role: { Args: { _user_id: string }; Returns: string }
       get_student_portal_data: { Args: { _code: string }; Returns: Json }
+      get_tarbawi_survey_by_token: { Args: { _token: string }; Returns: Json }
       has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
       }
       is_guardian_of: { Args: { _student_id: string }; Returns: boolean }
+      is_halaqa_teacher: { Args: { _halaqa_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       submit_external_narration_review: {
         Args: {
@@ -6473,6 +7221,10 @@ export type Database = {
           _reviewer_phone: string
           _token: string
         }
+        Returns: boolean
+      }
+      submit_tarbawi_survey: {
+        Args: { _answers: Json; _token: string }
         Returns: boolean
       }
     }
