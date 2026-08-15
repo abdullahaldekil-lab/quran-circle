@@ -219,6 +219,13 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [confirmReplace, setConfirmReplace] = useState(false);
 
   const handleSave = async () => {
+    if (!term || !PLAN_TERMS.includes(term)) {
+      setTermError(true);
+      toast.error("يرجى اختيار الفصل قبل الحفظ");
+      return;
+    }
+    setTermError(false);
+
     // Check for existing active plan
     // Scoped to the same term: creating a summer plan must not be blocked by, or
     // silently replace, the student's annual plan.
