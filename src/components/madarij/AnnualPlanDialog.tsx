@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Target, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, Target, BookOpen, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { PLAN_TERMS, TERM_LABELS, type PlanTerm } from "@/lib/planTerm";
@@ -44,6 +44,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [termError, setTermError] = useState(false);
 
   // Step 1
   const [halaqat, setHalaqat] = useState<any[]>([]);
@@ -51,7 +52,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
   const [planType, setPlanType] = useState("silver");
-  const [term, setTerm] = useState<PlanTerm>("annual");
+  const [term, setTerm] = useState<PlanTerm>("" as unknown as PlanTerm);
   const [customDaily, setCustomDaily] = useState(1);
 
   // Step 2
@@ -73,6 +74,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   useEffect(() => {
     if (open) {
       setStep(1);
+      setTermError(false);
       fetchHalaqat();
       fetchHolidays();
     }
@@ -193,10 +195,16 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
 
   const handleNext = () => {
     if (step === 1) {
+      if (!term || !PLAN_TERMS.includes(term)) {
+        setTermError(true);
+        toast.error("يرجى اختيار الفصل قبل المتابعة");
+        return;
+      }
       if (!selectedHalaqa || !selectedStudent) {
         toast.error("يرجى اختيار الحلقة والطالب");
         return;
       }
+      setTermError(false);
       calculateSummary();
       setStep(2);
     } else if (step === 2) {
@@ -212,6 +220,13 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [confirmReplace, setConfirmReplace] = useState(false);
 
   const handleSave = async () => {
+    if (!term || !PLAN_TERMS.includes(term)) {
+      setTermError(true);
+      toast.error("يرجى اختيار الفصل قبل الحفظ");
+      return;
+    }
+    setTermError(false);
+
     // Check for existing active plan
     // Scoped to the same term: creating a summer plan must not be blocked by, or
     // silently replace, the student's annual plan.
@@ -348,15 +363,26 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
             </div>
 
             <div className="space-y-2">
-              <Label>مدى الخطة</Label>
-              <Select value={term} onValueChange={(v) => setTerm(v as PlanTerm)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Label>مدى الخطة <span className="text-destructive">*</span></Label>
+              <Select
+                value={term}
+                onValueChange={(v) => { setTerm(v as PlanTerm); setTermError(false); }}
+                aria-invalid={termError}
+              >
+                <SelectTrigger className={termError ? "border-destructive ring-1 ring-destructive" : ""}>
+                  <SelectValue placeholder="اختر الفصل" />
+                </SelectTrigger>
                 <SelectContent>
                   {PLAN_TERMS.map((t) => (
                     <SelectItem key={t} value={t}>{TERM_LABELS[t]}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {termError && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" /> يرجى اختيار الفصل قبل المتابعة
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 يمكن أن تكون للطالب خطة سنوية وخطة فصلية نشطتان معًا — إنشاء خطة فصل لا يوقف الخطة السنوية.
               </p>
