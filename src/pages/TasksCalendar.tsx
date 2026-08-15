@@ -39,7 +39,21 @@ interface Holiday { id: string; title: string; start_date: string; end_date: str
 const emptyForm = {
   title: "", description: "", category: "عام", priority: "عادي", status: "pending",
   due_date: "", due_time: "", assigned_to: "", assigned_to_role: "",
+  reminder_value: "1", reminder_unit: "days" as "days" | "hours",
 };
+
+/** Reminder timestamp = due datetime minus the chosen lead time (null when disabled). */
+export const computeReminderAt = (
+  dueDate: string, dueTime: string, value: string, unit: "days" | "hours",
+): string | null => {
+  const n = Number(value);
+  if (!dueDate || !Number.isFinite(n) || n <= 0) return null;
+  const base = new Date(`${dueDate}T${dueTime || "08:00"}:00`);
+  if (Number.isNaN(base.getTime())) return null;
+  const ms = unit === "days" ? n * 86400000 : n * 3600000;
+  return new Date(base.getTime() - ms).toISOString();
+};
+
 
 export default function TasksCalendar() {
   const navigate = useNavigate();
