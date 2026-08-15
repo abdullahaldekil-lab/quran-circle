@@ -140,6 +140,39 @@ export default function TasksCalendar() {
     setAddOpen(true);
   };
 
+  const notifyTaskCreated = async (task: { id: string; title: string; due_date: string | null; due_time: string | null; priority: string; assigned_to: string | null; assigned_to_role: string | null }) => {
+    try {
+      let recipients: string[] = [];
+      if (task.assigned_to) {
+        recipients = [task.assigned_to];
+      } else if (task.assigned_to_role) {
+        const { data } = await supabase.from("profiles").select("id").eq("role", task.assigned_to_role);
+        recipients = (data || []).map((p: any) => p.id);
+      }
+      const creator = session?.user?.id;
+      if (creator && !recipients.includes(creator)) recipients.push(creator);
+      recipients = Array.from(new Set(recipients.filter(Boolean)));
+      if (!recipients.length) return;
+
+      const due = task.due_date
+        ? `${formatDateSmart(task.due_date)}${task.due_time ? ` - ${task.due_time.slice(0, 5)}` : ""}`
+        : "بدون تاريخ";
+      const rows = recipients.map((uid) => ({
+        user_id: uid,
+        title: "مهمة جديدة",
+        body: `تم إنشاء المهمة "${task.title}" (${task.priority}) بتاريخ استحقاق: ${due}.`,
+        channel: "inApp",
+        status: "sent",
+        sent_at: new Date().toISOString(),
+        meta_data: { type: "staff_task_created", task_id: task.id, link: "/work-hub?tab=calendar" },
+      }));
+      const { error } = await supabase.from("notifications").insert(rows as any);
+      if (error) console.error("notify task error", error);
+    } catch (e) {
+      console.error("notify task error", e);
+    }
+  };
+
   const saveTask = async () => {
     if (!form.title.trim() || !form.due_date) return;
     setSaving(true);
@@ -156,14 +189,24 @@ export default function TasksCalendar() {
       assigned_to_role: form.assigned_to ? null : form.assigned_to_role || null,
       completed_at: form.status === "completed" ? new Date().toISOString() : null,
     };
-    const { error } = await supabase.from("staff_tasks").insert(payload as any);
+    const { data, error } = await supabase.from("staff_tasks").insert(payload as any).select("id").single();
     setSaving(false);
     if (error) { toast.error("تعذّر إضافة المهمة"); return; }
     toast.success("تمت إضافة المهمة");
     setAddOpen(false);
     setForm(emptyForm);
     load();
+    await notifyTaskCreated({
+      id: (data as any)?.id,
+      title: payload.title,
+      due_date: payload.due_date,
+      due_time: payload.due_time,
+      priority: payload.priority,
+      assigned_to: payload.assigned_to,
+      assigned_to_role: payload.assigned_to_role,
+    });
   };
+
 
 
 
