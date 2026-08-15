@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useDynamicRoles } from "@/hooks/useDynamicRoles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, AlarmClock, CalendarDays, RefreshCw } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, AlarmClock, CalendarDays, RefreshCw, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateSmart, formatGregorianArabic, WEEKDAYS } from "@/lib/hijri";
 import {
@@ -19,6 +23,9 @@ const STATUS_LABELS: Record<string, string> = {
   pending: "معلّقة", in_progress: "قيد التنفيذ", completed: "مكتملة",
   cancelled: "ملغاة", overdue: "متأخرة",
 };
+const NEW_TASK_STATUSES = ["pending", "in_progress", "completed"];
+const CATEGORIES = ["عام", "تعليمي", "إداري", "صيانة", "متابعة", "تقارير"];
+const PRIORITIES = ["عاجل", "عالي", "عادي", "منخفض"];
 
 const YEARS = [1447, 1448, 1449, 1450];
 
@@ -29,8 +36,15 @@ interface Task {
 interface EventRow { id: string; title: string; event_type: string; event_date: string; event_time: string | null; location: string | null; }
 interface Holiday { id: string; title: string; start_date: string; end_date: string; holiday_type: string; }
 
+const emptyForm = {
+  title: "", description: "", category: "عام", priority: "عادي", status: "pending",
+  due_date: "", due_time: "", assigned_to: "", assigned_to_role: "",
+};
+
 export default function TasksCalendar() {
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const { roles } = useDynamicRoles();
   const initial = currentHijriPosition();
   const [year, setYear] = useState(YEARS.includes(initial.year) ? initial.year : 1448);
   const [month, setMonth] = useState(initial.month);
@@ -40,6 +54,17 @@ export default function TasksCalendar() {
   const [loading, setLoading] = useState(false);
   const [openDay, setOpenDay] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+
+  
+  const [staff, setStaff] = useState<{ id: string; full_name: string | null }[]>([]);
+  useEffect(() => {
+    supabase.from("profiles").select("id, full_name").order("full_name")
+      .then(({ data }) => setStaff(data || []));
+  }, []);
+
 
   const grid = useMemo(() => buildHijriMonth(year, month), [year, month]);
   const todayIso = new Date().toISOString().slice(0, 10);
@@ -110,6 +135,38 @@ export default function TasksCalendar() {
   const dayEvents = openDay ? eventsByDay[openDay] || [] : [];
   const dayHolidays = openDay ? holidaysFor(openDay) : [];
 
+  const openAdd = (iso: string) => {
+    setForm({ ...emptyForm, due_date: iso });
+    setAddOpen(true);
+  };
+
+  const saveTask = async () => {
+    if (!form.title.trim() || !form.due_date) return;
+    setSaving(true);
+    const payload: Record<string, any> = {
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      category: form.category,
+      priority: form.priority,
+      status: form.status,
+      due_date: form.due_date,
+      due_time: form.due_time || null,
+      assigned_by: session?.user?.id ?? null,
+      assigned_to: form.assigned_to || null,
+      assigned_to_role: form.assigned_to ? null : form.assigned_to_role || null,
+      completed_at: form.status === "completed" ? new Date().toISOString() : null,
+    };
+    const { error } = await supabase.from("staff_tasks").insert(payload as any);
+    setSaving(false);
+    if (error) { toast.error("تعذّر إضافة المهمة"); return; }
+    toast.success("تمت إضافة المهمة");
+    setAddOpen(false);
+    setForm(emptyForm);
+    load();
+  };
+
+
+
   return (
     <div className="space-y-4" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -117,6 +174,10 @@ export default function TasksCalendar() {
           <CalendarDays className="w-5 h-5 text-primary" /> التقويم الهجري — مخطِّط المهام
         </h2>
         <div className="flex items-center gap-2">
+          <Button size="sm" onClick={() => openAdd(todayIso)} aria-label="إضافة مهمة جديدة">
+            <Plus className="w-4 h-4 ml-1" /> مهمة جديدة
+          </Button>
+
           <Button variant="outline" size="sm" onClick={() => syncOverdue(false)} disabled={syncing}
             aria-label="تحديث المهام المتأخرة">
             <RefreshCw className={`w-4 h-4 ml-1 ${syncing ? "animate-spin" : ""}`} /> تحديث المتأخرة
@@ -181,16 +242,28 @@ export default function TasksCalendar() {
           const late = dt.filter((t) => isTaskLate(t, todayIso)).length;
           const isToday = d.iso === todayIso;
           return (
-            <button
+            <div
               key={d.iso}
+              role="button"
+              tabIndex={0}
               onClick={() => setOpenDay(d.iso)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenDay(d.iso); } }}
               aria-label={`${d.hijriDay} ${HIJRI_MONTH_NAMES[month - 1]} — ${dt.length} مهمة`}
-              className={`min-h-[76px] rounded-lg border p-1 text-right transition hover:bg-accent/50
+              className={`group relative min-h-[76px] cursor-pointer rounded-lg border p-1 text-right transition hover:bg-accent/50
                 ${isToday ? "border-primary ring-1 ring-primary" : ""}
                 ${dh.length ? "bg-amber-50 dark:bg-amber-950/20" : isWeekendDay(d.weekday) ? "bg-muted/40" : ""}`}
             >
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); openAdd(d.iso); }}
+                aria-label={`إضافة مهمة في ${d.hijriDay} ${HIJRI_MONTH_NAMES[month - 1]}`}
+                className="absolute bottom-1 left-1 rounded-md border bg-background p-0.5 opacity-0 transition group-hover:opacity-100 focus:opacity-100"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
               <div className="flex items-start justify-between">
                 <span className="text-sm font-bold">{d.hijriDay}</span>
+
                 <span className="text-[10px] text-muted-foreground">{d.gregorianDay}/{d.gregorianMonth}</span>
               </div>
               <div className="mt-1 space-y-0.5">
@@ -214,7 +287,8 @@ export default function TasksCalendar() {
                   </span>
                 )}
               </div>
-            </button>
+            </div>
+
           );
         })}
       </div>
@@ -256,9 +330,95 @@ export default function TasksCalendar() {
               <p className="text-sm text-muted-foreground text-center py-6">لا يوجد شيء في هذا اليوم</p>
             )}
           </div>
-          <Button variant="outline" onClick={() => navigate("/work-hub?tab=tasks")}>إدارة المهام</Button>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button onClick={() => { if (openDay) { setOpenDay(null); openAdd(openDay); } }}>
+              <Plus className="w-4 h-4 ml-1" /> إضافة مهمة في هذا اليوم
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/work-hub?tab=tasks")}>إدارة المهام</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(emptyForm); }}>
+        <DialogContent className="max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>مهمة جديدة</DialogTitle>
+            <DialogDescription>
+              {form.due_date ? `تاريخ الاستحقاق: ${formatDateSmart(form.due_date)} (${formatGregorianArabic(form.due_date)})` : "اختر تاريخ الاستحقاق"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+            <div>
+              <Label className="text-xs">عنوان المهمة *</Label>
+              <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="اكتب عنوان المهمة" />
+            </div>
+            <div>
+              <Label className="text-xs">الوصف</Label>
+              <Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={2} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">تاريخ الاستحقاق (ميلادي) *</Label>
+                <Input type="date" value={form.due_date} onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">الوقت</Label>
+                <Input type="time" value={form.due_time} onChange={(e) => setForm((f) => ({ ...f, due_time: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">الحالة</Label>
+                <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {NEW_TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">الأولوية</Label>
+                <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">التصنيف</Label>
+                <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">تكليف موظف</Label>
+                <Select value={form.assigned_to} onValueChange={(v) => setForm((f) => ({ ...f, assigned_to: v, assigned_to_role: "" }))}>
+                  <SelectTrigger><SelectValue placeholder="اختر موظفاً" /></SelectTrigger>
+                  <SelectContent>
+                    {staff.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || "بدون اسم"}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {!form.assigned_to && (
+              <div>
+                <Label className="text-xs">أو تكليف دور وظيفي</Label>
+                <Select value={form.assigned_to_role} onValueChange={(v) => setForm((f) => ({ ...f, assigned_to_role: v, assigned_to: "" }))}>
+                  <SelectTrigger><SelectValue placeholder="اختر الدور" /></SelectTrigger>
+                  <SelectContent>
+                    {roles.map((r) => <SelectItem key={r.name} value={r.name}>{r.name_ar || r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button onClick={saveTask} disabled={saving || !form.title.trim() || !form.due_date}>
+              {saving ? "جارٍ الحفظ..." : "حفظ المهمة"}
+            </Button>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>إلغاء</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
+
   );
 }
