@@ -44,6 +44,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [termError, setTermError] = useState(false);
 
   // Step 1
   const [halaqat, setHalaqat] = useState<any[]>([]);
@@ -51,7 +52,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
   const [planType, setPlanType] = useState("silver");
-  const [term, setTerm] = useState<PlanTerm>("annual");
+  const [term, setTerm] = useState<PlanTerm>("" as unknown as PlanTerm);
   const [customDaily, setCustomDaily] = useState(1);
 
   // Step 2
