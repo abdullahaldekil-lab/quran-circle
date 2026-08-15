@@ -56,6 +56,9 @@ const WorkHub = () => {
         <TabsContent value="tasks" className="mt-4">
           {tab === "tasks" && <StaffTasks embedded />}
         </TabsContent>
+        <TabsContent value="calendar" className="mt-4">
+          {tab === "calendar" && <TasksCalendar />}
+        </TabsContent>
         <TabsContent value="requests" className="mt-4">
           {tab === "requests" && <InternalRequests embedded />}
         </TabsContent>
