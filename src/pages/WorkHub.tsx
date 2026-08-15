@@ -5,6 +5,7 @@ import PageDateHeader from "@/components/PageDateHeader";
 import StaffTasks from "@/pages/StaffTasks";
 import InternalRequests from "@/pages/InternalRequests";
 import StaffTasksAnalytics from "@/pages/StaffTasksAnalytics";
+import TasksCalendar from "@/pages/TasksCalendar";
 import { WORK_TABS, WORK_TAB_LABELS, resolveInitialTab, type WorkTab } from "@/lib/workHub";
 
 /**
@@ -55,6 +56,9 @@ const WorkHub = () => {
 
         <TabsContent value="tasks" className="mt-4">
           {tab === "tasks" && <StaffTasks embedded />}
+        </TabsContent>
+        <TabsContent value="calendar" className="mt-4">
+          {tab === "calendar" && <TasksCalendar />}
         </TabsContent>
         <TabsContent value="requests" className="mt-4">
           {tab === "requests" && <InternalRequests embedded />}

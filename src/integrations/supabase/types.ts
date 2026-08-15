@@ -3689,6 +3689,7 @@ export type Database = {
           due_time: string | null
           estimated_minutes: number | null
           id: string
+          overdue_notified_at: string | null
           priority: string
           recurrence: string | null
           reminder_at: string | null
@@ -3713,6 +3714,7 @@ export type Database = {
           due_time?: string | null
           estimated_minutes?: number | null
           id?: string
+          overdue_notified_at?: string | null
           priority?: string
           recurrence?: string | null
           reminder_at?: string | null
@@ -3737,6 +3739,7 @@ export type Database = {
           due_time?: string | null
           estimated_minutes?: number | null
           id?: string
+          overdue_notified_at?: string | null
           priority?: string
           recurrence?: string | null
           reminder_at?: string | null
@@ -7217,6 +7220,7 @@ export type Database = {
       is_guardian_of: { Args: { _student_id: string }; Returns: boolean }
       is_halaqa_teacher: { Args: { _halaqa_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      mark_overdue_staff_tasks: { Args: never; Returns: number }
       submit_external_narration_review: {
         Args: {
           _reviewer_name: string

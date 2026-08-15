@@ -5,12 +5,13 @@
 // (`request_status`, `request_priority`, `request_type`), which cannot be done safely
 // for a purely presentational gain.
 
-export type WorkTab = "tasks" | "requests" | "analytics";
+export type WorkTab = "tasks" | "calendar" | "requests" | "analytics";
 
-export const WORK_TABS: WorkTab[] = ["tasks", "requests", "analytics"];
+export const WORK_TABS: WorkTab[] = ["tasks", "calendar", "requests", "analytics"];
 
 export const WORK_TAB_LABELS: Record<WorkTab, string> = {
   tasks: "المهام",
+  calendar: "التقويم الهجري",
   requests: "الطلبات الداخلية",
   analytics: "التحليلات",
 };
