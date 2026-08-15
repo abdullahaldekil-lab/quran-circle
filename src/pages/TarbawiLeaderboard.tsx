@@ -62,17 +62,15 @@ export default function TarbawiLeaderboard() {
 
     const list: LeaderboardEntry[] = (studs || []).map((s: any) => {
       const rows = byStudent.get(s.id) || [];
-      const totals = sumAxes(rows);
-      const overall = Math.round(
-        rows.reduce((sum, r) => sum + recordCommitment(r), 0) / (rows.length || 1),
-      );
       return {
         student_id: s.id,
         student_name: s.full_name,
         halaqa_name: halNames[s.halaqa_id] || "—",
-        ...totals,
-        overall,
-      } as LeaderboardEntry;
+        totals: sumAxes(rows),
+        commitment: Math.round(
+          rows.reduce((sum, r) => sum + recordCommitment(r), 0) / (rows.length || 1),
+        ),
+      };
     });
     setEntries(list);
     setLoading(false);
