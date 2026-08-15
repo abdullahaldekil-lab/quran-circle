@@ -174,6 +174,10 @@ export default function TasksCalendar() {
           <CalendarDays className="w-5 h-5 text-primary" /> التقويم الهجري — مخطِّط المهام
         </h2>
         <div className="flex items-center gap-2">
+          <Button size="sm" onClick={() => openAdd(todayIso)} aria-label="إضافة مهمة جديدة">
+            <Plus className="w-4 h-4 ml-1" /> مهمة جديدة
+          </Button>
+
           <Button variant="outline" size="sm" onClick={() => syncOverdue(false)} disabled={syncing}
             aria-label="تحديث المهام المتأخرة">
             <RefreshCw className={`w-4 h-4 ml-1 ${syncing ? "animate-spin" : ""}`} /> تحديث المتأخرة
