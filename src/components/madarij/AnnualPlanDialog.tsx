@@ -233,7 +233,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
         return;
       }
       if (!rangeValidation.valid) {
-        toast.error("يرجى تصحيح مواضع الحفظ السابق قبل المتابعة");
+        toast.error("يرجى تصحيح مواضع الحفظ السابق قبل المتابعة", { description: rangeValidation.messages.join(" • ") });
         return;
       }
       generateMonthlyDistribution();
@@ -251,7 +251,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     }
     setTermError(false);
     if (!rangeValidation.valid) {
-      toast.error("يرجى تصحيح مواضع الحفظ السابق قبل الحفظ");
+      toast.error("يرجى تصحيح مواضع الحفظ السابق قبل الحفظ", { description: rangeValidation.messages.join(" • ") });
       setStep(2);
       return;
     }
@@ -504,6 +504,18 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
                 </Button>
               </div>
 
+              {rangeValidation.messages.length > 0 && (
+                <div className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 p-3">
+                  <p className="text-xs font-semibold text-destructive flex items-center gap-1">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    يوجد {rangeValidation.messages.length} خطأ في مواضع الحفظ السابق:
+                  </p>
+                  <ul className="mt-1 space-y-0.5 pr-4 list-disc text-xs text-destructive">
+                    {rangeValidation.messages.map((m, k) => <li key={k}>{m}</li>)}
+                  </ul>
+                </div>
+              )}
+
               {prevRanges.length === 0 ? (
                 <p className="text-xs text-muted-foreground">لا توجد مواضع مسجلة — اضغط «إضافة موضع» لتسجيل أكثر من موضع للحفظ السابق.</p>
               ) : (
@@ -523,15 +535,15 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
                       </div>
                       <div className="col-span-3 space-y-1">
                         <Label className="text-xs">من</Label>
-                        <Input placeholder="مثال: البقرة 1" value={r.from} onChange={(e) => updatePrevRange(i, { from: e.target.value })} />
+                        <Input aria-invalid={["from", "range"].includes(rangeValidation.rowErrors[i]?.field || "")} className={["from", "range"].includes(rangeValidation.rowErrors[i]?.field || "") ? "border-destructive" : ""} placeholder="مثال: البقرة 1" value={r.from} onChange={(e) => updatePrevRange(i, { from: e.target.value })} />
                       </div>
                       <div className="col-span-3 space-y-1">
                         <Label className="text-xs">إلى</Label>
-                        <Input placeholder="مثال: البقرة 141" value={r.to} onChange={(e) => updatePrevRange(i, { to: e.target.value })} />
+                        <Input aria-invalid={["to", "range"].includes(rangeValidation.rowErrors[i]?.field || "")} className={["to", "range"].includes(rangeValidation.rowErrors[i]?.field || "") ? "border-destructive" : ""} placeholder="مثال: البقرة 141" value={r.to} onChange={(e) => updatePrevRange(i, { to: e.target.value })} />
                       </div>
                       <div className="col-span-2 space-y-1">
                         <Label className="text-xs">الأوجه</Label>
-                        <Input type="number" min={0.5} step={0.5} value={r.pages} onChange={(e) => updatePrevRange(i, { pages: Number(e.target.value) })} />
+                        <Input aria-invalid={rangeValidation.rowErrors[i]?.field === "pages"} className={rangeValidation.rowErrors[i]?.field === "pages" ? "border-destructive" : ""} type="number" min={0.5} step={0.5} value={r.pages} onChange={(e) => updatePrevRange(i, { pages: Number(e.target.value) })} />
                       </div>
                       <div className="col-span-1">
                         <Button type="button" size="icon" variant="ghost" onClick={() => removePrevRange(i)} aria-label="حذف الموضع">
@@ -540,7 +552,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
                       </div>
                       {rangeValidation.rowErrors[i] && (
                         <p className="col-span-12 text-xs text-destructive flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" /> {rangeValidation.rowErrors[i]}
+                          <AlertTriangle className="w-3 h-3 shrink-0" /> {rangeValidation.rowErrors[i].message}
                         </p>
                       )}
                     </div>

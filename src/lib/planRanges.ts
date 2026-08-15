@@ -29,17 +29,32 @@ export const parsePoint = (raw: string): ParsedPoint => {
   return { name, num };
 };
 
-/** Errors keyed by range index, plus cross-range overlap errors. */
+export type RangeField = "from" | "to" | "pages" | "range";
+
+export interface RangeError {
+  /** Which input needs fixing — used to highlight the field. */
+  field: RangeField;
+  /** Short reason shown next to the field. */
+  message: string;
+  /** Other position (1-based) involved, for overlap errors. */
+  conflictsWith?: number;
+}
+
+/** Errors keyed by range index, plus a flat list for the summary alert. */
 export interface RangeValidation {
-  rowErrors: Record<number, string>;
+  rowErrors: Record<number, RangeError>;
+  /** Detailed messages, each prefixed with the position number. */
+  messages: string[];
   valid: boolean;
 }
 
 const isFilled = (r: PlanRange) =>
   r.juz !== "" || !!(r.from || "").trim() || !!(r.to || "").trim() || Number(r.pages) > 0;
 
+const pos = (i: number) => `الموضع ${i + 1}`;
+
 export const validatePlanRanges = (ranges: PlanRange[]): RangeValidation => {
-  const rowErrors: Record<number, string> = {};
+  const rowErrors: Record<number, RangeError> = {};
 
   ranges.forEach((r, i) => {
     if (!isFilled(r)) return;
@@ -47,21 +62,35 @@ export const validatePlanRanges = (ranges: PlanRange[]): RangeValidation => {
     const from = (r.from || "").trim();
     const to = (r.to || "").trim();
 
-    if (!from || !to) {
-      rowErrors[i] = "يرجى تحديد «من» و«إلى»";
+    if (!from && !to) {
+      rowErrors[i] = { field: "from", message: "حقلا «من» و«إلى» فارغان — يرجى تحديد بداية ونهاية الموضع" };
+      return;
+    }
+    if (!from) {
+      rowErrors[i] = { field: "from", message: "حقل «من» فارغ — يرجى تحديد بداية الموضع" };
+      return;
+    }
+    if (!to) {
+      rowErrors[i] = { field: "to", message: "حقل «إلى» فارغ — يرجى تحديد نهاية الموضع" };
       return;
     }
 
     const pages = Number(r.pages);
     if (!Number.isFinite(pages) || pages <= 0) {
-      rowErrors[i] = "عدد الأوجه يجب أن يكون أكبر من صفر";
+      rowErrors[i] = {
+        field: "pages",
+        message: `عدد الأوجه (${r.pages || 0}) غير صحيح — يجب أن يكون رقماً أكبر من صفر`,
+      };
       return;
     }
 
     const a = parsePoint(from);
     const b = parsePoint(to);
     if (a.num !== null && b.num !== null && a.name === b.name && a.num > b.num) {
-      rowErrors[i] = "«من» يجب أن يكون أقل من أو يساوي «إلى»";
+      rowErrors[i] = {
+        field: "from",
+        message: `«من» (${from}) أكبر من «إلى» (${to}) — يجب أن يكون «من» أقل من أو يساوي «إلى»`,
+      };
     }
   });
 
@@ -78,12 +107,29 @@ export const validatePlanRanges = (ranges: PlanRange[]): RangeValidation => {
       if (p.a.name !== q.a.name) continue;
       const overlap = (p.a.num as number) <= (q.b.num as number) && (q.a.num as number) <= (p.b.num as number);
       if (overlap) {
-        const msg = "يوجد تداخل مع موضع آخر في نفس الخطة";
-        rowErrors[p.i] = rowErrors[p.i] || msg;
-        rowErrors[q.i] = rowErrors[q.i] || msg;
+        const label = p.a.name ? `${p.a.name} ` : "";
+        if (!rowErrors[p.i]) {
+          rowErrors[p.i] = {
+            field: "range",
+            conflictsWith: q.i + 1,
+            message: `تداخل مع ${pos(q.i)} (${label}${q.a.num}-${q.b.num}) — يرجى تعديل «من» أو «إلى»`,
+          };
+        }
+        if (!rowErrors[q.i]) {
+          rowErrors[q.i] = {
+            field: "range",
+            conflictsWith: p.i + 1,
+            message: `تداخل مع ${pos(p.i)} (${label}${p.a.num}-${p.b.num}) — يرجى تعديل «من» أو «إلى»`,
+          };
+        }
       }
     }
   }
 
-  return { rowErrors, valid: Object.keys(rowErrors).length === 0 };
+  const messages = Object.keys(rowErrors)
+    .map(Number)
+    .sort((m, n) => m - n)
+    .map((i) => `${pos(i)}: ${rowErrors[i].message}`);
+
+  return { rowErrors, messages, valid: messages.length === 0 };
 };
