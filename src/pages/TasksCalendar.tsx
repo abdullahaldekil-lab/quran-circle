@@ -330,9 +330,95 @@ export default function TasksCalendar() {
               <p className="text-sm text-muted-foreground text-center py-6">لا يوجد شيء في هذا اليوم</p>
             )}
           </div>
-          <Button variant="outline" onClick={() => navigate("/work-hub?tab=tasks")}>إدارة المهام</Button>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button onClick={() => { if (openDay) { setOpenDay(null); openAdd(openDay); } }}>
+              <Plus className="w-4 h-4 ml-1" /> إضافة مهمة في هذا اليوم
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/work-hub?tab=tasks")}>إدارة المهام</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(emptyForm); }}>
+        <DialogContent className="max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>مهمة جديدة</DialogTitle>
+            <DialogDescription>
+              {form.due_date ? `تاريخ الاستحقاق: ${formatDateSmart(form.due_date)} (${formatGregorianArabic(form.due_date)})` : "اختر تاريخ الاستحقاق"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+            <div>
+              <Label className="text-xs">عنوان المهمة *</Label>
+              <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="اكتب عنوان المهمة" />
+            </div>
+            <div>
+              <Label className="text-xs">الوصف</Label>
+              <Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={2} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">تاريخ الاستحقاق (ميلادي) *</Label>
+                <Input type="date" value={form.due_date} onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">الوقت</Label>
+                <Input type="time" value={form.due_time} onChange={(e) => setForm((f) => ({ ...f, due_time: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">الحالة</Label>
+                <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {NEW_TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">الأولوية</Label>
+                <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">التصنيف</Label>
+                <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">تكليف موظف</Label>
+                <Select value={form.assigned_to} onValueChange={(v) => setForm((f) => ({ ...f, assigned_to: v, assigned_to_role: "" }))}>
+                  <SelectTrigger><SelectValue placeholder="اختر موظفاً" /></SelectTrigger>
+                  <SelectContent>
+                    {staff.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || "بدون اسم"}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {!form.assigned_to && (
+              <div>
+                <Label className="text-xs">أو تكليف دور وظيفي</Label>
+                <Select value={form.assigned_to_role} onValueChange={(v) => setForm((f) => ({ ...f, assigned_to_role: v, assigned_to: "" }))}>
+                  <SelectTrigger><SelectValue placeholder="اختر الدور" /></SelectTrigger>
+                  <SelectContent>
+                    {roles.map((r) => <SelectItem key={r.name} value={r.name}>{r.label || r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button onClick={saveTask} disabled={saving || !form.title.trim() || !form.due_date}>
+              {saving ? "جارٍ الحفظ..." : "حفظ المهمة"}
+            </Button>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>إلغاء</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
+
   );
 }
