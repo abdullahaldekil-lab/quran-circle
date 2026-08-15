@@ -238,16 +238,28 @@ export default function TasksCalendar() {
           const late = dt.filter((t) => isTaskLate(t, todayIso)).length;
           const isToday = d.iso === todayIso;
           return (
-            <button
+            <div
               key={d.iso}
+              role="button"
+              tabIndex={0}
               onClick={() => setOpenDay(d.iso)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenDay(d.iso); } }}
               aria-label={`${d.hijriDay} ${HIJRI_MONTH_NAMES[month - 1]} — ${dt.length} مهمة`}
-              className={`min-h-[76px] rounded-lg border p-1 text-right transition hover:bg-accent/50
+              className={`group relative min-h-[76px] cursor-pointer rounded-lg border p-1 text-right transition hover:bg-accent/50
                 ${isToday ? "border-primary ring-1 ring-primary" : ""}
                 ${dh.length ? "bg-amber-50 dark:bg-amber-950/20" : isWeekendDay(d.weekday) ? "bg-muted/40" : ""}`}
             >
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); openAdd(d.iso); }}
+                aria-label={`إضافة مهمة في ${d.hijriDay} ${HIJRI_MONTH_NAMES[month - 1]}`}
+                className="absolute bottom-1 left-1 rounded-md border bg-background p-0.5 opacity-0 transition group-hover:opacity-100 focus:opacity-100"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
               <div className="flex items-start justify-between">
                 <span className="text-sm font-bold">{d.hijriDay}</span>
+
                 <span className="text-[10px] text-muted-foreground">{d.gregorianDay}/{d.gregorianMonth}</span>
               </div>
               <div className="mt-1 space-y-0.5">
