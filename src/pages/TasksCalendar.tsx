@@ -202,7 +202,10 @@ export default function TasksCalendar() {
       assigned_to: form.assigned_to || null,
       assigned_to_role: form.assigned_to ? null : form.assigned_to_role || null,
       completed_at: form.status === "completed" ? new Date().toISOString() : null,
+      reminder_at: computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit),
+      reminder_sent: false,
     };
+
     const { data, error } = await supabase.from("staff_tasks").insert(payload as any).select("id").single();
     setSaving(false);
     if (error) { toast.error("تعذّر إضافة المهمة"); return; }
