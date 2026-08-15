@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClipboardSignature, Plus, Trash2, BarChart3 } from "lucide-react";
 import { scaleAverage } from "@/lib/tarbawi";
@@ -189,8 +189,11 @@ export default function TarbawiSurveys() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent dir="rtl" className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>استبيان جديد</DialogTitle></DialogHeader>
+        <DialogContent dir="rtl" className="max-h-[85vh] overflow-y-auto" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>استبيان جديد</DialogTitle>
+            <DialogDescription>أنشئ استبياناً جديداً لقياس أثر البرنامج التربوي</DialogDescription>
+          </DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>العنوان *</Label>
