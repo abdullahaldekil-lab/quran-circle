@@ -30,15 +30,20 @@ export const HIJRI_MONTH_NAMES = HIJRI_MONTHS;
 /** Weekend in the academic calendar: Friday + Saturday. */
 export const isWeekendDay = (weekday: number) => weekday === 5 || weekday === 6;
 
+/** Local (not UTC) ISO date — the calendar works in the user's day, like the rest of the app. */
+const toIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 export const buildHijriMonth = (year: number, month: number): HijriMonthGrid => {
   const first = moment(`${year}/${month}/1`, "iYYYY/iM/iD");
-  const total = first.iDaysInMonth();
+  // `moment.iDaysInMonth` is the static helper (0-indexed month); the instance method is unavailable.
+  const total = (moment as any).iDaysInMonth(year, month - 1) || 30;
   const days: HijriDay[] = [];
+  const base = first.toDate();
   for (let d = 0; d < total; d++) {
-    const m = first.clone().add(d, "days");
-    const js = m.toDate();
+    const js = new Date(base.getFullYear(), base.getMonth(), base.getDate() + d);
     days.push({
-      iso: m.format("YYYY-MM-DD"),
+      iso: toIso(js),
       hijriDay: d + 1,
       weekday: js.getDay(),
       gregorianDay: js.getDate(),
