@@ -7206,7 +7206,9 @@ export type Database = {
       }
       get_external_narration_token: { Args: { _token: string }; Returns: Json }
       get_staff_role: { Args: { _user_id: string }; Returns: string }
+      get_student_pending_surveys: { Args: { _code: string }; Returns: Json }
       get_student_portal_data: { Args: { _code: string }; Returns: Json }
+      get_student_practice_quizzes: { Args: { _code: string }; Returns: Json }
       get_tarbawi_survey_by_token: { Args: { _token: string }; Returns: Json }
       has_permission: {
         Args: { _permission_name: string; _user_id: string }
@@ -7220,6 +7222,16 @@ export type Database = {
           _reviewer_name: string
           _reviewer_phone: string
           _token: string
+        }
+        Returns: boolean
+      }
+      submit_student_practice_attempt: {
+        Args: {
+          _answers: Json
+          _code: string
+          _quiz_id: string
+          _score: number
+          _total: number
         }
         Returns: boolean
       }
