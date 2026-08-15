@@ -135,6 +135,38 @@ export default function TasksCalendar() {
   const dayEvents = openDay ? eventsByDay[openDay] || [] : [];
   const dayHolidays = openDay ? holidaysFor(openDay) : [];
 
+  const openAdd = (iso: string) => {
+    setForm({ ...emptyForm, due_date: iso });
+    setAddOpen(true);
+  };
+
+  const saveTask = async () => {
+    if (!form.title.trim() || !form.due_date) return;
+    setSaving(true);
+    const payload: Record<string, any> = {
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      category: form.category,
+      priority: form.priority,
+      status: form.status,
+      due_date: form.due_date,
+      due_time: form.due_time || null,
+      assigned_by: session?.user?.id ?? null,
+      assigned_to: form.assigned_to || null,
+      assigned_to_role: form.assigned_to ? null : form.assigned_to_role || null,
+      completed_at: form.status === "completed" ? new Date().toISOString() : null,
+    };
+    const { error } = await supabase.from("staff_tasks").insert(payload as any);
+    setSaving(false);
+    if (error) { toast.error("تعذّر إضافة المهمة"); return; }
+    toast.success("تمت إضافة المهمة");
+    setAddOpen(false);
+    setForm(emptyForm);
+    load();
+  };
+
+
+
   return (
     <div className="space-y-4" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
