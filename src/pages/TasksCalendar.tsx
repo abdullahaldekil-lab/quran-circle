@@ -404,7 +404,7 @@ export default function TasksCalendar() {
                 <Select value={form.assigned_to_role} onValueChange={(v) => setForm((f) => ({ ...f, assigned_to_role: v, assigned_to: "" }))}>
                   <SelectTrigger><SelectValue placeholder="اختر الدور" /></SelectTrigger>
                   <SelectContent>
-                    {roles.map((r) => <SelectItem key={r.name} value={r.name}>{r.label || r.name}</SelectItem>)}
+                    {roles.map((r) => <SelectItem key={r.name} value={r.name}>{r.name_ar || r.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
