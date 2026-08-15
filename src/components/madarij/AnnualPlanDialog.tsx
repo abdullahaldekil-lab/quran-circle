@@ -93,11 +93,6 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     if (open) {
       setStep(1);
       setTermError(false);
-    if (!rangeValidation.valid) {
-      toast.error("يرجى تصحيح مواضع الحفظ السابق قبل الحفظ");
-      setStep(2);
-      return;
-    }
       setPrevRanges([]);
       fetchHalaqat();
       fetchHolidays();
