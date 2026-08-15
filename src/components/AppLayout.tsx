@@ -213,6 +213,7 @@ const navGroups: NavGroup[] = [
       { to: "/tarbawi-reports", icon: FileText, label: "التقارير التربوية" },
       { to: "/tarbawi-surveys", icon: ClipboardSignature, label: "استبيانات الأثر" },
       { to: "/tarbawi-calendar", icon: CalendarDays, label: "تقويم البرامج" },
+      { to: "/tarbawi-practice-quiz", icon: Sparkles, label: "اختبارات تجريبية ذكية" },
       { to: "/tarbawi-history", icon: History, label: "السجل التربوي" },
     ],
   },

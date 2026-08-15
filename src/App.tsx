@@ -108,6 +108,7 @@ import TarbawiReports from "./pages/TarbawiReports";
 import TarbawiSurveys from "./pages/TarbawiSurveys";
 import TarbawiCalendar from "./pages/TarbawiCalendar";
 import TarbawiStudentHistory from "./pages/TarbawiStudentHistory";
+import TarbawiPracticeQuiz from "./pages/TarbawiPracticeQuiz";
 import NazemExport from "./pages/NazemExport";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -263,6 +264,7 @@ const AppRoutes = () => {
       <Route path="/tarbawi-reports" element={<ProtectedRoute path="/tarbawi-reports"><TarbawiReports /></ProtectedRoute>} />
       <Route path="/tarbawi-surveys" element={<ProtectedRoute path="/tarbawi-surveys"><TarbawiSurveys /></ProtectedRoute>} />
       <Route path="/tarbawi-calendar" element={<ProtectedRoute path="/tarbawi-calendar"><TarbawiCalendar /></ProtectedRoute>} />
+      <Route path="/tarbawi-practice-quiz" element={<ProtectedRoute path="/tarbawi-practice-quiz"><TarbawiPracticeQuiz /></ProtectedRoute>} />
       <Route path="/tarbawi-history" element={<ProtectedRoute path="/tarbawi-history"><TarbawiStudentHistory /></ProtectedRoute>} />
       <Route path="/nazem-export" element={<ProtectedRoute path="/nazem-export"><NazemExport /></ProtectedRoute>} />
 
