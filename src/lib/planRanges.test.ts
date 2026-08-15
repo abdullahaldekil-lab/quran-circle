@@ -19,17 +19,21 @@ describe("validatePlanRanges", () => {
   it("rejects from > to", () => {
     const v = validatePlanRanges([{ juz: 1, from: "البقرة 141", to: "البقرة 1", pages: 5 }]);
     expect(v.valid).toBe(false);
-    expect(v.rowErrors[0]).toContain("«من»");
+    expect(v.rowErrors[0].field).toBe("from");
+    expect(v.rowErrors[0].message).toContain("البقرة 141");
+    expect(v.messages[0]).toContain("الموضع 1");
   });
 
   it("rejects non-positive pages", () => {
     const v = validatePlanRanges([{ juz: 1, from: "البقرة 1", to: "البقرة 5", pages: 0 }]);
     expect(v.valid).toBe(false);
+    expect(v.rowErrors[0].field).toBe("pages");
   });
 
   it("requires both bounds when a row is filled", () => {
     const v = validatePlanRanges([{ juz: 1, from: "البقرة 1", to: "", pages: 3 }]);
     expect(v.valid).toBe(false);
+    expect(v.rowErrors[0].field).toBe("to");
   });
 
   it("detects overlapping ranges in the same juz", () => {
@@ -39,6 +43,9 @@ describe("validatePlanRanges", () => {
     ]);
     expect(v.valid).toBe(false);
     expect(Object.keys(v.rowErrors)).toHaveLength(2);
+    expect(v.rowErrors[0].conflictsWith).toBe(2);
+    expect(v.rowErrors[1].message).toContain("الموضع 1");
+    expect(v.messages).toHaveLength(2);
   });
 
   it("allows adjacent non-overlapping ranges", () => {
