@@ -3994,6 +3994,7 @@ export type Database = {
           start_date: string
           status: string
           student_id: string
+          term: string
           total_target_pages: number
           updated_at: string
           working_days_per_week: number
@@ -4016,6 +4017,7 @@ export type Database = {
           start_date?: string
           status?: string
           student_id: string
+          term?: string
           total_target_pages?: number
           updated_at?: string
           working_days_per_week?: number
@@ -4038,6 +4040,7 @@ export type Database = {
           start_date?: string
           status?: string
           student_id?: string
+          term?: string
           total_target_pages?: number
           updated_at?: string
           working_days_per_week?: number
