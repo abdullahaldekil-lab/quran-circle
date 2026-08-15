@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { PLAN_TERMS, TERM_LABELS, type PlanTerm } from "@/lib/planTerm";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
+import { validatePlanRanges } from "@/lib/planRanges";
 
 interface Props {
   open: boolean;
@@ -82,6 +83,9 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     setPrevRanges(prev => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   const removePrevRange = (index: number) => setPrevRanges(prev => prev.filter((_, i) => i !== index));
 
+  // Live validation: from <= to, positive pages, and no overlap between segments.
+  const rangeValidation = validatePlanRanges(prevRanges);
+
   // Step 3
   const [monthlyDistribution, setMonthlyDistribution] = useState<MonthRow[]>([]);
 
@@ -89,6 +93,11 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     if (open) {
       setStep(1);
       setTermError(false);
+    if (!rangeValidation.valid) {
+      toast.error("يرجى تصحيح مواضع الحفظ السابق قبل الحفظ");
+      setStep(2);
+      return;
+    }
       setPrevRanges([]);
       fetchHalaqat();
       fetchHolidays();
@@ -226,6 +235,10 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     } else if (step === 2) {
       if (!startDate || !endDate) {
         toast.error("يرجى تحديد التواريخ");
+        return;
+      }
+      if (!rangeValidation.valid) {
+        toast.error("يرجى تصحيح مواضع الحفظ السابق قبل المتابعة");
         return;
       }
       generateMonthlyDistribution();
@@ -518,13 +531,18 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
                       </div>
                       <div className="col-span-2 space-y-1">
                         <Label className="text-xs">الأوجه</Label>
-                        <Input type="number" min={0} step={0.5} value={r.pages} onChange={(e) => updatePrevRange(i, { pages: Number(e.target.value) })} />
+                        <Input type="number" min={0.5} step={0.5} value={r.pages} onChange={(e) => updatePrevRange(i, { pages: Number(e.target.value) })} />
                       </div>
                       <div className="col-span-1">
                         <Button type="button" size="icon" variant="ghost" onClick={() => removePrevRange(i)} aria-label="حذف الموضع">
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       </div>
+                      {rangeValidation.rowErrors[i] && (
+                        <p className="col-span-12 text-xs text-destructive flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> {rangeValidation.rowErrors[i]}
+                        </p>
+                      )}
                     </div>
                   ))}
                   <p className="text-xs text-muted-foreground">
