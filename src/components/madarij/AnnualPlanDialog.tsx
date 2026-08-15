@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Target, BookOpen, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { CalendarDays, Target, BookOpen, ChevronLeft, ChevronRight, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { PLAN_TERMS, TERM_LABELS, type PlanTerm } from "@/lib/planTerm";
@@ -27,6 +27,13 @@ interface MonthRow {
   monthName: string;
   workDays: number;
   targetPages: number;
+}
+
+interface PrevRange {
+  juz: number | "";
+  from: string;
+  to: string;
+  pages: number;
 }
 
 const PLAN_TYPES = [
@@ -64,9 +71,16 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const [dailyMemorization, setDailyMemorization] = useState(0);
   const [dailyReview, setDailyReview] = useState(0);
   const [dailyLinking, setDailyLinking] = useState(0);
-  const [prevMemFrom, setPrevMemFrom] = useState("");
-  const [prevMemTo, setPrevMemTo] = useState("");
-  const [prevMemPages, setPrevMemPages] = useState(0);
+  // الحفظ السابق: عدة مواضع (الجزء + من / إلى + عدد الأوجه)
+  const [prevRanges, setPrevRanges] = useState<PrevRange[]>([]);
+  const prevMemPages = prevRanges.reduce((s, r) => s + (Number(r.pages) || 0), 0);
+  const prevMemFrom = prevRanges[0]?.from || "";
+  const prevMemTo = prevRanges[prevRanges.length - 1]?.to || "";
+
+  const addPrevRange = () => setPrevRanges(prev => [...prev, { juz: "", from: "", to: "", pages: 0 }]);
+  const updatePrevRange = (index: number, patch: Partial<PrevRange>) =>
+    setPrevRanges(prev => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  const removePrevRange = (index: number) => setPrevRanges(prev => prev.filter((_, i) => i !== index));
 
   // Step 3
   const [monthlyDistribution, setMonthlyDistribution] = useState<MonthRow[]>([]);
@@ -75,10 +89,12 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     if (open) {
       setStep(1);
       setTermError(false);
+      setPrevRanges([]);
       fetchHalaqat();
       fetchHolidays();
     }
   }, [open]);
+
 
   useEffect(() => {
     if (selectedHalaqa) fetchStudents();
@@ -275,6 +291,9 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
           previous_memorized_from: prevMemFrom || null,
           previous_memorized_to: prevMemTo || null,
           previous_memorized_pages: prevMemPages,
+          previous_memorized_ranges: prevRanges
+            .filter(r => r.juz !== "" || r.from || r.to || r.pages)
+            .map(r => ({ juz: r.juz === "" ? null : r.juz, from: r.from || null, to: r.to || null, pages: Number(r.pages) || 0 })),
           status: "active",
           created_by: user?.id,
         })
@@ -463,24 +482,58 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
               </div>
             </div>
 
-            {/* Previous memorization */}
+            {/* Previous memorization — multiple segments */}
             <div className="border-t pt-3">
-              <p className="text-sm font-semibold mb-3">الحفظ السابق (اختياري)</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">من</Label>
-                  <Input placeholder="مثال: البقرة آية 1" value={prevMemFrom} onChange={(e) => setPrevMemFrom(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">إلى</Label>
-                  <Input placeholder="مثال: آل عمران آية 50" value={prevMemTo} onChange={(e) => setPrevMemTo(e.target.value)} />
-                </div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold">الحفظ السابق (اختياري)</p>
+                <Button type="button" size="sm" variant="outline" onClick={addPrevRange} aria-label="إضافة موضع حفظ سابق">
+                  <Plus className="w-4 h-4 ml-1" /> إضافة موضع
+                </Button>
               </div>
-              <div className="space-y-1 mt-2">
-                <Label className="text-xs">عدد الأوجه المحفوظة سابقاً</Label>
-                <Input type="number" min={0} value={prevMemPages} onChange={(e) => setPrevMemPages(Number(e.target.value))} className="w-32" />
-              </div>
+
+              {prevRanges.length === 0 ? (
+                <p className="text-xs text-muted-foreground">لا توجد مواضع مسجلة — اضغط «إضافة موضع» لتسجيل أكثر من موضع للحفظ السابق.</p>
+              ) : (
+                <div className="space-y-2">
+                  {prevRanges.map((r, i) => (
+                    <div key={i} className="grid grid-cols-12 gap-2 items-end p-2 rounded-md bg-muted/40">
+                      <div className="col-span-3 space-y-1">
+                        <Label className="text-xs">الجزء</Label>
+                        <Select value={r.juz === "" ? "" : String(r.juz)} onValueChange={(v) => updatePrevRange(i, { juz: Number(v) })}>
+                          <SelectTrigger aria-label="الجزء"><SelectValue placeholder="اختر" /></SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 30 }, (_, k) => k + 1).map(j => (
+                              <SelectItem key={j} value={String(j)}>الجزء {j}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="col-span-3 space-y-1">
+                        <Label className="text-xs">من</Label>
+                        <Input placeholder="مثال: البقرة 1" value={r.from} onChange={(e) => updatePrevRange(i, { from: e.target.value })} />
+                      </div>
+                      <div className="col-span-3 space-y-1">
+                        <Label className="text-xs">إلى</Label>
+                        <Input placeholder="مثال: البقرة 141" value={r.to} onChange={(e) => updatePrevRange(i, { to: e.target.value })} />
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <Label className="text-xs">الأوجه</Label>
+                        <Input type="number" min={0} step={0.5} value={r.pages} onChange={(e) => updatePrevRange(i, { pages: Number(e.target.value) })} />
+                      </div>
+                      <div className="col-span-1">
+                        <Button type="button" size="icon" variant="ghost" onClick={() => removePrevRange(i)} aria-label="حذف الموضع">
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <p className="text-xs text-muted-foreground">
+                    إجمالي الأوجه المحفوظة سابقاً: <span className="font-semibold text-foreground">{prevMemPages}</span> وجه ({prevRanges.length} موضع)
+                  </p>
+                </div>
+              )}
             </div>
+
 
             <p className="text-xs text-muted-foreground">
               * يتم خصم العطل الرسمية تلقائياً ({holidays.length} عطلة مسجلة)
