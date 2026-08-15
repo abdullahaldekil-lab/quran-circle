@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Printer } from "lucide-react";
+import { FileDown, FileText, Printer } from "lucide-react";
+import { toast } from "sonner";
 import { formatDateSmart } from "@/lib/hijri";
+import { openTarbawiReportPrint } from "@/lib/tarbawi-report-print";
 import {
   ATTENDANCE_LABELS, averageCommitment, gradeLabel, recordCommitment,
   scaleAverage, scorePercentage, sumAxes, weekStart,
@@ -85,14 +87,36 @@ export default function TarbawiReports() {
 
   const halaqaName = halaqat.find((h) => h.id === halaqaId)?.name || "";
 
+  const exportPdf = () => {
+    const ok = openTarbawiReportPrint(
+      { periodLabel: PERIODS[period].label, halaqaName, from, to, weeks: PERIODS[period].weeks },
+      rows.map(({ s, recs, totals, commitment, examAvg, present, absent, excused }) => ({
+        studentName: s.full_name,
+        weeks: recs.length,
+        present, absent, excused, commitment, examAvg,
+        memorization: totals.memorization,
+        listening: totals.listening,
+        reading: totals.reading,
+        notes: recs.filter((r: any) => r.notes).map((r: any) => ({ week: r.week_start, text: r.notes })),
+      })),
+    );
+    if (!ok) toast.error("تعذّر فتح نافذة التصدير — يرجى السماح بالنوافذ المنبثقة");
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl" dir="rtl">
       <div className="flex items-center justify-between mb-5 print:hidden">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary" /> التقارير التربوية الدورية
         </h1>
-        <Button onClick={() => window.print()}><Printer className="w-4 h-4 ml-1" /> طباعة / PDF</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportPdf} aria-label="تصدير التقرير PDF">
+            <FileDown className="w-4 h-4 ml-1" /> تصدير PDF
+          </Button>
+          <Button onClick={() => window.print()}><Printer className="w-4 h-4 ml-1" /> طباعة</Button>
+        </div>
       </div>
+
 
       <div className="flex flex-wrap gap-3 mb-5 print:hidden">
         <div>
