@@ -7227,6 +7227,9 @@ export type Database = {
       is_halaqa_teacher: { Args: { _halaqa_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       mark_overdue_staff_tasks: { Args: never; Returns: number }
+      plan_range_name: { Args: { _raw: string }; Returns: string }
+      plan_range_norm: { Args: { _raw: string }; Returns: string }
+      plan_range_num: { Args: { _raw: string }; Returns: number }
       submit_external_narration_review: {
         Args: {
           _reviewer_name: string
