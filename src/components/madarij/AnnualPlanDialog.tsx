@@ -647,15 +647,30 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
             <div />
           )}
 
-          {step < 3 ? (
-            <Button onClick={handleNext}>
-              التالي <ChevronLeft className="w-4 h-4 mr-1" />
-            </Button>
-          ) : (
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "جارٍ الحفظ..." : "حفظ الخطة"}
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            {step === 2 && !rangeValidation.valid && rangeValidation.messages.length > 0 && (
+              <p className="text-xs text-destructive hidden md:flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 shrink-0" />
+                يرجى تصحيح مواضع الحفظ السابق قبل المتابعة
+              </p>
+            )}
+            {step === 3 && !rangeValidation.valid && rangeValidation.messages.length > 0 && (
+              <p className="text-xs text-destructive hidden md:flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 shrink-0" />
+                يرجى تصحيح مواضع الحفظ السابق قبل الحفظ
+              </p>
+            )}
+
+            {step < 3 ? (
+              <Button onClick={handleNext} disabled={step === 2 && !rangeValidation.valid}>
+                التالي <ChevronLeft className="w-4 h-4 mr-1" />
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={saving || !rangeValidation.valid}>
+                {saving ? "جارٍ الحفظ..." : "حفظ الخطة"}
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
