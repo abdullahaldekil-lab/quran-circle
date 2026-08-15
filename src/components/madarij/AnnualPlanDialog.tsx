@@ -472,24 +472,58 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
               </div>
             </div>
 
-            {/* Previous memorization */}
+            {/* Previous memorization — multiple segments */}
             <div className="border-t pt-3">
-              <p className="text-sm font-semibold mb-3">الحفظ السابق (اختياري)</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">من</Label>
-                  <Input placeholder="مثال: البقرة آية 1" value={prevMemFrom} onChange={(e) => setPrevMemFrom(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">إلى</Label>
-                  <Input placeholder="مثال: آل عمران آية 50" value={prevMemTo} onChange={(e) => setPrevMemTo(e.target.value)} />
-                </div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold">الحفظ السابق (اختياري)</p>
+                <Button type="button" size="sm" variant="outline" onClick={addPrevRange} aria-label="إضافة موضع حفظ سابق">
+                  <Plus className="w-4 h-4 ml-1" /> إضافة موضع
+                </Button>
               </div>
-              <div className="space-y-1 mt-2">
-                <Label className="text-xs">عدد الأوجه المحفوظة سابقاً</Label>
-                <Input type="number" min={0} value={prevMemPages} onChange={(e) => setPrevMemPages(Number(e.target.value))} className="w-32" />
-              </div>
+
+              {prevRanges.length === 0 ? (
+                <p className="text-xs text-muted-foreground">لا توجد مواضع مسجلة — اضغط «إضافة موضع» لتسجيل أكثر من موضع للحفظ السابق.</p>
+              ) : (
+                <div className="space-y-2">
+                  {prevRanges.map((r, i) => (
+                    <div key={i} className="grid grid-cols-12 gap-2 items-end p-2 rounded-md bg-muted/40">
+                      <div className="col-span-3 space-y-1">
+                        <Label className="text-xs">الجزء</Label>
+                        <Select value={r.juz === "" ? "" : String(r.juz)} onValueChange={(v) => updatePrevRange(i, { juz: Number(v) })}>
+                          <SelectTrigger aria-label="الجزء"><SelectValue placeholder="اختر" /></SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 30 }, (_, k) => k + 1).map(j => (
+                              <SelectItem key={j} value={String(j)}>الجزء {j}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="col-span-3 space-y-1">
+                        <Label className="text-xs">من</Label>
+                        <Input placeholder="مثال: البقرة 1" value={r.from} onChange={(e) => updatePrevRange(i, { from: e.target.value })} />
+                      </div>
+                      <div className="col-span-3 space-y-1">
+                        <Label className="text-xs">إلى</Label>
+                        <Input placeholder="مثال: البقرة 141" value={r.to} onChange={(e) => updatePrevRange(i, { to: e.target.value })} />
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <Label className="text-xs">الأوجه</Label>
+                        <Input type="number" min={0} step={0.5} value={r.pages} onChange={(e) => updatePrevRange(i, { pages: Number(e.target.value) })} />
+                      </div>
+                      <div className="col-span-1">
+                        <Button type="button" size="icon" variant="ghost" onClick={() => removePrevRange(i)} aria-label="حذف الموضع">
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <p className="text-xs text-muted-foreground">
+                    إجمالي الأوجه المحفوظة سابقاً: <span className="font-semibold text-foreground">{prevMemPages}</span> وجه ({prevRanges.length} موضع)
+                  </p>
+                </div>
+              )}
             </div>
+
 
             <p className="text-xs text-muted-foreground">
               * يتم خصم العطل الرسمية تلقائياً ({holidays.length} عطلة مسجلة)
