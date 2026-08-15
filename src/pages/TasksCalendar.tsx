@@ -426,6 +426,30 @@ export default function TasksCalendar() {
                 <Input type="time" value={form.due_time} onChange={(e) => setForm((f) => ({ ...f, due_time: e.target.value }))} />
               </div>
               <div>
+                <Label className="text-xs">تذكير قبل الاستحقاق</Label>
+                <Input
+                  type="number" min={0} step={1}
+                  value={form.reminder_value}
+                  onChange={(e) => setForm((f) => ({ ...f, reminder_value: e.target.value }))}
+                  aria-label="عدد الأيام أو الساعات قبل تاريخ الاستحقاق"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">وحدة التذكير</Label>
+                <Select value={form.reminder_unit} onValueChange={(v) => setForm((f) => ({ ...f, reminder_unit: v as "days" | "hours" }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="days">أيام</SelectItem>
+                    <SelectItem value="hours">ساعات</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2 -mt-1 text-xs text-muted-foreground">
+                {computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)
+                  ? `سيُرسل التذكير في: ${formatDateSmart(computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)!.slice(0, 10))} - ${new Date(computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)!).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true })}`
+                  : "بدون تذكير (اجعل القيمة 0 لتعطيله)"}
+
+              <div>
                 <Label className="text-xs">الحالة</Label>
                 <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
