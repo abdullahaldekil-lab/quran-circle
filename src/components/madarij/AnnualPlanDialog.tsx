@@ -194,10 +194,16 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
 
   const handleNext = () => {
     if (step === 1) {
+      if (!term || !PLAN_TERMS.includes(term)) {
+        setTermError(true);
+        toast.error("يرجى اختيار الفصل قبل المتابعة");
+        return;
+      }
       if (!selectedHalaqa || !selectedStudent) {
         toast.error("يرجى اختيار الحلقة والطالب");
         return;
       }
+      setTermError(false);
       calculateSummary();
       setStep(2);
     } else if (step === 2) {
