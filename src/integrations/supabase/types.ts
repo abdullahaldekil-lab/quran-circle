@@ -3990,6 +3990,7 @@ export type Database = {
           plan_type: string
           previous_memorized_from: string | null
           previous_memorized_pages: number | null
+          previous_memorized_ranges: Json
           previous_memorized_to: string | null
           start_date: string
           status: string
@@ -4013,6 +4014,7 @@ export type Database = {
           plan_type?: string
           previous_memorized_from?: string | null
           previous_memorized_pages?: number | null
+          previous_memorized_ranges?: Json
           previous_memorized_to?: string | null
           start_date?: string
           status?: string
@@ -4036,6 +4038,7 @@ export type Database = {
           plan_type?: string
           previous_memorized_from?: string | null
           previous_memorized_pages?: number | null
+          previous_memorized_ranges?: Json
           previous_memorized_to?: string | null
           start_date?: string
           status?: string
