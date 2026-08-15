@@ -29,6 +29,13 @@ interface MonthRow {
   targetPages: number;
 }
 
+interface PrevRange {
+  juz: number | "";
+  from: string;
+  to: string;
+  pages: number;
+}
+
 const PLAN_TYPES = [
   { value: "silver", label: "🥈 المسار الفضي", daily: 0.5, yearly: 100, desc: "نصف وجه يومياً" },
   { value: "gold", label: "🥇 المسار الذهبي", daily: 1, yearly: 200, desc: "وجه كامل يومياً" },
