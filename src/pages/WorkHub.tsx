@@ -5,6 +5,7 @@ import PageDateHeader from "@/components/PageDateHeader";
 import StaffTasks from "@/pages/StaffTasks";
 import InternalRequests from "@/pages/InternalRequests";
 import StaffTasksAnalytics from "@/pages/StaffTasksAnalytics";
+import TasksCalendar from "@/pages/TasksCalendar";
 import { WORK_TABS, WORK_TAB_LABELS, resolveInitialTab, type WorkTab } from "@/lib/workHub";
 
 /**
