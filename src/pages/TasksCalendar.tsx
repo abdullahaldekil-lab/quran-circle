@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useDynamicRoles } from "@/hooks/useDynamicRoles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, AlarmClock, CalendarDays, RefreshCw } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, AlarmClock, CalendarDays, RefreshCw, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateSmart, formatGregorianArabic, WEEKDAYS } from "@/lib/hijri";
 import {
@@ -19,6 +23,9 @@ const STATUS_LABELS: Record<string, string> = {
   pending: "معلّقة", in_progress: "قيد التنفيذ", completed: "مكتملة",
   cancelled: "ملغاة", overdue: "متأخرة",
 };
+const NEW_TASK_STATUSES = ["pending", "in_progress", "completed"];
+const CATEGORIES = ["عام", "تعليمي", "إداري", "صيانة", "متابعة", "تقارير"];
+const PRIORITIES = ["عاجل", "عالي", "عادي", "منخفض"];
 
 const YEARS = [1447, 1448, 1449, 1450];
 
@@ -29,8 +36,15 @@ interface Task {
 interface EventRow { id: string; title: string; event_type: string; event_date: string; event_time: string | null; location: string | null; }
 interface Holiday { id: string; title: string; start_date: string; end_date: string; holiday_type: string; }
 
+const emptyForm = {
+  title: "", description: "", category: "عام", priority: "عادي", status: "pending",
+  due_date: "", due_time: "", assigned_to: "", assigned_to_role: "",
+};
+
 export default function TasksCalendar() {
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const { roles } = useDynamicRoles();
   const initial = currentHijriPosition();
   const [year, setYear] = useState(YEARS.includes(initial.year) ? initial.year : 1448);
   const [month, setMonth] = useState(initial.month);
@@ -40,6 +54,17 @@ export default function TasksCalendar() {
   const [loading, setLoading] = useState(false);
   const [openDay, setOpenDay] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+
+  const { data: profiles } = { data: undefined } as { data: undefined };
+  const [staff, setStaff] = useState<{ id: string; full_name: string | null }[]>([]);
+  useEffect(() => {
+    supabase.from("profiles").select("id, full_name").order("full_name")
+      .then(({ data }) => setStaff(data || []));
+  }, []);
+
 
   const grid = useMemo(() => buildHijriMonth(year, month), [year, month]);
   const todayIso = new Date().toISOString().slice(0, 10);
