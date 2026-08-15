@@ -188,7 +188,7 @@ export function exportOverallToExcel(halaqatStats: HalaqaStat[]) {
 
 export function exportOverallToPdf(halaqatStats: HalaqaStat[]) {
   const doc = createPdf();
-  let startY = addHeader(doc, "تقرير المجمع — يوم السرد القرآني");
+  const startY = addHeader(doc, "تقرير المجمع — يوم السرد القرآني");
 
   doc.autoTable({
     startY,

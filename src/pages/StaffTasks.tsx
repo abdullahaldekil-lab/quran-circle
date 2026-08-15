@@ -154,7 +154,9 @@ const StaffTasks = ({ embedded = false }: StaffTasksProps = {}) => {
       osc.start();
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
       osc.stop(audioCtx.currentTime + 0.4);
-    } catch {}
+    } catch {
+      // Audio context might not be available or permitted
+    }
   }, []);
 
   // Realtime subscription

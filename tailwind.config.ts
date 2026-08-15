@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -14,7 +15,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        arabic: ['"IBM Plex Sans Arabic"', 'sans-serif'],
+        arabic: ['"IBM Plex Sans Arabic"', '"Cairo"', 'sans-serif'],
+        cairo: ['"Cairo"', 'sans-serif'],
+        amiri: ['"Amiri"', 'serif'],
+        quran: ['"Amiri Quran"', '"Amiri"', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -104,5 +108,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindAnimate],
 } satisfies Config;

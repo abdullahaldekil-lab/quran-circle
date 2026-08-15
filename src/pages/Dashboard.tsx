@@ -7,7 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase, CalendarDays, ScrollText } from "lucide-react";
+import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase, CalendarDays, ScrollText, Sparkles } from "lucide-react";
 import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
@@ -15,6 +15,7 @@ import QuizAnalytics from "@/components/dashboard/QuizAnalytics";
 import DailyAttendanceSummary from "@/components/dashboard/DailyAttendanceSummary";
 import TeacherQuickPanel from "@/components/dashboard/TeacherQuickPanel";
 import PageDateHeader from "@/components/PageDateHeader";
+import { QuranicVerseHeader, IslamicDivider, EightPointStar } from "@/components/ui/IslamicOrnament";
 import { formatDateHijriOnly } from "@/lib/hijri";
 
 const withTimeout = <T,>(promise: PromiseLike<T> | Promise<T>, ms = 5000): Promise<T> => {
@@ -187,21 +188,15 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-            مرحباً {profile?.full_name || ""}
-          </h1>
-          <p className="text-muted-foreground mt-1">مجمع حويلان لتحفيظ القرآن الكريم</p>
-        </div>
-        <PageDateHeader />
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      {/* Quranic Spiritual Header Banner */}
+      <QuranicVerseHeader
+        quote="﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾"
+        subtitle={`مرحباً بك، ${profile?.full_name || "مستخدم"}`}
+      />
 
       {/* لوحة المعلم: تحضير الحلقة وإدخال التسميع مباشرة */}
       {isTeacher && <TeacherQuickPanel />}
-
-
 
       {/* Alerts */}
       {alerts.length > 0 && (
@@ -209,105 +204,132 @@ const Dashboard = () => {
           {alerts.map((alert, i) => (
             <div
               key={i}
-             className={`flex items-center gap-3 p-3 rounded-lg text-sm ${
+             className={`flex items-center gap-3 p-3.5 rounded-xl text-sm border shadow-xs ${
                 alert.type === "error"
-                  ? "bg-destructive/10 text-destructive"
+                  ? "bg-destructive/10 text-destructive border-destructive/20"
                   : alert.type === "warning"
-                  ? "bg-warning/10 text-warning"
+                  ? "bg-warning/10 text-warning border-warning/20"
                   : alert.type === "info"
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300"
-                  : "bg-success/10 text-success"
+                  ? "bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200 border-blue-200 dark:border-blue-800/40"
+                  : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/20"
               }`}
             >
               {alert.type === "success" ? (
-                <CheckCircle className="w-4 h-4 shrink-0" />
+                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
               ) : alert.type === "info" ? (
-                <CalendarDays className="w-4 h-4 shrink-0" />
+                <CalendarDays className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
               ) : (
                 <AlertTriangle className="w-4 h-4 shrink-0" />
               )}
-              {alert.message}
+              <span className="font-medium">{alert.message}</span>
             </div>
           ))}
         </div>
       )}
 
       {!dataLoaded ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-16">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs text-muted-foreground font-amiri text-base">جاري تحميل بيانات المجمع...</span>
+          </div>
         </div>
       ) : (
         <>
-          <div className={`grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4`}>
-            {cards.map((card) => (
-              <Card
-                key={card.title}
-                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
-                onClick={() => navigate(card.href)}
-              >
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                  <card.icon className={`w-5 h-5 ${card.color}`} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl lg:text-3xl font-bold">{card.value}</div>
-                </CardContent>
-                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Card>
-            ))}
-            {canSeeStaff && staffPct !== null && (
-              <Card
-                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
-                onClick={() => navigate("/staff-attendance")}
-              >
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">حضور الموظفين</CardTitle>
-                  <Briefcase className={`w-5 h-5 ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`} />
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-2xl lg:text-3xl font-bold ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`}>
-                    {staffPct}%
-                  </div>
-                </CardContent>
-                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Card>
-            )}
-            {planStats && planStats.total > 0 && (isManager || isSupervisor) && (
-              <Card
-                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
-                onClick={() => navigate("/madarij")}
-              >
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">الخطط السنوية</CardTitle>
-                  <CalendarDays className={`w-5 h-5 ${planStats.onTrack === planStats.total ? 'text-success' : 'text-warning'}`} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl lg:text-3xl font-bold">{planStats.onTrack}/{planStats.total}</div>
-                  <p className="text-xs text-muted-foreground">طالب منتظم</p>
-                </CardContent>
-                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Card>
-            )}
-            {pendingRequests > 0 && (
-              <Card
-                className="animate-slide-in cursor-pointer group relative transition-shadow hover:shadow-lg"
-                onClick={() => navigate("/internal-requests", { state: { defaultTab: isManager || isSupervisor ? "admin" : "inbox" } })}
-              >
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">الطلبات المعلقة</CardTitle>
-                  <ScrollText className="w-5 h-5 text-warning" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl lg:text-3xl font-bold text-warning">{pendingRequests}</div>
-                  <p className="text-xs text-muted-foreground">طلب بانتظار الإجراء</p>
-                </CardContent>
-                <ArrowUpLeft className="w-4 h-4 text-muted-foreground absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Card>
-            )}
+          {/* Main Key Metrics */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <EightPointStar className="w-4 h-4 text-amber-500" />
+              <h2 className="font-cairo font-bold text-base text-foreground">المؤشرات الرئيسية اليومية</h2>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3.5 sm:gap-4">
+              {cards.map((card) => (
+                <Card
+                  key={card.title}
+                  className="islamic-card cursor-pointer group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  onClick={() => navigate(card.href)}
+                >
+                  <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-400 via-emerald-600 to-amber-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground font-cairo">{card.title}</CardTitle>
+                    <div className="p-1.5 rounded-lg bg-amber-500/10 dark:bg-emerald-950/50">
+                      <card.icon className={`w-4 h-4 ${card.color}`} />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    <div className="text-2xl lg:text-3xl font-extrabold font-cairo tracking-tight text-foreground">{card.value}</div>
+                  </CardContent>
+                  <ArrowUpLeft className="w-3.5 h-3.5 text-amber-500 absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Card>
+              ))}
+              {canSeeStaff && staffPct !== null && (
+                <Card
+                  className="islamic-card cursor-pointer group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  onClick={() => navigate("/staff-attendance")}
+                >
+                  <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground font-cairo">حضور الموظفين</CardTitle>
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                      <Briefcase className={`w-4 h-4 ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`} />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    <div className={`text-2xl lg:text-3xl font-extrabold font-cairo ${staffPct >= 90 ? 'text-success' : staffPct >= 70 ? 'text-warning' : 'text-destructive'}`}>
+                      {staffPct}%
+                    </div>
+                  </CardContent>
+                  <ArrowUpLeft className="w-3.5 h-3.5 text-amber-500 absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Card>
+              )}
+              {planStats && planStats.total > 0 && (isManager || isSupervisor) && (
+                <Card
+                  className="islamic-card cursor-pointer group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  onClick={() => navigate("/madarij")}
+                >
+                  <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-500 to-amber-300 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground font-cairo">الخطط السنوية</CardTitle>
+                    <div className="p-1.5 rounded-lg bg-amber-500/10">
+                      <CalendarDays className={`w-4 h-4 ${planStats.onTrack === planStats.total ? 'text-success' : 'text-warning'}`} />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    <div className="text-2xl lg:text-3xl font-extrabold font-cairo">{planStats.onTrack}/{planStats.total}</div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">طالب منتظم</p>
+                  </CardContent>
+                  <ArrowUpLeft className="w-3.5 h-3.5 text-amber-500 absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Card>
+              )}
+              {pendingRequests > 0 && (
+                <Card
+                  className="islamic-card cursor-pointer group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  onClick={() => navigate("/internal-requests", { state: { defaultTab: isManager || isSupervisor ? "admin" : "inbox" } })}
+                >
+                  <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-rose-500 to-amber-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
+                    <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground font-cairo">الطلبات المعلقة</CardTitle>
+                    <div className="p-1.5 rounded-lg bg-amber-500/10">
+                      <ScrollText className="w-4 h-4 text-warning" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    <div className="text-2xl lg:text-3xl font-extrabold font-cairo text-warning">{pendingRequests}</div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">طلب بانتظار الإجراء</p>
+                  </CardContent>
+                  <ArrowUpLeft className="w-3.5 h-3.5 text-amber-500 absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Card>
+              )}
+            </div>
           </div>
+
+          <IslamicDivider variant="gold" title="سجلات الحضور والتسميع اليومية" />
 
           {/* Daily Attendance Summary */}
           <DailyAttendanceSummary />
+
+          <IslamicDivider variant="emerald" title="التحليلات والإحصاءات الشاملة" />
 
           {/* Student Analytics Section */}
           <StudentAnalytics />
@@ -316,20 +338,26 @@ const Dashboard = () => {
           <QuizAnalytics />
 
           {!isMobile && (
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">آخر التسميعات</CardTitle>
+            <div className="grid lg:grid-cols-2 gap-6 pt-2">
+              <Card className="islamic-card">
+                <CardHeader className="border-b border-border/60 pb-3">
+                  <div className="flex items-center gap-2">
+                    <EightPointStar className="w-4 h-4 text-amber-500" />
+                    <CardTitle className="text-base font-bold font-cairo">آخر التسميعات</CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
                   <RecentRecitations />
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">التعليمات الجديدة</CardTitle>
+              <Card className="islamic-card">
+                <CardHeader className="border-b border-border/60 pb-3">
+                  <div className="flex items-center gap-2">
+                    <EightPointStar className="w-4 h-4 text-amber-500" />
+                    <CardTitle className="text-base font-bold font-cairo">التعليمات الجديدة</CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
                   <RecentInstructions />
                 </CardContent>
               </Card>

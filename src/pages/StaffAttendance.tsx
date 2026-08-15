@@ -249,8 +249,8 @@ const StaffAttendance = () => {
       const today = dateStr;
       const checkInIso = editCheckIn ? new Date(`${today}T${editCheckIn}:00`).toISOString() : null;
       const checkOutIso = editCheckOut ? new Date(`${today}T${editCheckOut}:00`).toISOString() : null;
-      let lateMin = 0;
-      let earlyMin = 0;
+      const lateMin = 0;
+      const earlyMin = 0;
       let totalWork = 0;
       if (checkInIso && checkOutIso) {
         totalWork = Math.round((new Date(checkOutIso).getTime() - new Date(checkInIso).getTime()) / 60000);

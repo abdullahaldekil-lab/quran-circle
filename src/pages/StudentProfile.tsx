@@ -605,7 +605,7 @@ const StudentProfile = () => {
               <Input type="date" value={editForm.birth_date_gregorian} onChange={(e) => {
                 const greg = e.target.value;
                 let hijri = "";
-                if (greg) { try { hijri = gregorianToHijri(new Date(greg)); } catch {} }
+                if (greg) { try { hijri = gregorianToHijri(new Date(greg)); } catch { /* ignore invalid date */ } }
                 setEditForm({ ...editForm, birth_date_gregorian: greg, birth_date_hijri: hijri });
               }} dir="ltr" className="text-right" />
             </div>

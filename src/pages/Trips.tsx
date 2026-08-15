@@ -75,7 +75,7 @@ const Trips = () => {
     ]);
     // Fetch trip_halaqat for all trips
     const tripIds = (tripsRes.data || []).map((t: any) => t.id);
-    let tripHalaqatMap: Record<string, string[]> = {};
+    const tripHalaqatMap: Record<string, string[]> = {};
     if (tripIds.length > 0) {
       const { data: thData } = await supabase.from("trip_halaqat").select("trip_id, halaqa_id").in("trip_id", tripIds);
       (thData || []).forEach((th: any) => {

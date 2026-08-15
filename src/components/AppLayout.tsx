@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import GlobalSearch from "@/components/GlobalSearch";
 import OnboardingTour from "@/components/OnboardingTour";
+import PageDateHeader from "@/components/PageDateHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
@@ -403,29 +404,31 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 h-dvh w-64 gradient-sidebar z-50 transition-transform duration-300 flex flex-col ${
+        className={`fixed lg:sticky top-0 h-dvh w-68 gradient-sidebar z-50 transition-transform duration-300 flex flex-col shadow-2xl border-l border-sidebar-border ${
           sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="p-6 border-b border-sidebar-border">
+        <div className="p-5 border-b border-sidebar-border/80 bg-black/10">
           <div className="flex items-center gap-3">
-            <img src={huwaylanLogo} alt="مجمع حويلان" className="w-10 h-10 rounded-xl object-contain" />
+            <div className="relative p-0.5 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 shadow-md">
+              <img src={huwaylanLogo} alt="مجمع حويلان" className="w-11 h-11 rounded-[10px] object-cover bg-white" />
+            </div>
             <div>
-              <h2 className="font-bold text-sidebar-foreground">مجمع حويلان</h2>
-              <p className="text-xs text-sidebar-foreground/70">تحفيظ القرآن</p>
+              <h2 className="font-bold text-base text-sidebar-foreground font-cairo tracking-wide">مجمع حويلان</h2>
+              <p className="text-[11px] text-amber-300/90 font-amiri font-medium">لتحفيظ القرآن الكريم</p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
           {/* Global Search Button */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors mb-1"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-all duration-200 mb-2 border border-sidebar-border/50 bg-white/5 shadow-sm"
           >
-            <Search className="w-5 h-5" />
-            <span className="flex-1 text-right">بحث شامل</span>
-            <span className="text-[10px] text-sidebar-foreground/40">Ctrl+K</span>
+            <Search className="w-4 h-4 text-amber-400" />
+            <span className="flex-1 text-right text-xs">البحث الشامل...</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sidebar-accent/80 text-amber-300 font-mono">⌘K</span>
           </button>
           {/* Standalone items */}
           {filteredStandalone.map((item) => (
@@ -434,14 +437,14 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               to={item.to}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    ? "bg-gradient-to-l from-sidebar-accent to-sidebar-accent/60 text-amber-300 font-bold border-r-4 border-amber-400 shadow-sm"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                 }`
               }
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-4 h-4" />
               <span className="flex-1">{item.label}</span>
               {item.to === "/work-hub" && combinedBadgeCount(pendingRequestsCount, urgentTasksCount) > 0 && (
                 <span
@@ -466,26 +469,26 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             );
 
             return (
-              <div key={group.id}>
+              <div key={group.id} className="pt-0.5">
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                     hasActiveChild
-                      ? "bg-sidebar-accent/60 text-sidebar-foreground"
+                      ? "bg-sidebar-accent/70 text-sidebar-foreground font-semibold"
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
                   }`}
                 >
-                  <group.icon className={`w-5 h-5 ${group.color} shrink-0`} />
-                  <span className="flex-1 text-right">{group.label}</span>
+                  <group.icon className={`w-4 h-4 ${group.color} shrink-0`} />
+                  <span className="flex-1 text-right text-xs sm:text-sm">{group.label}</span>
                   <ChevronDown
-                    className={`w-4 h-4 text-sidebar-foreground/50 transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
+                    className={`w-3.5 h-3.5 text-sidebar-foreground/50 transition-transform duration-200 ${
+                      isOpen ? "rotate-180 text-amber-400" : ""
                     }`}
                   />
                 </button>
 
                 {isOpen && (
-                  <div className="mt-0.5 mr-4 border-r border-sidebar-border/40 pr-2 space-y-0.5">
+                  <div className="mt-1 mr-3.5 border-r-2 border-amber-500/30 pr-2 space-y-0.5">
                     {/* Regular items */}
                     {group.items.map((item) => (
                       <NavLink
@@ -493,18 +496,18 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                         to={item.to}
                         onClick={() => setSidebarOpen(false)}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs sm:text-sm transition-all duration-150 ${
                             isActive
-                              ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                              ? "bg-sidebar-accent text-amber-300 font-bold shadow-xs border-r-2 border-amber-400"
                               : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                           }`
                         }
                       >
-                        <item.icon className="w-4 h-4" />
+                        <item.icon className="w-3.5 h-3.5" />
                         <span className="flex-1">{item.label}</span>
                         {item.to === "/work-hub" && combinedBadgeCount(pendingRequestsCount, urgentTasksCount) > 0 && (
                           <span
-                            className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+                            className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center animate-pulse"
                             title={combinedBadgeTitle(pendingRequestsCount, urgentTasksCount)}
                           >
                             {combinedBadgeCount(pendingRequestsCount, urgentTasksCount) > 9
@@ -523,16 +526,16 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                       );
 
                       return (
-                        <div key={subGroup.id}>
+                        <div key={subGroup.id} className="pt-0.5">
                           <button
                             onClick={() => toggleGroup(subGroup.id)}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-colors ${
                               hasActiveSubChild
-                                ? "bg-sidebar-accent/50 text-sidebar-foreground font-medium"
-                                : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                                ? "bg-sidebar-accent/60 text-sidebar-foreground font-semibold"
+                                : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                             }`}
                           >
-                            <subGroup.icon className="w-4 h-4" />
+                            <subGroup.icon className="w-3.5 h-3.5" />
                             <span className="flex-1 text-right">{subGroup.label}</span>
                             <ChevronDown
                               className={`w-3 h-3 text-sidebar-foreground/50 transition-transform duration-200 ${
@@ -542,22 +545,22 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                           </button>
 
                           {isSubOpen && (
-                            <div className="mt-0.5 mr-3 border-r border-sidebar-border/30 pr-2 space-y-0.5">
+                            <div className="mt-0.5 mr-2.5 border-r border-amber-500/20 pr-1.5 space-y-0.5">
                               {subGroup.items.map((item) => (
                                 <NavLink
                                   key={item.to}
                                   to={item.to}
                                   onClick={() => setSidebarOpen(false)}
                                   className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                                    `flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors ${
                                       isActive
-                                        ? "bg-sidebar-accent text-sidebar-primary font-medium"
-                                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                                        ? "bg-sidebar-accent text-amber-300 font-bold"
+                                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
                                     }`
                                   }
                                 >
-                                  <item.icon className="w-3.5 h-3.5" />
-                                  {item.label}
+                                  <item.icon className="w-3 h-3" />
+                                  <span>{item.label}</span>
                                 </NavLink>
                               ))}
                             </div>
@@ -572,16 +575,16 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center gap-3 mb-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground text-sm font-bold">
+        <div className="p-3.5 border-t border-sidebar-border/80 bg-black/15">
+          <div className="flex items-center gap-2.5 mb-2.5 px-2">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-white text-sm font-bold shadow-sm">
               {profile?.full_name?.[0] || "م"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
+              <p className="text-xs font-semibold text-sidebar-foreground truncate">
                 {profile?.full_name || "مستخدم"}
               </p>
-              <p className="text-xs text-sidebar-foreground/60 truncate">
+              <p className="text-[11px] text-amber-200/70 truncate">
                 {profile?.position_title || profile?.role || ""}
               </p>
             </div>
@@ -590,24 +593,24 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+            className="w-full justify-start text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 text-xs rounded-xl"
             onClick={signOut}
           >
-            <LogOut className="w-4 h-4 ml-2" />
+            <LogOut className="w-3.5 h-3.5 ml-2 text-rose-400" />
             تسجيل الخروج
           </Button>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-h-dvh">
+      <main className="flex-1 min-h-dvh flex flex-col bg-islamic-pattern">
         {/* Mobile header */}
-        <header className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={huwaylanLogo} alt="مجمع حويلان" className="w-8 h-8 rounded-lg object-contain" />
-            <span className="font-bold text-foreground">مجمع حويلان</span>
+        <header className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/70 px-4 py-2.5 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <img src={huwaylanLogo} alt="مجمع حويلان" className="w-8 h-8 rounded-lg object-contain border border-amber-400/40" />
+            <span className="font-bold text-foreground font-cairo text-sm">مجمع حويلان</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <NotificationBell />
             <Button
               variant="ghost"
@@ -621,12 +624,26 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </header>
 
-        {/* Desktop notification bell */}
-        <div className="hidden lg:flex justify-end p-4 pb-0">
-          <NotificationBell />
-        </div>
+        {/* Desktop Top Header Bar with Islamic Hijri pill */}
+        <header className="hidden lg:flex items-center justify-between px-8 py-3.5 border-b border-border/60 bg-background/80 backdrop-blur-md sticky top-0 z-20 shadow-xs">
+          <div className="flex items-center gap-3">
+            <PageDateHeader />
+          </div>
 
-        <div className="p-4 lg:p-8">{children}</div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-border bg-card/80 hover:bg-card text-xs text-muted-foreground transition-all shadow-xs"
+            >
+              <Search className="w-3.5 h-3.5 text-amber-500" />
+              <span>بحث سريع...</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground">⌘K</kbd>
+            </button>
+            <NotificationBell />
+          </div>
+        </header>
+
+        <div className="p-4 lg:p-8 flex-1">{children}</div>
       </main>
       <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
       <OnboardingTour />

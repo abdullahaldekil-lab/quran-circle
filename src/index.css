@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,85 +6,101 @@
 
 @layer base {
   :root {
-    --background: 40 30% 97%;
-    --foreground: 150 25% 12%;
+    /* Warm Islamic Parchment / Sand Surface */
+    --background: 44 38% 97%;
+    --foreground: 160 35% 12%;
 
-    --card: 40 25% 99%;
-    --card-foreground: 150 25% 12%;
+    /* Pure Warm White Card with Subtle Golden Border */
+    --card: 45 40% 99%;
+    --card-foreground: 160 35% 12%;
 
-    --popover: 40 25% 99%;
-    --popover-foreground: 150 25% 12%;
+    --popover: 45 40% 99%;
+    --popover-foreground: 160 35% 12%;
 
-    --primary: 155 55% 28%;
-    --primary-foreground: 40 30% 97%;
+    /* Quranic Deep Emerald Primary */
+    --primary: 158 64% 24%;
+    --primary-foreground: 45 35% 98%;
 
-    --secondary: 42 75% 55%;
-    --secondary-foreground: 150 25% 12%;
+    /* Sacred Gold & Amber Secondary */
+    --secondary: 41 78% 50%;
+    --secondary-foreground: 160 40% 10%;
 
-    --muted: 40 20% 93%;
-    --muted-foreground: 150 10% 45%;
+    --muted: 42 25% 92%;
+    --muted-foreground: 160 12% 40%;
 
-    --accent: 42 75% 55%;
-    --accent-foreground: 150 25% 12%;
+    --accent: 41 85% 52%;
+    --accent-foreground: 160 40% 10%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 88%;
-    --input: 40 20% 88%;
-    --ring: 155 55% 28%;
+    --border: 42 22% 86%;
+    --input: 42 22% 86%;
+    --ring: 158 64% 24%;
 
-    --radius: 0.75rem;
+    --radius: 0.85rem;
 
-    --sidebar-background: 155 45% 15%;
-    --sidebar-foreground: 40 30% 95%;
-    --sidebar-primary: 42 75% 55%;
-    --sidebar-primary-foreground: 150 25% 12%;
-    --sidebar-accent: 155 40% 22%;
-    --sidebar-accent-foreground: 40 30% 95%;
-    --sidebar-border: 155 35% 25%;
-    --sidebar-ring: 42 75% 55%;
+    /* Sidebar: Deep Emerald Night Gradient */
+    --sidebar-background: 160 55% 12%;
+    --sidebar-foreground: 45 40% 96%;
+    --sidebar-primary: 41 85% 52%;
+    --sidebar-primary-foreground: 160 40% 10%;
+    --sidebar-accent: 158 45% 19%;
+    --sidebar-accent-foreground: 45 40% 98%;
+    --sidebar-border: 158 35% 20%;
+    --sidebar-ring: 41 85% 52%;
 
-    --success: 145 60% 40%;
+    --success: 152 68% 34%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 38 94% 48%;
     --warning-foreground: 0 0% 100%;
-    --info: 200 80% 50%;
+    --info: 198 85% 44%;
     --info-foreground: 0 0% 100%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(155, 55%, 28%), hsl(155, 45%, 20%));
-    --gradient-gold: linear-gradient(135deg, hsl(42, 75%, 55%), hsl(38, 80%, 45%));
-    --gradient-sidebar: linear-gradient(180deg, hsl(155, 50%, 18%), hsl(155, 45%, 12%));
+    /* Sacred Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(158, 64%, 24%), hsl(162, 70%, 16%));
+    --gradient-emerald: linear-gradient(135deg, hsl(158, 64%, 28%), hsl(152, 60%, 18%));
+    --gradient-gold: linear-gradient(135deg, hsl(43, 85%, 54%), hsl(36, 85%, 44%));
+    --gradient-gold-soft: linear-gradient(135deg, hsl(44, 75%, 94%), hsl(40, 65%, 88%));
+    --gradient-sidebar: linear-gradient(180deg, hsl(160, 55%, 14%) 0%, hsl(162, 60%, 9%) 100%);
+    --gradient-card-header: linear-gradient(135deg, hsl(158, 45%, 96%), hsl(44, 40%, 96%));
   }
 
   .dark {
-    --background: 155 20% 8%;
-    --foreground: 40 30% 95%;
-    --card: 155 20% 12%;
-    --card-foreground: 40 30% 95%;
-    --popover: 155 20% 12%;
-    --popover-foreground: 40 30% 95%;
-    --primary: 155 55% 40%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 42 60% 50%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 155 15% 18%;
-    --muted-foreground: 40 15% 60%;
-    --accent: 42 60% 50%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 30%;
+    --background: 162 40% 6%;
+    --foreground: 45 35% 95%;
+    --card: 160 30% 10%;
+    --card-foreground: 45 35% 95%;
+    --popover: 160 30% 10%;
+    --popover-foreground: 45 35% 95%;
+    --primary: 155 60% 38%;
+    --primary-foreground: 45 35% 98%;
+    --secondary: 41 75% 52%;
+    --secondary-foreground: 160 40% 10%;
+    --muted: 160 20% 15%;
+    --muted-foreground: 45 15% 65%;
+    --accent: 41 75% 52%;
+    --accent-foreground: 160 40% 10%;
+    --destructive: 0 62% 35%;
     --destructive-foreground: 0 0% 100%;
-    --border: 155 15% 20%;
-    --input: 155 15% 20%;
-    --ring: 155 55% 40%;
-    --sidebar-background: 155 25% 8%;
-    --sidebar-foreground: 40 30% 95%;
-    --sidebar-primary: 42 60% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 155 20% 15%;
-    --sidebar-accent-foreground: 40 30% 95%;
-    --sidebar-border: 155 15% 15%;
-    --sidebar-ring: 42 60% 50%;
+    --border: 160 20% 18%;
+    --input: 160 20% 18%;
+    --ring: 155 60% 38%;
+    --sidebar-background: 162 45% 7%;
+    --sidebar-foreground: 45 35% 95%;
+    --sidebar-primary: 41 75% 52%;
+    --sidebar-primary-foreground: 160 40% 10%;
+    --sidebar-accent: 160 30% 13%;
+    --sidebar-accent-foreground: 45 35% 98%;
+    --sidebar-border: 160 20% 15%;
+    --sidebar-ring: 41 75% 52%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(155, 60%, 32%), hsl(162, 65%, 18%));
+    --gradient-emerald: linear-gradient(135deg, hsl(155, 55%, 30%), hsl(160, 50%, 14%));
+    --gradient-gold: linear-gradient(135deg, hsl(41, 75%, 52%), hsl(35, 75%, 40%));
+    --gradient-gold-soft: linear-gradient(135deg, hsl(160, 25%, 15%), hsl(160, 20%, 12%));
+    --gradient-sidebar: linear-gradient(180deg, hsl(162, 50%, 8%) 0%, hsl(165, 55%, 5%) 100%);
+    --gradient-card-header: linear-gradient(135deg, hsl(160, 25%, 13%), hsl(162, 30%, 10%));
   }
 }
 
@@ -95,21 +111,84 @@
 
   html {
     direction: rtl;
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-background text-foreground font-arabic;
+    @apply bg-background text-foreground font-arabic antialiased selection:bg-amber-200 selection:text-emerald-950 dark:selection:bg-emerald-800 dark:selection:text-amber-100;
   }
 }
 
 @layer utilities {
+  .font-quran {
+    font-family: 'Amiri Quran', 'Amiri', serif;
+  }
+  .font-amiri {
+    font-family: 'Amiri', serif;
+  }
+  .font-cairo {
+    font-family: 'Cairo', sans-serif;
+  }
+
   .gradient-primary {
     background: var(--gradient-primary);
+  }
+  .gradient-emerald {
+    background: var(--gradient-emerald);
   }
   .gradient-gold {
     background: var(--gradient-gold);
   }
+  .gradient-gold-soft {
+    background: var(--gradient-gold-soft);
+  }
   .gradient-sidebar {
     background: var(--gradient-sidebar);
+  }
+  .gradient-card-header {
+    background: var(--gradient-card-header);
+  }
+
+  /* Islamic Arabesque Geometric Watermark Pattern */
+  .bg-islamic-pattern {
+    background-color: transparent;
+    background-image: radial-gradient(hsl(var(--primary) / 0.07) 1px, transparent 1px),
+      radial-gradient(hsl(var(--accent) / 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: 0 0, 12px 12px;
+  }
+
+  .bg-islamic-stars {
+    background-image: radial-gradient(circle at 50% 50%, hsl(var(--accent) / 0.08) 0%, transparent 60%);
+  }
+
+  /* Islamic Card & Border Aesthetics */
+  .islamic-card {
+    position: relative;
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+    box-shadow: 0 4px 20px -2px hsl(var(--primary) / 0.05), 0 2px 6px -1px hsl(var(--accent) / 0.05);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .islamic-card:hover {
+    border-color: hsl(var(--accent) / 0.4);
+    box-shadow: 0 10px 25px -4px hsl(var(--primary) / 0.08), 0 4px 12px -2px hsl(var(--accent) / 0.1);
+  }
+
+  .islamic-border-gold {
+    border-color: hsl(var(--accent) / 0.45);
+  }
+
+  .islamic-border-emerald {
+    border-color: hsl(var(--primary) / 0.35);
+  }
+
+  .gold-glow {
+    box-shadow: 0 0 15px -2px hsl(var(--accent) / 0.25);
+  }
+
+  .emerald-glow {
+    box-shadow: 0 0 15px -2px hsl(var(--primary) / 0.25);
   }
 }

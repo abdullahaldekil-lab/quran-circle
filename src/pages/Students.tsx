@@ -430,7 +430,7 @@ const Students = () => {
                     const greg = e.target.value;
                     let hijri = "";
                     if (greg) {
-                      try { hijri = gregorianToHijri(new Date(greg)); } catch {}
+                      try { hijri = gregorianToHijri(new Date(greg)); } catch { /* ignore invalid date */ }
                     }
                     setForm({ ...form, birth_date_gregorian: greg, birth_date_hijri: hijri });
                   }}
