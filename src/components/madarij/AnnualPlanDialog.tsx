@@ -77,6 +77,11 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const prevMemFrom = prevRanges[0]?.from || "";
   const prevMemTo = prevRanges[prevRanges.length - 1]?.to || "";
 
+  const addPrevRange = () => setPrevRanges(prev => [...prev, { juz: "", from: "", to: "", pages: 0 }]);
+  const updatePrevRange = (index: number, patch: Partial<PrevRange>) =>
+    setPrevRanges(prev => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  const removePrevRange = (index: number) => setPrevRanges(prev => prev.filter((_, i) => i !== index));
+
   // Step 3
   const [monthlyDistribution, setMonthlyDistribution] = useState<MonthRow[]>([]);
 
@@ -84,10 +89,12 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
     if (open) {
       setStep(1);
       setTermError(false);
+      setPrevRanges([]);
       fetchHalaqat();
       fetchHolidays();
     }
   }, [open]);
+
 
   useEffect(() => {
     if (selectedHalaqa) fetchStudents();
