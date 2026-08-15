@@ -189,8 +189,11 @@ export default function TarbawiSurveys() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent dir="rtl" className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>استبيان جديد</DialogTitle></DialogHeader>
+        <DialogContent dir="rtl" className="max-h-[85vh] overflow-y-auto" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>استبيان جديد</DialogTitle>
+            <DialogDescription>أنشئ استبياناً جديداً لقياس أثر البرنامج التربوي</DialogDescription>
+          </DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>العنوان *</Label>
