@@ -448,6 +448,8 @@ export default function TasksCalendar() {
                 {computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)
                   ? `سيُرسل التذكير في: ${formatDateSmart(computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)!.slice(0, 10))} - ${new Date(computeReminderAt(form.due_date, form.due_time, form.reminder_value, form.reminder_unit)!).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true })}`
                   : "بدون تذكير (اجعل القيمة 0 لتعطيله)"}
+              </div>
+
 
               <div>
                 <Label className="text-xs">الحالة</Label>
