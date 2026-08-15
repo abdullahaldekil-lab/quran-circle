@@ -291,6 +291,9 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
           previous_memorized_from: prevMemFrom || null,
           previous_memorized_to: prevMemTo || null,
           previous_memorized_pages: prevMemPages,
+          previous_memorized_ranges: prevRanges
+            .filter(r => r.juz !== "" || r.from || r.to || r.pages)
+            .map(r => ({ juz: r.juz === "" ? null : r.juz, from: r.from || null, to: r.to || null, pages: Number(r.pages) || 0 })),
           status: "active",
           created_by: user?.id,
         })
