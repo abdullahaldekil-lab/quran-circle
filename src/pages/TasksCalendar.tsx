@@ -1,0 +1,264 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, AlarmClock, CalendarDays, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { formatDateSmart, formatGregorianArabic, WEEKDAYS } from "@/lib/hijri";
+import {
+  buildHijriMonth, currentHijriPosition, HIJRI_MONTH_NAMES,
+  isTaskLate, isWeekendDay, isWithinRange,
+} from "@/lib/hijri-calendar";
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: "معلّقة", in_progress: "قيد التنفيذ", completed: "مكتملة",
+  cancelled: "ملغاة", overdue: "متأخرة",
+};
+
+const YEARS = [1447, 1448, 1449, 1450];
+
+interface Task {
+  id: string; title: string; category: string; priority: string; status: string;
+  due_date: string | null; due_time: string | null; assigned_to: string | null; assigned_to_role: string | null;
+}
+interface EventRow { id: string; title: string; event_type: string; event_date: string; event_time: string | null; location: string | null; }
+interface Holiday { id: string; title: string; start_date: string; end_date: string; holiday_type: string; }
+
+export default function TasksCalendar() {
+  const navigate = useNavigate();
+  const initial = currentHijriPosition();
+  const [year, setYear] = useState(YEARS.includes(initial.year) ? initial.year : 1448);
+  const [month, setMonth] = useState(initial.month);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<EventRow[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [openDay, setOpenDay] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const grid = useMemo(() => buildHijriMonth(year, month), [year, month]);
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const load = useCallback(async () => {
+    if (!grid.startIso) return;
+    setLoading(true);
+    const [t, e, h] = await Promise.all([
+      supabase.from("staff_tasks")
+        .select("id, title, category, priority, status, due_date, due_time, assigned_to, assigned_to_role")
+        .gte("due_date", grid.startIso).lte("due_date", grid.endIso).order("due_date"),
+      (supabase as any).from("tarbawi_events")
+        .select("id, title, event_type, event_date, event_time, location")
+        .gte("event_date", grid.startIso).lte("event_date", grid.endIso).order("event_date"),
+      supabase.from("holidays").select("id, title, start_date, end_date, holiday_type")
+        .lte("start_date", grid.endIso).gte("end_date", grid.startIso),
+    ]);
+    setTasks((t.data as Task[]) || []);
+    setEvents((e.data as EventRow[]) || []);
+    setHolidays((h.data as Holiday[]) || []);
+    setLoading(false);
+  }, [grid.startIso, grid.endIso]);
+
+  useEffect(() => { load(); }, [load]);
+
+  /** Persist the overdue status (and fire the notification) once per visit. */
+  const syncOverdue = useCallback(async (silent = true) => {
+    setSyncing(true);
+    const { data, error } = await (supabase as any).rpc("mark_overdue_staff_tasks");
+    setSyncing(false);
+    if (error) { if (!silent) toast.error("تعذّر تحديث المهام المتأخرة"); return; }
+    const n = Number(data) || 0;
+    if (!silent) toast.success(n > 0 ? `تم تحديث ${n} مهمة إلى «متأخرة»` : "لا توجد مهام متأخرة جديدة");
+    if (n > 0) load();
+  }, [load]);
+
+  useEffect(() => { syncOverdue(true); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+
+  const tasksByDay = useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    tasks.forEach((t) => { if (t.due_date) (map[t.due_date] ||= []).push(t); });
+    return map;
+  }, [tasks]);
+
+  const eventsByDay = useMemo(() => {
+    const map: Record<string, EventRow[]> = {};
+    events.forEach((e) => { (map[e.event_date] ||= []).push(e); });
+    return map;
+  }, [events]);
+
+  const holidaysFor = useCallback(
+    (iso: string) => holidays.filter((h) => isWithinRange(iso, h.start_date, h.end_date)),
+    [holidays],
+  );
+
+  const lateCount = tasks.filter((t) => isTaskLate(t, todayIso)).length;
+  const doneCount = tasks.filter((t) => t.status === "completed").length;
+
+  const step = (delta: number) => {
+    let m = month + delta, y = year;
+    if (m > 12) { m = 1; y += 1; }
+    if (m < 1) { m = 12; y -= 1; }
+    if (!YEARS.includes(y)) return;
+    setYear(y); setMonth(m);
+  };
+
+  const dayTasks = openDay ? tasksByDay[openDay] || [] : [];
+  const dayEvents = openDay ? eventsByDay[openDay] || [] : [];
+  const dayHolidays = openDay ? holidaysFor(openDay) : [];
+
+  return (
+    <div className="space-y-4" dir="rtl">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold flex items-center gap-2">
+          <CalendarDays className="w-5 h-5 text-primary" /> التقويم الهجري — مخطِّط المهام
+        </h2>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => syncOverdue(false)} disabled={syncing}
+            aria-label="تحديث المهام المتأخرة">
+            <RefreshCw className={`w-4 h-4 ml-1 ${syncing ? "animate-spin" : ""}`} /> تحديث المتأخرة
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => step(-1)} aria-label="الشهر السابق">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => step(1)} aria-label="الشهر التالي">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <div>
+          <Label className="text-xs">السنة الهجرية</Label>
+          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+            <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>{YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y} هـ</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">الشهر</Label>
+          <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+            <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {HIJRI_MONTH_NAMES.map((n, i) => <SelectItem key={n} value={String(i + 1)}>{n}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-xl font-bold">{tasks.length}</p><p className="text-xs text-muted-foreground">مهام الشهر</p>
+        </CardContent></Card>
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-xl font-bold text-destructive">{lateCount}</p><p className="text-xs text-muted-foreground">متأخرة</p>
+        </CardContent></Card>
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-xl font-bold text-primary">{doneCount}</p><p className="text-xs text-muted-foreground">مكتملة</p>
+        </CardContent></Card>
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-xl font-bold">{events.length}</p><p className="text-xs text-muted-foreground">فعاليات</p>
+        </CardContent></Card>
+      </div>
+
+      <p className="text-sm font-medium text-center" aria-live="polite">
+        {grid.label} — {formatGregorianArabic(grid.startIso)} إلى {formatGregorianArabic(grid.endIso)}
+        {loading && <span className="text-muted-foreground"> · جارٍ التحميل...</span>}
+      </p>
+
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
+        {WEEKDAYS.map((d) => <div key={d} className="py-1">{d}</div>)}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: grid.leadingBlanks }).map((_, i) => <div key={`b${i}`} />)}
+        {grid.days.map((d) => {
+          const dt = tasksByDay[d.iso] || [];
+          const de = eventsByDay[d.iso] || [];
+          const dh = holidaysFor(d.iso);
+          const late = dt.filter((t) => isTaskLate(t, todayIso)).length;
+          const isToday = d.iso === todayIso;
+          return (
+            <button
+              key={d.iso}
+              onClick={() => setOpenDay(d.iso)}
+              aria-label={`${d.hijriDay} ${HIJRI_MONTH_NAMES[month - 1]} — ${dt.length} مهمة`}
+              className={`min-h-[76px] rounded-lg border p-1 text-right transition hover:bg-accent/50
+                ${isToday ? "border-primary ring-1 ring-primary" : ""}
+                ${dh.length ? "bg-amber-50 dark:bg-amber-950/20" : isWeekendDay(d.weekday) ? "bg-muted/40" : ""}`}
+            >
+              <div className="flex items-start justify-between">
+                <span className="text-sm font-bold">{d.hijriDay}</span>
+                <span className="text-[10px] text-muted-foreground">{d.gregorianDay}/{d.gregorianMonth}</span>
+              </div>
+              <div className="mt-1 space-y-0.5">
+                {dh.slice(0, 1).map((h) => (
+                  <p key={h.id} className="truncate text-[10px] text-amber-700 dark:text-amber-400">{h.title}</p>
+                ))}
+                {dt.slice(0, 2).map((t) => (
+                  <p key={t.id} className={`truncate text-[10px] ${isTaskLate(t, todayIso) ? "text-destructive font-medium" : ""}`}>
+                    • {t.title}
+                  </p>
+                ))}
+                {de.slice(0, 1).map((e) => (
+                  <p key={e.id} className="truncate text-[10px] text-primary">◆ {e.title}</p>
+                ))}
+                {dt.length + de.length > 3 && (
+                  <p className="text-[10px] text-muted-foreground">+{dt.length + de.length - 3}</p>
+                )}
+                {late > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] text-destructive">
+                    <AlarmClock className="w-3 h-3" /> {late} متأخرة
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <Dialog open={!!openDay} onOpenChange={(o) => !o && setOpenDay(null)}>
+        <DialogContent className="max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>{openDay ? formatDateSmart(openDay) : ""}</DialogTitle>
+            <DialogDescription>مهام وفعاليات وإجازات هذا اليوم</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+            {dayHolidays.map((h) => (
+              <div key={h.id} className="rounded-lg border bg-amber-50 dark:bg-amber-950/20 p-2 text-sm">
+                إجازة: {h.title} ({formatDateSmart(h.start_date)} — {formatDateSmart(h.end_date)})
+              </div>
+            ))}
+            {dayTasks.map((t) => (
+              <div key={t.id} className="rounded-lg border p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">{t.title}</p>
+                  <Badge variant={isTaskLate(t, todayIso) ? "destructive" : "secondary"}>
+                    {isTaskLate(t, todayIso) ? "متأخرة" : STATUS_LABELS[t.status] || t.status}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t.category} · {t.priority}{t.due_time ? ` · ${t.due_time.slice(0, 5)}` : ""}
+                </p>
+              </div>
+            ))}
+            {dayEvents.map((e) => (
+              <div key={e.id} className="rounded-lg border p-2">
+                <p className="text-sm font-medium text-primary">{e.title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  فعالية {e.event_type}{e.event_time ? ` · ${e.event_time.slice(0, 5)}` : ""}{e.location ? ` · ${e.location}` : ""}
+                </p>
+              </div>
+            ))}
+            {!dayHolidays.length && !dayTasks.length && !dayEvents.length && (
+              <p className="text-sm text-muted-foreground text-center py-6">لا يوجد شيء في هذا اليوم</p>
+            )}
+          </div>
+          <Button variant="outline" onClick={() => navigate("/work-hub?tab=tasks")}>إدارة المهام</Button>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
