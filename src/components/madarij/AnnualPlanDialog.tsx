@@ -74,6 +74,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   useEffect(() => {
     if (open) {
       setStep(1);
+      setTermError(false);
       fetchHalaqat();
       fetchHolidays();
     }
