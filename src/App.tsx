@@ -241,6 +241,9 @@ const AppRoutes = () => {
       <Route path="/internal-requests" element={<ProtectedRoute path="/internal-requests"><Navigate to="/work-hub?tab=requests" replace /></ProtectedRoute>} />
       <Route path="/staff-tasks" element={<ProtectedRoute path="/staff-tasks"><Navigate to="/work-hub?tab=tasks" replace /></ProtectedRoute>} />
       <Route path="/staff-tasks-analytics" element={<ProtectedRoute path="/staff-tasks-analytics"><Navigate to="/work-hub?tab=analytics" replace /></ProtectedRoute>} />
+      <Route path="/tasks-calendar" element={<ProtectedRoute path="/staff-tasks"><Navigate to="/work-hub?tab=calendar" replace /></ProtectedRoute>} />
+
+
       <Route path="/programs-overview" element={<ProtectedRoute path="/programs-overview"><ProgramsOverview /></ProtectedRoute>} />
       <Route path="/enrollment-form/:studentId" element={<ProtectedRoute path="/enrollment-form"><EnrollmentForm /></ProtectedRoute>} />
 
