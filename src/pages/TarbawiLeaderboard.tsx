@@ -130,7 +130,7 @@ export default function TarbawiLeaderboard() {
                       <span className="flex-1 font-medium truncate">{e.student_name}</span>
                       <span className="text-muted-foreground truncate max-w-24">{e.halaqa_name}</span>
                       <Badge variant="secondary">
-                        {(e as any)[axis.key]}{axis.unit}
+                        {axis.key === "overall" ? e.commitment : e.totals[axis.key]}{axis.unit}
                       </Badge>
                     </div>
                   ))}
