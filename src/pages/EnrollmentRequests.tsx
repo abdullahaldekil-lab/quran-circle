@@ -517,10 +517,11 @@ const EnrollmentRequests = () => {
                     <SelectContent>
                       {halaqat.map((h) => (
                         <SelectItem key={h.id} value={h.id} disabled={h.active_count >= h.capacity_max}>
-                          {h.name} ({h.active_count}/{h.capacity_max})
+                          {h.is_talqeen ? "🔵 تلقين — " : ""}{h.name} ({h.active_count}/{h.capacity_max})
                           {h.active_count >= h.capacity_max ? " - مكتمل" : ""}
                         </SelectItem>
                       ))}
+
                     </SelectContent>
                   </Select>
                 </div>
