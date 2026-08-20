@@ -193,48 +193,7 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
       toast.error("يرجى توضيح اسم الحلقة السابقة");
       return;
     }
-
-    // One-time response check by student ID number
-    const { data: existingById } = await anonClient
-      .from("enrollment_requests")
-      .select("id, status, form_data")
-      .eq("student_full_name", form.student_full_name.trim());
-
-    const dupById = existingById?.find((r: any) => r.form_data?.student_id_number === studentIdClean);
-    if (dupById) {
-      toast.error("تم تقديم طلب مسبقاً بهذا الرقم. لا يمكن إرسال أكثر من طلب واحد لنفس رقم الهوية.");
-      return;
-    }
-
-    // Check for duplicate: same student name + same guardian phone
-    const { data: existingRequests } = await anonClient
-      .from("enrollment_requests")
-      .select("id, status")
-      .eq("guardian_phone", phoneClean)
-      .eq("student_full_name", form.student_full_name.trim());
-
-    const activeDuplicate = existingRequests?.find(
-      (r: any) => r.status === "pending" || r.status === "approved" || r.status === "waitlisted"
-    );
-
-    if (activeDuplicate) {
-      toast.error("يوجد طلب مسجل مسبقاً لهذا الطالب بنفس رقم الجوال.");
-      return;
-    }
-
-    // Rate limit
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count } = await anonClient
-      .from("enrollment_requests")
-      .select("id", { count: "exact", head: true })
-      .eq("guardian_phone", phoneClean)
-      .gte("created_at", oneHourAgo);
-
-    if (count && count >= 3) {
-      toast.error("تم تجاوز الحد المسموح. يرجى المحاولة لاحقاً");
-      return;
-    }
-
+    if (submitting) return;
     setSubmitting(true);
 
     const { student_full_name, guardian_full_name, guardian_phone, notes, student_age, student_grade, ...extraFields } = form;
@@ -259,13 +218,23 @@ const EnrollmentForm = ({ onSubmitted }: Props) => {
     setSubmitting(false);
 
     if (error) {
-      toast.error("حدث خطأ. يرجى المحاولة مجدداً");
+      const msg = error.message || "";
+      if (msg.includes("DUPLICATE_ID_NUMBER")) {
+        toast.error("تم تقديم طلب مسبقاً بهذا رقم الهوية. لا يمكن إرسال أكثر من طلب واحد لنفس الطالب.");
+      } else if (msg.includes("DUPLICATE_STUDENT_REQUEST")) {
+        toast.error("يوجد طلب مسجل مسبقاً لهذا الطالب بنفس رقم الجوال.");
+      } else if (msg.includes("RATE_LIMIT_EXCEEDED")) {
+        toast.error("تم تجاوز الحد المسموح من الطلبات. يرجى المحاولة لاحقاً.");
+      } else {
+        toast.error("حدث خطأ. يرجى المحاولة مجدداً");
+      }
       console.error(error);
       return;
     }
 
     onSubmitted(form);
   };
+
 
   return (
     <div className="space-y-4">

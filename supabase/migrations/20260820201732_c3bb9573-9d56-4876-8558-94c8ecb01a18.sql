@@ -1,0 +1,1 @@
+DELETE FROM public.enrollment_requests WHERE guardian_phone = '0500000001' AND guardian_full_name = 'ولي اختبار';

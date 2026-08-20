@@ -46,7 +46,9 @@ interface HalaqaInfo {
   name: string;
   capacity_max: number;
   active_count: number;
+  is_talqeen?: boolean;
 }
+
 
 const STATUS_MAP: Record<ReqStatus, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: "قيد المراجعة", color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -96,11 +98,14 @@ const EnrollmentRequests = () => {
     setLoading(true);
     const [reqRes, halaqatRes] = await Promise.all([
       supabase.from("enrollment_requests").select("*, form_data").order("created_at", { ascending: false }),
-      (supabase as any).from("halaqat_tahfeez").select("id, name, capacity_max, talqeen_curriculum_id").eq("active", true),
+      (supabase as any).from("halaqat").select("id, name, capacity_max, talqeen_curriculum_id").eq("active", true),
     ]);
 
-    const { filterTahfeezOnly } = await import("@/lib/halaqaType");
-    const halaqatData = filterTahfeezOnly((halaqatRes.data as any[]) || []);
+    const { isTalqeenHalaqa } = await import("@/lib/halaqaType");
+    const halaqatData = ((halaqatRes.data as any[]) || []).map((h) => ({
+      ...h,
+      is_talqeen: isTalqeenHalaqa(h),
+    }));
 
     // Get student counts per halaqa
     const halaqatWithCounts: HalaqaInfo[] = [];
@@ -113,6 +118,7 @@ const EnrollmentRequests = () => {
     setHalaqat(halaqatWithCounts);
     setLoading(false);
   };
+
 
   useEffect(() => { fetchData(); }, []);
 
@@ -511,10 +517,11 @@ const EnrollmentRequests = () => {
                     <SelectContent>
                       {halaqat.map((h) => (
                         <SelectItem key={h.id} value={h.id} disabled={h.active_count >= h.capacity_max}>
-                          {h.name} ({h.active_count}/{h.capacity_max})
+                          {h.is_talqeen ? "🔵 تلقين — " : ""}{h.name} ({h.active_count}/{h.capacity_max})
                           {h.active_count >= h.capacity_max ? " - مكتمل" : ""}
                         </SelectItem>
                       ))}
+
                     </SelectContent>
                   </Select>
                 </div>
