@@ -399,10 +399,12 @@ const Students = () => {
                 <Select value={form.halaqa_id} onValueChange={(v) => setForm({ ...form, halaqa_id: v })}>
                   <SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
                   <SelectContent>
-                    {/* حلقات التحفيظ فقط — التسجيل في التلقين يتم من قسم التلقين */}
-                    {assignableForNewStudent(halaqat).map((h) => (
-                      <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                    {halaqat.map((h) => (
+                      <SelectItem key={h.id} value={h.id}>
+                        {isTalqeenHalaqa(h) ? "تلقين — " : ""}{h.name}
+                      </SelectItem>
                     ))}
+
                   </SelectContent>
                 </Select>
               </div>
