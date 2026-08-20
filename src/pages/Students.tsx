@@ -281,15 +281,8 @@ const Students = () => {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // New students never go into a talqeen halaqa — that enrolment runs through
-    // the Talqeen module. The picker already hides them; this is the save-time guard.
-    if (form.halaqa_id) {
-      const target = halaqat.find((h) => h.id === form.halaqa_id);
-      if (!canEnrolNewStudent(target)) {
-        toast.error(TALQEEN_ENROLMENT_BLOCKED_MSG);
-        return;
-      }
-    }
+    // Talqeen halaqat are now allowed for new students (per management request).
+
 
     // Check halaqa capacity before adding
     if (form.halaqa_id) {
