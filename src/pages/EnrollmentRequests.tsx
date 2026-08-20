@@ -46,7 +46,9 @@ interface HalaqaInfo {
   name: string;
   capacity_max: number;
   active_count: number;
+  is_talqeen?: boolean;
 }
+
 
 const STATUS_MAP: Record<ReqStatus, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: "قيد المراجعة", color: "bg-yellow-100 text-yellow-800", icon: Clock },
