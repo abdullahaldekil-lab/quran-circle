@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.prevent_duplicate_enrollment_request() FROM PUBLIC, anon, authenticated;
