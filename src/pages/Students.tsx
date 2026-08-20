@@ -17,11 +17,8 @@ import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import CsvBulkImport from "@/components/CsvBulkImport";
 import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import StudentNameLink from "@/components/StudentNameLink";
-import {
-  assignableForNewStudent,
-  canEnrolNewStudent,
-  TALQEEN_ENROLMENT_BLOCKED_MSG,
-} from "@/lib/halaqaType";
+import { isTalqeenHalaqa } from "@/lib/halaqaType";
+
 
 const PAGE_SIZE = 20;
 
