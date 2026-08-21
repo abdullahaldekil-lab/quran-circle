@@ -276,7 +276,7 @@ const ProfileSettings = () => {
                 {/* Avatar */}
                 <div className="flex flex-col items-center gap-2">
                   <Avatar className="w-24 h-24 text-2xl">
-                    <AvatarImage src={(profile as any)?.avatar_url || ""} />
+                    <AvatarImage src={profile?.avatar_url || ""} />
                     <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
                   <input
