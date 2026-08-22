@@ -16,6 +16,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { PLAN_TERMS, TERM_LABELS, type PlanTerm } from "@/lib/planTerm";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
 import { validatePlanRanges } from "@/lib/planRanges";
+import {
+  formatAyahRef,
+  searchSurahs,
+  segmentFromAyahs,
+  segmentFromHizb,
+  segmentFromJuz,
+  segmentFromPages,
+  type SegmentInfo,
+} from "@/lib/quran-locate";
+
 
 interface Props {
   open: boolean;
