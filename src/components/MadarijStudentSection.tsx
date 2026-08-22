@@ -4,14 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Eye, BookOpen, Pencil, Trash2 } from "lucide-react";
+import { Plus, Eye, BookOpen, Pencil, Trash2, GraduationCap } from "lucide-react";
 import { formatDateHijriOnly } from "@/lib/hijri";
 import { toast } from "sonner";
+import {
+  DAILY_PACE_OPTIONS,
+  buildPaceSummary,
+  commitmentTone,
+  expandHolidayRanges,
+  normalizePace,
+  paceLabel,
+  PAGES_PER_HIZB,
+  PAGES_PER_JUZ,
+} from "@/lib/madarij-pace";
 
 interface Props {
   studentId: string;
@@ -22,36 +33,32 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [tracks, setTracks] = useState<any[]>([]);
-  const [levelTracks, setLevelTracks] = useState<any[]>([]);
-  const [branches, setBranches] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [dailyRecords, setDailyRecords] = useState<any[]>([]);
+  const [holidays, setHolidays] = useState<string[]>([]);
   const [form, setForm] = useState({
-    track_id: "", level_track_id: "", branch_id: "", part_number: 1, hizb_number: 1,
+    track_id: "", part_number: 1, hizb_number: 1, daily_pace: "1",
     start_date: new Date().toISOString().split("T")[0], end_date: "",
   });
 
-  const hasActiveEnrollment = enrollments.some(e => e.status === "active");
+  const activeEnrollment = enrollments.find((e) => e.status === "active") || null;
+  const hasActiveEnrollment = !!activeEnrollment;
 
   const fetchEnrollments = async () => {
     const { data } = await supabase
       .from("madarij_enrollments")
       .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required)")
       .eq("student_id", studentId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(20);
     setEnrollments(data || []);
   };
 
   const fetchMeta = async () => {
-    const [tRes, ltRes, bRes] = await Promise.all([
-      supabase.from("madarij_tracks").select("*").eq("active", true),
-      supabase.from("level_tracks").select("*").eq("active", true).order("sort_order"),
-      supabase.from("level_branches").select("*").order("sort_order"),
-    ]);
-    setTracks(tRes.data || []);
-    setLevelTracks(ltRes.data || []);
-    setBranches(bRes.data || []);
+    const { data } = await supabase.from("madarij_tracks").select("*").eq("active", true);
+    setTracks(data || []);
   };
 
   useEffect(() => {
@@ -59,8 +66,46 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
     fetchMeta();
   }, [studentId]);
 
+  // متابعة إنجاز مسار الحفظ للتسجيل النشط
+  useEffect(() => {
+    if (!activeEnrollment) {
+      setDailyRecords([]);
+      return;
+    }
+    let alive = true;
+    (async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const [dpRes, hRes] = await Promise.all([
+        supabase
+          .from("madarij_daily_progress")
+          .select("progress_date, memorization")
+          .eq("enrollment_id", activeEnrollment.id)
+          .order("progress_date", { ascending: false })
+          .limit(400),
+        supabase
+          .from("holidays")
+          .select("start_date, end_date")
+          .gte("end_date", activeEnrollment.start_date)
+          .lte("start_date", today)
+          .limit(20),
+      ]);
+      if (!alive) return;
+      setDailyRecords(dpRes.data || []);
+      setHolidays(expandHolidayRanges(hRes.data || []));
+    })();
+    return () => { alive = false; };
+  }, [activeEnrollment?.id]);
+
+  const paceSummary = activeEnrollment
+    ? buildPaceSummary({
+        pace: activeEnrollment.daily_pace,
+        startDate: activeEnrollment.start_date,
+        records: dailyRecords,
+        holidays,
+      })
+    : null;
+
   const computeNextHizb = () => {
-    // Highest previously enrolled hizb + 1, fallback 1
     const maxHizb = enrollments.reduce((m, e) => Math.max(m, Number(e.hizb_number) || 0), 0);
     const next = Math.min(60, maxHizb + 1 || 1);
     const part = Math.max(1, Math.min(30, Math.ceil(next / 2)));
@@ -75,8 +120,8 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
     setEditingId(null);
     const auto = computeNextHizb();
     setForm({
-      track_id: "", level_track_id: "", branch_id: "",
-      part_number: auto.part_number, hizb_number: auto.hizb_number,
+      track_id: "",
+      part_number: auto.part_number, hizb_number: auto.hizb_number, daily_pace: "1",
       start_date: new Date().toISOString().split("T")[0], end_date: "",
     });
     setDialogOpen(true);
@@ -86,10 +131,9 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
     setEditingId(en.id);
     setForm({
       track_id: en.track_id,
-      level_track_id: en.level_track_id || "",
-      branch_id: en.branch_id || "",
       part_number: en.part_number,
       hizb_number: en.hizb_number,
+      daily_pace: String(normalizePace(en.daily_pace)),
       start_date: en.start_date,
       end_date: en.end_date || "",
     });
@@ -105,21 +149,20 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
       return d.toISOString().split("T")[0];
     })() : null);
 
-    if (editingId) {
-      const { error } = await supabase.from("madarij_enrollments").update({
-        track_id: form.track_id,
-        level_track_id: form.level_track_id || null,
-        branch_id: form.branch_id || null,
-        part_number: form.part_number,
-        hizb_number: form.hizb_number,
-        start_date: form.start_date,
-        end_date: endDate,
-      }).eq("id", editingId);
+    const payload = {
+      track_id: form.track_id,
+      part_number: form.part_number,
+      hizb_number: form.hizb_number,
+      daily_pace: normalizePace(form.daily_pace),
+      start_date: form.start_date,
+      end_date: endDate,
+    };
 
+    if (editingId) {
+      const { error } = await supabase.from("madarij_enrollments").update(payload).eq("id", editingId);
       if (error) { toast.error("خطأ في تحديث التسجيل"); return; }
       toast.success("تم تحديث التسجيل بنجاح");
     } else {
-      // Double-check no active enrollment exists
       const { data: existing } = await supabase
         .from("madarij_enrollments")
         .select("id")
@@ -132,17 +175,7 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
         return;
       }
 
-      const { error } = await supabase.from("madarij_enrollments").insert({
-        student_id: studentId,
-        track_id: form.track_id,
-        level_track_id: form.level_track_id || null,
-        branch_id: form.branch_id || null,
-        part_number: form.part_number,
-        hizb_number: form.hizb_number,
-        start_date: form.start_date,
-        end_date: endDate,
-      });
-
+      const { error } = await supabase.from("madarij_enrollments").insert({ student_id: studentId, ...payload });
       if (error) { toast.error("خطأ في التسجيل"); return; }
       toast.success("تم التسجيل في برنامج مدارج");
     }
@@ -161,9 +194,10 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
     fetchEnrollments();
   };
 
-  const filteredBranches = form.level_track_id
-    ? branches.filter(b => b.level_track_id === form.level_track_id)
-    : [];
+  const toneClass = (pct: number) => {
+    const tone = commitmentTone(pct);
+    return tone === "success" ? "text-success" : tone === "warning" ? "text-warning" : "text-destructive";
+  };
 
   return (
     <Card>
@@ -185,6 +219,56 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
             ⚠️ الطالب مسجل في مسار نشط حالياً. لا يمكن التسجيل في مسار آخر حتى يكتمل الحالي.
           </p>
         )}
+
+        {/* مسار الحفظ داخل برنامج مدارج */}
+        {activeEnrollment && paceSummary && (
+          <div className="rounded-lg border bg-muted/30 p-3 mb-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-medium text-sm">
+                <GraduationCap className="w-4 h-4 text-primary" />
+                مسار الحفظ
+              </div>
+              <Badge variant="secondary" className="text-xs">{paceLabel(activeEnrollment.daily_pace)}</Badge>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="rounded-md bg-background p-2">
+                <div className="text-muted-foreground">المقدار اليومي</div>
+                <div className="font-semibold">{paceSummary.dailyPages} وجه</div>
+              </div>
+              <div className="rounded-md bg-background p-2">
+                <div className="text-muted-foreground">إتمام الحزب ({PAGES_PER_HIZB} أوجه)</div>
+                <div className="font-semibold">{paceSummary.daysForHizb} يوم</div>
+              </div>
+              <div className="rounded-md bg-background p-2">
+                <div className="text-muted-foreground">إتمام الجزء ({PAGES_PER_JUZ} وجهاً)</div>
+                <div className="font-semibold">{paceSummary.daysForJuz} يوم</div>
+              </div>
+              <div className="rounded-md bg-background p-2">
+                <div className="text-muted-foreground">الانتهاء المتوقع للحزب</div>
+                <div className="font-semibold">
+                  {paceSummary.expectedHizbEnd ? formatDateHijriOnly(paceSummary.expectedHizbEnd) : "—"}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  المنجز {paceSummary.achieved} من {paceSummary.targetToDate} وجه حتى اليوم
+                </span>
+                <span className={`font-semibold ${toneClass(paceSummary.commitment)}`}>
+                  {paceSummary.commitment}%
+                </span>
+              </div>
+              <Progress value={Math.min(100, paceSummary.commitment)} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {paceSummary.daysAhead >= 0
+                  ? `متقدم عن الخطة بـ ${paceSummary.daysAhead} يوم`
+                  : `متأخر عن الخطة بـ ${Math.abs(paceSummary.daysAhead)} يوم`}
+              </p>
+            </div>
+          </div>
+        )}
+
         {enrollments.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">لا يوجد تسجيل في برنامج مدارج</p>
         ) : (
@@ -193,7 +277,9 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
               <div key={en.id} className="flex items-center justify-between py-2 border-b last:border-0">
                 <div>
                   <p className="text-sm font-medium">{(en.madarij_tracks as any)?.name} — الجزء {en.part_number} / الحزب {en.hizb_number}</p>
-                  <p className="text-xs text-muted-foreground">{formatDateHijriOnly(en.start_date)} → {en.end_date ? formatDateHijriOnly(en.end_date) : "—"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDateHijriOnly(en.start_date)} → {en.end_date ? formatDateHijriOnly(en.end_date) : "—"} • {paceLabel(en.daily_pace)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={en.status === "active" ? "default" : "secondary"} className="text-xs">
@@ -235,25 +321,20 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>المستوى</Label>
-              <Select value={form.level_track_id} onValueChange={v => setForm({...form, level_track_id: v, branch_id: ""})}>
-                <SelectTrigger><SelectValue placeholder="اختر المستوى" /></SelectTrigger>
+              <Label>مسار الحفظ (السرعة اليومية)</Label>
+              <Select value={form.daily_pace} onValueChange={v => setForm({...form, daily_pace: v})}>
+                <SelectTrigger><SelectValue placeholder="اختر السرعة" /></SelectTrigger>
                 <SelectContent>
-                  {levelTracks.map(lt => <SelectItem key={lt.id} value={lt.id}>{lt.name}</SelectItem>)}
+                  {DAILY_PACE_OPTIONS.map(o => (
+                    <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                إتمام الحزب في {Math.ceil(PAGES_PER_HIZB / normalizePace(form.daily_pace))} يوماً دراسياً،
+                والجزء في {Math.ceil(PAGES_PER_JUZ / normalizePace(form.daily_pace))} يوماً.
+              </p>
             </div>
-            {filteredBranches.length > 0 && (
-              <div className="space-y-1">
-                <Label>الفرع</Label>
-                <Select value={form.branch_id} onValueChange={v => setForm({...form, branch_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="اختر الفرع" /></SelectTrigger>
-                  <SelectContent>
-                    {filteredBranches.map(b => <SelectItem key={b.id} value={b.id}>الفرع {b.branch_number}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div className="rounded-md border bg-muted/40 p-3 text-sm">
               <div className="font-medium mb-1">الجزء والحزب (تلقائي)</div>
               <div className="text-muted-foreground">

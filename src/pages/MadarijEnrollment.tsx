@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowRight, Plus, Pencil, Trash2, Printer, AlertTriangle, FlaskConical } from "lucide-react";
 import { formatDateSmart, formatDateHijriOnly } from "@/lib/hijri";
+import { paceLabel } from "@/lib/madarij-pace";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import MadarijPrintTemplate from "@/components/MadarijPrintTemplate";
@@ -71,7 +72,7 @@ const MadarijEnrollment = () => {
     if (!enrollmentId) return;
     setLoading(true);
     const [enrollRes, dpRes, mistakesRes, examsRes] = await Promise.all([
-      supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required), level_tracks(name)").eq("id", enrollmentId).maybeSingle(),
+      supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required)").eq("id", enrollmentId).maybeSingle(),
       supabase.from("madarij_daily_progress").select("*").eq("enrollment_id", enrollmentId).order("progress_date"),
       supabase.from("madarij_mistakes").select("*").eq("enrollment_id", enrollmentId).order("created_at"),
       supabase.from("madarij_hizb_exams").select("*").eq("enrollment_id", enrollmentId).order("attempt_number", { ascending: false }),
@@ -334,6 +335,8 @@ const MadarijEnrollment = () => {
             <div><span className="text-muted-foreground">تاريخ البداية:</span> <strong>{formatDateHijriOnly(enrollment.start_date)}</strong></div>
             <div><span className="text-muted-foreground">تاريخ النهاية:</span> <strong>{enrollment.end_date ? formatDateHijriOnly(enrollment.end_date) : "—"}</strong></div>
             <div><span className="text-muted-foreground">الأيام:</span> <strong>{(enrollment.madarij_tracks as any)?.days_required} يوم</strong></div>
+            <div><span className="text-muted-foreground">مسار الحفظ:</span> <strong>{paceLabel(enrollment.daily_pace)}</strong></div>
+
             <div className="flex items-center gap-2">
               <Badge variant={enrollment.status === "active" ? "default" : "secondary"}>
                 {enrollment.status === "active" ? "نشط" : "مكتمل"}

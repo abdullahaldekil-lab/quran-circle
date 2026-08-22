@@ -1604,12 +1604,14 @@ export type Database = {
         Row: {
           branch_id: string | null
           created_at: string
+          daily_pace: number
           end_date: string | null
           failed_attempts: number
           hizb_number: number
           id: string
           level_downgraded: boolean
           level_track_id: string | null
+          pace_notes: string | null
           part_number: number
           previous_track_id: string | null
           start_date: string
@@ -1621,12 +1623,14 @@ export type Database = {
         Insert: {
           branch_id?: string | null
           created_at?: string
+          daily_pace?: number
           end_date?: string | null
           failed_attempts?: number
           hizb_number?: number
           id?: string
           level_downgraded?: boolean
           level_track_id?: string | null
+          pace_notes?: string | null
           part_number?: number
           previous_track_id?: string | null
           start_date?: string
@@ -1638,12 +1642,14 @@ export type Database = {
         Update: {
           branch_id?: string | null
           created_at?: string
+          daily_pace?: number
           end_date?: string | null
           failed_attempts?: number
           hizb_number?: number
           id?: string
           level_downgraded?: boolean
           level_track_id?: string | null
+          pace_notes?: string | null
           part_number?: number
           previous_track_id?: string | null
           start_date?: string
