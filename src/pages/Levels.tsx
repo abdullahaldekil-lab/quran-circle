@@ -60,8 +60,10 @@ const Levels = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold">مستويات الحفظ</h1>
-        <p className="text-muted-foreground text-sm">المستويات المعتمدة لتنظيم الطلاب وتحديد أهداف الحفظ اليومية</p>
+        <h1 className="text-2xl font-bold">مستويات مدارج</h1>
+        <p className="text-muted-foreground text-sm">
+          مدارج هو مسار الحفظ الوحيد، وهذه مستوياته الداخلية المعتمدة لتنظيم الطلاب وتحديد أهداف الحفظ اليومية
+        </p>
       </div>
 
       <div className="grid gap-4">
