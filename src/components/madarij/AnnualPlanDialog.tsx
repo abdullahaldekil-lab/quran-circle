@@ -31,6 +31,8 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
+  /** When set, the dialog edits this plan in place instead of creating a new one. */
+  planId?: string | null;
 }
 
 interface MonthRow {
