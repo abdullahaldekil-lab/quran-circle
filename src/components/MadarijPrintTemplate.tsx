@@ -51,6 +51,8 @@ const MadarijPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onClo
             <thead>
               <tr className="bg-gray-200">
                 <th className="border border-black p-1">المسار</th>
+                <th className="border border-black p-1">المستوى</th>
+                <th className="border border-black p-1">الفرع</th>
                 <th className="border border-black p-1">الجزء</th>
                 <th className="border border-black p-1">الحزب</th>
                 <th className="border border-black p-1">الأيام</th>
@@ -61,6 +63,8 @@ const MadarijPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onClo
             <tbody>
               <tr>
                 <td className="border border-black p-1 text-center">{trackName}</td>
+                <td className="border border-black p-1 text-center">{levelName}</td>
+                <td className="border border-black p-1 text-center">{branchNumber ?? "—"}</td>
                 <td className="border border-black p-1 text-center">{enrollment.part_number}</td>
                 <td className="border border-black p-1 text-center">{enrollment.hizb_number}</td>
                 <td className="border border-black p-1 text-center">{daysRequired}</td>
