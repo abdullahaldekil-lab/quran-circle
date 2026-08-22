@@ -19,7 +19,7 @@ const GuardianMessagesAdmin = () => {
   const load = async () => {
     setLoading(true);
     const { data: msgs } = await supabase
-      .from("guardian_messages" as any).select("*, students(full_name)")
+      .from("guardian_messages" as any).select("*, students(full_name, guardian_phone)")
       .order("created_at", { ascending: false });
     if (msgs?.length) {
       const ids = Array.from(new Set(msgs.map((m: any) => m.guardian_id)));
