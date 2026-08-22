@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { activePlanFor } from "@/lib/planTerm";
+import { normalizePace, paceLabel, type DailyPace } from "@/lib/madarij-pace";
 
 export interface StudentTrackInfo {
+  /** معرّف التسجيل في برنامج مدارج */
   id: string;
-  level_track_id: string;
   track_name?: string | null;
-  branch_name?: string | null;
+  hizb_number?: number | null;
   part_number?: number | null;
-  progress_percentage?: number | null;
+  daily_pace: DailyPace;
+  pace_label: string;
 }
 
 /**
- * A student may not be recited to without a memorization path in place.
- * The memorization track (مسار الحفظ) is what is followed daily; an annual
- * plan is also accepted as a valid path when present.
+ * مسار الحفظ صار جزءاً من برنامج مدارج: التسجيل النشط في مدارج هو المسار
+ * المعتمد، والخطة السنوية تُقبل كذلك كمسار صالح للتسميع.
  */
 export const useStudentPlan = (studentId?: string | null, refreshKey: number = 0) => {
   const [plan, setPlan] = useState<any>(null);
@@ -32,17 +33,19 @@ export const useStudentPlan = (studentId?: string | null, refreshKey: number = 0
     setLoading(true);
 
     (async () => {
-      const [planRes, levelRes] = await Promise.all([
+      const [planRes, enrollRes] = await Promise.all([
         supabase
           .from("student_annual_plans")
           .select("*")
           .eq("student_id", studentId)
           .eq("status", "active"),
         supabase
-          .from("student_levels")
-          .select("id, level_track_id, part_number, progress_percentage, branch_id, track_kind, status")
+          .from("madarij_enrollments")
+          .select("id, hizb_number, part_number, daily_pace, madarij_tracks!madarij_enrollments_track_id_fkey(name)")
           .eq("student_id", studentId)
           .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle(),
       ]);
       if (!alive) return;
@@ -50,22 +53,15 @@ export const useStudentPlan = (studentId?: string | null, refreshKey: number = 0
       const today = new Date().toISOString().split("T")[0];
       setPlan(activePlanFor((planRes.data as any[]) || [], today));
 
-      const level = levelRes.data as any;
-      if (level?.level_track_id) {
-        const [trackRes, branchRes] = await Promise.all([
-          supabase.from("level_tracks").select("name").eq("id", level.level_track_id).maybeSingle(),
-          level.branch_id
-            ? supabase.from("level_branches").select("name").eq("id", level.branch_id).maybeSingle()
-            : Promise.resolve({ data: null } as any),
-        ]);
-        if (!alive) return;
+      const en = enrollRes.data as any;
+      if (en?.id) {
         setTrack({
-          id: level.id,
-          level_track_id: level.level_track_id,
-          track_name: (trackRes.data as any)?.name ?? null,
-          branch_name: (branchRes?.data as any)?.name ?? null,
-          part_number: level.part_number,
-          progress_percentage: level.progress_percentage,
+          id: en.id,
+          track_name: (en.madarij_tracks as any)?.name ?? null,
+          hizb_number: en.hizb_number,
+          part_number: en.part_number,
+          daily_pace: normalizePace(en.daily_pace),
+          pace_label: paceLabel(en.daily_pace),
         });
       } else {
         setTrack(null);
