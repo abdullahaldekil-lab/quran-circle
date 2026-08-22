@@ -799,7 +799,7 @@ const TalqeenHalaqat = () => {
                     <SelectContent>
                       <SelectItem value="__none__">بدون مساعد</SelectItem>
                       {availableAssistantsForAdd.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                        <SelectItem key={t.id} value={t.id}>{teacherLabel(t, undefined, true)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
