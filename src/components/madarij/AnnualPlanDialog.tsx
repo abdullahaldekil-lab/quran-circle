@@ -445,23 +445,30 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
         if (error) throw error;
         plan = data;
       }
-      const planError = null as any;
+      // Monthly rows: keep already recorded progress when editing.
+      let existing: any[] = [];
+      if (isEditing) {
+        const { data } = await supabase
+          .from("student_plan_progress")
+          .select("month_number, actual_pages, commitment_percentage, status")
+          .eq("plan_id", plan.id);
+        existing = data || [];
+      }
 
-
-      if (planError) throw planError;
-
-      // Insert monthly progress rows
-      const progressRows = monthlyDistribution.map((m) => ({
-        plan_id: plan.id,
-        student_id: selectedStudent,
-        week_number: 0,
-        month_number: m.month,
-        target_pages: m.targetPages,
-        actual_pages: 0,
-        attendance_days: m.workDays,
-        commitment_percentage: 0,
-        status: "on_track",
-      }));
+      const progressRows = monthlyDistribution.map((m) => {
+        const prev = existing.find((p: any) => p.month_number === m.month);
+        return {
+          plan_id: plan.id,
+          student_id: selectedStudent,
+          week_number: 0,
+          month_number: m.month,
+          target_pages: m.targetPages,
+          actual_pages: prev?.actual_pages ?? 0,
+          attendance_days: m.workDays,
+          commitment_percentage: prev?.commitment_percentage ?? 0,
+          status: prev?.status ?? "on_track",
+        };
+      });
 
       if (progressRows.length > 0) {
         const { error: progressError } = await supabase
@@ -470,7 +477,8 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
         if (progressError) throw progressError;
       }
 
-      toast.success(`تم حفظ ${TERM_LABELS[term] === "سنوي" ? "الخطة السنوية" : "الخطة الفصلية"} بنجاح`);
+      toast.success(isEditing ? "تم تحديث الخطة بنجاح" : `تم حفظ ${TERM_LABELS[term] === "سنوي" ? "الخطة السنوية" : "الخطة الفصلية"} بنجاح`);
+
       onOpenChange(false);
       onSaved();
     } catch (error: any) {
