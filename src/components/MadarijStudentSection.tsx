@@ -182,42 +182,63 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
       return;
     }
     setEditingId(null);
+    setEndDateManual(false);
     const auto = computeNextHizb();
     setForm({
-      track_id: "",
-      part_number: auto.part_number, hizb_number: auto.hizb_number, daily_pace: "1",
-      start_date: new Date().toISOString().split("T")[0], end_date: "",
+      ...emptyForm,
+      part_number: auto.part_number,
+      hizb_number: auto.hizb_number,
+      start_date: new Date().toISOString().split("T")[0],
     });
     setDialogOpen(true);
   };
 
   const openEditDialog = (en: any) => {
     setEditingId(en.id);
+    setEndDateManual(!!en.end_date);
     setForm({
-      track_id: en.track_id,
+      track_id: en.track_id || "",
+      level_track_id: en.level_track_id || "",
+      branch_id: en.branch_id || "",
+      level_part_id: en.level_part_id || "",
       part_number: en.part_number,
       hizb_number: en.hizb_number,
       daily_pace: String(normalizePace(en.daily_pace)),
+      days_planned: Number(en.days_planned) || Number((en.madarij_tracks as any)?.days_required) || 20,
       start_date: en.start_date,
       end_date: en.end_date || "",
     });
     setDialogOpen(true);
   };
 
+  /** عند اختيار المسار: عدد الأيام يُجلب من بيانات المسار */
+  const onTrackChange = (trackId: string) => {
+    const t = tracks.find((x) => x.id === trackId);
+    setForm((f) => ({ ...f, track_id: trackId, days_planned: Number(t?.days_required) || f.days_planned }));
+  };
+
+  const onPartChange = (partId: string) => {
+    const p = parts.find((x) => x.id === partId);
+    const partNumber = Number(p?.part_number) || 1;
+    setForm((f) => ({ ...f, level_part_id: partId, part_number: partNumber, hizb_number: hizbOfPart(partNumber) }));
+  };
+
+  const paceDays = daysNeededFor(PAGES_PER_JUZ, form.daily_pace);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedTrack = tracks.find(t => t.id === form.track_id);
-    const endDate = form.end_date || (selectedTrack ? (() => {
-      const d = new Date(form.start_date);
-      d.setDate(d.getDate() + selectedTrack.days_required);
-      return d.toISOString().split("T")[0];
-    })() : null);
+    const days = Number(form.days_planned) || 0;
+    const endDate = form.end_date || addStudyDays(form.start_date, days, planHolidays);
 
     const payload = {
       track_id: form.track_id,
+      level_track_id: form.level_track_id || null,
+      branch_id: form.branch_id || null,
+      level_part_id: form.level_part_id || null,
       part_number: form.part_number,
       hizb_number: form.hizb_number,
       daily_pace: normalizePace(form.daily_pace),
+      days_planned: days || null,
       start_date: form.start_date,
       end_date: endDate,
     };
