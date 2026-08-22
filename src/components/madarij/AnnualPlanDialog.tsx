@@ -75,7 +75,8 @@ const HIJRI_MONTHS = [
   "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة",
 ];
 
-const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
+const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props) => {
+  const isEditing = !!planId;
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
