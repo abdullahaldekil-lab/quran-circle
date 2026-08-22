@@ -696,8 +696,10 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
                     </div>
                   ))}
                   <p className="text-xs text-muted-foreground">
-                    إجمالي الأوجه المحفوظة سابقاً: <span className="font-semibold text-foreground">{prevMemPages}</span> وجه ({prevRanges.length} موضع)
+                    إجمالي الأوجه المحفوظة سابقاً: <span className="font-semibold text-foreground">{prevMemPages}</span> وجه
+                    {" "}(<span className="font-semibold text-foreground">{prevMemSheets}</span> صفحة • {prevRanges.length} موضع)
                   </p>
+
                 </div>
               )}
             </div>
