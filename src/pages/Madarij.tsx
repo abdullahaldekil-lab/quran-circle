@@ -105,7 +105,7 @@ const Madarij = () => {
         </div>
         <div className="flex gap-2">
           {(isManager || isSupervisor || isTeacher) && (
-            <Button variant="outline" onClick={() => setAnnualPlanOpen(true)}>
+            <Button variant="outline" onClick={() => { setEditingPlanId(null); setAnnualPlanOpen(true); }}>
               <CalendarDays className="w-4 h-4 ml-1" />
               إنشاء خطة سنوية
             </Button>
