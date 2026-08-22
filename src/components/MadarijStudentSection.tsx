@@ -15,8 +15,10 @@ import { formatDateHijriOnly } from "@/lib/hijri";
 import { toast } from "sonner";
 import {
   DAILY_PACE_OPTIONS,
+  addStudyDays,
   buildPaceSummary,
   commitmentTone,
+  daysNeededFor,
   expandHolidayRanges,
   normalizePace,
   paceLabel,
@@ -29,19 +31,37 @@ interface Props {
   isManager: boolean;
 }
 
+/** أول حزب في الجزء (الجزء = حزبان). */
+const hizbOfPart = (part: number) => Math.max(1, Math.min(60, part * 2 - 1));
+
+const emptyForm = {
+  track_id: "",
+  level_track_id: "",
+  branch_id: "",
+  level_part_id: "",
+  part_number: 1,
+  hizb_number: 1,
+  daily_pace: "1",
+  days_planned: 20,
+  start_date: new Date().toISOString().split("T")[0],
+  end_date: "",
+};
+
 const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [tracks, setTracks] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [parts, setParts] = useState<any[]>([]);
+  const [planHolidays, setPlanHolidays] = useState<string[]>([]);
+  const [endDateManual, setEndDateManual] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dailyRecords, setDailyRecords] = useState<any[]>([]);
   const [holidays, setHolidays] = useState<string[]>([]);
-  const [form, setForm] = useState({
-    track_id: "", part_number: 1, hizb_number: 1, daily_pace: "1",
-    start_date: new Date().toISOString().split("T")[0], end_date: "",
-  });
+  const [form, setForm] = useState({ ...emptyForm });
 
   const activeEnrollment = enrollments.find((e) => e.status === "active") || null;
   const hasActiveEnrollment = !!activeEnrollment;
@@ -49,7 +69,7 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   const fetchEnrollments = async () => {
     const { data } = await supabase
       .from("madarij_enrollments")
-      .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required)")
+      .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required), level_tracks(name, level_number), level_branches(branch_number)")
       .eq("student_id", studentId)
       .order("created_at", { ascending: false })
       .limit(20);
@@ -57,14 +77,58 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   };
 
   const fetchMeta = async () => {
-    const { data } = await supabase.from("madarij_tracks").select("*").eq("active", true);
-    setTracks(data || []);
+    const [tracksRes, levelsRes, holRes] = await Promise.all([
+      supabase.from("madarij_tracks").select("*").eq("active", true),
+      supabase.from("level_tracks").select("id, name, level_number").eq("active", true).order("sort_order").limit(20),
+      supabase.from("holidays").select("start_date, end_date").order("start_date", { ascending: false }).limit(20),
+    ]);
+    setTracks(tracksRes.data || []);
+    setLevels(levelsRes.data || []);
+    setPlanHolidays(expandHolidayRanges(holRes.data || []));
   };
 
   useEffect(() => {
     fetchEnrollments();
     fetchMeta();
   }, [studentId]);
+
+  // الفروع تتبع المستوى، والأجزاء تتبع الفرع
+  useEffect(() => {
+    if (!form.level_track_id) { setBranches([]); return; }
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("level_branches")
+        .select("id, branch_number, description")
+        .eq("level_track_id", form.level_track_id)
+        .order("sort_order")
+        .limit(20);
+      if (alive) setBranches(data || []);
+    })();
+    return () => { alive = false; };
+  }, [form.level_track_id]);
+
+  useEffect(() => {
+    if (!form.branch_id) { setParts([]); return; }
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("level_parts")
+        .select("id, part_number")
+        .eq("branch_id", form.branch_id)
+        .order("sort_order")
+        .limit(20);
+      if (alive) setParts(data || []);
+    })();
+    return () => { alive = false; };
+  }, [form.branch_id]);
+
+  // تاريخ النهاية يُحسب تلقائياً من عدد الأيام الدراسية إلا إذا عدّله المستخدم
+  useEffect(() => {
+    if (endDateManual) return;
+    const auto = addStudyDays(form.start_date, Number(form.days_planned) || 0, planHolidays);
+    setForm((f) => (auto && auto !== f.end_date ? { ...f, end_date: auto } : f));
+  }, [form.start_date, form.days_planned, planHolidays, endDateManual]);
 
   // متابعة إنجاز مسار الحفظ للتسجيل النشط
   useEffect(() => {
