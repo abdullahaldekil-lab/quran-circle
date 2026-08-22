@@ -452,23 +452,31 @@ const TalqeenHalaqat = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logHalaqaId]);
 
-  const getAvailableTeachers = (currentTeacherId?: string) => {
-    return teachers.filter((t) => {
-      if (currentTeacherId && t.id === currentTeacherId) return true;
-      return !t.assigned_halaqa_id;
-    });
-  };
+  // إظهار جميع المعلمين، مع توضيح ارتباط كل معلم بحلقة أخرى (يمكن نقله)
+  const getAvailableTeachers = (_currentTeacherId?: string) => teachers;
+  const getAvailableAssistants = (_currentAssistantId?: string) => teachers;
 
-  const getAvailableAssistants = (currentAssistantId?: string) => {
-    return teachers.filter((t) => {
-      if (currentAssistantId && t.id === currentAssistantId) return true;
-      return !t.assigned_assistant_halaqa_id;
-    });
+  const halaqaNameById = (id?: string | null) =>
+    halaqat.find((h) => h.id === id)?.name || null;
+
+  const teacherLabel = (t: Teacher, currentId?: string, assistant = false) => {
+    const assignedId = assistant ? t.assigned_assistant_halaqa_id : t.assigned_halaqa_id;
+    if (!assignedId) return `${t.full_name} — غير مرتبط بحلقة`;
+    if (t.id === currentId) return `${t.full_name} (الحالي)`;
+    const name = halaqaNameById(assignedId);
+    return name ? `${t.full_name} — مرتبط بـ: ${name}` : t.full_name;
   };
 
   const linkTeacherToHalaqa = async (teacherId: string | null, halaqaId: string, oldTeacherId?: string | null) => {
     if (oldTeacherId && oldTeacherId !== teacherId) {
       await supabase.from("profiles").update({ assigned_halaqa_id: null } as any).eq("id", oldTeacherId);
+    }
+    // فك ارتباط المعلم من حلقته السابقة (إن كانت مختلفة)
+    if (teacherId) {
+      const prev = teachers.find((t) => t.id === teacherId)?.assigned_halaqa_id;
+      if (prev && prev !== halaqaId) {
+        await supabase.from("halaqat").update({ teacher_id: null }).eq("id", prev);
+      }
     }
     const { error } = await supabase.from("halaqat").update({ teacher_id: teacherId }).eq("id", halaqaId);
     if (error) return false;
@@ -481,6 +489,12 @@ const TalqeenHalaqat = () => {
   const linkAssistantToHalaqa = async (assistantId: string | null, halaqaId: string, oldAssistantId?: string | null) => {
     if (oldAssistantId && oldAssistantId !== assistantId) {
       await supabase.from("profiles").update({ assigned_assistant_halaqa_id: null } as any).eq("id", oldAssistantId);
+    }
+    if (assistantId) {
+      const prev = teachers.find((t) => t.id === assistantId)?.assigned_assistant_halaqa_id;
+      if (prev && prev !== halaqaId) {
+        await supabase.from("halaqat").update({ assistant_teacher_id: null }).eq("id", prev);
+      }
     }
     const { error } = await supabase.from("halaqat").update({ assistant_teacher_id: assistantId }).eq("id", halaqaId);
     if (error) return false;
@@ -773,7 +787,7 @@ const TalqeenHalaqat = () => {
                     <SelectTrigger><SelectValue placeholder="اختر المعلم" /></SelectTrigger>
                     <SelectContent>
                       {availableTeachersForAdd.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                        <SelectItem key={t.id} value={t.id}>{teacherLabel(t)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -785,7 +799,7 @@ const TalqeenHalaqat = () => {
                     <SelectContent>
                       <SelectItem value="__none__">بدون مساعد</SelectItem>
                       {availableAssistantsForAdd.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                        <SelectItem key={t.id} value={t.id}>{teacherLabel(t, undefined, true)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -950,8 +964,7 @@ const TalqeenHalaqat = () => {
                 <SelectContent>
                   {availableTeachersForEdit.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
-                      {t.full_name}
-                      {t.assigned_halaqa_id && t.id === editForm.teacher_id ? " (المعلم الحالي)" : ""}
+                      {teacherLabel(t, editForm.teacher_id)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -965,8 +978,7 @@ const TalqeenHalaqat = () => {
                   <SelectItem value="__none__">بدون مساعد</SelectItem>
                   {availableAssistantsForEdit.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
-                      {t.full_name}
-                      {t.assigned_assistant_halaqa_id && t.id === editForm.assistant_teacher_id ? " (المساعد الحالي)" : ""}
+                      {teacherLabel(t, editForm.assistant_teacher_id, true)}
                     </SelectItem>
                   ))}
                 </SelectContent>
