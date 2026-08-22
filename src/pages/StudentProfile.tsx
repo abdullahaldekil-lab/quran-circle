@@ -28,6 +28,8 @@ import TalqeenStudentDailyLog from "@/components/talqeen/TalqeenStudentDailyLog"
 import StudentStatusManager from "@/components/student/StudentStatusManager";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
 import StudentPlanChangeLog from "@/components/student/StudentPlanChangeLog";
+import WhatsappButton from "@/components/WhatsappButton";
+import { applyMessageVars } from "@/lib/whatsapp";
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_ORDER, attendanceRate, countByStatus } from "@/lib/attendanceStatus";
 import MemorizedAmountDialog from "@/components/student/MemorizedAmountDialog";
 import { juzEquivalent, memorizedPercent } from "@/lib/memorization";
