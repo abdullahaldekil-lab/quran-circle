@@ -255,6 +255,7 @@ const AppRoutes = () => {
       <Route path="/bulk-email" element={<ProtectedRoute path="/bulk-email"><BulkEmail /></ProtectedRoute>} />
 
       <Route path="/admin/guardian-messages" element={<ProtectedRoute path="/admin/guardian-messages"><GuardianMessagesAdmin /></ProtectedRoute>} />
+      <Route path="/admin/guardian-whatsapp" element={<ProtectedRoute path="/admin/guardian-whatsapp"><GuardianWhatsapp /></ProtectedRoute>} />
       <Route path="/admin/guardian-excuses" element={<ProtectedRoute path="/admin/guardian-excuses"><GuardianExcusesAdmin /></ProtectedRoute>} />
       <Route path="/admin/teacher-evaluations" element={<ProtectedRoute path="/admin/teacher-evaluations"><TeacherEvaluationsReport /></ProtectedRoute>} />
       <Route path="/admin/guardian-approvals" element={<ProtectedRoute path="/admin/guardian-approvals"><GuardianApprovals /></ProtectedRoute>} />
