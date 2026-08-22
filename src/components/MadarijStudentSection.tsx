@@ -363,6 +363,9 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
                 <div>
                   <p className="text-sm font-medium">{(en.madarij_tracks as any)?.name} — الجزء {en.part_number} / الحزب {en.hizb_number}</p>
                   <p className="text-xs text-muted-foreground">
+                    {(en.level_tracks as any)?.name ? `${(en.level_tracks as any).name} • ` : ""}
+                    {(en.level_branches as any)?.branch_number ? `الفرع ${(en.level_branches as any).branch_number} • ` : ""}
+                    {en.days_planned ? `${en.days_planned} يوم • ` : ""}
                     {formatDateHijriOnly(en.start_date)} → {en.end_date ? formatDateHijriOnly(en.end_date) : "—"} • {paceLabel(en.daily_pace)}
                   </p>
                 </div>
