@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowRight, Plus, Pencil, Trash2, Printer, AlertTriangle, FlaskConical } from "lucide-react";
 import { formatDateSmart, formatDateHijriOnly } from "@/lib/hijri";
+import { paceLabel } from "@/lib/madarij-pace";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
 import MadarijPrintTemplate from "@/components/MadarijPrintTemplate";
