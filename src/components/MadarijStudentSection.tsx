@@ -396,15 +396,60 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
             <DialogTitle>{editingId ? "تعديل التسجيل" : "تسجيل جديد في برنامج مدارج"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="space-y-1">
-              <Label>المسار</Label>
-              <Select value={form.track_id} onValueChange={v => setForm({...form, track_id: v})} required>
-                <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
-                <SelectContent>
-                  {tracks.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.days_required} يوم)</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>المسار</Label>
+                <Select value={form.track_id} onValueChange={onTrackChange} required>
+                  <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
+                  <SelectContent>
+                    {tracks.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.days_required} يوم)</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>المستوى</Label>
+                <Select
+                  value={form.level_track_id}
+                  onValueChange={v => setForm({ ...form, level_track_id: v, branch_id: "", level_part_id: "" })}
+                >
+                  <SelectTrigger><SelectValue placeholder="اختر المستوى" /></SelectTrigger>
+                  <SelectContent>
+                    {levels.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>الفرع</Label>
+                <Select
+                  value={form.branch_id}
+                  onValueChange={v => setForm({ ...form, branch_id: v, level_part_id: "" })}
+                  disabled={!form.level_track_id}
+                >
+                  <SelectTrigger><SelectValue placeholder={form.level_track_id ? "اختر الفرع" : "اختر المستوى أولاً"} /></SelectTrigger>
+                  <SelectContent>
+                    {branches.map(b => <SelectItem key={b.id} value={b.id}>الفرع {b.branch_number}{b.description ? ` — ${b.description}` : ""}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>الجزء</Label>
+                <Select value={form.level_part_id} onValueChange={onPartChange} disabled={!form.branch_id}>
+                  <SelectTrigger><SelectValue placeholder={form.branch_id ? "اختر الجزء" : "اختر الفرع أولاً"} /></SelectTrigger>
+                  <SelectContent>
+                    {parts.map(p => <SelectItem key={p.id} value={p.id}>الجزء {p.part_number}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+              <div className="font-medium mb-1">الحزب (تلقائي)</div>
+              <div className="text-muted-foreground">
+                الجزء <span className="font-semibold text-foreground">{form.part_number}</span> — الحزب <span className="font-semibold text-foreground">{form.hizb_number}</span>
+                {!form.level_part_id && <span className="block text-xs mt-1">يُحدَّد تلقائياً عند اختيار الجزء (الجزء = حزبان)</span>}
+              </div>
+            </div>
+
             <div className="space-y-1">
               <Label>مسار الحفظ (السرعة اليومية)</Label>
               <Select value={form.daily_pace} onValueChange={v => setForm({...form, daily_pace: v})}>
@@ -417,20 +462,43 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
               </Select>
               <p className="text-xs text-muted-foreground">
                 إتمام الحزب في {Math.ceil(PAGES_PER_HIZB / normalizePace(form.daily_pace))} يوماً دراسياً،
-                والجزء في {Math.ceil(PAGES_PER_JUZ / normalizePace(form.daily_pace))} يوماً.
+                والجزء في {paceDays} يوماً.
               </p>
+              {Number(form.days_planned) > 0 && paceDays !== Number(form.days_planned) && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ الأيام المقررة {form.days_planned} يوماً تختلف عن الأيام المحسوبة من السرعة ({paceDays} يوماً).
+                </p>
+              )}
             </div>
-            <div className="rounded-md border bg-muted/40 p-3 text-sm">
-              <div className="font-medium mb-1">الجزء والحزب (تلقائي)</div>
-              <div className="text-muted-foreground">
-                الجزء <span className="font-semibold text-foreground">{form.part_number}</span> — الحزب <span className="font-semibold text-foreground">{form.hizb_number}</span>
-                {!editingId && <span className="block text-xs mt-1">يتم تحديده تلقائياً بناءً على آخر تسجيل للطالب في برنامج مدارج</span>}
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label>الأيام</Label>
+                <Input
+                  type="number" min={1} max={365}
+                  value={form.days_planned}
+                  onChange={e => setForm({ ...form, days_planned: Number(e.target.value) })}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>تاريخ البداية</Label>
+                <Input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <Label>تاريخ النهاية</Label>
+                <Input
+                  type="date"
+                  value={form.end_date}
+                  onChange={e => { setEndDateManual(true); setForm({ ...form, end_date: e.target.value }); }}
+                />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1"><Label>تاريخ البداية</Label><Input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} required /></div>
-              <div className="space-y-1"><Label>تاريخ النهاية (اختياري)</Label><Input type="date" value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              تاريخ النهاية محسوب تلقائياً بأيام الدراسة (الأحد–الخميس) مع استثناء الإجازات الرسمية:
+              {" "}<span className="font-medium text-foreground">{form.end_date ? formatDateHijriOnly(form.end_date) : "—"}</span>
+              {endDateManual && " (معدَّل يدوياً)"}
+            </p>
             <Button type="submit" className="w-full">{editingId ? "حفظ التعديلات" : "تسجيل"}</Button>
           </form>
         </DialogContent>
