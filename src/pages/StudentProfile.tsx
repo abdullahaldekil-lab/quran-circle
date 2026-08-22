@@ -253,6 +253,28 @@ const StudentProfile = () => {
             <div className="flex-1">
               <h1 className="text-xl font-bold">{student.full_name}</h1>
               <p className="text-sm text-muted-foreground">{student.halaqat?.name || "بدون حلقة"}</p>
+              {(student.guardian_name || student.guardian_phone) && (
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-xs text-muted-foreground">
+                    ولي الأمر: {student.guardian_name || "غير مسجّل"}
+                    {student.guardian_phone && <span dir="ltr"> ({student.guardian_phone})</span>}
+                  </span>
+                  <WhatsappButton
+                    phone={student.guardian_phone}
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    message={applyMessageVars(
+                      "السلام عليكم {اسم_ولي_الأمر}، بخصوص الطالب {اسم_الطالب} — {الحلقة}",
+                      {
+                        اسم_ولي_الأمر: student.guardian_name || "",
+                        اسم_الطالب: student.full_name,
+                        الحلقة: student.halaqat?.name || "",
+                      },
+                    )}
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge variant="secondary">{student.current_level}</Badge>
                 {student.student_code && (
