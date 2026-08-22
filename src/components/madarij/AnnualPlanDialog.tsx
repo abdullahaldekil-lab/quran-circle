@@ -100,6 +100,8 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   // الحفظ السابق: عدة مواضع (الجزء + من / إلى + عدد الأوجه)
   const [prevRanges, setPrevRanges] = useState<PrevRange[]>([]);
   const prevMemPages = prevRanges.reduce((s, r) => s + (Number(r.pages) || 0), 0);
+  const prevMemSheets = prevRanges.reduce((s, r) => s + (r.info?.pages || 0), 0);
+
   const prevMemFrom = prevRanges[0]?.from || "";
   const prevMemTo = prevRanges[prevRanges.length - 1]?.to || "";
 
