@@ -121,6 +121,7 @@ const navGroups: NavGroup[] = [
         icon: MessageSquare,
         items: [
           { to: "/admin/guardian-messages", icon: MessageSquare, label: "رسائل أولياء الأمور" },
+          { to: "/admin/guardian-whatsapp", icon: MessageSquare, label: "إرسال واتساب جماعي" },
           { to: "/send-notification", icon: Send, label: "إرسال إشعار" },
           { to: "/bulk-email", icon: Mail, label: "بريد جماعي" },
           { to: "/notification-log", icon: ClipboardList, label: "سجل الإشعارات" },
