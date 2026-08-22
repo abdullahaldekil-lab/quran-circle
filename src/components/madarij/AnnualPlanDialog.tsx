@@ -30,12 +30,27 @@ interface MonthRow {
   targetPages: number;
 }
 
+type PrevMode = "ayah" | "page" | "juz" | "hizb";
+
 interface PrevRange {
   juz: number | "";
   from: string;
   to: string;
   pages: number;
+  /** Which input the teacher is using — the rest is derived automatically. */
+  mode: PrevMode;
+  /** Raw inputs per mode. */
+  aFrom: string;
+  aTo: string;
+  pFrom: string;
+  pTo: string;
+  jFrom: string;
+  jTo: string;
+  hFrom: string;
+  hTo: string;
+  info: SegmentInfo | null;
 }
+
 
 const PLAN_TYPES = [
   { value: "silver", label: "🥈 المسار الفضي", daily: 0.5, yearly: 100, desc: "نصف وجه يومياً" },
