@@ -893,13 +893,18 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
               </p>
             )}
 
+            {isEditing && step === 2 && (
+              <Button variant="secondary" onClick={handleSave} disabled={saving || !rangeValidation.valid}>
+                {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+              </Button>
+            )}
             {step < 3 ? (
               <Button onClick={handleNext} disabled={step === 2 && !rangeValidation.valid}>
                 التالي <ChevronLeft className="w-4 h-4 mr-1" />
               </Button>
             ) : (
               <Button onClick={handleSave} disabled={saving || !rangeValidation.valid}>
-                {saving ? "جارٍ الحفظ..." : "حفظ الخطة"}
+                {saving ? "جارٍ الحفظ..." : isEditing ? "حفظ التعديلات" : "حفظ الخطة"}
               </Button>
             )}
           </div>
