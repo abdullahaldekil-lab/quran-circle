@@ -87,6 +87,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
   const [students, setStudents] = useState<any[]>([]);
   const [selectedHalaqa, setSelectedHalaqa] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
+  const [madarijInfo, setMadarijInfo] = useState<any>(null);
   const [planType, setPlanType] = useState("silver");
   const [term, setTerm] = useState<PlanTerm>("" as unknown as PlanTerm);
   const [customDaily, setCustomDaily] = useState(1);
