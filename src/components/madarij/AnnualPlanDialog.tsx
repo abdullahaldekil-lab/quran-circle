@@ -158,6 +158,41 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
     }
   }, [open, planId]);
 
+  /** مدارج هو مسار الحفظ الوحيد: تُجلب بيانات التسجيل النشط لتُبنى عليها الخطة. */
+  useEffect(() => {
+    if (!selectedStudent) { setMadarijInfo(null); return; }
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("madarij_enrollments")
+        .select("id, part_number, hizb_number, daily_pace, start_date, madarij_tracks!madarij_enrollments_track_id_fkey(name), level_tracks(name), level_branches(branch_number)")
+        .eq("student_id", selectedStudent)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!alive) return;
+      if (!data) { setMadarijInfo(null); return; }
+      const info = {
+        id: (data as any).id,
+        part_number: (data as any).part_number,
+        hizb_number: (data as any).hizb_number,
+        daily_pace: (data as any).daily_pace,
+        start_date: (data as any).start_date,
+        track_name: ((data as any).madarij_tracks as any)?.name ?? null,
+        level_name: ((data as any).level_tracks as any)?.name ?? null,
+        branch_number: ((data as any).level_branches as any)?.branch_number ?? null,
+      };
+      setMadarijInfo(info);
+      if (!planId) {
+        setCustomDaily(normalizePace(info.daily_pace));
+        if (info.start_date) setStartDate(info.start_date);
+      }
+    })();
+    return () => { alive = false; };
+  }, [selectedStudent, planId]);
+
+
   /** Rebuild editable rows from the stored JSON so every field stays adjustable. */
   const hydratePrevRanges = (raw: any): PrevRange[] => {
     if (!Array.isArray(raw)) return [];
