@@ -334,6 +334,8 @@ const MadarijEnrollment = () => {
             <div><span className="text-muted-foreground">تاريخ البداية:</span> <strong>{formatDateHijriOnly(enrollment.start_date)}</strong></div>
             <div><span className="text-muted-foreground">تاريخ النهاية:</span> <strong>{enrollment.end_date ? formatDateHijriOnly(enrollment.end_date) : "—"}</strong></div>
             <div><span className="text-muted-foreground">الأيام:</span> <strong>{(enrollment.madarij_tracks as any)?.days_required} يوم</strong></div>
+            <div><span className="text-muted-foreground">مسار الحفظ:</span> <strong>{paceLabel(enrollment.daily_pace)}</strong></div>
+
             <div className="flex items-center gap-2">
               <Badge variant={enrollment.status === "active" ? "default" : "secondary"}>
                 {enrollment.status === "active" ? "نشط" : "مكتمل"}
