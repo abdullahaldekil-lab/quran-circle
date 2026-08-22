@@ -332,11 +332,12 @@ const Recitation = () => {
                   )}
                   {!planLoading && track && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
-                      مسار الحفظ: {track.track_name || "—"}
-                      {track.branch_name ? ` • ${track.branch_name}` : ""}
+                      مسار الحفظ (مدارج): {track.pace_label}
+                      {track.hizb_number ? ` • الحزب ${track.hizb_number}` : ""}
                       {track.part_number ? ` • الجزء ${track.part_number}` : ""}
                     </span>
                   )}
+
                 </div>
                 <Button aria-label="السابق" variant="ghost" size="icon" disabled={currentIndex <= 0} onClick={() => { setCurrentIndex(currentIndex - 1); resetForm(); }}>
                   <ChevronLeft className="w-5 h-5" />
