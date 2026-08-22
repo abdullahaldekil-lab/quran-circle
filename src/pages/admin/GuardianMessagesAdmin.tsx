@@ -33,15 +33,37 @@ const GuardianMessagesAdmin = () => {
 
   useEffect(() => { load(); }, []);
 
-  const handleReply = async (id: string) => {
+  /** رقم واتساب ولي الأمر: ملفه أولًا ثم بيانات الطالب. */
+  const guardianPhone = (m: any): string | null =>
+    resolveGuardianPhone(m.guardian?.phone, m.students?.guardian_phone);
+
+  /** نص الرد المرسل عبر واتساب. */
+  const replyMessage = (m: any, reply: string) =>
+    [
+      `السلام عليكم ${m.guardian?.full_name || ""}`.trim(),
+      m.students?.full_name ? `بشأن الطالب: ${m.students.full_name}` : "",
+      m.subject ? `الموضوع: ${m.subject}` : "",
+      "",
+      reply,
+    ].filter(Boolean).join("\n");
+
+  const handleReply = async (id: string, viaWhatsapp = false) => {
     const reply = replyText[id]?.trim();
     if (!reply) { toast.error("الرجاء كتابة الرد"); return; }
+    const message = messages.find((m) => m.id === id);
+
+    if (viaWhatsapp) {
+      const phone = message ? guardianPhone(message) : null;
+      if (!phone) { toast.error("لا يوجد رقم مسجّل لولي الأمر"); return; }
+      openWhatsapp(phone, replyMessage(message, reply));
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     const { error } = await supabase.from("guardian_messages" as any).update({
       reply, replied_by: session?.user.id, replied_at: new Date().toISOString(), status: "replied",
     }).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("تم إرسال الرد");
+    toast.success(viaWhatsapp ? "تم فتح واتساب وتسجيل الرد" : "تم إرسال الرد");
     setReplyText(p => ({ ...p, [id]: "" }));
     load();
   };
