@@ -571,36 +571,123 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
                 <p className="text-xs text-muted-foreground">لا توجد مواضع مسجلة — اضغط «إضافة موضع» لتسجيل أكثر من موضع للحفظ السابق.</p>
               ) : (
                 <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    أدخل أي مُدخَل (سورة وآية أو صفحات أو جزء أو حزب) ويكمل البرنامج باقي البيانات آلياً: الصفحات، الجزء، الحزب، وعدد الأوجه.
+                  </p>
                   {prevRanges.map((r, i) => (
-                    <div key={i} className="grid grid-cols-12 gap-2 items-end p-2 rounded-md bg-muted/40">
-                      <div className="col-span-3 space-y-1">
-                        <Label className="text-xs">الجزء</Label>
-                        <Select value={r.juz === "" ? "" : String(r.juz)} onValueChange={(v) => updatePrevRange(i, { juz: Number(v) })}>
-                          <SelectTrigger aria-label="الجزء"><SelectValue placeholder="اختر" /></SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: 30 }, (_, k) => k + 1).map(j => (
-                              <SelectItem key={j} value={String(j)}>الجزء {j}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    <div key={i} className="space-y-2 p-2 rounded-md bg-muted/40">
+                      <div className="grid grid-cols-12 gap-2 items-end">
+                        <div className="col-span-3 space-y-1">
+                          <Label className="text-xs">طريقة الإدخال</Label>
+                          <Select value={r.mode} onValueChange={(v) => updatePrevRange(i, { mode: v as PrevMode })}>
+                            <SelectTrigger aria-label="طريقة الإدخال"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ayah">سورة وآية</SelectItem>
+                              <SelectItem value="page">أرقام الصفحات</SelectItem>
+                              <SelectItem value="juz">الجزء</SelectItem>
+                              <SelectItem value="hizb">الحزب</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {r.mode === "ayah" && (
+                          <>
+                            <div className="col-span-4 space-y-1">
+                              <Label className="text-xs">من (سورة وآية)</Label>
+                              <Input
+                                list={`surahs-${i}`}
+                                aria-invalid={["from", "range"].includes(rangeValidation.rowErrors[i]?.field || "")}
+                                className={["from", "range"].includes(rangeValidation.rowErrors[i]?.field || "") ? "border-destructive" : ""}
+                                placeholder="مثال: البقرة 1"
+                                value={r.aFrom}
+                                onChange={(e) => updatePrevRange(i, { aFrom: e.target.value })}
+                              />
+                            </div>
+                            <div className="col-span-4 space-y-1">
+                              <Label className="text-xs">إلى (سورة وآية)</Label>
+                              <Input
+                                list={`surahs-${i}`}
+                                aria-invalid={["to", "range"].includes(rangeValidation.rowErrors[i]?.field || "")}
+                                className={["to", "range"].includes(rangeValidation.rowErrors[i]?.field || "") ? "border-destructive" : ""}
+                                placeholder="مثال: البقرة 141"
+                                value={r.aTo}
+                                onChange={(e) => updatePrevRange(i, { aTo: e.target.value })}
+                              />
+                            </div>
+                            <datalist id={`surahs-${i}`}>
+                              {searchSurahs("", 114).map((s) => <option key={s.number} value={`${s.name} 1`} />)}
+                            </datalist>
+                          </>
+                        )}
+
+                        {r.mode === "page" && (
+                          <>
+                            <div className="col-span-4 space-y-1">
+                              <Label className="text-xs">من صفحة</Label>
+                              <Input type="number" min={1} max={604} placeholder="1" value={r.pFrom} onChange={(e) => updatePrevRange(i, { pFrom: e.target.value })} />
+                            </div>
+                            <div className="col-span-4 space-y-1">
+                              <Label className="text-xs">إلى صفحة</Label>
+                              <Input type="number" min={1} max={604} placeholder="21" value={r.pTo} onChange={(e) => updatePrevRange(i, { pTo: e.target.value })} />
+                            </div>
+                          </>
+                        )}
+
+                        {r.mode === "juz" && (
+                          <>
+                            <div className="col-span-4 space-y-1">
+                              <Label className="text-xs">من الجزء</Label>
+                              <Select value={r.jFrom} onValueChange={(v) => updatePrevRange(i, { jFrom: v })}>
+                                <SelectTrigger aria-label="من الجزء"><SelectValue placeholder="اختر" /></SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: 30 }, (_, k) => k + 1).map(j => <SelectItem key={j} value={String(j)}>الجزء {j}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-4 space-y-1">
+                              <Label className="text-xs">إلى الجزء</Label>
+                              <Select value={r.jTo} onValueChange={(v) => updatePrevRange(i, { jTo: v })}>
+                                <SelectTrigger aria-label="إلى الجزء"><SelectValue placeholder="نفس الجزء" /></SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: 30 }, (_, k) => k + 1).map(j => <SelectItem key={j} value={String(j)}>الجزء {j}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        )}
+
+                        {r.mode === "hizb" && (
+                          <>
+                            <div className="col-span-4 space-y-1">
+                              <Label className="text-xs">من الحزب</Label>
+                              <Input type="number" min={1} max={60} placeholder="1" value={r.hFrom} onChange={(e) => updatePrevRange(i, { hFrom: e.target.value })} />
+                            </div>
+                            <div className="col-span-4 space-y-1">
+                              <Label className="text-xs">إلى الحزب</Label>
+                              <Input type="number" min={1} max={60} placeholder="نفس الحزب" value={r.hTo} onChange={(e) => updatePrevRange(i, { hTo: e.target.value })} />
+                            </div>
+                          </>
+                        )}
+
+                        <div className="col-span-1">
+                          <Button type="button" size="icon" variant="ghost" onClick={() => removePrevRange(i)} aria-label="حذف الموضع">
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="col-span-3 space-y-1">
-                        <Label className="text-xs">من</Label>
-                        <Input aria-invalid={["from", "range"].includes(rangeValidation.rowErrors[i]?.field || "")} className={["from", "range"].includes(rangeValidation.rowErrors[i]?.field || "") ? "border-destructive" : ""} placeholder="مثال: البقرة 1" value={r.from} onChange={(e) => updatePrevRange(i, { from: e.target.value })} />
-                      </div>
-                      <div className="col-span-3 space-y-1">
-                        <Label className="text-xs">إلى</Label>
-                        <Input aria-invalid={["to", "range"].includes(rangeValidation.rowErrors[i]?.field || "")} className={["to", "range"].includes(rangeValidation.rowErrors[i]?.field || "") ? "border-destructive" : ""} placeholder="مثال: البقرة 141" value={r.to} onChange={(e) => updatePrevRange(i, { to: e.target.value })} />
-                      </div>
-                      <div className="col-span-2 space-y-1">
-                        <Label className="text-xs">الأوجه</Label>
-                        <Input aria-invalid={rangeValidation.rowErrors[i]?.field === "pages"} className={rangeValidation.rowErrors[i]?.field === "pages" ? "border-destructive" : ""} type="number" min={0.5} step={0.5} value={r.pages} onChange={(e) => updatePrevRange(i, { pages: Number(e.target.value) })} />
-                      </div>
-                      <div className="col-span-1">
-                        <Button type="button" size="icon" variant="ghost" onClick={() => removePrevRange(i)} aria-label="حذف الموضع">
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
+
+                      {r.info ? (
+                        <div className="flex flex-wrap gap-1.5 text-xs">
+                          <Badge variant="secondary">{r.from} → {r.to}</Badge>
+                          <Badge variant="outline">صفحة {r.info.fromPage} - {r.info.toPage} ({r.info.pages} صفحة)</Badge>
+                          <Badge variant="outline">الجزء {r.info.juzFrom === r.info.juzTo ? r.info.juzFrom : `${r.info.juzFrom}-${r.info.juzTo}`}</Badge>
+                          <Badge variant="outline">الحزب {r.info.hizbFrom === r.info.hizbTo ? r.info.hizbFrom : `${r.info.hizbFrom}-${r.info.hizbTo}`}</Badge>
+                          <Badge className="bg-primary/10 text-primary border-primary/20">{r.info.awjuh} وجه</Badge>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">أكمل المُدخلات ليحتسب البرنامج الصفحات والجزء والحزب وعدد الأوجه آلياً.</p>
+                      )}
+
                       {rangeValidation.rowErrors[i] && (
                         <p className="col-span-12 text-xs text-destructive flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3 shrink-0" /> {rangeValidation.rowErrors[i].message}
