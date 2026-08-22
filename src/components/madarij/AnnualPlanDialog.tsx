@@ -501,7 +501,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-primary" />
-            إنشاء خطة سنوية — الخطوة {step} من 3
+            {isEditing ? "تعديل الخطة" : "إنشاء خطة سنوية"} — الخطوة {step} من 3
           </DialogTitle>
         </DialogHeader>
 
