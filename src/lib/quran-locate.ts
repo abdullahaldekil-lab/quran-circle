@@ -210,8 +210,6 @@ export const segmentFromJuz = (from?: number | null, to?: number | null): Segmen
   if (!from) return null;
   const juzFrom = Math.max(1, Math.min(30, Math.round(from)));
   const juzTo = Math.max(juzFrom, Math.min(30, Math.round(to || from)));
-  const { JUZ_START_PAGE } = { JUZ_START_PAGE: null as never };
-  void JUZ_START_PAGE;
   const start = juzStartPage(juzFrom);
   const end = juzTo >= 30 ? MUSHAF_TOTAL_PAGES : juzStartPage(juzTo + 1) - 1;
   return segmentFromPages(start, end);
