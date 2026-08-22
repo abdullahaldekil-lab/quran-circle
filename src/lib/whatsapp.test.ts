@@ -45,14 +45,17 @@ describe("applyMessageVars", () => {
 });
 
 describe("buildWhatsappLink", () => {
-  it("يبني الرابط بالنص المشفّر", () => {
+  // بيئة الاختبار (jsdom) تُعد جهاز كمبيوتر، فيُستخدم واتساب ويب
+  it("يبني رابط واتساب ويب بالنص المشفّر على الكمبيوتر", () => {
     expect(buildWhatsappLink("0501234567", "سلام")).toBe(
-      `https://wa.me/966501234567?text=${encodeURIComponent("سلام")}`,
+      `https://web.whatsapp.com/send?phone=966501234567&text=${encodeURIComponent("سلام")}`,
     );
   });
 
   it("يبني رابطًا بدون نص", () => {
-    expect(buildWhatsappLink("0501234567")).toBe("https://wa.me/966501234567");
+    expect(buildWhatsappLink("0501234567")).toBe(
+      "https://web.whatsapp.com/send?phone=966501234567",
+    );
   });
 
   it("يعيد null لرقم غير صالح", () => {
