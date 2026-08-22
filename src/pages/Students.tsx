@@ -509,6 +509,23 @@ const Students = () => {
                     {isElite && <Badge variant="outline" className="text-xs border-amber-300">{distinguished.track_name}</Badge>}
                   </div>
                 </div>
+                <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                  <WhatsappButton
+                    phone={student.guardian_phone}
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    label={`مراسلة ولي أمر ${student.full_name}`}
+                    message={applyMessageVars(
+                      "السلام عليكم {اسم_ولي_الأمر}، بخصوص الطالب {اسم_الطالب} — {الحلقة}",
+                      {
+                        اسم_ولي_الأمر: student.guardian_name || "",
+                        اسم_الطالب: student.full_name,
+                        الحلقة: student.halaqat?.name || "",
+                      },
+                    )}
+                  />
+                </div>
                 {canToggleElite && (
                   <button
                     onClick={(e) => handleStarClick(e, student.id)}
