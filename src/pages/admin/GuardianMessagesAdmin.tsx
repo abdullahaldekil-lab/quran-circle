@@ -108,9 +108,15 @@ const GuardianMessagesAdmin = () => {
                       {m.students?.full_name && <> — بشأن: {m.students.full_name}</>}
                     </p>
                   </div>
-                  <Badge variant={m.status === "replied" ? "default" : m.status === "closed" ? "secondary" : "outline"}>
-                    {m.status === "replied" ? "تم الرد" : m.status === "closed" ? "مغلقة" : "قيد المعالجة"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <WhatsappButton
+                      phone={guardianPhone(m)}
+                      message={`السلام عليكم ${m.guardian?.full_name || ""}`.trim()}
+                    />
+                    <Badge variant={m.status === "replied" ? "default" : m.status === "closed" ? "secondary" : "outline"}>
+                      {m.status === "replied" ? "تم الرد" : m.status === "closed" ? "مغلقة" : "قيد المعالجة"}
+                    </Badge>
+                  </div>
                 </div>
                 <p className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded">{m.body}</p>
                 <p className="text-[10px] text-muted-foreground">
