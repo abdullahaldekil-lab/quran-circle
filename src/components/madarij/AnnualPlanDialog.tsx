@@ -31,6 +31,8 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
+  /** When set, the dialog edits this plan in place instead of creating a new one. */
+  planId?: string | null;
 }
 
 interface MonthRow {
@@ -73,7 +75,8 @@ const HIJRI_MONTHS = [
   "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة",
 ];
 
-const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
+const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props) => {
+  const isEditing = !!planId;
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -149,8 +152,53 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
       setPrevRanges([]);
       fetchHalaqat();
       fetchHolidays();
+      if (planId) loadPlan(planId);
     }
-  }, [open]);
+  }, [open, planId]);
+
+  /** Rebuild editable rows from the stored JSON so every field stays adjustable. */
+  const hydratePrevRanges = (raw: any): PrevRange[] => {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((x: any) => {
+      const base = emptyPrevRange();
+      if (x?.from || x?.to) {
+        return deriveRange({ ...base, mode: "ayah", aFrom: x.from || "", aTo: x.to || "" });
+      }
+      if (x?.from_page || x?.to_page) {
+        return deriveRange({ ...base, mode: "page", pFrom: String(x.from_page ?? ""), pTo: String(x.to_page ?? "") });
+      }
+      if (x?.hizb_from) {
+        return deriveRange({ ...base, mode: "hizb", hFrom: String(x.hizb_from), hTo: String(x.hizb_to ?? x.hizb_from) });
+      }
+      if (x?.juz) {
+        return deriveRange({ ...base, mode: "juz", jFrom: String(x.juz), jTo: String(x.juz_to ?? x.juz) });
+      }
+      return base;
+    });
+  };
+
+  const loadPlan = async (id: string) => {
+    const { data, error } = await (supabase as any)
+      .from("student_annual_plans")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) { toast.error("تعذر تحميل الخطة للتعديل"); return; }
+    setSelectedHalaqa(data.halaqa_id || "");
+    setSelectedStudent(data.student_id || "");
+    setPlanType(data.plan_type || "silver");
+    setTerm((data.term || "") as PlanTerm);
+    setStartDate(data.start_date || "");
+    setEndDate(data.end_date || "");
+    setWorkingDays(data.working_days_per_week || 5);
+    setCustomDaily(Number(data.daily_target_pages) || 1);
+    setDailyMemorization(Number(data.daily_memorization_pages) || 0);
+    setDailyReview(Number(data.daily_review_pages) || 0);
+    setDailyLinking(Number(data.daily_linking_pages) || 0);
+    setPrevRanges(hydratePrevRanges(data.previous_memorized_ranges));
+    setStep(2);
+  };
+
 
 
   useEffect(() => {
@@ -309,6 +357,12 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
       return;
     }
 
+    // Editing an existing plan updates the same row — never creates a duplicate.
+    if (isEditing) {
+      await doSave();
+      return;
+    }
+
     // Check for existing active plan
     // Scoped to the same term: creating a summer plan must not be blocked by, or
     // silently replace, the student's annual plan.
@@ -330,68 +384,91 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const doSave = async () => {
     setSaving(true);
     try {
-      // Suspend only the plan for the same term — other terms stay active.
-      await (supabase as any)
-        .from("student_annual_plans")
-        .update({ status: "suspended" })
-        .eq("student_id", selectedStudent)
-        .eq("status", "active")
-        .eq("term", term);
-
-      const { data: plan, error: planError } = await (supabase as any)
-        .from("student_annual_plans")
-        .insert({
-          student_id: selectedStudent,
-          halaqa_id: selectedHalaqa,
-          academic_year: (() => { const h = toHijri(startDate); return `${h.year}-${h.year + 1}`; })(),
-          plan_type: planType,
-          term,
-          start_date: startDate,
-          end_date: endDate,
-          total_target_pages: summary.totalPages,
-          daily_target_pages: summary.dailyPages,
-          working_days_per_week: workingDays,
-          daily_memorization_pages: dailyMemorization,
-          daily_review_pages: dailyReview,
-          daily_linking_pages: dailyLinking,
-          previous_memorized_from: prevMemFrom || null,
-          previous_memorized_to: prevMemTo || null,
-          previous_memorized_pages: prevMemPages,
-          previous_memorized_ranges: prevRanges
-            .filter(r => r.juz !== "" || r.from || r.to || r.pages)
-            .map(r => ({
-              juz: r.juz === "" ? null : r.juz,
-              from: r.from || null,
-              to: r.to || null,
-              pages: Number(r.pages) || 0,
-              from_page: r.info?.fromPage ?? null,
-              to_page: r.info?.toPage ?? null,
-              sheets: r.info?.pages ?? null,
-              juz_to: r.info?.juzTo ?? null,
-              hizb_from: r.info?.hizbFrom ?? null,
-              hizb_to: r.info?.hizbTo ?? null,
-            })),
-
-          status: "active",
-          created_by: user?.id,
-        })
-        .select()
-        .single();
-
-      if (planError) throw planError;
-
-      // Insert monthly progress rows
-      const progressRows = monthlyDistribution.map((m) => ({
-        plan_id: plan.id,
+      const payload = {
         student_id: selectedStudent,
-        week_number: 0,
-        month_number: m.month,
-        target_pages: m.targetPages,
-        actual_pages: 0,
-        attendance_days: m.workDays,
-        commitment_percentage: 0,
-        status: "on_track",
-      }));
+        halaqa_id: selectedHalaqa,
+        academic_year: (() => { const h = toHijri(startDate); return `${h.year}-${h.year + 1}`; })(),
+        plan_type: planType,
+        term,
+        start_date: startDate,
+        end_date: endDate,
+        total_target_pages: summary.totalPages,
+        daily_target_pages: summary.dailyPages,
+        working_days_per_week: workingDays,
+        daily_memorization_pages: dailyMemorization,
+        daily_review_pages: dailyReview,
+        daily_linking_pages: dailyLinking,
+        previous_memorized_from: prevMemFrom || null,
+        previous_memorized_to: prevMemTo || null,
+        previous_memorized_pages: prevMemPages,
+        previous_memorized_ranges: prevRanges
+          .filter(r => r.juz !== "" || r.from || r.to || r.pages)
+          .map(r => ({
+            juz: r.juz === "" ? null : r.juz,
+            from: r.from || null,
+            to: r.to || null,
+            pages: Number(r.pages) || 0,
+            from_page: r.info?.fromPage ?? null,
+            to_page: r.info?.toPage ?? null,
+            sheets: r.info?.pages ?? null,
+            juz_to: r.info?.juzTo ?? null,
+            hizb_from: r.info?.hizbFrom ?? null,
+            hizb_to: r.info?.hizbTo ?? null,
+          })),
+        status: "active",
+      };
+
+      let plan: any;
+      if (isEditing) {
+        const { data, error } = await (supabase as any)
+          .from("student_annual_plans")
+          .update(payload)
+          .eq("id", planId)
+          .select()
+          .single();
+        if (error) throw error;
+        plan = data;
+      } else {
+        // Suspend only the plan for the same term — other terms stay active.
+        await (supabase as any)
+          .from("student_annual_plans")
+          .update({ status: "suspended" })
+          .eq("student_id", selectedStudent)
+          .eq("status", "active")
+          .eq("term", term);
+
+        const { data, error } = await (supabase as any)
+          .from("student_annual_plans")
+          .insert({ ...payload, created_by: user?.id })
+          .select()
+          .single();
+        if (error) throw error;
+        plan = data;
+      }
+      // Monthly rows: keep already recorded progress when editing.
+      let existing: any[] = [];
+      if (isEditing) {
+        const { data } = await supabase
+          .from("student_plan_progress")
+          .select("month_number, actual_pages, commitment_percentage, status")
+          .eq("plan_id", plan.id);
+        existing = data || [];
+      }
+
+      const progressRows = monthlyDistribution.map((m) => {
+        const prev = existing.find((p: any) => p.month_number === m.month);
+        return {
+          plan_id: plan.id,
+          student_id: selectedStudent,
+          week_number: 0,
+          month_number: m.month,
+          target_pages: m.targetPages,
+          actual_pages: prev?.actual_pages ?? 0,
+          attendance_days: m.workDays,
+          commitment_percentage: prev?.commitment_percentage ?? 0,
+          status: prev?.status ?? "on_track",
+        };
+      });
 
       if (progressRows.length > 0) {
         const { error: progressError } = await supabase
@@ -400,7 +477,8 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
         if (progressError) throw progressError;
       }
 
-      toast.success(`تم حفظ ${TERM_LABELS[term] === "سنوي" ? "الخطة السنوية" : "الخطة الفصلية"} بنجاح`);
+      toast.success(isEditing ? "تم تحديث الخطة بنجاح" : `تم حفظ ${TERM_LABELS[term] === "سنوي" ? "الخطة السنوية" : "الخطة الفصلية"} بنجاح`);
+
       onOpenChange(false);
       onSaved();
     } catch (error: any) {
@@ -423,7 +501,7 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-primary" />
-            إنشاء خطة سنوية — الخطوة {step} من 3
+            {isEditing ? "تعديل الخطة" : "إنشاء خطة سنوية"} — الخطوة {step} من 3
           </DialogTitle>
         </DialogHeader>
 
@@ -815,13 +893,18 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
               </p>
             )}
 
+            {isEditing && step === 2 && (
+              <Button variant="secondary" onClick={handleSave} disabled={saving || !rangeValidation.valid}>
+                {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+              </Button>
+            )}
             {step < 3 ? (
               <Button onClick={handleNext} disabled={step === 2 && !rangeValidation.valid}>
                 التالي <ChevronLeft className="w-4 h-4 mr-1" />
               </Button>
             ) : (
               <Button onClick={handleSave} disabled={saving || !rangeValidation.valid}>
-                {saving ? "جارٍ الحفظ..." : "حفظ الخطة"}
+                {saving ? "جارٍ الحفظ..." : isEditing ? "حفظ التعديلات" : "حفظ الخطة"}
               </Button>
             )}
           </div>

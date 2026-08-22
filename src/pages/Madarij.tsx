@@ -29,6 +29,7 @@ const Madarij = () => {
   const [deleteTrackId, setDeleteTrackId] = useState<string | null>(null);
   const [trackForm, setTrackForm] = useState({ name: "", description: "", days_required: 20 });
   const [annualPlanOpen, setAnnualPlanOpen] = useState(false);
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -104,7 +105,7 @@ const Madarij = () => {
         </div>
         <div className="flex gap-2">
           {(isManager || isSupervisor || isTeacher) && (
-            <Button variant="outline" onClick={() => setAnnualPlanOpen(true)}>
+            <Button variant="outline" onClick={() => { setEditingPlanId(null); setAnnualPlanOpen(true); }}>
               <CalendarDays className="w-4 h-4 ml-1" />
               إنشاء خطة سنوية
             </Button>
@@ -218,10 +219,15 @@ const Madarij = () => {
                     <TableCell className="text-xs">{p.start_date}</TableCell>
                     <TableCell className="text-xs">{p.end_date || "—"}</TableCell>
                     <TableCell>{p.total_target_pages ?? "—"}</TableCell>
-                    <TableCell>
+                    <TableCell className="flex gap-1">
                       <Button aria-label="عرض التفاصيل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/student-annual-plan/${p.student_id}`)}>
                         <Eye className="w-4 h-4" />
                       </Button>
+                      {(isManager || isSupervisor || isTeacher) && (
+                        <Button aria-label="تعديل الخطة" variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingPlanId(p.id); setAnnualPlanOpen(true); }}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -313,7 +319,12 @@ const Madarij = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AnnualPlanDialog open={annualPlanOpen} onOpenChange={setAnnualPlanOpen} onSaved={fetchData} />
+      <AnnualPlanDialog
+        open={annualPlanOpen}
+        onOpenChange={(o) => { setAnnualPlanOpen(o); if (!o) setEditingPlanId(null); }}
+        onSaved={fetchData}
+        planId={editingPlanId}
+      />
     </div>
   );
 };
