@@ -92,6 +92,7 @@ import GuardianExcuses from "./pages/guardian/GuardianExcuses";
 import GuardianSettings from "./pages/guardian/GuardianSettings";
 import GuardianEvaluation from "./pages/guardian/GuardianEvaluation";
 import GuardianMessagesAdmin from "./pages/admin/GuardianMessagesAdmin";
+import GuardianWhatsapp from "./pages/admin/GuardianWhatsapp";
 import GuardianExcusesAdmin from "./pages/admin/GuardianExcusesAdmin";
 import TeacherEvaluationsReport from "./pages/admin/TeacherEvaluationsReport";
 import GuardianApprovals from "./pages/admin/GuardianApprovals";
@@ -254,6 +255,7 @@ const AppRoutes = () => {
       <Route path="/bulk-email" element={<ProtectedRoute path="/bulk-email"><BulkEmail /></ProtectedRoute>} />
 
       <Route path="/admin/guardian-messages" element={<ProtectedRoute path="/admin/guardian-messages"><GuardianMessagesAdmin /></ProtectedRoute>} />
+      <Route path="/admin/guardian-whatsapp" element={<ProtectedRoute path="/admin/guardian-whatsapp"><GuardianWhatsapp /></ProtectedRoute>} />
       <Route path="/admin/guardian-excuses" element={<ProtectedRoute path="/admin/guardian-excuses"><GuardianExcusesAdmin /></ProtectedRoute>} />
       <Route path="/admin/teacher-evaluations" element={<ProtectedRoute path="/admin/teacher-evaluations"><TeacherEvaluationsReport /></ProtectedRoute>} />
       <Route path="/admin/guardian-approvals" element={<ProtectedRoute path="/admin/guardian-approvals"><GuardianApprovals /></ProtectedRoute>} />

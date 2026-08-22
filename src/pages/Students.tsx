@@ -18,6 +18,8 @@ import CsvBulkImport from "@/components/CsvBulkImport";
 import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import StudentNameLink from "@/components/StudentNameLink";
 import { isTalqeenHalaqa } from "@/lib/halaqaType";
+import WhatsappButton from "@/components/WhatsappButton";
+import { applyMessageVars } from "@/lib/whatsapp";
 
 
 const PAGE_SIZE = 20;
@@ -508,6 +510,23 @@ const Students = () => {
                     <Badge variant="secondary" className="text-xs">{student.current_level}</Badge>
                     {isElite && <Badge variant="outline" className="text-xs border-amber-300">{distinguished.track_name}</Badge>}
                   </div>
+                </div>
+                <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                  <WhatsappButton
+                    phone={student.guardian_phone}
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    label={`مراسلة ولي أمر ${student.full_name}`}
+                    message={applyMessageVars(
+                      "السلام عليكم {اسم_ولي_الأمر}، بخصوص الطالب {اسم_الطالب} — {الحلقة}",
+                      {
+                        اسم_ولي_الأمر: student.guardian_name || "",
+                        اسم_الطالب: student.full_name,
+                        الحلقة: student.halaqat?.name || "",
+                      },
+                    )}
+                  />
                 </div>
                 {canToggleElite && (
                   <button

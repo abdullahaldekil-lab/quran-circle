@@ -36,7 +36,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/send-notification", "/bulk-email",
     "/permissions-management", "/internal-requests", "/work-hub",
     "/programs-overview", "/halaqa-performance", "/enrollment-form",
-    "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/teacher-evaluations", "/admin/guardian-approvals",
+    "/admin/guardian-messages", "/admin/guardian-whatsapp", "/admin/guardian-excuses", "/admin/teacher-evaluations", "/admin/guardian-approvals",
     "/student-portal", "/program-quiz",
     "/summer-programs", "/program-materials", "/nazem-export",
     "/tarbawi-programs", "/tarbawi-follow-up", "/tarbawi-exams", "/tarbawi-leaderboard", "/tarbawi-reports", "/tarbawi-surveys", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
@@ -77,7 +77,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-attendance-report",
     "/notification-preferences", "/notification-log", "/whatsapp-log", "/internal-requests", "/work-hub", "/staff-tasks", "/staff-tasks-analytics",
     "/enrollment-form", "/programs-overview",
-    "/admin/guardian-messages", "/admin/guardian-excuses", "/admin/guardian-approvals",
+    "/admin/guardian-messages", "/admin/guardian-whatsapp", "/admin/guardian-excuses", "/admin/guardian-approvals",
     "/student-portal",
   ],
   admin_staff: [

@@ -6,7 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, MessageCircle } from "lucide-react";
+import WhatsappButton from "@/components/WhatsappButton";
+import { resolveGuardianPhone, openWhatsapp } from "@/lib/whatsapp";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -19,7 +21,7 @@ const GuardianMessagesAdmin = () => {
   const load = async () => {
     setLoading(true);
     const { data: msgs } = await supabase
-      .from("guardian_messages" as any).select("*, students(full_name)")
+      .from("guardian_messages" as any).select("*, students(full_name, guardian_phone)")
       .order("created_at", { ascending: false });
     if (msgs?.length) {
       const ids = Array.from(new Set(msgs.map((m: any) => m.guardian_id)));
@@ -33,15 +35,37 @@ const GuardianMessagesAdmin = () => {
 
   useEffect(() => { load(); }, []);
 
-  const handleReply = async (id: string) => {
+  /** رقم واتساب ولي الأمر: ملفه أولًا ثم بيانات الطالب. */
+  const guardianPhone = (m: any): string | null =>
+    resolveGuardianPhone(m.guardian?.phone, m.students?.guardian_phone);
+
+  /** نص الرد المرسل عبر واتساب. */
+  const replyMessage = (m: any, reply: string) =>
+    [
+      `السلام عليكم ${m.guardian?.full_name || ""}`.trim(),
+      m.students?.full_name ? `بشأن الطالب: ${m.students.full_name}` : "",
+      m.subject ? `الموضوع: ${m.subject}` : "",
+      "",
+      reply,
+    ].filter(Boolean).join("\n");
+
+  const handleReply = async (id: string, viaWhatsapp = false) => {
     const reply = replyText[id]?.trim();
     if (!reply) { toast.error("الرجاء كتابة الرد"); return; }
+    const message = messages.find((m) => m.id === id);
+
+    if (viaWhatsapp) {
+      const phone = message ? guardianPhone(message) : null;
+      if (!phone) { toast.error("لا يوجد رقم مسجّل لولي الأمر"); return; }
+      openWhatsapp(phone, replyMessage(message, reply));
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     const { error } = await supabase.from("guardian_messages" as any).update({
       reply, replied_by: session?.user.id, replied_at: new Date().toISOString(), status: "replied",
     }).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("تم إرسال الرد");
+    toast.success(viaWhatsapp ? "تم فتح واتساب وتسجيل الرد" : "تم إرسال الرد");
     setReplyText(p => ({ ...p, [id]: "" }));
     load();
   };
@@ -86,9 +110,15 @@ const GuardianMessagesAdmin = () => {
                       {m.students?.full_name && <> — بشأن: {m.students.full_name}</>}
                     </p>
                   </div>
-                  <Badge variant={m.status === "replied" ? "default" : m.status === "closed" ? "secondary" : "outline"}>
-                    {m.status === "replied" ? "تم الرد" : m.status === "closed" ? "مغلقة" : "قيد المعالجة"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <WhatsappButton
+                      phone={guardianPhone(m)}
+                      message={`السلام عليكم ${m.guardian?.full_name || ""}`.trim()}
+                    />
+                    <Badge variant={m.status === "replied" ? "default" : m.status === "closed" ? "secondary" : "outline"}>
+                      {m.status === "replied" ? "تم الرد" : m.status === "closed" ? "مغلقة" : "قيد المعالجة"}
+                    </Badge>
+                  </div>
                 </div>
                 <p className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded">{m.body}</p>
                 <p className="text-[10px] text-muted-foreground">
@@ -107,8 +137,18 @@ const GuardianMessagesAdmin = () => {
                       value={replyText[m.id] || ""}
                       onChange={(e) => setReplyText(p => ({ ...p, [m.id]: e.target.value }))}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button size="sm" onClick={() => handleReply(m.id)}>إرسال الرد</Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!guardianPhone(m)}
+                        className="text-[hsl(142_70%_35%)] border-[hsl(142_40%_60%)]"
+                        onClick={() => handleReply(m.id, true)}
+                      >
+                        <MessageCircle className="w-4 h-4 ml-1" />
+                        إرسال الرد عبر واتساب
+                      </Button>
                       {m.status !== "closed" && (
                         <Button size="sm" variant="outline" onClick={() => close(m.id)}>إغلاق دون رد</Button>
                       )}
