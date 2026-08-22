@@ -357,6 +357,12 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
       return;
     }
 
+    // Editing an existing plan updates the same row — never creates a duplicate.
+    if (isEditing) {
+      await doSave();
+      return;
+    }
+
     // Check for existing active plan
     // Scoped to the same term: creating a summer plan must not be blocked by, or
     // silently replace, the student's annual plan.
@@ -378,53 +384,69 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
   const doSave = async () => {
     setSaving(true);
     try {
-      // Suspend only the plan for the same term — other terms stay active.
-      await (supabase as any)
-        .from("student_annual_plans")
-        .update({ status: "suspended" })
-        .eq("student_id", selectedStudent)
-        .eq("status", "active")
-        .eq("term", term);
+      const payload = {
+        student_id: selectedStudent,
+        halaqa_id: selectedHalaqa,
+        academic_year: (() => { const h = toHijri(startDate); return `${h.year}-${h.year + 1}`; })(),
+        plan_type: planType,
+        term,
+        start_date: startDate,
+        end_date: endDate,
+        total_target_pages: summary.totalPages,
+        daily_target_pages: summary.dailyPages,
+        working_days_per_week: workingDays,
+        daily_memorization_pages: dailyMemorization,
+        daily_review_pages: dailyReview,
+        daily_linking_pages: dailyLinking,
+        previous_memorized_from: prevMemFrom || null,
+        previous_memorized_to: prevMemTo || null,
+        previous_memorized_pages: prevMemPages,
+        previous_memorized_ranges: prevRanges
+          .filter(r => r.juz !== "" || r.from || r.to || r.pages)
+          .map(r => ({
+            juz: r.juz === "" ? null : r.juz,
+            from: r.from || null,
+            to: r.to || null,
+            pages: Number(r.pages) || 0,
+            from_page: r.info?.fromPage ?? null,
+            to_page: r.info?.toPage ?? null,
+            sheets: r.info?.pages ?? null,
+            juz_to: r.info?.juzTo ?? null,
+            hizb_from: r.info?.hizbFrom ?? null,
+            hizb_to: r.info?.hizbTo ?? null,
+          })),
+        status: "active",
+      };
 
-      const { data: plan, error: planError } = await (supabase as any)
-        .from("student_annual_plans")
-        .insert({
-          student_id: selectedStudent,
-          halaqa_id: selectedHalaqa,
-          academic_year: (() => { const h = toHijri(startDate); return `${h.year}-${h.year + 1}`; })(),
-          plan_type: planType,
-          term,
-          start_date: startDate,
-          end_date: endDate,
-          total_target_pages: summary.totalPages,
-          daily_target_pages: summary.dailyPages,
-          working_days_per_week: workingDays,
-          daily_memorization_pages: dailyMemorization,
-          daily_review_pages: dailyReview,
-          daily_linking_pages: dailyLinking,
-          previous_memorized_from: prevMemFrom || null,
-          previous_memorized_to: prevMemTo || null,
-          previous_memorized_pages: prevMemPages,
-          previous_memorized_ranges: prevRanges
-            .filter(r => r.juz !== "" || r.from || r.to || r.pages)
-            .map(r => ({
-              juz: r.juz === "" ? null : r.juz,
-              from: r.from || null,
-              to: r.to || null,
-              pages: Number(r.pages) || 0,
-              from_page: r.info?.fromPage ?? null,
-              to_page: r.info?.toPage ?? null,
-              sheets: r.info?.pages ?? null,
-              juz_to: r.info?.juzTo ?? null,
-              hizb_from: r.info?.hizbFrom ?? null,
-              hizb_to: r.info?.hizbTo ?? null,
-            })),
+      let plan: any;
+      if (isEditing) {
+        const { data, error } = await (supabase as any)
+          .from("student_annual_plans")
+          .update(payload)
+          .eq("id", planId)
+          .select()
+          .single();
+        if (error) throw error;
+        plan = data;
+      } else {
+        // Suspend only the plan for the same term — other terms stay active.
+        await (supabase as any)
+          .from("student_annual_plans")
+          .update({ status: "suspended" })
+          .eq("student_id", selectedStudent)
+          .eq("status", "active")
+          .eq("term", term);
 
-          status: "active",
-          created_by: user?.id,
-        })
-        .select()
-        .single();
+        const { data, error } = await (supabase as any)
+          .from("student_annual_plans")
+          .insert({ ...payload, created_by: user?.id })
+          .select()
+          .single();
+        if (error) throw error;
+        plan = data;
+      }
+      const planError = null as any;
+
 
       if (planError) throw planError;
 
