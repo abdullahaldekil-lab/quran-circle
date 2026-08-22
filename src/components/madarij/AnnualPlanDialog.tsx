@@ -537,6 +537,28 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
               </Select>
             </div>
 
+            {/* الخطة تُبنى على تسجيل الطالب في مدارج (المسار الوحيد للحفظ) */}
+            {selectedStudent && (
+              madarijInfo ? (
+                <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
+                  <p className="font-medium text-sm">مسار الحفظ في مدارج</p>
+                  <p className="text-muted-foreground">
+                    {madarijInfo.track_name || "—"}
+                    {madarijInfo.level_name ? ` • ${madarijInfo.level_name}` : ""}
+                    {madarijInfo.branch_number ? ` • الفرع ${madarijInfo.branch_number}` : ""}
+                    {` • الجزء ${madarijInfo.part_number ?? "—"} / الحزب ${madarijInfo.hizb_number ?? "—"}`}
+                    {` • ${paceLabel(madarijInfo.daily_pace)}`}
+                  </p>
+                  <p className="text-muted-foreground">تُبنى الخطة على هذا التسجيل ويُعتمد مقداره اليومي.</p>
+                </div>
+              ) : (
+                <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
+                  لا يوجد تسجيل نشط في برنامج مدارج لهذا الطالب — سجّله في مدارج أولاً لتُبنى خطته على مسار الحفظ.
+                </div>
+              )
+            )}
+
+
             <div className="space-y-2">
               <Label>مدى الخطة <span className="text-destructive">*</span></Label>
               <Select
