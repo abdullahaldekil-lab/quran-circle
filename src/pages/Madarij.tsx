@@ -218,10 +218,15 @@ const Madarij = () => {
                     <TableCell className="text-xs">{p.start_date}</TableCell>
                     <TableCell className="text-xs">{p.end_date || "—"}</TableCell>
                     <TableCell>{p.total_target_pages ?? "—"}</TableCell>
-                    <TableCell>
+                    <TableCell className="flex gap-1">
                       <Button aria-label="عرض التفاصيل" variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/student-annual-plan/${p.student_id}`)}>
                         <Eye className="w-4 h-4" />
                       </Button>
+                      {(isManager || isSupervisor || isTeacher) && (
+                        <Button aria-label="تعديل الخطة" variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingPlanId(p.id); setAnnualPlanOpen(true); }}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
