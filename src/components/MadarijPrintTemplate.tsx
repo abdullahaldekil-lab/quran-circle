@@ -16,7 +16,9 @@ const MadarijPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onClo
   const studentName = (enrollment.students as any)?.full_name || "";
   const halaqaName = (enrollment.students as any)?.halaqat?.name || "";
   const trackName = (enrollment.madarij_tracks as any)?.name || "";
-  const daysRequired = (enrollment.madarij_tracks as any)?.days_required || 0;
+  const daysRequired = enrollment.days_planned || (enrollment.madarij_tracks as any)?.days_required || 0;
+  const levelName = (enrollment.level_tracks as any)?.name || "—";
+  const branchNumber = (enrollment.level_branches as any)?.branch_number;
 
   return (
     <div>
