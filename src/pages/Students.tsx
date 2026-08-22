@@ -18,6 +18,8 @@ import CsvBulkImport from "@/components/CsvBulkImport";
 import { gregorianToHijri, hijriToGregorian } from "@/lib/hijri";
 import StudentNameLink from "@/components/StudentNameLink";
 import { isTalqeenHalaqa } from "@/lib/halaqaType";
+import WhatsappButton from "@/components/WhatsappButton";
+import { applyMessageVars } from "@/lib/whatsapp";
 
 
 const PAGE_SIZE = 20;
