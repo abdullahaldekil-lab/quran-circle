@@ -92,6 +92,7 @@ import GuardianExcuses from "./pages/guardian/GuardianExcuses";
 import GuardianSettings from "./pages/guardian/GuardianSettings";
 import GuardianEvaluation from "./pages/guardian/GuardianEvaluation";
 import GuardianMessagesAdmin from "./pages/admin/GuardianMessagesAdmin";
+import GuardianWhatsapp from "./pages/admin/GuardianWhatsapp";
 import GuardianExcusesAdmin from "./pages/admin/GuardianExcusesAdmin";
 import TeacherEvaluationsReport from "./pages/admin/TeacherEvaluationsReport";
 import GuardianApprovals from "./pages/admin/GuardianApprovals";
