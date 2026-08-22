@@ -93,10 +93,36 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
   const prevMemFrom = prevRanges[0]?.from || "";
   const prevMemTo = prevRanges[prevRanges.length - 1]?.to || "";
 
-  const addPrevRange = () => setPrevRanges(prev => [...prev, { juz: "", from: "", to: "", pages: 0 }]);
+  const emptyPrevRange = (): PrevRange => ({
+    juz: "", from: "", to: "", pages: 0,
+    mode: "ayah", aFrom: "", aTo: "", pFrom: "", pTo: "", jFrom: "", jTo: "", hFrom: "", hTo: "",
+    info: null,
+  });
+
+  const addPrevRange = () => setPrevRanges(prev => [...prev, emptyPrevRange()]);
+
+  /** Recompute pages/juz/hizb/أوجه from whichever input the teacher filled. */
+  const deriveRange = (r: PrevRange): PrevRange => {
+    const info =
+      r.mode === "ayah" ? segmentFromAyahs(r.aFrom, r.aTo)
+      : r.mode === "page" ? segmentFromPages(Number(r.pFrom) || null, Number(r.pTo) || null)
+      : r.mode === "juz" ? segmentFromJuz(Number(r.jFrom) || null, Number(r.jTo) || Number(r.jFrom) || null)
+      : segmentFromHizb(Number(r.hFrom) || null, Number(r.hTo) || Number(r.hFrom) || null);
+    if (!info) return { ...r, info: null, from: "", to: "", juz: "", pages: 0 };
+    return {
+      ...r,
+      info,
+      from: formatAyahRef(info.fromRef),
+      to: formatAyahRef(info.toRef),
+      juz: info.juzFrom,
+      pages: info.awjuh,
+    };
+  };
+
   const updatePrevRange = (index: number, patch: Partial<PrevRange>) =>
-    setPrevRanges(prev => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+    setPrevRanges(prev => prev.map((r, i) => (i === index ? deriveRange({ ...r, ...patch }) : r)));
   const removePrevRange = (index: number) => setPrevRanges(prev => prev.filter((_, i) => i !== index));
+
 
   // Live validation: from <= to, positive pages, and no overlap between segments.
   const rangeValidation = validatePlanRanges(prevRanges);
