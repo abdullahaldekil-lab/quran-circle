@@ -114,28 +114,20 @@ const StudentQuiz = () => {
     enabled: !!selectedHalaqa,
   });
 
-  // Fetch student level info
+  // Fetch the active Madarij enrollment (memorization path lives inside Madarij)
   const { data: studentLevel } = useQuery({
-    queryKey: ["quiz-student-level", selectedStudent],
+    queryKey: ["quiz-student-madarij", selectedStudent],
     queryFn: async () => {
-      const { data: levels } = await supabase
-        .from("student_levels")
-        .select("*, level_tracks(name, level_number)")
+      const { data: enrollment } = await supabase
+        .from("madarij_enrollments")
+        .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name)")
         .eq("student_id", selectedStudent)
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      const { data: enrollment } = await supabase
-        .from("madarij_enrollments")
-        .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name)")
-        .eq("student_id", selectedStudent)
-        .eq("status", "active")
-        .limit(1)
-        .maybeSingle();
-
-      return { level: levels, enrollment };
+      return { enrollment };
     },
     enabled: !!selectedStudent,
   });
@@ -162,11 +154,6 @@ const StudentQuiz = () => {
   const memorizedContent = useMemo(() => {
     if (!studentLevel) return "";
     const parts: string[] = [];
-    if (studentLevel.level) {
-      const lt = studentLevel.level as any;
-      const trackName = lt.level_tracks?.name || "";
-      parts.push(`المستوى: ${trackName}, الجزء ${lt.part_number || 1}`);
-    }
     if (studentLevel.enrollment) {
       const en = studentLevel.enrollment as any;
       const trackName = en.madarij_tracks?.name || "";

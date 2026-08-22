@@ -57,7 +57,7 @@ const TeacherQuickPanel = () => {
           .limit(30);
         const ids = (studentRows || []).map((s) => s.id);
 
-        const [recRes, attRes, planRes, levelRes] = await Promise.all([
+        const [recRes, attRes, planRes, madarijRes] = await Promise.all([
           ids.length
             ? supabase
                 .from("recitation_records")
@@ -79,7 +79,7 @@ const TeacherQuickPanel = () => {
             : Promise.resolve({ data: [] } as any),
           ids.length
             ? supabase
-                .from("student_levels")
+                .from("madarij_enrollments")
                 .select("student_id")
                 .eq("status", "active")
                 .in("student_id", ids)
@@ -90,7 +90,7 @@ const TeacherQuickPanel = () => {
         const recited = new Set(((recRes as any).data || []).map((r: any) => r.student_id));
         const planned = new Set([
           ...(((planRes as any).data || []).map((r: any) => r.student_id)),
-          ...(((levelRes as any).data || []).map((r: any) => r.student_id)),
+          ...(((madarijRes as any).data || []).map((r: any) => r.student_id)),
         ]);
 
         setAttendanceDone(((attRes as any).count || 0) > 0);

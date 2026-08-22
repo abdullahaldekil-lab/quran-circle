@@ -20,7 +20,6 @@ import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGr
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { toast } from "sonner";
-import StudentLevelProgress from "@/components/StudentLevelProgress";
 import MadarijStudentSection from "@/components/MadarijStudentSection";
 import AnnualPlanSummaryCard from "@/components/madarij/AnnualPlanSummaryCard";
 import TalqeenStudentTests from "@/components/talqeen/TalqeenStudentTests";
@@ -360,7 +359,6 @@ const StudentProfile = () => {
         return (
           <>
             {/* Student Level Progress (Memorization Track) */}
-            <StudentLevelProgress studentId={id!} isManager={isManager} />
 
             {/* Madarij Section */}
             <MadarijStudentSection studentId={id!} isManager={isManager} />
