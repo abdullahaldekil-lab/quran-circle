@@ -787,7 +787,7 @@ const TalqeenHalaqat = () => {
                     <SelectTrigger><SelectValue placeholder="اختر المعلم" /></SelectTrigger>
                     <SelectContent>
                       {availableTeachersForAdd.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                        <SelectItem key={t.id} value={t.id}>{teacherLabel(t)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
