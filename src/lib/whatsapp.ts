@@ -43,14 +43,26 @@ export const applyMessageVars = (
   return out;
 };
 
-/** يبني رابط محادثة واتساب، أو null إذا كان الرقم غير صالح. */
+/** هل نحن على جهاز جوال؟ (على الكمبيوتر نستخدم واتساب ويب لأن wa.me قد يُحجب) */
+const isMobileDevice = (): boolean => {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+};
+
+/**
+ * يبني رابط محادثة واتساب، أو null إذا كان الرقم غير صالح.
+ *
+ * على الجوال: wa.me (يفتح التطبيق).
+ * على الكمبيوتر: web.whatsapp.com مباشرة — بعض المتصفحات/الشبكات تحجب
+ * api.whatsapp.com الذي يحوّل إليه wa.me (ERR_BLOCKED_BY_RESPONSE).
+ */
 export const buildWhatsappLink = (phone?: string | null, message?: string): string | null => {
   const number = normalizeWhatsappNumber(phone);
   if (!number) return null;
   const text = (message || "").trim();
-  return text
-    ? `https://wa.me/${number}?text=${encodeURIComponent(text)}`
-    : `https://wa.me/${number}`;
+  const query = text ? `?text=${encodeURIComponent(text)}` : "";
+  if (isMobileDevice()) return `https://wa.me/${number}${query}`;
+  return `https://web.whatsapp.com/send?phone=${number}${text ? `&text=${encodeURIComponent(text)}` : ""}`;
 };
 
 /** يختار رقم ولي الأمر: ملف ولي الأمر أولًا ثم بيانات الطالب. */
