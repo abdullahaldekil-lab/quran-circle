@@ -38,21 +38,25 @@ export const completionPercent = (seconds: unknown, duration: unknown): number =
 /** A view counts as "watched" once 80% of the media has played. */
 export const isCompleted = (percent: number): boolean => percent >= 80;
 
-/** Fire-and-forget: a failed tracking insert must never block playback. */
+/**
+ * Fire-and-forget: a failed tracking insert must never block playback.
+ *
+ * Goes through the `log_material_view` function so the server decides the identity:
+ * the student is resolved from a real active student code and `user_id` comes from
+ * the session — the client cannot fabricate rows for other students.
+ */
 export const logMaterialView = async (log: MaterialViewLog): Promise<boolean> => {
   if (!log.material_id) return false;
-  const payload = {
-    material_id: log.material_id,
-    event_type: log.event_type,
-    student_id: log.student_id || null,
-    student_code: log.student_code || null,
-    user_id: log.user_id || null,
-    seconds_watched: clampNumber(log.seconds_watched ?? 0, 0, 200000),
-    completion_percent: clampNumber(log.completion_percent ?? 0, 0, 100),
-  };
-  const { error } = await (supabase as any).from("program_material_views").insert(payload);
-  return !error;
+  const { data, error } = await (supabase as any).rpc("log_material_view", {
+    _material_id: log.material_id,
+    _event_type: log.event_type,
+    _student_code: log.student_code || null,
+    _seconds: clampNumber(log.seconds_watched ?? 0, 0, 200000),
+    _percent: clampNumber(log.completion_percent ?? 0, 0, 100),
+  });
+  return !error && data !== false;
 };
+
 
 export interface MaterialViewRow {
   material_id: string;

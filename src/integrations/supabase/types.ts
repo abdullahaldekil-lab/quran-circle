@@ -7226,6 +7226,16 @@ export type Database = {
       is_guardian_of: { Args: { _student_id: string }; Returns: boolean }
       is_halaqa_teacher: { Args: { _halaqa_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      log_material_view: {
+        Args: {
+          _event_type: string
+          _material_id: string
+          _percent?: number
+          _seconds?: number
+          _student_code?: string
+        }
+        Returns: boolean
+      }
       mark_overdue_staff_tasks: { Args: never; Returns: number }
       plan_range_name: { Args: { _raw: string }; Returns: string }
       plan_range_norm: { Args: { _raw: string }; Returns: string }
