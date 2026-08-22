@@ -6,7 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, MessageCircle } from "lucide-react";
+import WhatsappButton from "@/components/WhatsappButton";
+import { resolveGuardianPhone, openWhatsapp } from "@/lib/whatsapp";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 
