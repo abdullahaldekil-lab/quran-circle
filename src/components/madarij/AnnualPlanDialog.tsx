@@ -359,7 +359,19 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved }: Props) => {
           previous_memorized_pages: prevMemPages,
           previous_memorized_ranges: prevRanges
             .filter(r => r.juz !== "" || r.from || r.to || r.pages)
-            .map(r => ({ juz: r.juz === "" ? null : r.juz, from: r.from || null, to: r.to || null, pages: Number(r.pages) || 0 })),
+            .map(r => ({
+              juz: r.juz === "" ? null : r.juz,
+              from: r.from || null,
+              to: r.to || null,
+              pages: Number(r.pages) || 0,
+              from_page: r.info?.fromPage ?? null,
+              to_page: r.info?.toPage ?? null,
+              sheets: r.info?.pages ?? null,
+              juz_to: r.info?.juzTo ?? null,
+              hizb_from: r.info?.hizbFrom ?? null,
+              hizb_to: r.info?.hizbTo ?? null,
+            })),
+
           status: "active",
           created_by: user?.id,
         })
