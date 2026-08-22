@@ -371,17 +371,6 @@ const Halaqat = () => {
                 <Label>الجدول</Label>
                 <Input value={form.schedule} onChange={(e) => setForm({ ...form, schedule: e.target.value })} placeholder="مثال: السبت - الخميس 4:00 - 6:00" />
               </div>
-              <div className="space-y-2">
-                <Label>مسار الحفظ</Label>
-                <Select value={form.level_track_id} onValueChange={(v) => setForm({ ...form, level_track_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="اختر المسار (اختياري)" /></SelectTrigger>
-                  <SelectContent>
-                    {levelTracks.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <Button type="submit" className="w-full">إضافة</Button>
             </form>
           </DialogContent>
@@ -437,9 +426,6 @@ const Halaqat = () => {
               <CardContent className="space-y-3 text-sm">
                 <p className="text-muted-foreground">المعلم: {h.profiles?.full_name || "غير محدد"}</p>
                 {h.assistant_teacher_id && <p className="text-muted-foreground">المعلم المساعد: {h.assistant?.full_name || "غير محدد"}</p>}
-                {h.level_track_id && (
-                  <p className="text-muted-foreground">المسار: {levelTracks.find(t => t.id === h.level_track_id)?.name || "—"}</p>
-                )}
 
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
@@ -546,17 +532,6 @@ const Halaqat = () => {
             <div className="space-y-2">
               <Label>الحد الأقصى للطلاب</Label>
               <Input type="number" value={editForm.capacity_max} onChange={(e) => setEditForm({ ...editForm, capacity_max: Number(e.target.value) })} min={1} />
-            </div>
-            <div className="space-y-2">
-              <Label>مسار الحفظ</Label>
-              <Select value={editForm.level_track_id} onValueChange={(v) => setEditForm({ ...editForm, level_track_id: v })}>
-                <SelectTrigger><SelectValue placeholder="اختر المسار (اختياري)" /></SelectTrigger>
-                <SelectContent>
-                  {levelTracks.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <Button type="submit" className="w-full">حفظ التعديلات</Button>
           </form>
