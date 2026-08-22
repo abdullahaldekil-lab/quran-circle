@@ -152,8 +152,53 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
       setPrevRanges([]);
       fetchHalaqat();
       fetchHolidays();
+      if (planId) loadPlan(planId);
     }
-  }, [open]);
+  }, [open, planId]);
+
+  /** Rebuild editable rows from the stored JSON so every field stays adjustable. */
+  const hydratePrevRanges = (raw: any): PrevRange[] => {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((x: any) => {
+      const base = emptyPrevRange();
+      if (x?.from || x?.to) {
+        return deriveRange({ ...base, mode: "ayah", aFrom: x.from || "", aTo: x.to || "" });
+      }
+      if (x?.from_page || x?.to_page) {
+        return deriveRange({ ...base, mode: "page", pFrom: String(x.from_page ?? ""), pTo: String(x.to_page ?? "") });
+      }
+      if (x?.hizb_from) {
+        return deriveRange({ ...base, mode: "hizb", hFrom: String(x.hizb_from), hTo: String(x.hizb_to ?? x.hizb_from) });
+      }
+      if (x?.juz) {
+        return deriveRange({ ...base, mode: "juz", jFrom: String(x.juz), jTo: String(x.juz_to ?? x.juz) });
+      }
+      return base;
+    });
+  };
+
+  const loadPlan = async (id: string) => {
+    const { data, error } = await (supabase as any)
+      .from("student_annual_plans")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) { toast.error("تعذر تحميل الخطة للتعديل"); return; }
+    setSelectedHalaqa(data.halaqa_id || "");
+    setSelectedStudent(data.student_id || "");
+    setPlanType(data.plan_type || "silver");
+    setTerm((data.term || "") as PlanTerm);
+    setStartDate(data.start_date || "");
+    setEndDate(data.end_date || "");
+    setWorkingDays(data.working_days_per_week || 5);
+    setCustomDaily(Number(data.daily_target_pages) || 1);
+    setDailyMemorization(Number(data.daily_memorization_pages) || 0);
+    setDailyReview(Number(data.daily_review_pages) || 0);
+    setDailyLinking(Number(data.daily_linking_pages) || 0);
+    setPrevRanges(hydratePrevRanges(data.previous_memorized_ranges));
+    setStep(2);
+  };
+
 
 
   useEffect(() => {
