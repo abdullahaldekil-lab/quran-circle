@@ -156,3 +156,21 @@ export const buildPaceSummary = (opts: {
 /** لون شريط الالتزام: أخضر ≥ 85%، أصفر 60–84%، أحمر < 60%. */
 export const commitmentTone = (pct: number): "success" | "warning" | "danger" =>
   pct >= 85 ? "success" : pct >= 60 ? "warning" : "danger";
+
+/** يفكّ نطاقات الإجازات (بداية/نهاية) إلى قائمة تواريخ. */
+export const expandHolidayRanges = (
+  rows: { start_date?: string | null; end_date?: string | null }[],
+): string[] => {
+  const out: string[] = [];
+  (rows || []).forEach((r) => {
+    if (!r.start_date) return;
+    const start = new Date(`${r.start_date}T00:00:00`);
+    const end = new Date(`${r.end_date || r.start_date}T00:00:00`);
+    const cur = new Date(start);
+    for (let i = 0; i < 400 && cur <= end; i += 1) {
+      out.push(cur.toISOString().split("T")[0]);
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  return out;
+};
