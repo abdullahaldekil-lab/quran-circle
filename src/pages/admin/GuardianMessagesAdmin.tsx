@@ -135,8 +135,18 @@ const GuardianMessagesAdmin = () => {
                       value={replyText[m.id] || ""}
                       onChange={(e) => setReplyText(p => ({ ...p, [m.id]: e.target.value }))}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button size="sm" onClick={() => handleReply(m.id)}>إرسال الرد</Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!guardianPhone(m)}
+                        className="text-[hsl(142_70%_35%)] border-[hsl(142_40%_60%)]"
+                        onClick={() => handleReply(m.id, true)}
+                      >
+                        <MessageCircle className="w-4 h-4 ml-1" />
+                        إرسال الرد عبر واتساب
+                      </Button>
                       {m.status !== "closed" && (
                         <Button size="sm" variant="outline" onClick={() => close(m.id)}>إغلاق دون رد</Button>
                       )}
