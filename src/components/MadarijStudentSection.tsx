@@ -15,8 +15,10 @@ import { formatDateHijriOnly } from "@/lib/hijri";
 import { toast } from "sonner";
 import {
   DAILY_PACE_OPTIONS,
+  addStudyDays,
   buildPaceSummary,
   commitmentTone,
+  daysNeededFor,
   expandHolidayRanges,
   normalizePace,
   paceLabel,
@@ -29,19 +31,37 @@ interface Props {
   isManager: boolean;
 }
 
+/** أول حزب في الجزء (الجزء = حزبان). */
+const hizbOfPart = (part: number) => Math.max(1, Math.min(60, part * 2 - 1));
+
+const emptyForm = {
+  track_id: "",
+  level_track_id: "",
+  branch_id: "",
+  level_part_id: "",
+  part_number: 1,
+  hizb_number: 1,
+  daily_pace: "1",
+  days_planned: 20,
+  start_date: new Date().toISOString().split("T")[0],
+  end_date: "",
+};
+
 const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [tracks, setTracks] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [parts, setParts] = useState<any[]>([]);
+  const [planHolidays, setPlanHolidays] = useState<string[]>([]);
+  const [endDateManual, setEndDateManual] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dailyRecords, setDailyRecords] = useState<any[]>([]);
   const [holidays, setHolidays] = useState<string[]>([]);
-  const [form, setForm] = useState({
-    track_id: "", part_number: 1, hizb_number: 1, daily_pace: "1",
-    start_date: new Date().toISOString().split("T")[0], end_date: "",
-  });
+  const [form, setForm] = useState({ ...emptyForm });
 
   const activeEnrollment = enrollments.find((e) => e.status === "active") || null;
   const hasActiveEnrollment = !!activeEnrollment;
@@ -49,7 +69,7 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   const fetchEnrollments = async () => {
     const { data } = await supabase
       .from("madarij_enrollments")
-      .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required)")
+      .select("*, madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required), level_tracks(name, level_number), level_branches(branch_number)")
       .eq("student_id", studentId)
       .order("created_at", { ascending: false })
       .limit(20);
@@ -57,14 +77,58 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
   };
 
   const fetchMeta = async () => {
-    const { data } = await supabase.from("madarij_tracks").select("*").eq("active", true);
-    setTracks(data || []);
+    const [tracksRes, levelsRes, holRes] = await Promise.all([
+      supabase.from("madarij_tracks").select("*").eq("active", true),
+      supabase.from("level_tracks").select("id, name, level_number").eq("active", true).order("sort_order").limit(20),
+      supabase.from("holidays").select("start_date, end_date").order("start_date", { ascending: false }).limit(20),
+    ]);
+    setTracks(tracksRes.data || []);
+    setLevels(levelsRes.data || []);
+    setPlanHolidays(expandHolidayRanges(holRes.data || []));
   };
 
   useEffect(() => {
     fetchEnrollments();
     fetchMeta();
   }, [studentId]);
+
+  // الفروع تتبع المستوى، والأجزاء تتبع الفرع
+  useEffect(() => {
+    if (!form.level_track_id) { setBranches([]); return; }
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("level_branches")
+        .select("id, branch_number, description")
+        .eq("level_track_id", form.level_track_id)
+        .order("sort_order")
+        .limit(20);
+      if (alive) setBranches(data || []);
+    })();
+    return () => { alive = false; };
+  }, [form.level_track_id]);
+
+  useEffect(() => {
+    if (!form.branch_id) { setParts([]); return; }
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("level_parts")
+        .select("id, part_number")
+        .eq("branch_id", form.branch_id)
+        .order("sort_order")
+        .limit(20);
+      if (alive) setParts(data || []);
+    })();
+    return () => { alive = false; };
+  }, [form.branch_id]);
+
+  // تاريخ النهاية يُحسب تلقائياً من عدد الأيام الدراسية إلا إذا عدّله المستخدم
+  useEffect(() => {
+    if (endDateManual) return;
+    const auto = addStudyDays(form.start_date, Number(form.days_planned) || 0, planHolidays);
+    setForm((f) => (auto && auto !== f.end_date ? { ...f, end_date: auto } : f));
+  }, [form.start_date, form.days_planned, planHolidays, endDateManual]);
 
   // متابعة إنجاز مسار الحفظ للتسجيل النشط
   useEffect(() => {
@@ -118,42 +182,63 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
       return;
     }
     setEditingId(null);
+    setEndDateManual(false);
     const auto = computeNextHizb();
     setForm({
-      track_id: "",
-      part_number: auto.part_number, hizb_number: auto.hizb_number, daily_pace: "1",
-      start_date: new Date().toISOString().split("T")[0], end_date: "",
+      ...emptyForm,
+      part_number: auto.part_number,
+      hizb_number: auto.hizb_number,
+      start_date: new Date().toISOString().split("T")[0],
     });
     setDialogOpen(true);
   };
 
   const openEditDialog = (en: any) => {
     setEditingId(en.id);
+    setEndDateManual(!!en.end_date);
     setForm({
-      track_id: en.track_id,
+      track_id: en.track_id || "",
+      level_track_id: en.level_track_id || "",
+      branch_id: en.branch_id || "",
+      level_part_id: en.level_part_id || "",
       part_number: en.part_number,
       hizb_number: en.hizb_number,
       daily_pace: String(normalizePace(en.daily_pace)),
+      days_planned: Number(en.days_planned) || Number((en.madarij_tracks as any)?.days_required) || 20,
       start_date: en.start_date,
       end_date: en.end_date || "",
     });
     setDialogOpen(true);
   };
 
+  /** عند اختيار المسار: عدد الأيام يُجلب من بيانات المسار */
+  const onTrackChange = (trackId: string) => {
+    const t = tracks.find((x) => x.id === trackId);
+    setForm((f) => ({ ...f, track_id: trackId, days_planned: Number(t?.days_required) || f.days_planned }));
+  };
+
+  const onPartChange = (partId: string) => {
+    const p = parts.find((x) => x.id === partId);
+    const partNumber = Number(p?.part_number) || 1;
+    setForm((f) => ({ ...f, level_part_id: partId, part_number: partNumber, hizb_number: hizbOfPart(partNumber) }));
+  };
+
+  const paceDays = daysNeededFor(PAGES_PER_JUZ, form.daily_pace);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedTrack = tracks.find(t => t.id === form.track_id);
-    const endDate = form.end_date || (selectedTrack ? (() => {
-      const d = new Date(form.start_date);
-      d.setDate(d.getDate() + selectedTrack.days_required);
-      return d.toISOString().split("T")[0];
-    })() : null);
+    const days = Number(form.days_planned) || 0;
+    const endDate = form.end_date || addStudyDays(form.start_date, days, planHolidays);
 
     const payload = {
       track_id: form.track_id,
+      level_track_id: form.level_track_id || null,
+      branch_id: form.branch_id || null,
+      level_part_id: form.level_part_id || null,
       part_number: form.part_number,
       hizb_number: form.hizb_number,
       daily_pace: normalizePace(form.daily_pace),
+      days_planned: days || null,
       start_date: form.start_date,
       end_date: endDate,
     };
@@ -278,6 +363,9 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
                 <div>
                   <p className="text-sm font-medium">{(en.madarij_tracks as any)?.name} — الجزء {en.part_number} / الحزب {en.hizb_number}</p>
                   <p className="text-xs text-muted-foreground">
+                    {(en.level_tracks as any)?.name ? `${(en.level_tracks as any).name} • ` : ""}
+                    {(en.level_branches as any)?.branch_number ? `الفرع ${(en.level_branches as any).branch_number} • ` : ""}
+                    {en.days_planned ? `${en.days_planned} يوم • ` : ""}
                     {formatDateHijriOnly(en.start_date)} → {en.end_date ? formatDateHijriOnly(en.end_date) : "—"} • {paceLabel(en.daily_pace)}
                   </p>
                 </div>
@@ -311,15 +399,60 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
             <DialogTitle>{editingId ? "تعديل التسجيل" : "تسجيل جديد في برنامج مدارج"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="space-y-1">
-              <Label>المسار</Label>
-              <Select value={form.track_id} onValueChange={v => setForm({...form, track_id: v})} required>
-                <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
-                <SelectContent>
-                  {tracks.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.days_required} يوم)</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>المسار</Label>
+                <Select value={form.track_id} onValueChange={onTrackChange} required>
+                  <SelectTrigger><SelectValue placeholder="اختر المسار" /></SelectTrigger>
+                  <SelectContent>
+                    {tracks.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.days_required} يوم)</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>المستوى</Label>
+                <Select
+                  value={form.level_track_id}
+                  onValueChange={v => setForm({ ...form, level_track_id: v, branch_id: "", level_part_id: "" })}
+                >
+                  <SelectTrigger><SelectValue placeholder="اختر المستوى" /></SelectTrigger>
+                  <SelectContent>
+                    {levels.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>الفرع</Label>
+                <Select
+                  value={form.branch_id}
+                  onValueChange={v => setForm({ ...form, branch_id: v, level_part_id: "" })}
+                  disabled={!form.level_track_id}
+                >
+                  <SelectTrigger><SelectValue placeholder={form.level_track_id ? "اختر الفرع" : "اختر المستوى أولاً"} /></SelectTrigger>
+                  <SelectContent>
+                    {branches.map(b => <SelectItem key={b.id} value={b.id}>الفرع {b.branch_number}{b.description ? ` — ${b.description}` : ""}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>الجزء</Label>
+                <Select value={form.level_part_id} onValueChange={onPartChange} disabled={!form.branch_id}>
+                  <SelectTrigger><SelectValue placeholder={form.branch_id ? "اختر الجزء" : "اختر الفرع أولاً"} /></SelectTrigger>
+                  <SelectContent>
+                    {parts.map(p => <SelectItem key={p.id} value={p.id}>الجزء {p.part_number}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+              <div className="font-medium mb-1">الحزب (تلقائي)</div>
+              <div className="text-muted-foreground">
+                الجزء <span className="font-semibold text-foreground">{form.part_number}</span> — الحزب <span className="font-semibold text-foreground">{form.hizb_number}</span>
+                {!form.level_part_id && <span className="block text-xs mt-1">يُحدَّد تلقائياً عند اختيار الجزء (الجزء = حزبان)</span>}
+              </div>
+            </div>
+
             <div className="space-y-1">
               <Label>مسار الحفظ (السرعة اليومية)</Label>
               <Select value={form.daily_pace} onValueChange={v => setForm({...form, daily_pace: v})}>
@@ -332,20 +465,43 @@ const MadarijStudentSection = ({ studentId, isManager }: Props) => {
               </Select>
               <p className="text-xs text-muted-foreground">
                 إتمام الحزب في {Math.ceil(PAGES_PER_HIZB / normalizePace(form.daily_pace))} يوماً دراسياً،
-                والجزء في {Math.ceil(PAGES_PER_JUZ / normalizePace(form.daily_pace))} يوماً.
+                والجزء في {paceDays} يوماً.
               </p>
+              {Number(form.days_planned) > 0 && paceDays !== Number(form.days_planned) && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ الأيام المقررة {form.days_planned} يوماً تختلف عن الأيام المحسوبة من السرعة ({paceDays} يوماً).
+                </p>
+              )}
             </div>
-            <div className="rounded-md border bg-muted/40 p-3 text-sm">
-              <div className="font-medium mb-1">الجزء والحزب (تلقائي)</div>
-              <div className="text-muted-foreground">
-                الجزء <span className="font-semibold text-foreground">{form.part_number}</span> — الحزب <span className="font-semibold text-foreground">{form.hizb_number}</span>
-                {!editingId && <span className="block text-xs mt-1">يتم تحديده تلقائياً بناءً على آخر تسجيل للطالب في برنامج مدارج</span>}
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label>الأيام</Label>
+                <Input
+                  type="number" min={1} max={365}
+                  value={form.days_planned}
+                  onChange={e => setForm({ ...form, days_planned: Number(e.target.value) })}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>تاريخ البداية</Label>
+                <Input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <Label>تاريخ النهاية</Label>
+                <Input
+                  type="date"
+                  value={form.end_date}
+                  onChange={e => { setEndDateManual(true); setForm({ ...form, end_date: e.target.value }); }}
+                />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1"><Label>تاريخ البداية</Label><Input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} required /></div>
-              <div className="space-y-1"><Label>تاريخ النهاية (اختياري)</Label><Input type="date" value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} /></div>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              تاريخ النهاية محسوب تلقائياً بأيام الدراسة (الأحد–الخميس) مع استثناء الإجازات الرسمية:
+              {" "}<span className="font-medium text-foreground">{form.end_date ? formatDateHijriOnly(form.end_date) : "—"}</span>
+              {endDateManual && " (معدَّل يدوياً)"}
+            </p>
             <Button type="submit" className="w-full">{editingId ? "حفظ التعديلات" : "تسجيل"}</Button>
           </form>
         </DialogContent>

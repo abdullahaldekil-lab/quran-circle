@@ -16,7 +16,9 @@ const MadarijPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onClo
   const studentName = (enrollment.students as any)?.full_name || "";
   const halaqaName = (enrollment.students as any)?.halaqat?.name || "";
   const trackName = (enrollment.madarij_tracks as any)?.name || "";
-  const daysRequired = (enrollment.madarij_tracks as any)?.days_required || 0;
+  const daysRequired = enrollment.days_planned || (enrollment.madarij_tracks as any)?.days_required || 0;
+  const levelName = (enrollment.level_tracks as any)?.name || "—";
+  const branchNumber = (enrollment.level_branches as any)?.branch_number;
 
   return (
     <div>
@@ -49,6 +51,8 @@ const MadarijPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onClo
             <thead>
               <tr className="bg-gray-200">
                 <th className="border border-black p-1">المسار</th>
+                <th className="border border-black p-1">المستوى</th>
+                <th className="border border-black p-1">الفرع</th>
                 <th className="border border-black p-1">الجزء</th>
                 <th className="border border-black p-1">الحزب</th>
                 <th className="border border-black p-1">الأيام</th>
@@ -59,6 +63,8 @@ const MadarijPrintTemplate = ({ enrollment, dailyProgress, mistakes, exam, onClo
             <tbody>
               <tr>
                 <td className="border border-black p-1 text-center">{trackName}</td>
+                <td className="border border-black p-1 text-center">{levelName}</td>
+                <td className="border border-black p-1 text-center">{branchNumber ?? "—"}</td>
                 <td className="border border-black p-1 text-center">{enrollment.part_number}</td>
                 <td className="border border-black p-1 text-center">{enrollment.hizb_number}</td>
                 <td className="border border-black p-1 text-center">{daysRequired}</td>

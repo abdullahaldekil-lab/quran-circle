@@ -72,7 +72,7 @@ const MadarijEnrollment = () => {
     if (!enrollmentId) return;
     setLoading(true);
     const [enrollRes, dpRes, mistakesRes, examsRes] = await Promise.all([
-      supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required)").eq("id", enrollmentId).maybeSingle(),
+      supabase.from("madarij_enrollments").select("*, students(full_name, halaqat(name)), madarij_tracks!madarij_enrollments_track_id_fkey(name, days_required), level_tracks(name, level_number), level_branches(branch_number)").eq("id", enrollmentId).maybeSingle(),
       supabase.from("madarij_daily_progress").select("*").eq("enrollment_id", enrollmentId).order("progress_date"),
       supabase.from("madarij_mistakes").select("*").eq("enrollment_id", enrollmentId).order("created_at"),
       supabase.from("madarij_hizb_exams").select("*").eq("enrollment_id", enrollmentId).order("attempt_number", { ascending: false }),
@@ -330,11 +330,13 @@ const MadarijEnrollment = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div><span className="text-muted-foreground">الطالب:</span> <strong><StudentNameLink studentId={enrollment.student_id} studentName={(enrollment.students as any)?.full_name || "—"} /></strong></div>
             <div><span className="text-muted-foreground">المسار:</span> <strong>{(enrollment.madarij_tracks as any)?.name}</strong></div>
+            <div><span className="text-muted-foreground">المستوى:</span> <strong>{(enrollment.level_tracks as any)?.name || "—"}</strong></div>
+            <div><span className="text-muted-foreground">الفرع:</span> <strong>{(enrollment.level_branches as any)?.branch_number ? `الفرع ${(enrollment.level_branches as any).branch_number}` : "—"}</strong></div>
             <div><span className="text-muted-foreground">الجزء:</span> <strong>{enrollment.part_number}</strong></div>
             <div><span className="text-muted-foreground">الحزب:</span> <strong>{enrollment.hizb_number}</strong></div>
             <div><span className="text-muted-foreground">تاريخ البداية:</span> <strong>{formatDateHijriOnly(enrollment.start_date)}</strong></div>
             <div><span className="text-muted-foreground">تاريخ النهاية:</span> <strong>{enrollment.end_date ? formatDateHijriOnly(enrollment.end_date) : "—"}</strong></div>
-            <div><span className="text-muted-foreground">الأيام:</span> <strong>{(enrollment.madarij_tracks as any)?.days_required} يوم</strong></div>
+            <div><span className="text-muted-foreground">الأيام:</span> <strong>{enrollment.days_planned || (enrollment.madarij_tracks as any)?.days_required} يوم</strong></div>
             <div><span className="text-muted-foreground">مسار الحفظ:</span> <strong>{paceLabel(enrollment.daily_pace)}</strong></div>
 
             <div className="flex items-center gap-2">

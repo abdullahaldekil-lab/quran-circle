@@ -1605,11 +1605,13 @@ export type Database = {
           branch_id: string | null
           created_at: string
           daily_pace: number
+          days_planned: number | null
           end_date: string | null
           failed_attempts: number
           hizb_number: number
           id: string
           level_downgraded: boolean
+          level_part_id: string | null
           level_track_id: string | null
           pace_notes: string | null
           part_number: number
@@ -1624,11 +1626,13 @@ export type Database = {
           branch_id?: string | null
           created_at?: string
           daily_pace?: number
+          days_planned?: number | null
           end_date?: string | null
           failed_attempts?: number
           hizb_number?: number
           id?: string
           level_downgraded?: boolean
+          level_part_id?: string | null
           level_track_id?: string | null
           pace_notes?: string | null
           part_number?: number
@@ -1643,11 +1647,13 @@ export type Database = {
           branch_id?: string | null
           created_at?: string
           daily_pace?: number
+          days_planned?: number | null
           end_date?: string | null
           failed_attempts?: number
           hizb_number?: number
           id?: string
           level_downgraded?: boolean
+          level_part_id?: string | null
           level_track_id?: string | null
           pace_notes?: string | null
           part_number?: number
@@ -1664,6 +1670,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "level_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "madarij_enrollments_level_part_id_fkey"
+            columns: ["level_part_id"]
+            isOneToOne: false
+            referencedRelation: "level_parts"
             referencedColumns: ["id"]
           },
           {
