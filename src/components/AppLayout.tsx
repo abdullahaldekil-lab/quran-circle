@@ -293,6 +293,7 @@ const navGroups: NavGroup[] = [
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { profile, signOut } = useAuth();
   const { hasAccess, role } = useRole();
+  usePermissionsAutoSync();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
