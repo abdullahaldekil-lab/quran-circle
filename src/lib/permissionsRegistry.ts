@@ -53,6 +53,8 @@ export const categoryLabels: Record<string, string> = {
   guardians: "أولياء الأمور",
   programs: "البرامج",
   talqeen: "التلقين",
+  tarbawi: "البرامج التربوية",
+  summer: "البرنامج الصيفي",
   certificates: "الشهادات",
 };
 
@@ -63,6 +65,9 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   // ===== الإدارة =====
   { name: "manage_permissions", name_ar: "إدارة الصلاحيات", category: "admin", defaultRoles: ["manager"] },
   { name: "manage_users",       name_ar: "إدارة المستخدمين", category: "admin", defaultRoles: ["manager"] },
+  { name: "manage_roles",       name_ar: "إدارة الأدوار",     category: "admin", defaultRoles: ["manager"] },
+  { name: "view_permissions_sync_log", name_ar: "عرض سجل مزامنة الصلاحيات", category: "admin", defaultRoles: ["manager"] },
+  { name: "view_admin_dashboard", name_ar: "عرض لوحة الإدارة", category: "admin", defaultRoles: ["manager", "supervisor"] },
 
   // ===== الحضور =====
   { name: "mark_attendance",     name_ar: "تسجيل الحضور",     category: "attendance", defaultRoles: ["manager", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
@@ -89,6 +94,11 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
 
   // ===== أولياء الأمور =====
   { name: "manage_guardians", name_ar: "إدارة أولياء الأمور", category: "guardians", defaultRoles: ["manager", "secretary", "admin_staff"] },
+  { name: "send_guardian_whatsapp",   name_ar: "إرسال رسائل واتساب لأولياء الأمور", category: "guardians", defaultRoles: ["manager", "supervisor", "secretary", "admin_staff", "teacher"] },
+  { name: "manage_guardian_messages", name_ar: "إدارة رسائل أولياء الأمور", category: "guardians", defaultRoles: ["manager", "supervisor", "secretary", "admin_staff"] },
+  { name: "manage_guardian_excuses",  name_ar: "إدارة أعذار الطلاب",       category: "guardians", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff"] },
+  { name: "manage_guardian_approvals", name_ar: "اعتماد ربط أولياء الأمور", category: "guardians", defaultRoles: ["manager", "secretary"] },
+  { name: "view_teacher_evaluations", name_ar: "عرض تقييمات المعلمين",     category: "guardians", defaultRoles: ["manager", "supervisor"] },
 
   // ===== الحلقات =====
   { name: "view_halaqat",   name_ar: "عرض الحلقات", category: "halaqat", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
@@ -109,6 +119,10 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "manage_madarij_progress", name_ar: "إدارة المتابعة اليومية", category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
   { name: "manage_madarij_exams",    name_ar: "إدارة اختبارات الحزب", category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
   { name: "manage_madarij_mistakes", name_ar: "إدارة الأخطاء",        category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
+  { name: "manage_madarij_enrollments", name_ar: "إدارة التسجيل في مدارج", category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "manage_memorization_path",   name_ar: "إدارة مسار الحفظ (نصف وجه/وجه)", category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "manage_annual_plans",        name_ar: "إدارة الخطط السنوية",   category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
+  { name: "view_madarij_reports",       name_ar: "عرض تقارير مدارج",      category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
 
   // ===== السرد =====
   { name: "view_narration",            name_ar: "عرض السرد",            category: "narration", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher", "assistant_teacher"] },
@@ -136,6 +150,27 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "view_summer_programs",     name_ar: "عرض البرامج الصيفية",   category: "programs", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
   { name: "manage_summer_programs",   name_ar: "إدارة البرامج الصيفية", category: "programs", defaultRoles: ["manager", "supervisor"] },
   { name: "nazem_export",             name_ar: "تصدير ناظم",            category: "programs", defaultRoles: ["manager", "supervisor"] },
+  { name: "view_material_stats",      name_ar: "عرض إحصاءات مشاهدة المواد", category: "programs", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "assign_program_materials", name_ar: "إسناد المواد للحلقات",   category: "programs", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+
+  // ===== البرنامج الصيفي =====
+  { name: "manage_summer_maqare",       name_ar: "إدارة المقارئ الصيفية",   category: "summer", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "manage_summer_students",     name_ar: "إدارة طلاب البرنامج الصيفي", category: "summer", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary"] },
+  { name: "manage_summer_daily_records", name_ar: "تسجيل المتابعة اليومية الصيفية", category: "summer", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
+  { name: "manage_summer_attendance",   name_ar: "حضور البرنامج الصيفي",   category: "summer", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher", "assistant_teacher"] },
+  { name: "view_summer_reports",        name_ar: "عرض تقارير البرنامج الصيفي", category: "summer", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+
+  // ===== البرامج التربوية =====
+  { name: "view_tarbawi_programs",       name_ar: "عرض البرامج التربوية",     category: "tarbawi", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher", "assistant_teacher"] },
+  { name: "manage_tarbawi_programs",     name_ar: "إدارة البرامج التربوية",   category: "tarbawi", defaultRoles: ["manager", "supervisor"] },
+  { name: "manage_tarbawi_weekly",       name_ar: "المتابعة الأسبوعية التربوية", category: "tarbawi", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
+  { name: "manage_tarbawi_exams",        name_ar: "إدارة الاختبارات التربوية", category: "tarbawi", defaultRoles: ["manager", "supervisor", "teacher"] },
+  { name: "manage_tarbawi_practice_quizzes", name_ar: "إدارة الاختبارات التدريبية", category: "tarbawi", defaultRoles: ["manager", "supervisor", "teacher"] },
+  { name: "view_tarbawi_leaderboard",    name_ar: "عرض لوحة الصدارة التربوية", category: "tarbawi", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher", "assistant_teacher"] },
+  { name: "view_tarbawi_reports",        name_ar: "عرض التقارير التربوية",    category: "tarbawi", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "manage_tarbawi_surveys",      name_ar: "إدارة الاستبانات التربوية", category: "tarbawi", defaultRoles: ["manager", "supervisor"] },
+  { name: "manage_tarbawi_calendar",     name_ar: "إدارة تقويم البرامج التربوية", category: "tarbawi", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "view_tarbawi_history",        name_ar: "عرض السجل التربوي للطالب", category: "tarbawi", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
 
   // ===== الاختبارات =====
   { name: "manage_quizzes",     name_ar: "إدارة الاختبارات",      category: "quizzes", defaultRoles: ["manager", "supervisor"] },
@@ -145,6 +180,8 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "view_recitations", name_ar: "عرض التسميعات", category: "recitation", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher", "assistant_teacher"] },
   { name: "mark_recitation",  name_ar: "تسجيل التسميع", category: "recitation", defaultRoles: ["manager", "teacher", "assistant_teacher"] },
   { name: "edit_recitation",  name_ar: "تعديل التسميع", category: "recitation", defaultRoles: ["manager", "teacher"] },
+  { name: "delete_recitation", name_ar: "حذف التسميع",  category: "recitation", defaultRoles: ["manager"] },
+  { name: "manage_recitation_mistakes", name_ar: "إدارة تصنيف أخطاء التسميع", category: "recitation", defaultRoles: ["manager", "supervisor", "teacher"] },
 
   // ===== المكافآت والترتيب =====
   { name: "manage_rankings", name_ar: "إدارة الترتيب", category: "rewards", defaultRoles: ["manager", "teacher", "assistant_teacher"] },
@@ -163,18 +200,28 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "view_staff_tasks_analytics",  name_ar: "عرض تحليلات المهام",  category: "staff", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
   { name: "manage_internal_requests",    name_ar: "إدارة الطلبات الداخلية", category: "staff", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
   { name: "view_work_hub",               name_ar: "عرض المهام والطلبات",  category: "staff", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
+  { name: "manage_tasks_calendar",       name_ar: "إدارة تقويم المهام الهجري", category: "staff", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary"] },
+  { name: "manage_staff_qr",             name_ar: "إدارة بصمة QR للحضور", category: "staff", defaultRoles: ["manager", "supervisor", "secretary"] },
+  { name: "staff_qr_checkin",            name_ar: "تسجيل الحضور بالباركود", category: "staff", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
+  { name: "view_staff_attendance_audit", name_ar: "عرض سجل تدقيق حضور الموظفين", category: "staff", defaultRoles: ["manager", "supervisor"] },
 
   // ===== الطلاب =====
   { name: "view_students",   name_ar: "عرض الطلاب",   category: "students", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
   { name: "create_student",  name_ar: "إضافة طالب",   category: "students", defaultRoles: ["manager", "secretary", "admin_staff"] },
   { name: "edit_student",    name_ar: "تعديل طالب",   category: "students", defaultRoles: ["manager", "secretary", "admin_staff"] },
   { name: "delete_student",  name_ar: "حذف طالب",     category: "students", defaultRoles: ["manager"] },
+  { name: "view_inactive_students", name_ar: "عرض الطلاب غير النشطين", category: "students", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff"] },
+  { name: "manage_student_status",   name_ar: "إدارة حالة الطالب",      category: "students", defaultRoles: ["manager", "supervisor", "secretary"] },
+  { name: "view_student_reports",    name_ar: "عرض تقارير الطلاب",      category: "students", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher"] },
 
   // ===== التلقين (موديول جديد) =====
   { name: "view_talqeen",            name_ar: "عرض حلقات التلقين",     category: "talqeen", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
   { name: "manage_talqeen_curricula", name_ar: "إدارة مناهج التلقين",  category: "talqeen", defaultRoles: ["manager", "supervisor"] },
   { name: "manage_talqeen_sessions",  name_ar: "إدارة جلسات التلقين",  category: "talqeen", defaultRoles: ["manager", "supervisor", "teacher"] },
   { name: "manage_talqeen_tests",     name_ar: "إدارة اختبارات التلقين", category: "talqeen", defaultRoles: ["manager", "supervisor", "teacher"] },
+  { name: "view_talqeen_supervisor_board", name_ar: "لوحة مراقبة مشرف التلقين", category: "talqeen", defaultRoles: ["manager", "supervisor"] },
+  { name: "manage_talqeen_programs",  name_ar: "إدارة برامج التلقين",   category: "talqeen", defaultRoles: ["manager", "supervisor"] },
+  { name: "manage_talqeen_daily_record", name_ar: "تسجيل اليوم (حضور/درس/تربوي/واجبات)", category: "talqeen", defaultRoles: ["manager", "supervisor", "teacher", "assistant_teacher"] },
 
   // ===== الشهادات (موديول جديد) =====
   { name: "issue_certificates",  name_ar: "إصدار الشهادات",  category: "certificates", defaultRoles: ["manager", "supervisor", "teacher"] },
