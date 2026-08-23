@@ -17,6 +17,7 @@ import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Search, Shield, Users, Lock, UserCog, RefreshCw, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { syncPermissionsRegistry } from "@/lib/permissionsSync";
+import { PermissionsSyncLog } from "@/components/permissions/PermissionsSyncLog";
 import { categoryLabels as registryCategoryLabels } from "@/lib/permissionsRegistry";
 
 interface Role {
@@ -118,7 +119,7 @@ const PermissionsManagement = () => {
     if (!isManager) return;
     setSyncing(true);
     try {
-      const res = await syncPermissionsRegistry();
+      const res = await syncPermissionsRegistry("manual");
       const hasChanges = res.added.length > 0 || res.updated.length > 0 || res.linked > 0;
 
       if (res.errors.length > 0) {
@@ -508,12 +509,15 @@ const PermissionsManagement = () => {
       </div>
 
       <Tabs defaultValue="roles" className="space-y-4" onValueChange={handleTabChange}>
-        <TabsList className={`grid w-full ${isManager ? "grid-cols-4" : "grid-cols-3"}`}>
+        <TabsList className={`grid w-full ${isManager ? "grid-cols-5" : "grid-cols-3"}`}>
           <TabsTrigger value="roles" className="gap-2"><Shield className="w-4 h-4" /> الأدوار</TabsTrigger>
           <TabsTrigger value="permissions" className="gap-2"><Lock className="w-4 h-4" /> الصلاحيات</TabsTrigger>
           <TabsTrigger value="users" className="gap-2"><Users className="w-4 h-4" /> المستخدمون</TabsTrigger>
           {isManager && (
             <TabsTrigger value="role-change" className="gap-2"><UserCog className="w-4 h-4" /> تغيير الأدوار</TabsTrigger>
+          )}
+          {isManager && (
+            <TabsTrigger value="sync-log" className="gap-2"><History className="w-4 h-4" /> سجل المزامنة</TabsTrigger>
           )}
         </TabsList>
 
@@ -942,6 +946,11 @@ const PermissionsManagement = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+        )}
+        {isManager && (
+          <TabsContent value="sync-log" className="space-y-4">
+            <PermissionsSyncLog />
           </TabsContent>
         )}
       </Tabs>
