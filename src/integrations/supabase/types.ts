@@ -2675,6 +2675,42 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions_sync_log: {
+        Row: {
+          added_permissions: Json
+          created_at: string
+          errors: Json
+          id: string
+          links_created: number
+          performed_by: string | null
+          performed_by_name: string | null
+          trigger_source: string
+          updated_permissions: Json
+        }
+        Insert: {
+          added_permissions?: Json
+          created_at?: string
+          errors?: Json
+          id?: string
+          links_created?: number
+          performed_by?: string | null
+          performed_by_name?: string | null
+          trigger_source?: string
+          updated_permissions?: Json
+        }
+        Update: {
+          added_permissions?: Json
+          created_at?: string
+          errors?: Json
+          id?: string
+          links_created?: number
+          performed_by?: string | null
+          performed_by_name?: string | null
+          trigger_source?: string
+          updated_permissions?: Json
+        }
+        Relationships: []
+      }
       pre_registrations: {
         Row: {
           converted_student_id: string | null

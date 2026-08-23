@@ -18,7 +18,9 @@ export interface SyncResult {
  *
  * يتطلب صلاحيات MANAGER (تفرضها RLS).
  */
-export async function syncPermissionsRegistry(): Promise<SyncResult> {
+export async function syncPermissionsRegistry(
+  source: "auto" | "manual" = "manual"
+): Promise<SyncResult> {
   const result: SyncResult = { added: [], updated: [], linked: 0, skipped: 0, errors: [] };
 
   // 1) جلب الصلاحيات والأدوار الحالية
@@ -104,6 +106,36 @@ export async function syncPermissionsRegistry(): Promise<SyncResult> {
     }
   } else {
     result.skipped = PERMISSIONS_REGISTRY.length;
+  }
+
+  // 4) تسجيل العملية في سجل التدقيق (فقط عند وجود تغييرات أو أخطاء)
+  const hasChanges =
+    result.added.length > 0 || result.updated.length > 0 || result.linked > 0 || result.errors.length > 0;
+  if (hasChanges) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id ?? null;
+      let performedByName: string | null = null;
+      if (userId) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userId)
+          .maybeSingle();
+        performedByName = prof?.full_name ?? userData?.user?.email ?? null;
+      }
+      await supabase.from("permissions_sync_log").insert({
+        performed_by: userId,
+        performed_by_name: performedByName,
+        trigger_source: source,
+        added_permissions: result.added,
+        updated_permissions: result.updated,
+        links_created: result.linked,
+        errors: result.errors,
+      });
+    } catch (e) {
+      console.error("[permissions] failed to write sync log", e);
+    }
   }
 
   return result;
