@@ -5,6 +5,7 @@ import OnboardingTour from "@/components/OnboardingTour";
 import PageDateHeader from "@/components/PageDateHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { usePermissionsAutoSync } from "@/hooks/usePermissionsAutoSync";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard,
