@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { History, RefreshCw, Bot, Hand, AlertTriangle, Plus, Pencil, Link2 } from "lucide-react";
 import { PERMISSIONS_REGISTRY } from "@/lib/permissionsRegistry";
-import { formatDualDate } from "@/lib/dateUtils";
+import { formatDateTimeSmart } from "@/lib/hijri";
 
 interface SyncLogEntry {
   id: string;
@@ -27,11 +27,7 @@ const fmtTime = (iso: string) => {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "-";
   try {
-    return `${formatDualDate(d)} — ${d.toLocaleTimeString("ar-SA", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    })}`;
+    return formatDateTimeSmart(d);
   } catch {
     return d.toLocaleString("ar-SA");
   }
