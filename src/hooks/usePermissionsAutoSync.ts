@@ -34,7 +34,7 @@ export const usePermissionsAutoSync = () => {
         const missing = PERMISSIONS_REGISTRY.filter((d) => !existing.has(d.name));
         if (missing.length === 0) return;
 
-        const res = await syncPermissionsRegistry();
+        const res = await syncPermissionsRegistry("auto");
         if (res.added.length > 0) {
           console.info(
             `[permissions] تمت مزامنة ${res.added.length} صلاحية ناقصة تلقائيًا`,
