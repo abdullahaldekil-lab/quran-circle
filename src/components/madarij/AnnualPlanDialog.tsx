@@ -17,6 +17,7 @@ import { PLAN_TERMS, TERM_LABELS, type PlanTerm } from "@/lib/planTerm";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
 import { validatePlanRanges } from "@/lib/planRanges";
 import { normalizePace, paceLabel } from "@/lib/madarij-pace";
+import { ACADEMIC_YEAR } from "@/lib/academicYear";
 import {
   formatAyahRef,
   searchSurahs,
