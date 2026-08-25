@@ -157,6 +157,50 @@ const AcademicCalendar = () => {
         )}
       </div>
 
+      {/* العام الدراسي وأيام الدراسة */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-primary" />
+            العام الدراسي {ACADEMIC_YEAR.label}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Badge variant={todayIsStudyDay ? "default" : "secondary"}>
+              {todayIsStudyDay ? "اليوم يوم دراسي" : "اليوم ليس يوم دراسة"}
+            </Badge>
+            {currentTerm && <Badge variant="outline">{currentTerm.label}</Badge>}
+            {upcomingStudyDay && (
+              <span className="text-muted-foreground">
+                أول يوم دراسي قادم: {formatDateSmart(upcomingStudyDay)}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {ACADEMIC_YEAR.terms.map((t) => (
+              <div key={t.key} className="rounded-lg border p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">{t.label}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {termStudyDays(t, holidayRanges)} يوم دراسة
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formatDateSmart(t.start)} – {formatDateSmart(t.end)}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            بداية العام من عودة الطلاب ({formatDateSmart(ACADEMIC_YEAR.start)}) — لا تُحتسب عودة المعلمين.
+            إجمالي أيام الدراسة: {countStudyDays(ACADEMIC_YEAR.start, ACADEMIC_YEAR.end, holidayRanges)} يوماً.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Active/Upcoming */}
       <Card>
         <CardHeader className="pb-2">
