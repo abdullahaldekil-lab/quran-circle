@@ -12,6 +12,15 @@ import { CalendarDays, Plus, Trash2, Pencil } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDateSmart } from "@/lib/hijri";
+import {
+  ACADEMIC_YEAR,
+  countStudyDays,
+  isStudyDay,
+  nextStudyDay,
+  termForDate,
+  termStudyDays,
+  type HolidayRange,
+} from "@/lib/academicYear";
 
 interface Holiday {
   id: string;
@@ -83,6 +92,14 @@ const AcademicCalendar = () => {
   };
 
   const today = new Date().toISOString().split("T")[0];
+  const holidayRanges: HolidayRange[] = holidays.map((h) => ({
+    start_date: h.start_date,
+    end_date: h.end_date,
+    title: h.title,
+  }));
+  const currentTerm = termForDate(today);
+  const todayIsStudyDay = isStudyDay(today, holidayRanges);
+  const upcomingStudyDay = todayIsStudyDay ? null : nextStudyDay(today, holidayRanges);
 
   if (loading) {
     return (
@@ -139,6 +156,50 @@ const AcademicCalendar = () => {
           </Dialog>
         )}
       </div>
+
+      {/* العام الدراسي وأيام الدراسة */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-primary" />
+            العام الدراسي {ACADEMIC_YEAR.label}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Badge variant={todayIsStudyDay ? "default" : "secondary"}>
+              {todayIsStudyDay ? "اليوم يوم دراسي" : "اليوم ليس يوم دراسة"}
+            </Badge>
+            {currentTerm && <Badge variant="outline">{currentTerm.label}</Badge>}
+            {upcomingStudyDay && (
+              <span className="text-muted-foreground">
+                أول يوم دراسي قادم: {formatDateSmart(upcomingStudyDay)}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {ACADEMIC_YEAR.terms.map((t) => (
+              <div key={t.key} className="rounded-lg border p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">{t.label}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {termStudyDays(t, holidayRanges)} يوم دراسة
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formatDateSmart(t.start)} – {formatDateSmart(t.end)}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            بداية العام من عودة الطلاب ({formatDateSmart(ACADEMIC_YEAR.start)}) — لا تُحتسب عودة المعلمين.
+            إجمالي أيام الدراسة: {countStudyDays(ACADEMIC_YEAR.start, ACADEMIC_YEAR.end, holidayRanges)} يوماً.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Active/Upcoming */}
       <Card>

@@ -17,6 +17,7 @@ import { PLAN_TERMS, TERM_LABELS, type PlanTerm } from "@/lib/planTerm";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
 import { validatePlanRanges } from "@/lib/planRanges";
 import { normalizePace, paceLabel } from "@/lib/madarij-pace";
+import { ACADEMIC_YEAR } from "@/lib/academicYear";
 import {
   formatAyahRef,
   searchSurahs,
@@ -600,7 +601,19 @@ const AnnualPlanDialog = ({ open, onOpenChange, onSaved, planId = null }: Props)
               <Label>مدى الخطة <span className="text-destructive">*</span></Label>
               <Select
                 value={term}
-                onValueChange={(v) => { setTerm(v as PlanTerm); setTermError(false); }}
+                onValueChange={(v) => {
+                  const next = v as PlanTerm;
+                  setTerm(next);
+                  setTermError(false);
+                  // تُبنى تواريخ الخطة على التقويم الدراسي المعتمد (بداية العام = عودة الطلاب)
+                  if (next === "annual") {
+                    setStartDate(ACADEMIC_YEAR.start);
+                    setEndDate(ACADEMIC_YEAR.end);
+                  } else {
+                    const t = ACADEMIC_YEAR.terms.find((x) => x.key === next);
+                    if (t) { setStartDate(t.start); setEndDate(t.end); }
+                  }
+                }}
                 aria-invalid={termError}
               >
                 <SelectTrigger className={termError ? "border-destructive ring-1 ring-destructive" : ""}>
