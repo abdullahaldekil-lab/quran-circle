@@ -12,6 +12,15 @@ import { CalendarDays, Plus, Trash2, Pencil } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDateSmart } from "@/lib/hijri";
+import {
+  ACADEMIC_YEAR,
+  countStudyDays,
+  isStudyDay,
+  nextStudyDay,
+  termForDate,
+  termStudyDays,
+  type HolidayRange,
+} from "@/lib/academicYear";
 
 interface Holiday {
   id: string;
