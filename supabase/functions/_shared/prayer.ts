@@ -112,7 +112,31 @@ export async function getPrayerTimes(admin: any, dateISO?: string): Promise<Pray
     };
   }
 
-  const times = await fetchFromAladhan(date);
+  let times: PrayerTimes;
+  try {
+    times = await fetchFromAladhan(date);
+  } catch (e) {
+    // Rate limited or unreachable: fall back to the most recent cached day so the
+    // scheduled monitors still run instead of failing the whole tick.
+    console.error("prayer fetch failed, falling back to last cached day", e);
+    const { data: previous } = await admin
+      .from("prayer_times_cache")
+      .select("*")
+      .lt("prayer_date", date)
+      .order("prayer_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!previous?.asr) throw e;
+    return {
+      fajr: previous.fajr,
+      dhuhr: previous.dhuhr,
+      asr: previous.asr,
+      maghrib: previous.maghrib,
+      isha: previous.isha,
+      hijri_date: previous.hijri_date,
+    };
+  }
+
   // Best-effort cache write — a failure here must not break the caller.
   await admin
     .from("prayer_times_cache")
