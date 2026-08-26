@@ -106,6 +106,9 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "edit_halaqa",    name_ar: "تعديل حلقة",  category: "halaqat", defaultRoles: ["manager", "secretary"] },
   { name: "delete_halaqa",  name_ar: "حذف حلقة",    category: "halaqat", defaultRoles: ["manager", "secretary"] },
   { name: "assign_teacher", name_ar: "ربط معلم بحلقة", category: "halaqat", defaultRoles: ["manager", "secretary"] },
+  { name: "create_talqeen_halaqa", name_ar: "إضافة حلقة تلقين", category: "halaqat", defaultRoles: ["manager", "secretary"] },
+  { name: "edit_talqeen_halaqa",   name_ar: "تعديل حلقة تلقين", category: "halaqat", defaultRoles: ["manager", "secretary"] },
+  { name: "delete_talqeen_halaqa", name_ar: "حذف حلقة تلقين",   category: "halaqat", defaultRoles: ["manager", "secretary"] },
 
   // ===== الصحة =====
   { name: "manage_health", name_ar: "إدارة السجل الصحي", category: "health", defaultRoles: ["manager", "secretary", "admin_staff"] },
