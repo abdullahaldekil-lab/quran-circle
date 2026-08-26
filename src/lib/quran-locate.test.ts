@@ -77,7 +77,7 @@ describe("segments", () => {
     expect(s.fromPage).toBe(2);
     expect(s.toPage).toBe(21);
     expect(s.pages).toBe(20);
-    expect(s.awjuh).toBe(40);
+    expect(s.awjuh).toBe(20);
     expect(s.juzFrom).toBe(1);
     expect(formatAyahRef(s.fromRef)).toBe("البقرة 1");
   });

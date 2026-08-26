@@ -170,7 +170,7 @@ export const expandHolidayRanges = (
     const end = new Date(`${r.end_date || r.start_date}T00:00:00`);
     const cur = new Date(start);
     for (let i = 0; i < 400 && cur <= end; i += 1) {
-      out.push(cur.toISOString().split("T")[0]);
+      out.push(iso(cur));
       cur.setDate(cur.getDate() + 1);
     }
   });
