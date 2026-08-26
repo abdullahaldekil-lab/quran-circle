@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatDateSmart } from "@/lib/hijri";
 import {
   ACADEMIC_YEAR,
+  ACADEMIC_YEAR_HOLIDAYS,
   countStudyDays,
   isStudyDay,
   nextStudyDay,
