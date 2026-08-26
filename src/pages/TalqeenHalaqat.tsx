@@ -70,6 +70,8 @@ const TalqeenHalaqat = () => {
   const { isManager, isSupervisor, isTalqeenSupervisor } = useRole();
   const { user } = useAuth();
   const canChangeCurriculum = isManager || isTalqeenSupervisor;
+  // مشرف التلقين يدير حلقات التلقين (إضافة/تعديل/حذف) كالمدير.
+  const canManageHalaqat = isManager || isTalqeenSupervisor;
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [levelTracks, setLevelTracks] = useState<any[]>([]);
@@ -769,7 +771,7 @@ const TalqeenHalaqat = () => {
             </div>
           </div>
         </div>
-        {isManager && (
+        {canManageHalaqat && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 ml-2" />إضافة حلقة تلقين</Button>
@@ -898,7 +900,7 @@ const TalqeenHalaqat = () => {
                       سجل المنهج
                     </Button>
                   )}
-                  {isManager && (
+                  {canManageHalaqat && (
                     <>
                       <Button aria-label="تعديل" variant="outline" size="icon" className="h-9 w-9" onClick={() => openEditHalaqa(h)}>
                         <Pencil className="w-3 h-3" />
