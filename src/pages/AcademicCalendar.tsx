@@ -92,11 +92,16 @@ const AcademicCalendar = () => {
   };
 
   const today = new Date().toISOString().split("T")[0];
-  const holidayRanges: HolidayRange[] = holidays.map((h) => ({
-    start_date: h.start_date,
-    end_date: h.end_date,
-    title: h.title,
-  }));
+  // تُدمج إجازات قاعدة البيانات مع الإجازات الرسمية المعتمدة في التقويم الدراسي،
+  // لأن تمرير مصفوفة يُلغي القيمة الافتراضية.
+  const holidayRanges: HolidayRange[] = [
+    ...ACADEMIC_YEAR_HOLIDAYS,
+    ...holidays.map((h) => ({
+      start_date: h.start_date,
+      end_date: h.end_date,
+      title: h.title,
+    })),
+  ];
   const currentTerm = termForDate(today);
   const todayIsStudyDay = isStudyDay(today, holidayRanges);
   const upcomingStudyDay = todayIsStudyDay ? null : nextStudyDay(today, holidayRanges);
