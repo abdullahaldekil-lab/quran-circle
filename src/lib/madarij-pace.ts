@@ -23,7 +23,9 @@ export const paceLabel = (value: unknown): string =>
   normalizePace(value) === 0.5 ? "نصف وجه يومياً" : "وجه كامل يومياً";
 
 const toDate = (d: string | Date): Date => (typeof d === "string" ? new Date(`${d}T00:00:00`) : new Date(d));
-const iso = (d: Date): string => d.toISOString().split("T")[0];
+/** تنسيق محلي (لا UTC) — وإلا تُرجَع التواريخ يوماً أقل في المناطق شرق غرينتش. */
+const iso = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 /** أيام الدراسة: الأحد–الخميس، مع استثناء الإجازات الرسمية. */
 export const isStudyDay = (date: string | Date, holidays: string[] = []): boolean => {
@@ -168,7 +170,7 @@ export const expandHolidayRanges = (
     const end = new Date(`${r.end_date || r.start_date}T00:00:00`);
     const cur = new Date(start);
     for (let i = 0; i < 400 && cur <= end; i += 1) {
-      out.push(cur.toISOString().split("T")[0]);
+      out.push(iso(cur));
       cur.setDate(cur.getDate() + 1);
     }
   });

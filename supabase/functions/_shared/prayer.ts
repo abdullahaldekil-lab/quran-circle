@@ -57,15 +57,25 @@ export const riyadhTimeToDate = (dateISO: string, hhmm: string): Date => {
   return new Date(`${dateISO}T${pad(h)}:${pad(m)}:00+03:00`);
 };
 
-async function fetchFromAladhan(dateISO: string): Promise<PrayerTimes> {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchFromAladhan(dateISO: string, attempts = 3): Promise<PrayerTimes> {
   const [y, m, d] = dateISO.split("-");
   const url =
     `https://api.aladhan.com/v1/timings/${d}-${m}-${y}` +
     `?latitude=${LOCATION.latitude}&longitude=${LOCATION.longitude}` +
     `&method=${LOCATION.method}&timezonestring=${TIMEZONE}`;
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Aladhan API error: ${res.status}`);
+  let res: Response | null = null;
+  for (let i = 0; i < attempts; i++) {
+    // Retry with backoff on rate limiting (429) and transient server errors.
+    res = await fetch(url).catch(() => null);
+    if (res?.ok) break;
+    const retryable = !res || res.status === 429 || res.status >= 500;
+    if (!retryable || i === attempts - 1) break;
+    await sleep(500 * Math.pow(2, i));
+  }
+  if (!res?.ok) throw new Error(`Aladhan API error: ${res ? res.status : "network"}`);
   const json = await res.json();
   const t = json.data.timings;
   // Aladhan may append a timezone suffix such as "16:12 (+03)".
@@ -102,7 +112,31 @@ export async function getPrayerTimes(admin: any, dateISO?: string): Promise<Pray
     };
   }
 
-  const times = await fetchFromAladhan(date);
+  let times: PrayerTimes;
+  try {
+    times = await fetchFromAladhan(date);
+  } catch (e) {
+    // Rate limited or unreachable: fall back to the most recent cached day so the
+    // scheduled monitors still run instead of failing the whole tick.
+    console.error("prayer fetch failed, falling back to last cached day", e);
+    const { data: previous } = await admin
+      .from("prayer_times_cache")
+      .select("*")
+      .lt("prayer_date", date)
+      .order("prayer_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!previous?.asr) throw e;
+    return {
+      fajr: previous.fajr,
+      dhuhr: previous.dhuhr,
+      asr: previous.asr,
+      maghrib: previous.maghrib,
+      isha: previous.isha,
+      hijri_date: previous.hijri_date,
+    };
+  }
+
   // Best-effort cache write — a failure here must not break the caller.
   await admin
     .from("prayer_times_cache")

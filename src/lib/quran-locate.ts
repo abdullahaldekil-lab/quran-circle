@@ -10,8 +10,8 @@ export interface AyahRef {
   ayah: number;
 }
 
-/** Program convention: one full page = 2 أوجه (نصف وجه = ربع صفحة يومياً). */
-export const AWJUH_PER_PAGE = 2;
+/** اصطلاح البرنامج: الوجه = صفحة مصحف واحدة (مطابق لـ madarij-pace: الحزب 10 أوجه، الجزء 20). */
+export const AWJUH_PER_PAGE = 1;
 
 const stripDiacritics = (s: string) => s.replace(/[\u064B-\u0652\u0670\u06D6-\u06ED\u0640]/g, "");
 
