@@ -9,7 +9,14 @@ import { toast } from "sonner";
 import { Book, Video, FileText, Link as LinkIcon, Plus, Trash2, Library, Pencil, EyeOff, Music, Eye, Play, Users, Clock, ListOrdered, Info } from "lucide-react";
 import MaterialFormDialog, { type MaterialRow } from "@/components/programs/MaterialFormDialog";
 import MaterialPlayer from "@/components/programs/MaterialPlayer";
-import { MATERIAL_LABELS, MATERIAL_TYPES, type MaterialType } from "@/lib/materialType";
+import {
+  MATERIAL_AUDIENCES,
+  MATERIAL_AUDIENCE_LABELS,
+  MATERIAL_LABELS,
+  MATERIAL_TYPES,
+  materialAudience,
+  type MaterialType,
+} from "@/lib/materialType";
 import {
   aggregateStats,
   emptyStats,
