@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -44,13 +45,33 @@ const DataArchive = () => {
   const [batches, setBatches] = useState<ArchiveBatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<ArchiveBatch | null>(null);
 
-  const totalToArchive = useMemo(
-    () => (preview ?? []).reduce((sum, r) => sum + (r.count || 0), 0),
+  const availableRows = useMemo(
+    () => (preview ?? []).filter((r) => (r.count || 0) > 0),
     [preview],
   );
+
+  const totalToArchive = useMemo(
+    () =>
+      availableRows
+        .filter((r) => selected.includes(r.table))
+        .reduce((sum, r) => sum + (r.count || 0), 0),
+    [availableRows, selected],
+  );
+
+  const toggleTable = (table: string) =>
+    setSelected((prev) =>
+      prev.includes(table) ? prev.filter((t) => t !== table) : [...prev, table],
+    );
+
+  const allSelected =
+    availableRows.length > 0 && availableRows.every((r) => selected.includes(r.table));
+
+  const toggleAll = () =>
+    setSelected(allSelected ? [] : availableRows.map((r) => r.table));
 
   const loadBatches = useCallback(async () => {
     const { data, error } = await supabase
@@ -71,7 +92,9 @@ const DataArchive = () => {
       toast.error("تعذّر حساب المعاينة", { description: error.message });
       return;
     }
-    setPreview((data as unknown as PreviewRow[]) ?? []);
+    const rows = (data as unknown as PreviewRow[]) ?? [];
+    setPreview(rows);
+    setSelected((prev) => prev.filter((t) => rows.some((r) => r.table === t && r.count > 0)));
   }, [cutoff, isManager]);
 
   useEffect(() => {
@@ -88,6 +111,7 @@ const DataArchive = () => {
       _cutoff: cutoff,
       _label: label,
       _year_label: ACADEMIC_YEAR.label,
+      _tables: selected,
     });
     setRunning(false);
     setConfirmArchive(false);
@@ -180,12 +204,14 @@ const DataArchive = () => {
                 السجلات القابلة للأرشفة
               </CardTitle>
               <CardDescription>
-                الإجمالي: {totalToArchive.toLocaleString("ar-EG")} سجل قبل {formatDateSmart(cutoff)}
+                المحدَّد للأرشفة: {totalToArchive.toLocaleString("ar-EG")} سجل من{" "}
+                {selected.length.toLocaleString("ar-EG")} نوع بيانات، قبل {formatDateSmart(cutoff)}.
+                الأنواع غير المحددة تبقى نشطة كما هي.
               </CardDescription>
             </div>
             <Button
               onClick={() => setConfirmArchive(true)}
-              disabled={running || loading || totalToArchive === 0}
+              disabled={running || loading || selected.length === 0 || totalToArchive === 0}
             >
               <Archive className="ms-1 h-4 w-4" aria-hidden="true" />
               تحويل إلى الأرشيف
@@ -195,6 +221,14 @@ const DataArchive = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12 text-right">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={toggleAll}
+                      aria-label="اختيار كل أنواع البيانات"
+                      disabled={availableRows.length === 0}
+                    />
+                  </TableHead>
                   <TableHead className="text-right">نوع البيانات</TableHead>
                   <TableHead className="text-right">عدد السجلات</TableHead>
                 </TableRow>
@@ -202,19 +236,27 @@ const DataArchive = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="py-6 text-center text-muted-foreground">
+                    <TableCell colSpan={3} className="py-6 text-center text-muted-foreground">
                       جارٍ الحساب...
                     </TableCell>
                   </TableRow>
                 ) : (preview ?? []).length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="py-6 text-center text-muted-foreground">
+                    <TableCell colSpan={3} className="py-6 text-center text-muted-foreground">
                       لا توجد بيانات قابلة للأرشفة قبل هذا التاريخ.
                     </TableCell>
                   </TableRow>
                 ) : (
                   (preview ?? []).map((row) => (
-                    <TableRow key={row.table}>
+                    <TableRow key={row.table} className={row.count === 0 ? "opacity-60" : undefined}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selected.includes(row.table)}
+                          onCheckedChange={() => toggleTable(row.table)}
+                          disabled={row.count === 0}
+                          aria-label={`أرشفة ${row.label}`}
+                        />
+                      </TableCell>
                       <TableCell>{row.label}</TableCell>
                       <TableCell>
                         <Badge variant={row.count > 0 ? "default" : "outline"}>
@@ -287,8 +329,13 @@ const DataArchive = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>تأكيد الأرشفة</AlertDialogTitle>
             <AlertDialogDescription>
-              سيتم وسم {totalToArchive.toLocaleString("ar-EG")} سجل قبل {formatDateSmart(cutoff)} كمؤرشف.
-              لا يتم حذف أي بيانات، ويمكن استرجاع الدفعة كاملة في أي وقت.
+              سيتم وسم {totalToArchive.toLocaleString("ar-EG")} سجل قبل {formatDateSmart(cutoff)} كمؤرشف،
+              من الأنواع المحددة فقط:{" "}
+              {availableRows
+                .filter((r) => selected.includes(r.table))
+                .map((r) => r.label)
+                .join("، ")}
+              . بقية الأنواع لن تتأثر، ولا يتم حذف أي بيانات، ويمكن استرجاع الدفعة كاملة في أي وقت.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

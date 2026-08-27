@@ -7575,7 +7575,12 @@ export type Database = {
       preview_archive: { Args: { _cutoff: string }; Returns: Json }
       restore_archive: { Args: { _batch_id: string }; Returns: Json }
       run_archive: {
-        Args: { _cutoff: string; _label: string; _year_label?: string }
+        Args: {
+          _cutoff: string
+          _label: string
+          _tables?: string[]
+          _year_label?: string
+        }
         Returns: Json
       }
       submit_external_narration_review: {
