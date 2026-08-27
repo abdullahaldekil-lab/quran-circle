@@ -39,6 +39,7 @@ import Enroll from "./pages/Enroll";
 import EnrollmentRequests from "./pages/EnrollmentRequests";
 import Preparation from "./pages/Preparation";
 import AcademicCalendar from "./pages/AcademicCalendar";
+import DataArchive from "./pages/DataArchive";
 import AttendanceAuditLog from "./pages/AttendanceAuditLog";
 import Madarij from "./pages/Madarij";
 import MadarijEnrollment from "./pages/MadarijEnrollment";
