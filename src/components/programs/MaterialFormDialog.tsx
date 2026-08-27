@@ -32,6 +32,8 @@ export interface MaterialRow {
   url: string | null;
   file_path: string | null;
   program_key?: string | null;
+  /** Who the material is intended for: students, teachers, or both. */
+  audience?: string | null;
   order_index: number | null;
   active: boolean | null;
   /** Optional teaching metadata. */
