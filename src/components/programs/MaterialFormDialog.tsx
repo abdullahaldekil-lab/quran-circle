@@ -222,6 +222,24 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
           </div>
 
           <div>
+            <Label>الفئة المستهدفة</Label>
+            <Select
+              value={form.audience}
+              onValueChange={(v) => setForm({ ...form, audience: v as MaterialAudience })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MATERIAL_AUDIENCES.map((a) => (
+                  <SelectItem key={a} value={a}>{MATERIAL_AUDIENCE_LABELS[a]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              تحدد لمن تُخصّص المادة: للطلاب فقط، للمعلمين فقط، أو للجميع.
+            </p>
+          </div>
+
+          <div>
             <Label>الرابط (يوتيوب / خارجي)</Label>
             <Input
               value={form.url}
