@@ -237,6 +237,9 @@ export default function ProgramMaterials() {
                       <div className="flex flex-wrap gap-1 mt-2">
                         <Badge variant="outline">{MATERIAL_LABELS[type]}</Badge>
                         <Badge variant="secondary" className="text-[10px]">{programLabel(m.program_key)}</Badge>
+                        <Badge className="text-[10px]" variant="default">
+                          {MATERIAL_AUDIENCE_LABELS[materialAudience(m.audience)]}
+                        </Badge>
                         {m.active === false && (
                           <Badge variant="destructive" className="text-[10px]">
                             <EyeOff className="w-3 h-3 ml-1" />مخفية
