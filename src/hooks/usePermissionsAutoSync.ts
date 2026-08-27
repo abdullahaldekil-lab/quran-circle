@@ -5,13 +5,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { PERMISSIONS_REGISTRY } from "@/lib/permissionsRegistry";
 import { syncPermissionsRegistry } from "@/lib/permissionsSync";
 
-const SESSION_FLAG = "permissions_autosync_done";
+const SIGNATURE_KEY = "permissions_autosync_signature";
+
+/** بصمة السجل: تتغيّر تلقائيًا عند إضافة أو تعديل أي صلاحية */
+const registrySignature = () =>
+  PERMISSIONS_REGISTRY.map((p) => `${p.name}:${p.name_ar}:${p.category}`)
+    .sort()
+    .join("|")
+    .length +
+  ":" +
+  PERMISSIONS_REGISTRY.length;
 
 /**
  * مزامنة تلقائية للصلاحيات:
- * إذا وُجدت صلاحيات في السجل (Registry) غير موجودة في قاعدة البيانات،
- * تُضاف تلقائيًا وتُربط بالأدوار الافتراضية — مرة واحدة لكل جلسة متصفح،
- * ولا تُنفَّذ إلا لمن يملك صلاحية إدارة الصلاحيات (تفرضها RLS أيضًا).
+ * أي صلاحية جديدة تُضاف في PERMISSIONS_REGISTRY تُزامن تلقائيًا مع قاعدة
+ * البيانات وتُربط بالأدوار الافتراضية — عند أول تحميل بعد أي إضافة/تعديل،
+ * وأيضًا إن وُجدت صلاحيات ناقصة في DB لأي سبب.
+ * لا تُنفَّذ إلا لمن يملك صلاحية إدارة الصلاحيات (تفرضها RLS أيضًا).
  */
 export const usePermissionsAutoSync = () => {
   const { session, profile } = useAuth();
@@ -21,10 +31,9 @@ export const usePermissionsAutoSync = () => {
   useEffect(() => {
     if (!session?.user?.id || !profile || loading || started.current) return;
     if (!(profile.role === "manager" || hasPermission("manage_permissions"))) return;
-    if (sessionStorage.getItem(SESSION_FLAG)) return;
 
     started.current = true;
-    sessionStorage.setItem(SESSION_FLAG, "1");
+    const signature = registrySignature();
 
     (async () => {
       try {
@@ -32,9 +41,12 @@ export const usePermissionsAutoSync = () => {
         if (error) return;
         const existing = new Set((data || []).map((p) => p.name));
         const missing = PERMISSIONS_REGISTRY.filter((d) => !existing.has(d.name));
-        if (missing.length === 0) return;
+        const signatureChanged = localStorage.getItem(SIGNATURE_KEY) !== signature;
+
+        if (missing.length === 0 && !signatureChanged) return;
 
         const res = await syncPermissionsRegistry("auto");
+        localStorage.setItem(SIGNATURE_KEY, signature);
         if (res.added.length > 0) {
           console.info(
             `[permissions] تمت مزامنة ${res.added.length} صلاحية ناقصة تلقائيًا`,
