@@ -84,6 +84,7 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
             material_type: (material.material_type as MaterialType) || "book",
             url: material.url ?? "",
             program_key: material.program_key ?? "",
+            audience: materialAudience(material.audience),
             order_index: material.order_index ?? 0,
             active: material.active ?? true,
             segment_order: material.segment_order ?? "",
