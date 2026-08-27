@@ -50,6 +50,7 @@ export default function ProgramMaterials() {
 
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [audienceFilter, setAudienceFilter] = useState<string>("all");
   const programFilter = searchParams.get("program") || "all";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MaterialRow | null>(null);
