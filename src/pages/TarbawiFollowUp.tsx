@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -46,6 +47,7 @@ const toDraft = (r: any): Draft => ({
 });
 
 export default function TarbawiFollowUp() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isManager, isSupervisor, role } = useRole();
   const isOversight = isManager || isSupervisor || role === "assistant_supervisor";

@@ -44,8 +44,8 @@ const TYPE_COLOR: Record<MaterialType, string> = {
 };
 
 export default function ProgramMaterials() {
-  const { isManager, isSupervisor } = useRole();
-  const canManage = isManager || isSupervisor;
+  const { isManager, isSupervisor, role } = useRole();
+  const canManage = isManager || isSupervisor || role === "assistant_supervisor";
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
