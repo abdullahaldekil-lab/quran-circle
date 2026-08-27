@@ -57,6 +57,7 @@ const emptyForm = {
   material_type: "book" as MaterialType,
   url: "",
   program_key: "",
+  audience: "both" as MaterialAudience,
   order_index: 0,
   active: true,
   segment_order: "",
