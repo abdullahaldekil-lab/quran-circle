@@ -270,5 +270,14 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
 
   // مدارج (تفصيلي)
   { name: "view_student_annual_plan", name_ar: "عرض الخطة السنوية للطالب", category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
+  { name: "view_madarij", name_ar: "عرض برنامج مدارج", category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher", "assistant_teacher"] },
+
+  // إضافات التدقيق: صفحات كانت بلا صلاحية مخصّصة
+  { name: "view_tarbawi_follow_up", name_ar: "عرض المتابعة التربوية", category: "tarbawi", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher", "assistant_teacher"] },
+  { name: "manage_excellence_track_settings", name_ar: "إدارة إعدادات مسار التميز", category: "excellence", defaultRoles: ["manager", "supervisor"] },
+  { name: "view_strategic_dashboard", name_ar: "عرض لوحة الاستراتيجية", category: "finance", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "view_student_portal", name_ar: "عرض بوابة الطالب (إداريًا)", category: "students", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
+  { name: "view_documents", name_ar: "عرض المستندات", category: "operations", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
 ];
+
 
