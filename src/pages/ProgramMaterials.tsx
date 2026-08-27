@@ -208,6 +208,17 @@ export default function ProgramMaterials() {
         ))}
       </div>
 
+      {/* Audience filter — students / teachers / both */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-xs text-muted-foreground">الفئة المستهدفة:</span>
+        <Button size="sm" variant={audienceFilter === "all" ? "secondary" : "ghost"} onClick={() => setAudienceFilter("all")}>الكل</Button>
+        {MATERIAL_AUDIENCES.map((a) => (
+          <Button key={a} size="sm" variant={audienceFilter === a ? "secondary" : "ghost"} onClick={() => setAudienceFilter(a)}>
+            {MATERIAL_AUDIENCE_LABELS[a]}
+          </Button>
+        ))}
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {filtered.map((m) => {
           const type = (m.material_type as MaterialType) in TYPE_ICON ? (m.material_type as MaterialType) : "link";
