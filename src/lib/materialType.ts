@@ -138,3 +138,19 @@ export const validateMaterial = (m: MaterialDraft): ValidationResult => {
 
   return { ok: true };
 };
+
+/** Who an enrichment material is meant for. */
+export const MATERIAL_AUDIENCES = ["both", "students", "teachers"] as const;
+export type MaterialAudience = (typeof MATERIAL_AUDIENCES)[number];
+
+export const MATERIAL_AUDIENCE_LABELS: Record<MaterialAudience, string> = {
+  both: "الطلاب والمعلمون",
+  students: "للطلاب",
+  teachers: "للمعلمين",
+};
+
+/** Normalises any stored value to a known audience. */
+export const materialAudience = (raw?: string | null): MaterialAudience =>
+  (MATERIAL_AUDIENCES as readonly string[]).includes(raw ?? "")
+    ? (raw as MaterialAudience)
+    : "both";

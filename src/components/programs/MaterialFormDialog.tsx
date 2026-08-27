@@ -13,10 +13,14 @@ import { Upload } from "lucide-react";
 import { PROGRAMS } from "@/lib/programs";
 import {
   MATERIAL_ACCEPT,
+  MATERIAL_AUDIENCES,
+  MATERIAL_AUDIENCE_LABELS,
   MATERIAL_LABELS,
   MATERIAL_TYPES,
+  materialAudience,
   materialStoragePath,
   validateMaterial,
+  type MaterialAudience,
   type MaterialType,
 } from "@/lib/materialType";
 
@@ -28,6 +32,8 @@ export interface MaterialRow {
   url: string | null;
   file_path: string | null;
   program_key?: string | null;
+  /** Who the material is intended for: students, teachers, or both. */
+  audience?: string | null;
   order_index: number | null;
   active: boolean | null;
   /** Optional teaching metadata. */
@@ -51,6 +57,7 @@ const emptyForm = {
   material_type: "book" as MaterialType,
   url: "",
   program_key: "",
+  audience: "both" as MaterialAudience,
   order_index: 0,
   active: true,
   segment_order: "",
@@ -77,6 +84,7 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
             material_type: (material.material_type as MaterialType) || "book",
             url: material.url ?? "",
             program_key: material.program_key ?? "",
+            audience: materialAudience(material.audience),
             order_index: material.order_index ?? 0,
             active: material.active ?? true,
             segment_order: material.segment_order ?? "",
@@ -111,6 +119,7 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
         material_type: form.material_type,
         url: form.url.trim() || null,
         program_key: form.program_key || null,
+        audience: form.audience,
         order_index: form.order_index,
         active: form.active,
         segment_order: form.segment_order.trim() || null,
@@ -210,6 +219,24 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label>الفئة المستهدفة</Label>
+            <Select
+              value={form.audience}
+              onValueChange={(v) => setForm({ ...form, audience: v as MaterialAudience })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MATERIAL_AUDIENCES.map((a) => (
+                  <SelectItem key={a} value={a}>{MATERIAL_AUDIENCE_LABELS[a]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              تحدد لمن تُخصّص المادة: للطلاب فقط، للمعلمين فقط، أو للجميع.
+            </p>
           </div>
 
           <div>

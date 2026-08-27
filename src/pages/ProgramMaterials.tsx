@@ -9,7 +9,14 @@ import { toast } from "sonner";
 import { Book, Video, FileText, Link as LinkIcon, Plus, Trash2, Library, Pencil, EyeOff, Music, Eye, Play, Users, Clock, ListOrdered, Info } from "lucide-react";
 import MaterialFormDialog, { type MaterialRow } from "@/components/programs/MaterialFormDialog";
 import MaterialPlayer from "@/components/programs/MaterialPlayer";
-import { MATERIAL_LABELS, MATERIAL_TYPES, type MaterialType } from "@/lib/materialType";
+import {
+  MATERIAL_AUDIENCES,
+  MATERIAL_AUDIENCE_LABELS,
+  MATERIAL_LABELS,
+  MATERIAL_TYPES,
+  materialAudience,
+  type MaterialType,
+} from "@/lib/materialType";
 import {
   aggregateStats,
   emptyStats,
@@ -43,6 +50,7 @@ export default function ProgramMaterials() {
 
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [audienceFilter, setAudienceFilter] = useState<string>("all");
   const programFilter = searchParams.get("program") || "all";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MaterialRow | null>(null);
@@ -102,9 +110,11 @@ export default function ProgramMaterials() {
   }
 
   const filtered = materials.filter((m) => {
+    const audience = materialAudience(m.audience);
     if (typeFilter !== "all" && m.material_type !== typeFilter) return false;
     if (programFilter !== "all" && (m.program_key || "") !== programFilter) return false;
-    // Staff who cannot manage only see published materials.
+    if (audienceFilter !== "all" && audience !== audienceFilter) return false;
+    // Staff who cannot manage only see published materials, and never teacher-hidden ones.
     if (!canManage && m.active === false) return false;
     return true;
   });
@@ -198,6 +208,17 @@ export default function ProgramMaterials() {
         ))}
       </div>
 
+      {/* Audience filter — students / teachers / both */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-xs text-muted-foreground">الفئة المستهدفة:</span>
+        <Button size="sm" variant={audienceFilter === "all" ? "secondary" : "ghost"} onClick={() => setAudienceFilter("all")}>الكل</Button>
+        {MATERIAL_AUDIENCES.map((a) => (
+          <Button key={a} size="sm" variant={audienceFilter === a ? "secondary" : "ghost"} onClick={() => setAudienceFilter(a)}>
+            {MATERIAL_AUDIENCE_LABELS[a]}
+          </Button>
+        ))}
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {filtered.map((m) => {
           const type = (m.material_type as MaterialType) in TYPE_ICON ? (m.material_type as MaterialType) : "link";
@@ -216,6 +237,9 @@ export default function ProgramMaterials() {
                       <div className="flex flex-wrap gap-1 mt-2">
                         <Badge variant="outline">{MATERIAL_LABELS[type]}</Badge>
                         <Badge variant="secondary" className="text-[10px]">{programLabel(m.program_key)}</Badge>
+                        <Badge className="text-[10px]" variant="default">
+                          {MATERIAL_AUDIENCE_LABELS[materialAudience(m.audience)]}
+                        </Badge>
                         {m.active === false && (
                           <Badge variant="destructive" className="text-[10px]">
                             <EyeOff className="w-3 h-3 ml-1" />مخفية

@@ -3057,6 +3057,7 @@ export type Database = {
       program_materials: {
         Row: {
           active: boolean | null
+          audience: string
           created_at: string
           created_by: string | null
           description: string | null
@@ -3077,6 +3078,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          audience?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -3097,6 +3099,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          audience?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
