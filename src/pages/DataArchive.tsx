@@ -11,7 +11,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Archive, RotateCcw, RefreshCw, Database, CalendarDays } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Archive, RotateCcw, RefreshCw, Database, CalendarDays, Eye, Download } from "lucide-react";
 import { toast } from "sonner";
 import { ACADEMIC_YEAR } from "@/lib/academicYear";
 import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
@@ -35,6 +39,38 @@ interface ArchiveBatch {
   restored_at: string | null;
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  attendance: "حضور الطلاب",
+  recitation_records: "سجلات التسميع",
+  talqeen_sessions: "جلسات التلقين",
+  talqeen_session_attendance: "حضور جلسات التلقين",
+  madarij_daily_progress: "المتابعة اليومية (مدارج)",
+  madarij_hizb_exams: "اختبارات الحزب (مدارج)",
+  staff_attendance: "حضور الموظفين",
+  excellence_sessions: "جلسات التميز",
+  excellence_attendance: "حضور التميز",
+  excellence_performance: "أداء التميز",
+  narration_sessions: "جلسات السرد",
+  narration_results: "نتائج السرد",
+  tarbawi_weekly_records: "المتابعة التربوية الأسبوعية",
+  tarbawi_events: "الفعاليات التربوية",
+  summer_daily_records: "السجلات اليومية الصيفية",
+  summer_attendance: "الحضور الصيفي",
+  trips: "الرحلات",
+};
+
+const PAGE_SIZE = 20;
+
+const toCsv = (rows: Record<string, unknown>[]) => {
+  if (rows.length === 0) return "";
+  const cols = Object.keys(rows[0]);
+  const esc = (v: unknown) => {
+    const t = v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+    return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  return [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n");
+};
+
 const DataArchive = () => {
   const { role } = useRole();
   const isManager = role === "manager";
@@ -48,6 +84,82 @@ const DataArchive = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<ArchiveBatch | null>(null);
+
+  const [viewBatch, setViewBatch] = useState<ArchiveBatch | null>(null);
+  const [viewTable, setViewTable] = useState<string>("");
+  const [viewRows, setViewRows] = useState<Record<string, unknown>[]>([]);
+  const [viewCount, setViewCount] = useState(0);
+  const [viewPage, setViewPage] = useState(0);
+  const [viewLoading, setViewLoading] = useState(false);
+
+  const batchTypes = useMemo(() => {
+    const stats = viewBatch?.stats ?? {};
+    return Object.entries(stats)
+      .filter(([, n]) => Number(n) > 0)
+      .map(([t, n]) => ({ table: t, label: TYPE_LABELS[t] ?? t, count: Number(n) }));
+  }, [viewBatch]);
+
+  const openViewer = (batch: ArchiveBatch) => {
+    const types = Object.entries(batch.stats ?? {}).filter(([, n]) => Number(n) > 0);
+    setViewBatch(batch);
+    setViewPage(0);
+    setViewRows([]);
+    setViewTable(types[0]?.[0] ?? "");
+  };
+
+  const loadViewRows = useCallback(async () => {
+    if (!viewBatch || !viewTable) return;
+    setViewLoading(true);
+    const from = viewPage * PAGE_SIZE;
+    const { data, count, error } = await (supabase as any)
+      .from(viewTable)
+      .select("*", { count: "exact" })
+      .eq("archived_batch_id", viewBatch.id)
+      .order("archived_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+    setViewLoading(false);
+    if (error) {
+      toast.error("تعذّر عرض بيانات الأرشيف", { description: error.message });
+      setViewRows([]);
+      return;
+    }
+    setViewRows((data ?? []) as Record<string, unknown>[]);
+    setViewCount(count ?? 0);
+  }, [viewBatch, viewTable, viewPage]);
+
+  useEffect(() => {
+    loadViewRows();
+  }, [loadViewRows]);
+
+  const exportViewCsv = async () => {
+    if (!viewBatch || !viewTable) return;
+    const { data, error } = await (supabase as any)
+      .from(viewTable)
+      .select("*")
+      .eq("archived_batch_id", viewBatch.id)
+      .limit(5000);
+    if (error) {
+      toast.error("تعذّر التصدير", { description: error.message });
+      return;
+    }
+    const csv = toCsv((data ?? []) as Record<string, unknown>[]);
+    if (!csv) {
+      toast.info("لا توجد بيانات للتصدير");
+      return;
+    }
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${viewTable}-${viewBatch.label}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const viewColumns = useMemo(
+    () => (viewRows[0] ? Object.keys(viewRows[0]).slice(0, 8) : []),
+    [viewRows],
+  );
 
   const availableRows = useMemo(
     () => (preview ?? []).filter((r) => (r.count || 0) > 0),
@@ -308,7 +420,11 @@ const DataArchive = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>{formatDateTimeSmart(b.created_at)}</TableCell>
-                    <TableCell>
+                    <TableCell className="flex flex-wrap gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => openViewer(b)}>
+                        <Eye className="ms-1 h-4 w-4" aria-hidden="true" />
+                        عرض البيانات
+                      </Button>
                       {isManager && b.status !== "restored" && (
                         <Button variant="outline" size="sm" onClick={() => setRestoreTarget(b)}>
                           <RotateCcw className="ms-1 h-4 w-4" aria-hidden="true" />
@@ -346,6 +462,119 @@ const DataArchive = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!viewBatch} onOpenChange={(o) => !o && setViewBatch(null)}>
+        <DialogContent dir="rtl" className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>بيانات الأرشيف — {viewBatch?.label}</DialogTitle>
+            <DialogDescription>
+              استعراض السجلات المؤرشفة قبل {viewBatch ? formatDateSmart(viewBatch.cutoff_date) : ""} حسب نوع البيانات،
+              مع إمكانية تصديرها.
+            </DialogDescription>
+          </DialogHeader>
+
+          {batchTypes.length === 0 ? (
+            <p className="py-6 text-center text-muted-foreground">لا توجد سجلات في هذه الدفعة.</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="min-w-56 space-y-2">
+                  <Label>نوع البيانات</Label>
+                  <Select
+                    value={viewTable}
+                    onValueChange={(v) => {
+                      setViewTable(v);
+                      setViewPage(0);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر نوع البيانات" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {batchTypes.map((t) => (
+                        <SelectItem key={t.table} value={t.table}>
+                          {t.label} ({t.count.toLocaleString("ar-EG")})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button variant="outline" onClick={exportViewCsv}>
+                  <Download className="ms-1 h-4 w-4" aria-hidden="true" />
+                  تصدير CSV
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  الإجمالي: {viewCount.toLocaleString("ar-EG")} سجل
+                </span>
+              </div>
+
+              <div className="max-h-[50vh] overflow-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {viewColumns.map((c) => (
+                        <TableHead key={c} className="whitespace-nowrap text-right">{c}</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {viewLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={Math.max(viewColumns.length, 1)} className="py-6 text-center text-muted-foreground">
+                          جارٍ التحميل...
+                        </TableCell>
+                      </TableRow>
+                    ) : viewRows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={Math.max(viewColumns.length, 1)} className="py-6 text-center text-muted-foreground">
+                          لا توجد سجلات لعرضها.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      viewRows.map((row, i) => (
+                        <TableRow key={String(row.id ?? i)}>
+                          {viewColumns.map((c) => (
+                            <TableCell key={c} className="max-w-48 truncate whitespace-nowrap">
+                              {row[c] === null || row[c] === undefined
+                                ? "—"
+                                : typeof row[c] === "object"
+                                  ? JSON.stringify(row[c])
+                                  : String(row[c])}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={viewPage === 0 || viewLoading}
+                  onClick={() => setViewPage((p) => Math.max(0, p - 1))}
+                >
+                  السابق
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  صفحة {(viewPage + 1).toLocaleString("ar-EG")} من{" "}
+                  {Math.max(1, Math.ceil(viewCount / PAGE_SIZE)).toLocaleString("ar-EG")}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={viewLoading || (viewPage + 1) * PAGE_SIZE >= viewCount}
+                  onClick={() => setViewPage((p) => p + 1)}
+                >
+                  التالي
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!restoreTarget} onOpenChange={(o) => !o && setRestoreTarget(null)}>
         <AlertDialogContent dir="rtl">
