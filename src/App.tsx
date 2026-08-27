@@ -200,6 +200,7 @@ const AppRoutes = () => {
       <Route path="/enrollment-requests" element={<ProtectedRoute path="/enrollment-requests"><EnrollmentRequests /></ProtectedRoute>} />
       <Route path="/preparation" element={<ProtectedRoute path="/preparation"><Preparation /></ProtectedRoute>} />
       <Route path="/academic-calendar" element={<ProtectedRoute path="/academic-calendar"><AcademicCalendar /></ProtectedRoute>} />
+      <Route path="/data-archive" element={<ProtectedRoute path="/data-archive"><DataArchive /></ProtectedRoute>} />
       <Route path="/attendance-audit" element={<ProtectedRoute path="/attendance-audit"><AttendanceAuditLog /></ProtectedRoute>} />
       <Route path="/madarij" element={<ProtectedRoute path="/madarij"><Madarij /></ProtectedRoute>} />
       <Route path="/madarij/:enrollmentId" element={<ProtectedRoute path="/madarij"><MadarijEnrollment /></ProtectedRoute>} />
