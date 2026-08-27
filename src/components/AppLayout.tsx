@@ -54,6 +54,7 @@ import {
   Library,
   FileSpreadsheet,
   Sparkles,
+  Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import huwaylanLogo from "@/assets/huwaylan-logo.jpeg";
@@ -229,6 +230,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/academic-calendar", icon: CalendarDays, label: "التقويم الأكاديمي" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
+      { to: "/data-archive", icon: Archive, label: "أرشفة البيانات" },
     ],
   },
   {

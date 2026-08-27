@@ -41,8 +41,55 @@ export type Database = {
         }
         Relationships: []
       }
+      archive_batches: {
+        Row: {
+          academic_year_label: string | null
+          created_at: string
+          created_by: string | null
+          cutoff_date: string
+          id: string
+          label: string
+          restored_at: string | null
+          restored_by: string | null
+          stats: Json
+          status: string
+          total_records: number
+          updated_at: string
+        }
+        Insert: {
+          academic_year_label?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutoff_date: string
+          id?: string
+          label: string
+          restored_at?: string | null
+          restored_by?: string | null
+          stats?: Json
+          status?: string
+          total_records?: number
+          updated_at?: string
+        }
+        Update: {
+          academic_year_label?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutoff_date?: string
+          id?: string
+          label?: string
+          restored_at?: string | null
+          restored_by?: string | null
+          stats?: Json
+          status?: string
+          total_records?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           attendance_date: string
           created_at: string
           halaqa_id: string
@@ -53,6 +100,8 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attendance_date?: string
           created_at?: string
           halaqa_id: string
@@ -63,6 +112,8 @@ export type Database = {
           student_id: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attendance_date?: string
           created_at?: string
           halaqa_id?: string
@@ -73,6 +124,13 @@ export type Database = {
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "attendance_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attendance_halaqa_id_fkey"
             columns: ["halaqa_id"]
@@ -437,6 +495,8 @@ export type Database = {
       }
       excellence_attendance: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           id: string
           is_present: boolean
@@ -445,6 +505,8 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           id?: string
           is_present?: boolean
@@ -453,6 +515,8 @@ export type Database = {
           student_id: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           id?: string
           is_present?: boolean
@@ -461,6 +525,13 @@ export type Database = {
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "excellence_attendance_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "excellence_attendance_session_id_fkey"
             columns: ["session_id"]
@@ -591,6 +662,8 @@ export type Database = {
       }
       excellence_performance: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           hizb_count: number | null
           id: string
@@ -605,6 +678,8 @@ export type Database = {
           warnings_count: number | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           hizb_count?: number | null
           id?: string
@@ -619,6 +694,8 @@ export type Database = {
           warnings_count?: number | null
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           hizb_count?: number | null
           id?: string
@@ -634,6 +711,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "excellence_performance_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "excellence_performance_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
@@ -644,6 +728,8 @@ export type Database = {
       }
       excellence_sessions: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           created_by: string | null
           halaqa_id: string | null
@@ -657,6 +743,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           created_by?: string | null
           halaqa_id?: string | null
@@ -670,6 +758,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           created_by?: string | null
           halaqa_id?: string | null
@@ -683,6 +773,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "excellence_sessions_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "excellence_sessions_halaqa_id_fkey"
             columns: ["halaqa_id"]
@@ -1536,6 +1633,8 @@ export type Database = {
       }
       madarij_daily_progress: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           enrollment_id: string
           execution: string | null
@@ -1552,6 +1651,8 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           enrollment_id: string
           execution?: string | null
@@ -1568,6 +1669,8 @@ export type Database = {
           student_id: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           enrollment_id?: string
           execution?: string | null
@@ -1584,6 +1687,13 @@ export type Database = {
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "madarij_daily_progress_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "madarij_daily_progress_enrollment_id_fkey"
             columns: ["enrollment_id"]
@@ -1711,6 +1821,8 @@ export type Database = {
       }
       madarij_hizb_exams: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           attempt_number: number
           created_at: string
           enrollment_id: string
@@ -1744,6 +1856,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attempt_number?: number
           created_at?: string
           enrollment_id: string
@@ -1777,6 +1891,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attempt_number?: number
           created_at?: string
           enrollment_id?: string
@@ -1810,6 +1926,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "madarij_hizb_exams_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "madarij_hizb_exams_enrollment_id_fkey"
             columns: ["enrollment_id"]
@@ -2237,6 +2360,8 @@ export type Database = {
       }
       narration_results: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           grade: number
           hizb_from: number
@@ -2259,6 +2384,8 @@ export type Database = {
           warnings_count: number
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           grade?: number
           hizb_from?: number
@@ -2281,6 +2408,8 @@ export type Database = {
           warnings_count?: number
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           grade?: number
           hizb_from?: number
@@ -2304,6 +2433,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "narration_results_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "narration_results_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
@@ -2321,6 +2457,8 @@ export type Database = {
       }
       narration_sessions: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           created_by: string | null
           external_teacher_name: string | null
@@ -2335,6 +2473,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           created_by?: string | null
           external_teacher_name?: string | null
@@ -2349,6 +2489,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           created_by?: string | null
           external_teacher_name?: string | null
@@ -2363,6 +2505,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "narration_sessions_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "narration_sessions_halaqa_id_fkey"
             columns: ["halaqa_id"]
@@ -3289,6 +3438,8 @@ export type Database = {
       }
       recitation_records: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           audio_url: string | null
           created_at: string
           halaqa_id: string
@@ -3310,6 +3461,8 @@ export type Database = {
           total_score: number | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           audio_url?: string | null
           created_at?: string
           halaqa_id: string
@@ -3331,6 +3484,8 @@ export type Database = {
           total_score?: number | null
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           audio_url?: string | null
           created_at?: string
           halaqa_id?: string
@@ -3352,6 +3507,13 @@ export type Database = {
           total_score?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "recitation_records_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recitation_records_halaqa_id_fkey"
             columns: ["halaqa_id"]
@@ -3557,6 +3719,8 @@ export type Database = {
       }
       staff_attendance: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           attendance_date: string
           check_in_time: string | null
           check_out_time: string | null
@@ -3576,6 +3740,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attendance_date?: string
           check_in_time?: string | null
           check_out_time?: string | null
@@ -3595,6 +3761,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attendance_date?: string
           check_in_time?: string | null
           check_out_time?: string | null
@@ -3614,6 +3782,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_attendance_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_attendance_shift_id_fkey"
             columns: ["shift_id"]
@@ -4843,6 +5018,8 @@ export type Database = {
       }
       summer_attendance: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           attendance_date: string
           created_at: string
           id: string
@@ -4852,6 +5029,8 @@ export type Database = {
           summer_student_id: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attendance_date: string
           created_at?: string
           id?: string
@@ -4861,6 +5040,8 @@ export type Database = {
           summer_student_id: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attendance_date?: string
           created_at?: string
           id?: string
@@ -4870,6 +5051,13 @@ export type Database = {
           summer_student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "summer_attendance_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "summer_attendance_summer_student_id_fkey"
             columns: ["summer_student_id"]
@@ -4882,6 +5070,8 @@ export type Database = {
       summer_daily_records: {
         Row: {
           amyal_score: number
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -4918,6 +5108,8 @@ export type Database = {
         }
         Insert: {
           amyal_score?: number
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -4954,6 +5146,8 @@ export type Database = {
         }
         Update: {
           amyal_score?: number
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -4989,6 +5183,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "summer_daily_records_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "summer_daily_records_summer_student_id_fkey"
             columns: ["summer_student_id"]
@@ -5691,6 +5892,8 @@ export type Database = {
       }
       talqeen_session_attendance: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           homework_status: string
           id: string
@@ -5701,6 +5904,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           homework_status?: string
           id?: string
@@ -5711,6 +5916,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           homework_status?: string
           id?: string
@@ -5721,6 +5928,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "talqeen_session_attendance_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "talqeen_session_attendance_session_id_fkey"
             columns: ["session_id"]
@@ -5739,6 +5953,8 @@ export type Database = {
       }
       talqeen_sessions: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           attendance_done: boolean | null
           attendance_done_at: string | null
           created_at: string | null
@@ -5766,6 +5982,8 @@ export type Database = {
           to_ayah: number | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attendance_done?: boolean | null
           attendance_done_at?: string | null
           created_at?: string | null
@@ -5793,6 +6011,8 @@ export type Database = {
           to_ayah?: number | null
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           attendance_done?: boolean | null
           attendance_done_at?: string | null
           created_at?: string | null
@@ -5820,6 +6040,13 @@ export type Database = {
           to_ayah?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "talqeen_sessions_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "talqeen_sessions_halaqa_id_fkey"
             columns: ["halaqa_id"]
@@ -5995,6 +6222,8 @@ export type Database = {
       }
       tarbawi_events: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -6009,6 +6238,8 @@ export type Database = {
           visible_to_guardians: boolean
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -6023,6 +6254,8 @@ export type Database = {
           visible_to_guardians?: boolean
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -6037,6 +6270,13 @@ export type Database = {
           visible_to_guardians?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "tarbawi_events_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tarbawi_events_program_id_fkey"
             columns: ["program_id"]
@@ -6582,6 +6822,8 @@ export type Database = {
       }
       tarbawi_weekly_records: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           created_at: string
           halaqa_id: string | null
           id: string
@@ -6600,6 +6842,8 @@ export type Database = {
           week_start: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           halaqa_id?: string | null
           id?: string
@@ -6618,6 +6862,8 @@ export type Database = {
           week_start: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           created_at?: string
           halaqa_id?: string | null
           id?: string
@@ -6636,6 +6882,13 @@ export type Database = {
           week_start?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tarbawi_weekly_records_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tarbawi_weekly_records_halaqa_id_fkey"
             columns: ["halaqa_id"]
@@ -6948,6 +7201,8 @@ export type Database = {
       }
       trips: {
         Row: {
+          archived_at: string | null
+          archived_batch_id: string | null
           capacity: number | null
           created_at: string
           created_by: string | null
@@ -6966,6 +7221,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           capacity?: number | null
           created_at?: string
           created_by?: string | null
@@ -6984,6 +7241,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_batch_id?: string | null
           capacity?: number | null
           created_at?: string
           created_by?: string | null
@@ -7002,6 +7261,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "trips_archived_batch_id_fkey"
+            columns: ["archived_batch_id"]
+            isOneToOne: false
+            referencedRelation: "archive_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trips_created_by_fkey"
             columns: ["created_by"]
@@ -7262,6 +7528,14 @@ export type Database = {
       }
     }
     Functions: {
+      archive_targets: {
+        Args: never
+        Returns: {
+          date_expr: string
+          label_ar: string
+          tbl: string
+        }[]
+      }
       check_enrollment_status: {
         Args: { phone_number: string }
         Returns: {
@@ -7298,6 +7572,12 @@ export type Database = {
       plan_range_name: { Args: { _raw: string }; Returns: string }
       plan_range_norm: { Args: { _raw: string }; Returns: string }
       plan_range_num: { Args: { _raw: string }; Returns: number }
+      preview_archive: { Args: { _cutoff: string }; Returns: Json }
+      restore_archive: { Args: { _batch_id: string }; Returns: Json }
+      run_archive: {
+        Args: { _cutoff: string; _label: string; _year_label?: string }
+        Returns: Json
+      }
       submit_external_narration_review: {
         Args: {
           _reviewer_name: string
