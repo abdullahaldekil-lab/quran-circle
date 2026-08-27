@@ -13,10 +13,14 @@ import { Upload } from "lucide-react";
 import { PROGRAMS } from "@/lib/programs";
 import {
   MATERIAL_ACCEPT,
+  MATERIAL_AUDIENCES,
+  MATERIAL_AUDIENCE_LABELS,
   MATERIAL_LABELS,
   MATERIAL_TYPES,
+  materialAudience,
   materialStoragePath,
   validateMaterial,
+  type MaterialAudience,
   type MaterialType,
 } from "@/lib/materialType";
 
