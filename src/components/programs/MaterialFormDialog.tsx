@@ -119,6 +119,7 @@ const MaterialFormDialog = ({ open, onOpenChange, material, defaultProgramKey, o
         material_type: form.material_type,
         url: form.url.trim() || null,
         program_key: form.program_key || null,
+        audience: form.audience,
         order_index: form.order_index,
         active: form.active,
         segment_order: form.segment_order.trim() || null,
