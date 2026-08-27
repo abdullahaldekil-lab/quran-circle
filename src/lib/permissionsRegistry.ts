@@ -229,4 +229,44 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   // ===== الشهادات (موديول جديد) =====
   { name: "issue_certificates",  name_ar: "إصدار الشهادات",  category: "certificates", defaultRoles: ["manager", "supervisor", "teacher"] },
   { name: "verify_certificates", name_ar: "التحقق من الشهادات", category: "certificates", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
+
+  // ===== إضافات: صلاحيات تفصيلية للصفحات التي لم تكن مسجّلة =====
+
+  // لوحات ومسارات عامة
+  { name: "view_dashboard",            name_ar: "عرض اللوحة الرئيسية",       category: "admin", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
+  { name: "manage_own_profile",        name_ar: "تعديل الملف الشخصي",        category: "admin", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
+  { name: "view_teacher_quick_panel",  name_ar: "عرض لوحة المعلم السريعة",   category: "admin", defaultRoles: ["manager", "teacher", "assistant_teacher"] },
+
+  // الحضور والتقارير
+  { name: "view_attendance_audit",         name_ar: "عرض سجل تدقيق الحضور",     category: "attendance", defaultRoles: ["manager", "supervisor"] },
+  { name: "view_student_attendance_report", name_ar: "عرض تقرير حضور الطالب المطبوع", category: "attendance", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher"] },
+
+  // التحضير والاستعداد
+  { name: "manage_preparation",  name_ar: "إدارة التحضير اليومي", category: "operations", defaultRoles: ["manager", "supervisor", "teacher", "assistant_teacher"] },
+  { name: "manage_enrollment_form", name_ar: "تعبئة نموذج التسجيل للطالب", category: "enrollment", defaultRoles: ["manager", "secretary", "admin_staff"] },
+
+  // الاختبارات (تفصيلي)
+  { name: "manage_student_quiz",  name_ar: "تنفيذ اختبار الطالب",        category: "quizzes", defaultRoles: ["manager", "supervisor", "teacher", "assistant_teacher"] },
+  { name: "view_quiz_comparison", name_ar: "عرض مقارنة الاختبارات",      category: "quizzes", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "manage_program_quiz",  name_ar: "إدارة اختبار البرامج",       category: "quizzes", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+
+  // السرد (تفصيلي)
+  { name: "manage_review_test",   name_ar: "إدارة اختبار المراجعة",      category: "narration", defaultRoles: ["manager", "supervisor", "teacher"] },
+  { name: "view_narration_stats", name_ar: "عرض إحصاءات السرد",          category: "narration", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+  { name: "manage_narration_test_settings", name_ar: "إدارة إعدادات اختبار السرد", category: "narration", defaultRoles: ["manager", "supervisor"] },
+  { name: "view_student_narration_progress", name_ar: "عرض تقدم الطالب في السرد", category: "narration", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
+
+  // التميز (تفصيلي)
+  { name: "view_excellence_comparison", name_ar: "عرض مقارنة التميز", category: "excellence", defaultRoles: ["manager", "supervisor", "assistant_supervisor"] },
+
+  // الإشعارات (تفصيلي)
+  { name: "view_notification_log",         name_ar: "عرض سجل الإشعارات",        category: "notifications", defaultRoles: ["manager", "supervisor"] },
+  { name: "manage_notification_preferences", name_ar: "تعديل تفضيلات الإشعارات", category: "notifications", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
+
+  // شؤون الموظفين (تفصيلي)
+  { name: "view_staff_attendance_log", name_ar: "عرض سجل حضور الموظفين", category: "staff", defaultRoles: ["manager", "supervisor", "secretary"] },
+
+  // مدارج (تفصيلي)
+  { name: "view_student_annual_plan", name_ar: "عرض الخطة السنوية للطالب", category: "madarij", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "teacher"] },
 ];
+
