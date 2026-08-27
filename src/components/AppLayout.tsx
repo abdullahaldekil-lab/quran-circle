@@ -229,6 +229,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/academic-calendar", icon: CalendarDays, label: "التقويم الأكاديمي" },
       { to: "/preparation", icon: Clock, label: "وقت التحضير" },
+      { to: "/data-archive", icon: Archive, label: "أرشفة البيانات" },
     ],
   },
   {
