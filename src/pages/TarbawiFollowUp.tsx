@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -46,6 +47,7 @@ const toDraft = (r: any): Draft => ({
 });
 
 export default function TarbawiFollowUp() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isManager, isSupervisor, role } = useRole();
   const isOversight = isManager || isSupervisor || role === "assistant_supervisor";
@@ -237,7 +239,18 @@ export default function TarbawiFollowUp() {
 
   const entryPanel = (
     <>
+      {!loading && programs.length === 0 && (
+        <div className="rounded-2xl border-2 border-amber-300 bg-amber-50/60 p-4 mb-4 text-sm">
+          <p className="font-bold mb-1">لا يوجد برنامج تربوي بعد</p>
+          <p className="text-xs text-muted-foreground mb-2">
+            المتابعة الأسبوعية تبدأ من برنامج تربوي: أنشئ البرنامج، ثم اختر الحلقات المشمولة، وبعدها ستظهر أسماء طلاب كل حلقة هنا تلقائياً.
+          </p>
+          <Button size="sm" onClick={() => navigate("/tarbawi-programs")}>إنشاء برنامج تربوي</Button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-end gap-3 mb-4">
+
         <div className="min-w-40">
           <Label className="text-xs">البرنامج</Label>
           <Select value={programId} onValueChange={setProgramId}>

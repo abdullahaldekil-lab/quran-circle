@@ -134,13 +134,23 @@ export default function TarbawiCalendar() {
               </div>
               <div>
                 <Label>البرنامج</Label>
-                <Select value={form.program_id} onValueChange={(v) => setForm({ ...form, program_id: v })}>
+                <Select
+                  value={form.program_id || "none"}
+                  onValueChange={(v) => setForm({ ...form, program_id: v === "none" ? "" : v })}
+                >
                   <SelectTrigger><SelectValue placeholder="اختياري" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">بدون برنامج</SelectItem>
                     {programs.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {programs.length === 0 && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    لا توجد برامج تربوية بعد — يمكن إضافة الحدث بدون برنامج، أو أنشئ برنامجاً من صفحة «البرامج التربوية».
+                  </p>
+                )}
               </div>
+
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
