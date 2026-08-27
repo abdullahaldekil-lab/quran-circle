@@ -110,9 +110,11 @@ export default function ProgramMaterials() {
   }
 
   const filtered = materials.filter((m) => {
+    const audience = materialAudience(m.audience);
     if (typeFilter !== "all" && m.material_type !== typeFilter) return false;
     if (programFilter !== "all" && (m.program_key || "") !== programFilter) return false;
-    // Staff who cannot manage only see published materials.
+    if (audienceFilter !== "all" && audience !== audienceFilter) return false;
+    // Staff who cannot manage only see published materials, and never teacher-hidden ones.
     if (!canManage && m.active === false) return false;
     return true;
   });
