@@ -75,9 +75,11 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "view_attendance_log", name_ar: "عرض سجل الحضور",   category: "attendance", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
 
   // ===== القبول والتسجيل =====
-  { name: "manage_bulk_import",      name_ar: "إضافة جماعية",         category: "enrollment", defaultRoles: ["manager", "secretary", "admin_staff"] },
-  { name: "manage_enrollment",       name_ar: "إدارة طلبات الالتحاق", category: "enrollment", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff"] },
-  { name: "manage_pre_registration", name_ar: "إدارة التسجيل المسبق", category: "enrollment", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff"] },
+  { name: "manage_bulk_import",         name_ar: "إضافة جماعية",              category: "enrollment", defaultRoles: ["manager", "secretary", "admin_staff"] },
+  { name: "manage_enrollment",          name_ar: "إدارة طلبات الالتحاق",      category: "enrollment", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff"] },
+  { name: "view_enrollment_requests",   name_ar: "عرض طلبات الالتحاق",        category: "enrollment", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff"] },
+  { name: "approve_enrollment_requests", name_ar: "الموافقة على طلبات الالتحاق", category: "enrollment", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff"] },
+  { name: "manage_pre_registration",    name_ar: "إدارة التسجيل المسبق",      category: "enrollment", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff"] },
 
   // ===== التميز =====
   { name: "manage_distinguished_students", name_ar: "إدارة الطلاب المتميزين", category: "excellence", defaultRoles: ["manager", "supervisor"] },
