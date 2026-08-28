@@ -15,7 +15,12 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Archive, RotateCcw, RefreshCw, Database, CalendarDays, Eye, Download } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import {
+  Archive, RotateCcw, RefreshCw, Database, CalendarDays, Eye, Download,
+  AlertTriangle, CheckCircle2, Loader2, ChevronDown, Copy,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ACADEMIC_YEAR } from "@/lib/academicYear";
 import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
@@ -61,6 +66,37 @@ const TYPE_LABELS: Record<string, string> = {
 
 const PAGE_SIZE = 20;
 
+type StepStatus = "pending" | "running" | "done" | "failed";
+
+interface RunStep {
+  table: string;
+  label: string;
+  expected: number;
+  archived: number;
+  status: StepStatus;
+  error?: string;
+}
+
+interface FailureDetail {
+  title: string;
+  table?: string;
+  message: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+  at: string;
+}
+
+const asPgError = (error: unknown) => {
+  const e = (error ?? {}) as { message?: string; code?: string; details?: string; hint?: string };
+  return {
+    message: e.message || "خطأ غير معروف من قاعدة البيانات",
+    code: e.code,
+    details: e.details,
+    hint: e.hint,
+  };
+};
+
 const toCsv = (rows: Record<string, unknown>[]) => {
   if (rows.length === 0) return "";
   const cols = Object.keys(rows[0]);
@@ -84,6 +120,9 @@ const DataArchive = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<ArchiveBatch | null>(null);
+  const [steps, setSteps] = useState<RunStep[]>([]);
+  const [failure, setFailure] = useState<FailureDetail | null>(null);
+  const [openBatch, setOpenBatch] = useState<string | null>(null);
 
   const [viewBatch, setViewBatch] = useState<ArchiveBatch | null>(null);
   const [viewTable, setViewTable] = useState<string>("");
@@ -182,6 +221,16 @@ const DataArchive = () => {
   const allSelected =
     availableRows.length > 0 && availableRows.every((r) => selected.includes(r.table));
 
+  const doneSteps = useMemo(() => steps.filter((s) => s.status === "done").length, [steps]);
+  const archivedSoFar = useMemo(
+    () => steps.reduce((sum, s) => sum + s.archived, 0),
+    [steps],
+  );
+  const overallPercent = useMemo(
+    () => (steps.length === 0 ? 0 : Math.round((doneSteps / steps.length) * 100)),
+    [doneSteps, steps.length],
+  );
+
   const toggleAll = () =>
     setSelected(allSelected ? [] : availableRows.map((r) => r.table));
 
@@ -218,21 +267,67 @@ const DataArchive = () => {
   }, [loadPreview]);
 
   const runArchive = async () => {
-    setRunning(true);
-    const { data, error } = await supabase.rpc("run_archive", {
-      _cutoff: cutoff,
-      _label: label,
-      _year_label: ACADEMIC_YEAR.label,
-      _tables: selected,
-    });
-    setRunning(false);
+    const targets = availableRows.filter((r) => selected.includes(r.table));
+    if (targets.length === 0) return;
+
+    setFailure(null);
     setConfirmArchive(false);
-    if (error) {
-      toast.error("فشلت عملية الأرشفة", { description: error.message });
-      return;
+    setRunning(true);
+    setSteps(
+      targets.map((t) => ({
+        table: t.table,
+        label: t.label,
+        expected: t.count,
+        archived: 0,
+        status: "pending" as StepStatus,
+      })),
+    );
+
+    let archivedTotal = 0;
+
+    for (const target of targets) {
+      setSteps((prev) =>
+        prev.map((s) => (s.table === target.table ? { ...s, status: "running" } : s)),
+      );
+
+      const { data, error } = await supabase.rpc("run_archive", {
+        _cutoff: cutoff,
+        _label: targets.length > 1 ? `${label} — ${target.label}` : label,
+        _year_label: ACADEMIC_YEAR.label,
+        _tables: [target.table],
+      });
+
+      if (error) {
+        const pg = asPgError(error);
+        setSteps((prev) =>
+          prev.map((s) =>
+            s.table === target.table ? { ...s, status: "failed", error: pg.message } : s,
+          ),
+        );
+        setFailure({
+          title: `توقفت الأرشفة عند: ${target.label}`,
+          table: target.table,
+          message: pg.message,
+          code: pg.code,
+          details: pg.details,
+          hint: pg.hint,
+          at: new Date().toISOString(),
+        });
+        setRunning(false);
+        toast.error("فشلت عملية الأرشفة", { description: `${target.label}: ${pg.message}` });
+        await Promise.all([loadBatches(), loadPreview()]);
+        return;
+      }
+
+      const archived = (data as { total?: number } | null)?.total ?? 0;
+      archivedTotal += archived;
+      setSteps((prev) =>
+        prev.map((s) => (s.table === target.table ? { ...s, status: "done", archived } : s)),
+      );
     }
-    const total = (data as { total?: number } | null)?.total ?? 0;
-    toast.success(`تمت الأرشفة بنجاح — ${total} سجل`);
+
+    setRunning(false);
+    toast.success(`تمت الأرشفة بنجاح — ${archivedTotal.toLocaleString("ar-EG")} سجل`);
     await Promise.all([loadBatches(), loadPreview()]);
   };
 
@@ -240,7 +335,16 @@ const DataArchive = () => {
     const { data, error } = await supabase.rpc("restore_archive", { _batch_id: batch.id });
     setRestoreTarget(null);
     if (error) {
-      toast.error("تعذّر الاسترجاع", { description: error.message });
+      const pg = asPgError(error);
+      setFailure({
+        title: `تعذّر استرجاع الدفعة: ${batch.label}`,
+        message: pg.message,
+        code: pg.code,
+        details: pg.details,
+        hint: pg.hint,
+        at: new Date().toISOString(),
+      });
+      toast.error("تعذّر الاسترجاع", { description: pg.message });
       return;
     }
     const restored = (data as { restored?: number } | null)?.restored ?? 0;
@@ -384,6 +488,108 @@ const DataArchive = () => {
         </Card>
       )}
 
+      {steps.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                {running ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden="true" />
+                ) : failure ? (
+                  <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden="true" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden="true" />
+                )}
+                حالة تنفيذ الأرشفة
+              </CardTitle>
+              <CardDescription>
+                {running
+                  ? `جارٍ التنفيذ — ${doneSteps.toLocaleString("ar-EG")} من ${steps.length.toLocaleString("ar-EG")} نوع بيانات`
+                  : failure
+                    ? "توقّف التنفيذ قبل إكمال كل الأنواع، والتفاصيل بالأسفل."
+                    : `اكتمل التنفيذ — ${archivedSoFar.toLocaleString("ar-EG")} سجل مؤرشف.`}
+              </CardDescription>
+            </div>
+            {!running && (
+              <Button variant="ghost" size="sm" onClick={() => { setSteps([]); setFailure(null); }}>
+                إخفاء
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1">
+              <Progress value={overallPercent} aria-label="نسبة تقدم الأرشفة" />
+              <p className="text-xs text-muted-foreground">
+                نسبة الإنجاز الكلية: {overallPercent.toLocaleString("ar-EG")}%
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {steps.map((s) => {
+                const pct = s.expected > 0
+                  ? Math.min(100, Math.round((s.archived / s.expected) * 100))
+                  : s.status === "done" ? 100 : 0;
+                return (
+                  <div key={s.table} className="space-y-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span className="flex items-center gap-2">
+                        {s.status === "running" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                        {s.status === "done" && <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />}
+                        {s.status === "failed" && <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden="true" />}
+                        {s.label}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {s.status === "pending"
+                          ? `في الانتظار — ${s.expected.toLocaleString("ar-EG")} سجل متوقع`
+                          : s.status === "failed"
+                            ? "فشل"
+                            : `${s.archived.toLocaleString("ar-EG")} / ${s.expected.toLocaleString("ar-EG")} (${pct.toLocaleString("ar-EG")}%)`}
+                      </span>
+                    </div>
+                    <Progress value={pct} aria-label={`تقدم ${s.label}`} />
+                    {s.error && <p className="text-xs text-destructive">{s.error}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {failure && (
+        <Alert variant="destructive" dir="rtl">
+          <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+          <AlertTitle>{failure.title}</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p className="font-medium">{failure.message}</p>
+            <ul className="space-y-1 text-xs">
+              {failure.code && <li>رمز الخطأ: {failure.code}</li>}
+              {failure.table && <li>نوع البيانات: {TYPE_LABELS[failure.table] ?? failure.table}</li>}
+              {failure.details && <li>تفاصيل: {failure.details}</li>}
+              {failure.hint && <li>اقتراح المعالجة: {failure.hint}</li>}
+              <li>وقت الخطأ: {formatDateTimeSmart(failure.at)}</li>
+            </ul>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard?.writeText(JSON.stringify(failure, null, 2));
+                  toast.success("تم نسخ تفاصيل الخطأ");
+                }}
+              >
+                <Copy className="ms-1 h-4 w-4" aria-hidden="true" />
+                نسخ التفاصيل
+              </Button>
+              <Button variant="outline" size="sm" onClick={runArchive} disabled={running}>
+                <RefreshCw className="ms-1 h-4 w-4" aria-hidden="true" />
+                إعادة المحاولة
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">دفعات الأرشيف</CardTitle>
@@ -409,7 +615,7 @@ const DataArchive = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                batches.map((b) => (
+                batches.flatMap((b) => [
                   <TableRow key={b.id}>
                     <TableCell className="font-medium">{b.label}</TableCell>
                     <TableCell>{formatDateSmart(b.cutoff_date)}</TableCell>
@@ -425,6 +631,18 @@ const DataArchive = () => {
                         <Eye className="ms-1 h-4 w-4" aria-hidden="true" />
                         عرض البيانات
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setOpenBatch((cur) => (cur === b.id ? null : b.id))}
+                        aria-expanded={openBatch === b.id}
+                      >
+                        <ChevronDown
+                          className={`ms-1 h-4 w-4 transition-transform ${openBatch === b.id ? "rotate-180" : ""}`}
+                          aria-hidden="true"
+                        />
+                        التفاصيل
+                      </Button>
                       {isManager && b.status !== "restored" && (
                         <Button variant="outline" size="sm" onClick={() => setRestoreTarget(b)}>
                           <RotateCcw className="ms-1 h-4 w-4" aria-hidden="true" />
@@ -432,8 +650,44 @@ const DataArchive = () => {
                         </Button>
                       )}
                     </TableCell>
-                  </TableRow>
-                ))
+                  </TableRow>,
+                  openBatch === b.id ? (
+                    <TableRow key={`${b.id}-details`}>
+                      <TableCell colSpan={6} className="bg-muted/40">
+                        {Object.entries(b.stats ?? {}).filter(([, n]) => Number(n) > 0).length === 0 ? (
+                          <p className="text-sm text-muted-foreground">لا توجد تفاصيل لهذه الدفعة.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {Object.entries(b.stats ?? {})
+                              .filter(([, n]) => Number(n) > 0)
+                              .sort((a, c) => Number(c[1]) - Number(a[1]))
+                              .map(([t, n]) => {
+                                const share = b.total_records > 0
+                                  ? Math.round((Number(n) / b.total_records) * 100)
+                                  : 0;
+                                return (
+                                  <div key={t} className="space-y-1">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                                      <span>{TYPE_LABELS[t] ?? t}</span>
+                                      <span className="text-muted-foreground">
+                                        {Number(n).toLocaleString("ar-EG")} سجل ({share.toLocaleString("ar-EG")}%)
+                                      </span>
+                                    </div>
+                                    <Progress value={share} aria-label={`نسبة ${TYPE_LABELS[t] ?? t}`} />
+                                  </div>
+                                );
+                              })}
+                            {b.restored_at && (
+                              <p className="text-xs text-muted-foreground">
+                                تم الاسترجاع في {formatDateTimeSmart(b.restored_at)}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ) : null,
+                ])
               )}
             </TableBody>
           </Table>
