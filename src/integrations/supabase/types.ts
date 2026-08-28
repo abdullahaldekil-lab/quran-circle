@@ -7539,6 +7539,7 @@ export type Database = {
           tbl: string
         }[]
       }
+      can_purge_students: { Args: never; Returns: boolean }
       check_enrollment_status: {
         Args: { phone_number: string }
         Returns: {
@@ -7547,6 +7548,10 @@ export type Database = {
           status: string
           student_full_name: string
         }[]
+      }
+      delete_student_permanently: {
+        Args: { _student_id: string }
+        Returns: Json
       }
       get_external_narration_token: { Args: { _token: string }; Returns: Json }
       get_staff_role: { Args: { _user_id: string }; Returns: string }
@@ -7576,6 +7581,11 @@ export type Database = {
       plan_range_norm: { Args: { _raw: string }; Returns: string }
       plan_range_num: { Args: { _raw: string }; Returns: number }
       preview_archive: { Args: { _cutoff: string }; Returns: Json }
+      preview_student_purge: { Args: { _student_id?: string }; Returns: Json }
+      purge_student_records: {
+        Args: { _student_id?: string; _tables?: string[] }
+        Returns: Json
+      }
       restore_archive: { Args: { _batch_id: string }; Returns: Json }
       run_archive: {
         Args: {
@@ -7585,6 +7595,14 @@ export type Database = {
           _year_label?: string
         }
         Returns: Json
+      }
+      student_purge_targets: {
+        Args: never
+        Returns: {
+          col: string
+          label_ar: string
+          tbl: string
+        }[]
       }
       submit_external_narration_review: {
         Args: {
