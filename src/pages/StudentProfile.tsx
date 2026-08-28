@@ -25,6 +25,7 @@ import AnnualPlanSummaryCard from "@/components/madarij/AnnualPlanSummaryCard";
 import TalqeenStudentTests from "@/components/talqeen/TalqeenStudentTests";
 import TalqeenStudentDailyLog from "@/components/talqeen/TalqeenStudentDailyLog";
 import StudentStatusManager from "@/components/student/StudentStatusManager";
+import StudentPurgeDialog from "@/components/student/StudentPurgeDialog";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
 import StudentPlanChangeLog from "@/components/student/StudentPlanChangeLog";
 import WhatsappButton from "@/components/WhatsappButton";
