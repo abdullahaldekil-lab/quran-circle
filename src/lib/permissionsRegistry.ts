@@ -279,6 +279,8 @@ export const PERMISSIONS_REGISTRY: PermissionDef[] = [
   { name: "view_student_portal", name_ar: "عرض بوابة الطالب (إداريًا)", category: "students", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
   { name: "view_archive", name_ar: "عرض الأرشيف", category: "admin", defaultRoles: ["manager", "supervisor"] },
   { name: "manage_archive", name_ar: "تنفيذ الأرشفة والاسترجاع", category: "admin", defaultRoles: ["manager"] },
+  { name: "purge_student_data", name_ar: "تصفير سجلات الطلاب", category: "admin", defaultRoles: ["manager", "secretary"] },
+  { name: "delete_student_permanently", name_ar: "الحذف النهائي للطالب", category: "admin", defaultRoles: ["manager", "secretary"] },
   { name: "view_documents", name_ar: "عرض المستندات", category: "operations", defaultRoles: ["manager", "supervisor", "assistant_supervisor", "secretary", "admin_staff", "teacher", "assistant_teacher"] },
 ];
 

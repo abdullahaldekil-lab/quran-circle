@@ -19,12 +19,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import {
   Archive, RotateCcw, RefreshCw, Database, CalendarDays, Eye, Download,
-  AlertTriangle, CheckCircle2, Loader2, ChevronDown, Copy,
+  AlertTriangle, CheckCircle2, Loader2, ChevronDown, Copy, Eraser,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ACADEMIC_YEAR } from "@/lib/academicYear";
 import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
 import { useRole } from "@/hooks/useRole";
+import StudentPurgeDialog from "@/components/student/StudentPurgeDialog";
 
 interface PreviewRow {
   table: string;
@@ -123,6 +124,8 @@ const DataArchive = () => {
   const [steps, setSteps] = useState<RunStep[]>([]);
   const [failure, setFailure] = useState<FailureDetail | null>(null);
   const [openBatch, setOpenBatch] = useState<string | null>(null);
+  const [bulkPurgeOpen, setBulkPurgeOpen] = useState(false);
+  const canPurge = role === "manager" || role === "secretary";
 
   const [viewBatch, setViewBatch] = useState<ArchiveBatch | null>(null);
   const [viewTable, setViewTable] = useState<string>("");
@@ -364,11 +367,28 @@ const DataArchive = () => {
             تحويل كل ما قبل بداية العام الدراسي الحالي إلى أرشيف، مع إمكانية الاسترجاع.
           </p>
         </div>
-        <Button variant="outline" onClick={loadPreview} disabled={loading || !isManager}>
-          <RefreshCw className="ms-1 h-4 w-4" aria-hidden="true" />
-          تحديث المعاينة
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {canPurge && (
+            <Button variant="outline" className="text-destructive" onClick={() => setBulkPurgeOpen(true)}>
+              <Eraser className="ms-1 h-4 w-4" aria-hidden="true" />
+              تصفير بيانات جميع الطلاب
+            </Button>
+          )}
+          <Button variant="outline" onClick={loadPreview} disabled={loading || !isManager}>
+            <RefreshCw className="ms-1 h-4 w-4" aria-hidden="true" />
+            تحديث المعاينة
+          </Button>
+        </div>
       </header>
+
+      {canPurge && (
+        <StudentPurgeDialog
+          open={bulkPurgeOpen}
+          onOpenChange={setBulkPurgeOpen}
+          studentId={null}
+          onDone={loadPreview}
+        />
+      )}
 
       <Card>
         <CardHeader>

@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare, Printer, Copy, QrCode, ClipboardList } from "lucide-react";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare, Printer, Copy, QrCode, ClipboardList, Eraser } from "lucide-react";
 import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian, formatDateSmart, toHijri, toMiladi, HIJRI_MONTHS, getWeekdayArabic, formatDateHijriOnly } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
@@ -25,6 +25,7 @@ import AnnualPlanSummaryCard from "@/components/madarij/AnnualPlanSummaryCard";
 import TalqeenStudentTests from "@/components/talqeen/TalqeenStudentTests";
 import TalqeenStudentDailyLog from "@/components/talqeen/TalqeenStudentDailyLog";
 import StudentStatusManager from "@/components/student/StudentStatusManager";
+import StudentPurgeDialog from "@/components/student/StudentPurgeDialog";
 import StudentStatusLog from "@/components/student/StudentStatusLog";
 import StudentPlanChangeLog from "@/components/student/StudentPlanChangeLog";
 import WhatsappButton from "@/components/WhatsappButton";
@@ -49,7 +50,9 @@ const StudentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
-  const { isManager, isSupervisor } = useRole();
+  const { isManager, isSupervisor, role } = useRole();
+  const canPurge = isManager || role === "secretary";
+  const [purgeOpen, setPurgeOpen] = useState(false);
   const [student, setStudent] = useState<any>(null);
   const [halaqaStudents, setHalaqaStudents] = useState<{id: string; full_name: string}[]>([]);
   const [records, setRecords] = useState<any[]>([]);
@@ -341,6 +344,14 @@ const StudentProfile = () => {
                 setStudent(data);
               }}
             />
+            {canPurge && (
+              <div className="mt-3">
+                <Button variant="outline" size="sm" className="text-destructive" onClick={() => setPurgeOpen(true)}>
+                  <Eraser className="w-3.5 h-3.5 ml-1" />
+                  تصفير سجلات الطالب
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -676,6 +687,16 @@ const StudentProfile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {canPurge && student && (
+        <StudentPurgeDialog
+          open={purgeOpen}
+          onOpenChange={setPurgeOpen}
+          studentId={student.id}
+          studentName={student.full_name}
+          onDone={() => window.location.reload()}
+        />
+      )}
     </>
   );
 };

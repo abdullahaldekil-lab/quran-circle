@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { UserX, RefreshCw, Archive, Search } from "lucide-react";
+import { UserX, RefreshCw, Archive, Search, Trash2 } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
+import DeleteStudentPermanentlyDialog from "@/components/student/DeleteStudentPermanentlyDialog";
 
 const STATUS_LABELS: Record<string, string> = {
   inactive: "غير نشط",
@@ -19,8 +21,12 @@ const STATUS_LABELS: Record<string, string> = {
 
 const InactiveStudents = () => {
   const queryClient = useQueryClient();
+  const { isManager, role } = useRole();
+  const canDelete = isManager || role === "secretary";
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["inactive-students"],
@@ -118,6 +124,16 @@ const InactiveStudents = () => {
                         <Button size="sm" variant="outline" onClick={() => updateStatusMutation.mutate({ id: s.id, status: "active" })} disabled={updateStatusMutation.isPending}>
                           <RefreshCw className="w-3 h-3 ml-1" />إعادة تفعيل
                         </Button>
+                        {canDelete && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive"
+                            onClick={() => setDeleteTarget({ id: s.id, name: s.full_name })}
+                          >
+                            <Trash2 className="w-3 h-3 ml-1" />حذف نهائي
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -126,6 +142,19 @@ const InactiveStudents = () => {
             </Table>
           </CardContent>
         </Card>
+      )}
+
+      {deleteTarget && (
+        <DeleteStudentPermanentlyDialog
+          open={!!deleteTarget}
+          onOpenChange={(o) => !o && setDeleteTarget(null)}
+          studentId={deleteTarget.id}
+          studentName={deleteTarget.name}
+          onDeleted={() => {
+            setDeleteTarget(null);
+            queryClient.invalidateQueries({ queryKey: ["inactive-students"] });
+          }}
+        />
       )}
     </div>
   );
