@@ -478,6 +478,108 @@ const DataArchive = () => {
         </Card>
       )}
 
+      {steps.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                {running ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden="true" />
+                ) : failure ? (
+                  <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden="true" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden="true" />
+                )}
+                حالة تنفيذ الأرشفة
+              </CardTitle>
+              <CardDescription>
+                {running
+                  ? `جارٍ التنفيذ — ${doneSteps.toLocaleString("ar-EG")} من ${steps.length.toLocaleString("ar-EG")} نوع بيانات`
+                  : failure
+                    ? "توقّف التنفيذ قبل إكمال كل الأنواع، والتفاصيل بالأسفل."
+                    : `اكتمل التنفيذ — ${archivedSoFar.toLocaleString("ar-EG")} سجل مؤرشف.`}
+              </CardDescription>
+            </div>
+            {!running && (
+              <Button variant="ghost" size="sm" onClick={() => { setSteps([]); setFailure(null); }}>
+                إخفاء
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1">
+              <Progress value={overallPercent} aria-label="نسبة تقدم الأرشفة" />
+              <p className="text-xs text-muted-foreground">
+                نسبة الإنجاز الكلية: {overallPercent.toLocaleString("ar-EG")}%
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {steps.map((s) => {
+                const pct = s.expected > 0
+                  ? Math.min(100, Math.round((s.archived / s.expected) * 100))
+                  : s.status === "done" ? 100 : 0;
+                return (
+                  <div key={s.table} className="space-y-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span className="flex items-center gap-2">
+                        {s.status === "running" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                        {s.status === "done" && <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />}
+                        {s.status === "failed" && <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden="true" />}
+                        {s.label}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {s.status === "pending"
+                          ? `في الانتظار — ${s.expected.toLocaleString("ar-EG")} سجل متوقع`
+                          : s.status === "failed"
+                            ? "فشل"
+                            : `${s.archived.toLocaleString("ar-EG")} / ${s.expected.toLocaleString("ar-EG")} (${pct.toLocaleString("ar-EG")}%)`}
+                      </span>
+                    </div>
+                    <Progress value={pct} aria-label={`تقدم ${s.label}`} />
+                    {s.error && <p className="text-xs text-destructive">{s.error}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {failure && (
+        <Alert variant="destructive" dir="rtl">
+          <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+          <AlertTitle>{failure.title}</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p className="font-medium">{failure.message}</p>
+            <ul className="space-y-1 text-xs">
+              {failure.code && <li>رمز الخطأ: {failure.code}</li>}
+              {failure.table && <li>نوع البيانات: {TYPE_LABELS[failure.table] ?? failure.table}</li>}
+              {failure.details && <li>تفاصيل: {failure.details}</li>}
+              {failure.hint && <li>اقتراح المعالجة: {failure.hint}</li>}
+              <li>وقت الخطأ: {formatDateTimeSmart(failure.at)}</li>
+            </ul>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard?.writeText(JSON.stringify(failure, null, 2));
+                  toast.success("تم نسخ تفاصيل الخطأ");
+                }}
+              >
+                <Copy className="ms-1 h-4 w-4" aria-hidden="true" />
+                نسخ التفاصيل
+              </Button>
+              <Button variant="outline" size="sm" onClick={runArchive} disabled={running}>
+                <RefreshCw className="ms-1 h-4 w-4" aria-hidden="true" />
+                إعادة المحاولة
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">دفعات الأرشيف</CardTitle>
