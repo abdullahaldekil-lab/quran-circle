@@ -19,12 +19,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import {
   Archive, RotateCcw, RefreshCw, Database, CalendarDays, Eye, Download,
-  AlertTriangle, CheckCircle2, Loader2, ChevronDown, Copy,
+  AlertTriangle, CheckCircle2, Loader2, ChevronDown, Copy, Eraser,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ACADEMIC_YEAR } from "@/lib/academicYear";
 import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
 import { useRole } from "@/hooks/useRole";
+import StudentPurgeDialog from "@/components/student/StudentPurgeDialog";
 
 interface PreviewRow {
   table: string;
