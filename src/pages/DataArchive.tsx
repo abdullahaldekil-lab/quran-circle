@@ -15,7 +15,12 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Archive, RotateCcw, RefreshCw, Database, CalendarDays, Eye, Download } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import {
+  Archive, RotateCcw, RefreshCw, Database, CalendarDays, Eye, Download,
+  AlertTriangle, CheckCircle2, Loader2, ChevronDown, Copy,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ACADEMIC_YEAR } from "@/lib/academicYear";
 import { formatDateSmart, formatDateTimeSmart } from "@/lib/hijri";
