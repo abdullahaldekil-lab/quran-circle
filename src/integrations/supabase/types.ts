@@ -2943,6 +2943,7 @@ export type Database = {
           late_tolerance_minutes: number | null
           offset_minutes: number
           tardiness_minutes: number | null
+          teacher_window_close_minutes: number
           updated_at: string
           updated_by: string | null
         }
@@ -2955,6 +2956,7 @@ export type Database = {
           late_tolerance_minutes?: number | null
           offset_minutes?: number
           tardiness_minutes?: number | null
+          teacher_window_close_minutes?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -2967,6 +2969,7 @@ export type Database = {
           late_tolerance_minutes?: number | null
           offset_minutes?: number
           tardiness_minutes?: number | null
+          teacher_window_close_minutes?: number
           updated_at?: string
           updated_by?: string | null
         }
