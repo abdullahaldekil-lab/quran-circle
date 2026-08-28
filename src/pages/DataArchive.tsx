@@ -366,11 +366,28 @@ const DataArchive = () => {
             تحويل كل ما قبل بداية العام الدراسي الحالي إلى أرشيف، مع إمكانية الاسترجاع.
           </p>
         </div>
-        <Button variant="outline" onClick={loadPreview} disabled={loading || !isManager}>
-          <RefreshCw className="ms-1 h-4 w-4" aria-hidden="true" />
-          تحديث المعاينة
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {canPurge && (
+            <Button variant="outline" className="text-destructive" onClick={() => setBulkPurgeOpen(true)}>
+              <Eraser className="ms-1 h-4 w-4" aria-hidden="true" />
+              تصفير بيانات جميع الطلاب
+            </Button>
+          )}
+          <Button variant="outline" onClick={loadPreview} disabled={loading || !isManager}>
+            <RefreshCw className="ms-1 h-4 w-4" aria-hidden="true" />
+            تحديث المعاينة
+          </Button>
+        </div>
       </header>
+
+      {canPurge && (
+        <StudentPurgeDialog
+          open={bulkPurgeOpen}
+          onOpenChange={setBulkPurgeOpen}
+          studentId={null}
+          onDone={loadPreview}
+        />
+      )}
 
       <Card>
         <CardHeader>
