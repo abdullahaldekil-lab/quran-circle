@@ -49,7 +49,9 @@ const StudentProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canAccessStudent, loading: accessLoading } = useTeacherHalaqat();
-  const { isManager, isSupervisor } = useRole();
+  const { isManager, isSupervisor, role } = useRole();
+  const canPurge = isManager || role === "secretary";
+  const [purgeOpen, setPurgeOpen] = useState(false);
   const [student, setStudent] = useState<any>(null);
   const [halaqaStudents, setHalaqaStudents] = useState<{id: string; full_name: string}[]>([]);
   const [records, setRecords] = useState<any[]>([]);
