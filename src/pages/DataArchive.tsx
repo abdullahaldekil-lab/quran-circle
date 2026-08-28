@@ -615,7 +615,7 @@ const DataArchive = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                batches.map((b) => (
+                batches.flatMap((b) => [
                   <TableRow key={b.id}>
                     <TableCell className="font-medium">{b.label}</TableCell>
                     <TableCell>{formatDateSmart(b.cutoff_date)}</TableCell>
