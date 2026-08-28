@@ -124,6 +124,16 @@ const InactiveStudents = () => {
                         <Button size="sm" variant="outline" onClick={() => updateStatusMutation.mutate({ id: s.id, status: "active" })} disabled={updateStatusMutation.isPending}>
                           <RefreshCw className="w-3 h-3 ml-1" />إعادة تفعيل
                         </Button>
+                        {canDelete && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive"
+                            onClick={() => setDeleteTarget({ id: s.id, name: s.full_name })}
+                          >
+                            <Trash2 className="w-3 h-3 ml-1" />حذف نهائي
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -132,6 +142,19 @@ const InactiveStudents = () => {
             </Table>
           </CardContent>
         </Card>
+      )}
+
+      {deleteTarget && (
+        <DeleteStudentPermanentlyDialog
+          open={!!deleteTarget}
+          onOpenChange={(o) => !o && setDeleteTarget(null)}
+          studentId={deleteTarget.id}
+          studentName={deleteTarget.name}
+          onDeleted={() => {
+            setDeleteTarget(null);
+            queryClient.invalidateQueries({ queryKey: ["inactive-students"] });
+          }}
+        />
       )}
     </div>
   );
