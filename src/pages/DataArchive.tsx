@@ -66,6 +66,37 @@ const TYPE_LABELS: Record<string, string> = {
 
 const PAGE_SIZE = 20;
 
+type StepStatus = "pending" | "running" | "done" | "failed";
+
+interface RunStep {
+  table: string;
+  label: string;
+  expected: number;
+  archived: number;
+  status: StepStatus;
+  error?: string;
+}
+
+interface FailureDetail {
+  title: string;
+  table?: string;
+  message: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+  at: string;
+}
+
+const asPgError = (error: unknown) => {
+  const e = (error ?? {}) as { message?: string; code?: string; details?: string; hint?: string };
+  return {
+    message: e.message || "خطأ غير معروف من قاعدة البيانات",
+    code: e.code,
+    details: e.details,
+    hint: e.hint,
+  };
+};
+
 const toCsv = (rows: Record<string, unknown>[]) => {
   if (rows.length === 0) return "";
   const cols = Object.keys(rows[0]);
