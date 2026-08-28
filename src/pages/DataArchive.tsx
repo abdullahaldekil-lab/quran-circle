@@ -631,6 +631,18 @@ const DataArchive = () => {
                         <Eye className="ms-1 h-4 w-4" aria-hidden="true" />
                         عرض البيانات
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setOpenBatch((cur) => (cur === b.id ? null : b.id))}
+                        aria-expanded={openBatch === b.id}
+                      >
+                        <ChevronDown
+                          className={`ms-1 h-4 w-4 transition-transform ${openBatch === b.id ? "rotate-180" : ""}`}
+                          aria-hidden="true"
+                        />
+                        التفاصيل
+                      </Button>
                       {isManager && b.status !== "restored" && (
                         <Button variant="outline" size="sm" onClick={() => setRestoreTarget(b)}>
                           <RotateCcw className="ms-1 h-4 w-4" aria-hidden="true" />
@@ -638,8 +650,44 @@ const DataArchive = () => {
                         </Button>
                       )}
                     </TableCell>
-                  </TableRow>
-                ))
+                  </TableRow>,
+                  openBatch === b.id ? (
+                    <TableRow key={`${b.id}-details`}>
+                      <TableCell colSpan={6} className="bg-muted/40">
+                        {Object.entries(b.stats ?? {}).filter(([, n]) => Number(n) > 0).length === 0 ? (
+                          <p className="text-sm text-muted-foreground">لا توجد تفاصيل لهذه الدفعة.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {Object.entries(b.stats ?? {})
+                              .filter(([, n]) => Number(n) > 0)
+                              .sort((a, c) => Number(c[1]) - Number(a[1]))
+                              .map(([t, n]) => {
+                                const share = b.total_records > 0
+                                  ? Math.round((Number(n) / b.total_records) * 100)
+                                  : 0;
+                                return (
+                                  <div key={t} className="space-y-1">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                                      <span>{TYPE_LABELS[t] ?? t}</span>
+                                      <span className="text-muted-foreground">
+                                        {Number(n).toLocaleString("ar-EG")} سجل ({share.toLocaleString("ar-EG")}%)
+                                      </span>
+                                    </div>
+                                    <Progress value={share} aria-label={`نسبة ${TYPE_LABELS[t] ?? t}`} />
+                                  </div>
+                                );
+                              })}
+                            {b.restored_at && (
+                              <p className="text-xs text-muted-foreground">
+                                تم الاسترجاع في {formatDateTimeSmart(b.restored_at)}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ) : null,
+                ])
               )}
             </TableBody>
           </Table>
