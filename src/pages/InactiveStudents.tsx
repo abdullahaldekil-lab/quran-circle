@@ -21,8 +21,12 @@ const STATUS_LABELS: Record<string, string> = {
 
 const InactiveStudents = () => {
   const queryClient = useQueryClient();
+  const { isManager, role } = useRole();
+  const canDelete = isManager || role === "secretary";
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["inactive-students"],
