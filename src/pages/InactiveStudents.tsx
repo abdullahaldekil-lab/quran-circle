@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { UserX, RefreshCw, Archive, Search } from "lucide-react";
+import { UserX, RefreshCw, Archive, Search, Trash2 } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
+import DeleteStudentPermanentlyDialog from "@/components/student/DeleteStudentPermanentlyDialog";
 
 const STATUS_LABELS: Record<string, string> = {
   inactive: "غير نشط",
