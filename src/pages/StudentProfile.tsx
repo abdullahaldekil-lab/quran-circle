@@ -687,6 +687,16 @@ const StudentProfile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {canPurge && student && (
+        <StudentPurgeDialog
+          open={purgeOpen}
+          onOpenChange={setPurgeOpen}
+          studentId={student.id}
+          studentName={student.full_name}
+          onDone={() => window.location.reload()}
+        />
+      )}
     </>
   );
 };
