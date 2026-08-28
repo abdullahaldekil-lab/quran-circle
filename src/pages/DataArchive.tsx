@@ -120,6 +120,9 @@ const DataArchive = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<ArchiveBatch | null>(null);
+  const [steps, setSteps] = useState<RunStep[]>([]);
+  const [failure, setFailure] = useState<FailureDetail | null>(null);
+  const [openBatch, setOpenBatch] = useState<string | null>(null);
 
   const [viewBatch, setViewBatch] = useState<ArchiveBatch | null>(null);
   const [viewTable, setViewTable] = useState<string>("");
