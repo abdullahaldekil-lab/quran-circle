@@ -123,6 +123,8 @@ const DataArchive = () => {
   const [steps, setSteps] = useState<RunStep[]>([]);
   const [failure, setFailure] = useState<FailureDetail | null>(null);
   const [openBatch, setOpenBatch] = useState<string | null>(null);
+  const [bulkPurgeOpen, setBulkPurgeOpen] = useState(false);
+  const canPurge = role === "manager" || role === "secretary";
 
   const [viewBatch, setViewBatch] = useState<ArchiveBatch | null>(null);
   const [viewTable, setViewTable] = useState<string>("");
