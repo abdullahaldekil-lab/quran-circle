@@ -257,21 +257,67 @@ const DataArchive = () => {
   }, [loadPreview]);
 
   const runArchive = async () => {
-    setRunning(true);
-    const { data, error } = await supabase.rpc("run_archive", {
-      _cutoff: cutoff,
-      _label: label,
-      _year_label: ACADEMIC_YEAR.label,
-      _tables: selected,
-    });
-    setRunning(false);
+    const targets = availableRows.filter((r) => selected.includes(r.table));
+    if (targets.length === 0) return;
+
+    setFailure(null);
     setConfirmArchive(false);
-    if (error) {
-      toast.error("فشلت عملية الأرشفة", { description: error.message });
-      return;
+    setRunning(true);
+    setSteps(
+      targets.map((t) => ({
+        table: t.table,
+        label: t.label,
+        expected: t.count,
+        archived: 0,
+        status: "pending" as StepStatus,
+      })),
+    );
+
+    let archivedTotal = 0;
+
+    for (const target of targets) {
+      setSteps((prev) =>
+        prev.map((s) => (s.table === target.table ? { ...s, status: "running" } : s)),
+      );
+
+      const { data, error } = await supabase.rpc("run_archive", {
+        _cutoff: cutoff,
+        _label: targets.length > 1 ? `${label} — ${target.label}` : label,
+        _year_label: ACADEMIC_YEAR.label,
+        _tables: [target.table],
+      });
+
+      if (error) {
+        const pg = asPgError(error);
+        setSteps((prev) =>
+          prev.map((s) =>
+            s.table === target.table ? { ...s, status: "failed", error: pg.message } : s,
+          ),
+        );
+        setFailure({
+          title: `توقفت الأرشفة عند: ${target.label}`,
+          table: target.table,
+          message: pg.message,
+          code: pg.code,
+          details: pg.details,
+          hint: pg.hint,
+          at: new Date().toISOString(),
+        });
+        setRunning(false);
+        toast.error("فشلت عملية الأرشفة", { description: `${target.label}: ${pg.message}` });
+        await Promise.all([loadBatches(), loadPreview()]);
+        return;
+      }
+
+      const archived = (data as { total?: number } | null)?.total ?? 0;
+      archivedTotal += archived;
+      setSteps((prev) =>
+        prev.map((s) => (s.table === target.table ? { ...s, status: "done", archived } : s)),
+      );
     }
-    const total = (data as { total?: number } | null)?.total ?? 0;
-    toast.success(`تمت الأرشفة بنجاح — ${total} سجل`);
+
+    setRunning(false);
+    toast.success(`تمت الأرشفة بنجاح — ${archivedTotal.toLocaleString("ar-EG")} سجل`);
     await Promise.all([loadBatches(), loadPreview()]);
   };
 
@@ -279,7 +325,16 @@ const DataArchive = () => {
     const { data, error } = await supabase.rpc("restore_archive", { _batch_id: batch.id });
     setRestoreTarget(null);
     if (error) {
-      toast.error("تعذّر الاسترجاع", { description: error.message });
+      const pg = asPgError(error);
+      setFailure({
+        title: `تعذّر استرجاع الدفعة: ${batch.label}`,
+        message: pg.message,
+        code: pg.code,
+        details: pg.details,
+        hint: pg.hint,
+        at: new Date().toISOString(),
+      });
+      toast.error("تعذّر الاسترجاع", { description: pg.message });
       return;
     }
     const restored = (data as { restored?: number } | null)?.restored ?? 0;
