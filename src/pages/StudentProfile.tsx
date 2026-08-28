@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare, Printer, Copy, QrCode, ClipboardList } from "lucide-react";
+import { ArrowRight, User, Calendar, TrendingUp, Play, BookOpen, Mic, ChevronLeft, ChevronRight, ShieldAlert, Pencil, Trash2, BarChart3, History, CheckSquare, Printer, Copy, QrCode, ClipboardList, Eraser } from "lucide-react";
 import { formatHijriArabic, formatHijriStringArabic, gregorianToHijri, hijriToGregorian, formatDateSmart, toHijri, toMiladi, HIJRI_MONTHS, getWeekdayArabic, formatDateHijriOnly } from "@/lib/hijri";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
