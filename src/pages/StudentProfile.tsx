@@ -344,6 +344,14 @@ const StudentProfile = () => {
                 setStudent(data);
               }}
             />
+            {canPurge && (
+              <div className="mt-3">
+                <Button variant="outline" size="sm" className="text-destructive" onClick={() => setPurgeOpen(true)}>
+                  <Eraser className="w-3.5 h-3.5 ml-1" />
+                  تصفير سجلات الطالب
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
