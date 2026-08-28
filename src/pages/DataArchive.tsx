@@ -221,6 +221,16 @@ const DataArchive = () => {
   const allSelected =
     availableRows.length > 0 && availableRows.every((r) => selected.includes(r.table));
 
+  const doneSteps = useMemo(() => steps.filter((s) => s.status === "done").length, [steps]);
+  const archivedSoFar = useMemo(
+    () => steps.reduce((sum, s) => sum + s.archived, 0),
+    [steps],
+  );
+  const overallPercent = useMemo(
+    () => (steps.length === 0 ? 0 : Math.round((doneSteps / steps.length) * 100)),
+    [doneSteps, steps.length],
+  );
+
   const toggleAll = () =>
     setSelected(allSelected ? [] : availableRows.map((r) => r.table));
 
