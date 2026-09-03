@@ -335,7 +335,7 @@ const Halaqat = () => {
                   <SelectTrigger><SelectValue placeholder="اختر المعلم" /></SelectTrigger>
                   <SelectContent>
                     {availableTeachersForAdd.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                      <SelectItem key={t.id} value={t.id}>{teacherLabel(t)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -347,8 +347,9 @@ const Halaqat = () => {
                   <SelectContent>
                     <SelectItem value="__none__">بدون مساعد</SelectItem>
                     {availableAssistantsForAdd.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
+                      <SelectItem key={t.id} value={t.id}>{teacherLabel(t, undefined, true)}</SelectItem>
                     ))}
+
                   </SelectContent>
                 </Select>
               </div>
