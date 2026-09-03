@@ -488,8 +488,7 @@ const Halaqat = () => {
                 <SelectContent>
                   {availableTeachersForEdit.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
-                      {t.full_name}
-                      {t.assigned_halaqa_id && t.id === editForm.teacher_id ? " (المعلم الحالي)" : ""}
+                      {teacherLabel(t, editForm.teacher_id)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -503,10 +502,10 @@ const Halaqat = () => {
                   <SelectItem value="__none__">بدون مساعد</SelectItem>
                   {availableAssistantsForEdit.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
-                      {t.full_name}
-                      {t.assigned_assistant_halaqa_id && t.id === editForm.assistant_teacher_id ? " (المساعد الحالي)" : ""}
+                      {teacherLabel(t, editForm.assistant_teacher_id, true)}
                     </SelectItem>
                   ))}
+
                 </SelectContent>
               </Select>
             </div>
