@@ -73,10 +73,16 @@ Deno.serve(async (req) => {
     }
 
     // Verify QR
+    const normalizedCode = code.trim().toUpperCase();
     const { data: qr } = await admin
-      .from('staff_checkin_qr').select('*').eq('code', code).eq('active', true).maybeSingle();
+      .from('staff_checkin_qr').select('*').eq('code', normalizedCode).maybeSingle();
     if (!qr) {
       return new Response(JSON.stringify({ error: 'رمز QR غير صالح' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!qr.active) {
+      return new Response(JSON.stringify({ error: 'رمز QR هذا موقوف. امسح الرمز الحالي المفعّل في موقع الحضور.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -128,7 +134,7 @@ Deno.serve(async (req) => {
         staff_id: userId, attendance_date: today,
         check_in_time: now.toISOString(),
         status, late_minutes: lateMinutes,
-        source: 'qr', qr_code: code, latitude, longitude,
+        source: 'qr', qr_code: normalizedCode, latitude, longitude,
       };
       if (existing) {
         await admin.from('staff_attendance').update(payload).eq('id', existing.id);
