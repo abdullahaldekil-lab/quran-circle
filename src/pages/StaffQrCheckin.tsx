@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,25 +25,46 @@ const StaffQrCheckin = () => {
 
   useEffect(() => () => { controlsRef.current?.stop(); }, []);
 
-  const startScan = async () => {
-    try {
-      setScanning(true);
-      const reader = new BrowserQRCodeReader();
-      readerRef.current = reader;
-      const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current!, (res, err, ctrl) => {
-        if (res) {
-          setCode(res.getText());
+  useEffect(() => {
+    if (!scanning || !videoRef.current) return;
+    let cancelled = false;
+
+    const openCamera = async () => {
+      try {
+        const reader = new BrowserQRCodeReader();
+        readerRef.current = reader;
+        const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current, (res, _err, ctrl) => {
+          if (!res || cancelled) return;
+          setCode(res.getText().trim().toUpperCase());
           setScanning(false);
           ctrl.stop();
           toast({ title: "تم قراءة الرمز" });
-        }
-      });
-      controlsRef.current = controls;
-    } catch (e: any) {
-      setScanning(false);
-      toast({ title: "خطأ في الكاميرا", description: e.message, variant: "destructive" });
-    }
-  };
+        });
+        if (cancelled) controls.stop();
+        else controlsRef.current = controls;
+      } catch (error) {
+        if (cancelled) return;
+        setScanning(false);
+        const message = error instanceof Error ? error.message : "تعذّر الوصول إلى الكاميرا";
+        toast({
+          title: "تعذّر فتح الكاميرا",
+          description: message.includes("Permission") || message.includes("NotAllowed")
+            ? "اسمح للتطبيق باستخدام الكاميرا من إعدادات الموقع ثم حاول مرة أخرى."
+            : message,
+          variant: "destructive",
+        });
+      }
+    };
+
+    openCamera();
+    return () => {
+      cancelled = true;
+      controlsRef.current?.stop();
+      controlsRef.current = null;
+    };
+  }, [scanning, toast]);
+
+  const startScan = () => setScanning(true);
 
   const stopScan = () => { controlsRef.current?.stop(); setScanning(false); };
 
@@ -55,9 +77,15 @@ const StaffQrCheckin = () => {
       async (pos) => {
         try {
           const { data, error } = await supabase.functions.invoke("staff-qr-checkin", {
-            body: { code: code.trim(), latitude: pos.coords.latitude, longitude: pos.coords.longitude, action },
+            body: { code: code.trim().toUpperCase(), latitude: pos.coords.latitude, longitude: pos.coords.longitude, action },
           });
-          if (error) throw error;
+          if (error) {
+            if (error instanceof FunctionsHttpError) {
+              const payload = await error.context.json().catch(() => null);
+              throw new Error(payload?.error || "تعذّر تسجيل البصمة. تحقق من الرمز والموقع ثم حاول مرة أخرى.");
+            }
+            throw error;
+          }
           if ((data as any)?.error) throw new Error((data as any).error);
           setResult(data);
           toast({ title: action === "check_in" ? "تم تسجيل الحضور" : "تم تسجيل الانصراف" });
@@ -99,7 +127,7 @@ const StaffQrCheckin = () => {
             </Button>
           )}
           <div className="text-center text-xs text-muted-foreground">أو أدخل الرمز يدوياً</div>
-          <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="HW-QR-XXXXXX-XXXX" className="font-mono text-center" />
+           <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="HW-QR-XXXXXX-XXXX" className="font-mono text-center" autoCapitalize="characters" />
         </CardContent>
       </Card>
 
