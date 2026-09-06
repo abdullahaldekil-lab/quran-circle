@@ -24,7 +24,7 @@ export type StaffRole =
 // Route-level access per role
 const rolePermissions: Record<StaffRole, string[]> = {
   manager: [
-    "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/attendance",
+    "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/teacher-management", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/attendance",
     "/instructions", "/levels", "/rankings", "/rewards", "/trips",
     "/finance", "/strategic-plan", "/strategy", "/kpi-dashboard", "/bulk-import",
     "/user-management", "/profile", "/health", "/documents", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/attendance-audit", "/madarij", "/madarij-report", "/talqeen-curricula",
@@ -42,7 +42,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/tarbawi-programs", "/tarbawi-follow-up", "/tarbawi-exams", "/tarbawi-leaderboard", "/tarbawi-reports", "/tarbawi-surveys", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
   ],
   supervisor: [
-    "/dashboard", "/admin-dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/admin-dashboard", "/halaqat", "/teacher-management", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
@@ -56,7 +56,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/tarbawi-programs", "/tarbawi-follow-up", "/tarbawi-exams", "/tarbawi-leaderboard", "/tarbawi-reports", "/tarbawi-surveys", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
   ],
   assistant_supervisor: [
-    "/dashboard", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
+    "/dashboard", "/halaqat", "/teacher-management", "/talqeen-halaqat", "/talqeen-programs", "/talqeen-supervisor", "/recitation", "/kpi-dashboard",
     "/strategic-plan", "/strategy", "/profile", "/documents", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar", "/madarij", "/madarij-report", "/talqeen-curricula",
     "/quran-narration", "/excellence", "/excellence-comparison", "/excellence/track-settings", "/student-quiz", "/quiz-results", "/quiz-comparison",
     "/narration-test", "/review-test", "/narration-stats",
@@ -69,7 +69,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/tarbawi-programs", "/tarbawi-follow-up", "/tarbawi-exams", "/tarbawi-leaderboard", "/tarbawi-reports", "/tarbawi-surveys", "/tarbawi-calendar", "/tarbawi-history", "/tarbawi-practice-quiz",
   ],
   secretary: [
-    "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance", "/attendance-audit",
+    "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/teacher-management", "/talqeen-halaqat", "/talqeen-programs", "/attendance", "/attendance-audit",
     "/instructions", "/notification-templates", "/send-notification", "/bulk-email", "/student-portal", "/documents",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
@@ -81,7 +81,7 @@ const rolePermissions: Record<StaffRole, string[]> = {
     "/student-portal",
   ],
   admin_staff: [
-    "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/talqeen-halaqat", "/talqeen-programs", "/attendance", "/attendance-audit",
+    "/dashboard", "/admin-dashboard", "/students", "/inactive-students", "/halaqat", "/teacher-management", "/talqeen-halaqat", "/talqeen-programs", "/attendance", "/attendance-audit",
     "/bulk-import", "/trips", "/profile", "/buses", "/pre-registration", "/enrollment-requests", "/preparation", "/academic-calendar",
     "/quran-narration",
     "/staff-attendance", "/staff-attendance-log", "/staff-qr-checkin",
