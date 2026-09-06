@@ -50,6 +50,7 @@ import TalqeenHalaqat from "./pages/TalqeenHalaqat";
 import TalqeenCurricula from "./pages/TalqeenCurricula";
 import TalqeenPrograms from "./pages/TalqeenPrograms";
 import TalqeenSupervisor from "./pages/TalqeenSupervisor";
+import TeacherManagement from "./pages/TeacherManagement";
 import NarrationSession from "./pages/NarrationSession";
 import NarrationReports from "./pages/NarrationReports";
 import StudentNarrationProgress from "./pages/StudentNarrationProgress";
@@ -180,6 +181,7 @@ const AppRoutes = () => {
       <Route path="/students/:id" element={<ProtectedRoute path="/students"><StudentProfile /></ProtectedRoute>} />
       <Route path="/inactive-students" element={<ProtectedRoute path="/students"><InactiveStudents /></ProtectedRoute>} />
       <Route path="/halaqat" element={<ProtectedRoute path="/halaqat"><Halaqat /></ProtectedRoute>} />
+      <Route path="/teacher-management" element={<ProtectedRoute path="/teacher-management"><TeacherManagement /></ProtectedRoute>} />
       <Route path="/recitation" element={<ProtectedRoute path="/recitation"><Recitation /></ProtectedRoute>} />
       <Route path="/attendance" element={<ProtectedRoute path="/attendance"><Attendance /></ProtectedRoute>} />
       <Route path="/instructions" element={<ProtectedRoute path="/instructions"><Instructions /></ProtectedRoute>} />
