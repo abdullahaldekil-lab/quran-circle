@@ -127,9 +127,9 @@ const StaffQrCheckin = () => {
       },
       (err) => {
         setBusy(false);
-        toast({ title: "تعذّر تحديد الموقع", description: err.message, variant: "destructive" });
+        toast({ title: "تعذّر تحديد الموقع", description: geoErrorMessage(err), variant: "destructive" });
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   };
 
