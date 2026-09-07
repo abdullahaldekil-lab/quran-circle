@@ -145,7 +145,7 @@ const StaffQrCheckin = () => {
         <CardContent className="space-y-3">
           {scanning ? (
             <>
-              <video ref={videoRef} className="w-full rounded-lg bg-black aspect-square object-cover" />
+              <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-lg bg-black aspect-square object-cover" />
               <Button variant="outline" className="w-full" onClick={stopScan}>
                 <StopCircle className="w-4 h-4 ml-1" />إيقاف الكاميرا
               </Button>
