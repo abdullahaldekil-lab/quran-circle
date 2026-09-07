@@ -31,9 +31,17 @@ const StaffQrCheckin = () => {
 
     const openCamera = async () => {
       try {
+        if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+          throw new Error("insecure");
+        }
         const reader = new BrowserQRCodeReader();
         readerRef.current = reader;
-        const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current, (res, _err, ctrl) => {
+        // تفضيل الكاميرا الخلفية على الجوال
+        const constraints: MediaStreamConstraints = {
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        };
+        const controls = await reader.decodeFromConstraints(constraints, videoRef.current, (res, _err, ctrl) => {
           if (!res || cancelled) return;
           setCode(res.getText().trim().toUpperCase());
           setScanning(false);
@@ -45,12 +53,9 @@ const StaffQrCheckin = () => {
       } catch (error) {
         if (cancelled) return;
         setScanning(false);
-        const message = error instanceof Error ? error.message : "تعذّر الوصول إلى الكاميرا";
         toast({
           title: "تعذّر فتح الكاميرا",
-          description: message.includes("Permission") || message.includes("NotAllowed")
-            ? "اسمح للتطبيق باستخدام الكاميرا من إعدادات الموقع ثم حاول مرة أخرى."
-            : message,
+          description: cameraErrorMessage(error),
           variant: "destructive",
         });
       }
