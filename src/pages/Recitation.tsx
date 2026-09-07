@@ -136,6 +136,9 @@ const Recitation = () => {
     // تحديث خطة الطالب بما سُمِّع فعلاً
     await updatePlanProgress(currentStudent.id, form);
 
+    // تحديث التقدم اليومي في مسار مدارج
+    await updateMadarijDailyProgress(currentStudent.id, form, totalScore);
+
     // تحديث المحفوظ التراكمي للطالب
     await updateTotalMemorized(currentStudent.id, form);
 
