@@ -7,7 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeacherHalaqat } from "@/hooks/useTeacherHalaqat";
 import { useRole } from "@/hooks/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase, CalendarDays, ScrollText, Sparkles } from "lucide-react";
+import { Users, BookOpen, ClipboardList, TrendingUp, AlertTriangle, CheckCircle, ArrowUpLeft, Briefcase, CalendarDays, ScrollText, Sparkles, Fingerprint } from "lucide-react";
 import StudentAnalytics from "@/components/dashboard/StudentAnalytics";
 import AttendanceAnalytics from "@/components/dashboard/AttendanceAnalytics";
 import HalaqatAnalytics from "@/components/dashboard/HalaqatAnalytics";
@@ -263,6 +263,24 @@ const Dashboard = () => {
                   <ArrowUpLeft className="w-3.5 h-3.5 text-amber-500 absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Card>
               ))}
+              {/* بصمة الحضور والانصراف — متاحة لكل الموظفين */}
+              <Card
+                className="islamic-card cursor-pointer group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"
+                onClick={() => navigate("/staff-qr-checkin")}
+              >
+                <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-400 opacity-70 group-hover:opacity-100 transition-opacity" />
+                <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
+                  <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground font-cairo">بصمة الحضور</CardTitle>
+                  <div className="p-2 rounded-xl bg-teal-500/10">
+                    <Fingerprint className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+                  </div>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <div className="text-sm lg:text-base font-bold font-cairo text-foreground">تسجيل الحضور / الانصراف</div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">امسح رمز QR أو أدخل الرمز</p>
+                </CardContent>
+                <ArrowUpLeft className="w-3.5 h-3.5 text-amber-500 absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Card>
               {canSeeStaff && staffPct !== null && (
                 <Card
                   className="islamic-card cursor-pointer group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md"

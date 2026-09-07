@@ -136,6 +136,9 @@ const Recitation = () => {
     // تحديث خطة الطالب بما سُمِّع فعلاً
     await updatePlanProgress(currentStudent.id, form);
 
+    // تحديث التقدم اليومي في مسار مدارج
+    await updateMadarijDailyProgress(currentStudent.id, form, totalScore);
+
     // تحديث المحفوظ التراكمي للطالب
     await updateTotalMemorized(currentStudent.id, form);
 
@@ -250,6 +253,58 @@ const Recitation = () => {
     if (next <= (student?.total_memorized_pages || 0)) return;
 
     await supabase.from("students").update({ total_memorized_pages: next }).eq("id", studentId);
+  };
+
+  /**
+   * مزامنة التسميع مع التقدم اليومي في مسار مدارج: تُنشئ سجل اليوم أو تحدّثه
+   * حتى ينعكس التسميع مباشرة على متابعة المسار والتقارير.
+   */
+  const updateMadarijDailyProgress = async (studentId: string, recited: typeof form, score: number) => {
+    try {
+      const { data: en } = await supabase
+        .from("madarij_enrollments")
+        .select("id")
+        .eq("student_id", studentId)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!en) return;
+
+      const today = new Date().toISOString().split("T")[0];
+      const counts = aggregateCounts(recited.mistakes_breakdown);
+      const joinRange = (from: string, to: string) =>
+        from && to ? `${from} - ${to}` : from || to || null;
+
+      const values = {
+        memorization: joinRange(recited.memorized_from, recited.memorized_to),
+        review: joinRange(recited.review_from, recited.review_to),
+        linking: joinRange(recited.linking_from, recited.linking_to),
+        mistakes_count: counts.total,
+        grade: score,
+        execution: "completed",
+      };
+
+      const { data: existing } = await supabase
+        .from("madarij_daily_progress")
+        .select("id")
+        .eq("enrollment_id", en.id)
+        .eq("progress_date", today)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from("madarij_daily_progress").update(values).eq("id", existing.id);
+      } else {
+        await supabase.from("madarij_daily_progress").insert({
+          ...values,
+          enrollment_id: en.id,
+          student_id: studentId,
+          progress_date: today,
+        });
+      }
+    } catch (err) {
+      console.error("Madarij daily progress sync error:", err);
+    }
   };
 
   /**
