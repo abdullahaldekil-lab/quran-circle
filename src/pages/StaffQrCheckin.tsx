@@ -12,6 +12,30 @@ import { BrowserQRCodeReader } from "@zxing/browser";
 
 type Action = "check_in" | "check_out";
 
+// ترجمة أخطاء الكاميرا للعربية
+const cameraErrorMessage = (error: unknown): string => {
+  const msg = error instanceof Error ? `${error.name} ${error.message}` : "";
+  if (msg === "insecure") return "الكاميرا تحتاج اتصالاً آمناً (HTTPS). افتح التطبيق من الرابط الرسمي أو من التطبيق المثبّت.";
+  if (/NotAllowed|Permission|denied/i.test(msg)) return "تم رفض إذن الكاميرا. اسمح للتطبيق باستخدام الكاميرا من إعدادات الجهاز ثم حاول مرة أخرى.";
+  if (/NotFound|Requested device|Overconstrained/i.test(msg)) return "لم يتم العثور على كاميرا في هذا الجهاز.";
+  if (/NotReadable|Could not start|in use/i.test(msg)) return "الكاميرا مشغولة بتطبيق آخر. أغلق التطبيقات الأخرى ثم حاول مجدداً.";
+  return "حدث خطأ غير متوقع أثناء فتح الكاميرا. تأكد من منح الإذن ثم أعد المحاولة.";
+};
+
+// ترجمة أخطاء تحديد الموقع للعربية
+const geoErrorMessage = (err: GeolocationPositionError): string => {
+  switch (err.code) {
+    case err.PERMISSION_DENIED:
+      return "تم رفض إذن الموقع. فعّل خدمة الموقع واسمح للتطبيق باستخدامه ثم حاول مرة أخرى.";
+    case err.POSITION_UNAVAILABLE:
+      return "تعذّر تحديد موقعك حالياً. تأكد من تفعيل GPS ثم أعد المحاولة.";
+    case err.TIMEOUT:
+      return "انتهت مهلة تحديد الموقع. انتقل لمكان مفتوح ثم أعد المحاولة.";
+    default:
+      return "تعذّر تحديد الموقع. حاول مرة أخرى.";
+  }
+};
+
 const StaffQrCheckin = () => {
   const { toast } = useToast();
   const { profile } = useAuth();
@@ -31,9 +55,17 @@ const StaffQrCheckin = () => {
 
     const openCamera = async () => {
       try {
+        if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+          throw new Error("insecure");
+        }
         const reader = new BrowserQRCodeReader();
         readerRef.current = reader;
-        const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current, (res, _err, ctrl) => {
+        // تفضيل الكاميرا الخلفية على الجوال
+        const constraints: MediaStreamConstraints = {
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        };
+        const controls = await reader.decodeFromConstraints(constraints, videoRef.current, (res, _err, ctrl) => {
           if (!res || cancelled) return;
           setCode(res.getText().trim().toUpperCase());
           setScanning(false);
@@ -45,12 +77,9 @@ const StaffQrCheckin = () => {
       } catch (error) {
         if (cancelled) return;
         setScanning(false);
-        const message = error instanceof Error ? error.message : "تعذّر الوصول إلى الكاميرا";
         toast({
           title: "تعذّر فتح الكاميرا",
-          description: message.includes("Permission") || message.includes("NotAllowed")
-            ? "اسمح للتطبيق باستخدام الكاميرا من إعدادات الموقع ثم حاول مرة أخرى."
-            : message,
+          description: cameraErrorMessage(error),
           variant: "destructive",
         });
       }
@@ -98,9 +127,9 @@ const StaffQrCheckin = () => {
       },
       (err) => {
         setBusy(false);
-        toast({ title: "تعذّر تحديد الموقع", description: err.message, variant: "destructive" });
+        toast({ title: "تعذّر تحديد الموقع", description: geoErrorMessage(err), variant: "destructive" });
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   };
 
@@ -116,7 +145,7 @@ const StaffQrCheckin = () => {
         <CardContent className="space-y-3">
           {scanning ? (
             <>
-              <video ref={videoRef} className="w-full rounded-lg bg-black aspect-square object-cover" />
+              <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-lg bg-black aspect-square object-cover" />
               <Button variant="outline" className="w-full" onClick={stopScan}>
                 <StopCircle className="w-4 h-4 ml-1" />إيقاف الكاميرا
               </Button>
