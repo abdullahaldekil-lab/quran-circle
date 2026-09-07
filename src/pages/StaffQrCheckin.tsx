@@ -12,6 +12,30 @@ import { BrowserQRCodeReader } from "@zxing/browser";
 
 type Action = "check_in" | "check_out";
 
+// ترجمة أخطاء الكاميرا للعربية
+const cameraErrorMessage = (error: unknown): string => {
+  const msg = error instanceof Error ? `${error.name} ${error.message}` : "";
+  if (msg === "insecure") return "الكاميرا تحتاج اتصالاً آمناً (HTTPS). افتح التطبيق من الرابط الرسمي أو من التطبيق المثبّت.";
+  if (/NotAllowed|Permission|denied/i.test(msg)) return "تم رفض إذن الكاميرا. اسمح للتطبيق باستخدام الكاميرا من إعدادات الجهاز ثم حاول مرة أخرى.";
+  if (/NotFound|Requested device|Overconstrained/i.test(msg)) return "لم يتم العثور على كاميرا في هذا الجهاز.";
+  if (/NotReadable|Could not start|in use/i.test(msg)) return "الكاميرا مشغولة بتطبيق آخر. أغلق التطبيقات الأخرى ثم حاول مجدداً.";
+  return "حدث خطأ غير متوقع أثناء فتح الكاميرا. تأكد من منح الإذن ثم أعد المحاولة.";
+};
+
+// ترجمة أخطاء تحديد الموقع للعربية
+const geoErrorMessage = (err: GeolocationPositionError): string => {
+  switch (err.code) {
+    case err.PERMISSION_DENIED:
+      return "تم رفض إذن الموقع. فعّل خدمة الموقع واسمح للتطبيق باستخدامه ثم حاول مرة أخرى.";
+    case err.POSITION_UNAVAILABLE:
+      return "تعذّر تحديد موقعك حالياً. تأكد من تفعيل GPS ثم أعد المحاولة.";
+    case err.TIMEOUT:
+      return "انتهت مهلة تحديد الموقع. انتقل لمكان مفتوح ثم أعد المحاولة.";
+    default:
+      return "تعذّر تحديد الموقع. حاول مرة أخرى.";
+  }
+};
+
 const StaffQrCheckin = () => {
   const { toast } = useToast();
   const { profile } = useAuth();
