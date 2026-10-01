@@ -276,24 +276,35 @@ const Recitation = () => {
       const joinRange = (from: string, to: string) =>
         from && to ? `${from} - ${to}` : from || to || null;
 
+      // لا نكتب الدرجة هنا: صفحات مدارج تحسبها بمقياس صغير (calcGrade)،
+      // وكتابة درجة التسميع (0-100) تُفسد متوسطات المتابعة والطباعة.
       const values = {
         memorization: joinRange(recited.memorized_from, recited.memorized_to),
         review: joinRange(recited.review_from, recited.review_to),
         linking: joinRange(recited.linking_from, recited.linking_to),
         mistakes_count: counts.total,
-        grade: score,
         execution: "completed",
       };
 
       const { data: existing } = await supabase
         .from("madarij_daily_progress")
-        .select("id")
+        .select("id, memorization, review, linking")
         .eq("enrollment_id", en.id)
         .eq("progress_date", today)
         .maybeSingle();
 
       if (existing) {
-        await supabase.from("madarij_daily_progress").update(values).eq("id", existing.id);
+        // دمج بدل الاستبدال: لا نمسح حقولاً عبّأها المعلم سابقاً بقيم فارغة.
+        const merged: Record<string, unknown> = { mistakes_count: counts.total };
+        if (values.memorization) merged.memorization = values.memorization;
+        if (values.review) merged.review = values.review;
+        if (values.linking) merged.linking = values.linking;
+        if (existing.memorization || existing.review || existing.linking) {
+          // سجل المعلم موجود مسبقاً: نحافظ على حالة التنفيذ كما هي.
+        } else {
+          merged.execution = values.execution;
+        }
+        await supabase.from("madarij_daily_progress").update(merged).eq("id", existing.id);
       } else {
         await supabase.from("madarij_daily_progress").insert({
           ...values,
