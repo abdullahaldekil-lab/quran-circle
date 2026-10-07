@@ -33,10 +33,10 @@ const HIZB_OPTIONS = Array.from({ length: 60 }, (_, i) => String(i + 1));
 // Defaults (overridden by settings table)
 const DEFAULT_SETTINGS = {
   error_deduction: 5,
-  lahn_deduction: 2,
+  lahn_deduction: 5,
   warning_deduction: 1,
-  pass_threshold: 60,
-  attendance_score: 50,
+  pass_threshold: 37,
+  attendance_score: 0,
   narration_max: 50,
 };
 
@@ -106,9 +106,9 @@ const NarrationTest = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
-        .select("id, full_name")
+        .select("id, full_name, status")
         .eq("halaqa_id", selectedHalaqaId)
-        .eq("status", "active")
+        .in("status", ["active", "inactive"])
         .order("full_name");
       if (error) throw error;
       return data;
