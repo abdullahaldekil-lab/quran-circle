@@ -37,7 +37,7 @@ export const summarizeWeek = ({ attendance, recitations, homework }: WeekInput):
   const scores = recitations.map((r) => Number(r.total_score)).filter((n) => !isNaN(n) && n > 0);
   const recitationAvg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
   const hw = homework.filter((h) => h.homework_status);
-  const homeworkPct = hw.length ? Math.round((hw.filter((h) => h.homework_status === "done").length / hw.length) * 100) : 0;
+  const homeworkPct = hw.length ? Math.round((hw.filter((h) => h.homework_status === "submitted" || h.homework_status === "done").length / hw.length) * 100) : 0;
   const parts = [attendancePct, ...(scores.length ? [recitationAvg] : []), ...(hw.length ? [homeworkPct] : [])];
   const total = Math.round(parts.reduce((a, b) => a + b, 0) / parts.length);
   return { present, absent, late, excused, attendancePct, recitationAvg, homeworkPct, total };

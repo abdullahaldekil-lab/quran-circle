@@ -10,7 +10,7 @@ describe("weeklyResults", () => {
     const s = summarizeWeek({
       attendance: [{ status: "present" }, { status: "absent" }, { status: "excused" }, { status: "late" }],
       recitations: [{ total_score: 80 }, { total_score: 100 }],
-      homework: [{ homework_status: "done" }, { homework_status: "not_done" }],
+      homework: [{ homework_status: "submitted" }, { homework_status: "not_submitted" }],
     });
     expect(s.attendancePct).toBe(67);
     expect(s.recitationAvg).toBe(90);
