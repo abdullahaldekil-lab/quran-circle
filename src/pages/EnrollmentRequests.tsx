@@ -172,6 +172,7 @@ const EnrollmentRequests = () => {
         guardian_name: selectedReq.guardian_full_name,
         guardian_phone: selectedReq.guardian_phone,
         notes: selectedReq.notes,
+        ...mapFormDataToStudent((selectedReq as any).form_data),
       }).select("id").single();
 
       if (sErr) { toast.error(sErr.message); setProcessing(false); return; }
