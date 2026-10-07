@@ -184,6 +184,7 @@ const Buses = () => {
 
   const resetAssignDialog = () => {
     setSelectedStudentId("");
+    setStudentSearch("");
     setGuardianName("");
     setGuardianPhone("");
     setPhoneError("");
