@@ -1,3 +1,4 @@
+import { printStudentData } from "@/lib/printStudentData";
 import { useEffect, useState } from "react";
 // date-fns & recharts used by AttendanceTab
 import { format as fmtDate, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from "date-fns";
