@@ -8,6 +8,13 @@
       "when": 1791355578448,
       "tag": "0000_scope_reference_reads_to_members",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791361864424,
+      "tag": "0001_migration",
+      "breakpoints": true
     }
   ]
 }
