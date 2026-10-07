@@ -444,7 +444,7 @@ const TalqeenHalaqat = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [user?.id, role]);
 
   // تحديث فوري لعدد الطلاب وسجل التغييرات عبر Realtime
   useEffect(() => {
