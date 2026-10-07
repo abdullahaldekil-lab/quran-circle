@@ -15,6 +15,20 @@
       "when": 1791361864424,
       "tag": "0001_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791363672005,
+      "tag": "0002_student_track_guardian_edit",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791363934046,
+      "tag": "0003_guardian_edit_notify",
+      "breakpoints": true
     }
   ]
 }

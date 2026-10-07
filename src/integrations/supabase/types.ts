@@ -95,6 +95,7 @@ export type Database = {
           halaqa_id: string
           id: string
           marked_at: string | null
+          marked_by: string | null
           note: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           student_id: string
@@ -107,6 +108,7 @@ export type Database = {
           halaqa_id: string
           id?: string
           marked_at?: string | null
+          marked_by?: string | null
           note?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id: string
@@ -119,6 +121,7 @@ export type Database = {
           halaqa_id?: string
           id?: string
           marked_at?: string | null
+          marked_by?: string | null
           note?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id?: string
@@ -1072,6 +1075,41 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guardian_edit_log: {
+        Row: {
+          created_at: string
+          guardian_id: string
+          id: string
+          new_values: Json
+          old_values: Json
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          guardian_id: string
+          id?: string
+          new_values?: Json
+          old_values?: Json
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          guardian_id?: string
+          id?: string
+          new_values?: Json
+          old_values?: Json
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_edit_log_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -7559,6 +7597,10 @@ export type Database = {
       get_student_portal_data: { Args: { _code: string }; Returns: Json }
       get_student_practice_quizzes: { Args: { _code: string }; Returns: Json }
       get_tarbawi_survey_by_token: { Args: { _token: string }; Returns: Json }
+      guardian_update_student: {
+        Args: { _fields: Json; _student_id: string }
+        Returns: boolean
+      }
       has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean

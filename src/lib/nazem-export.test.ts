@@ -114,3 +114,22 @@ describe("nazem export row builder", () => {
     expect(row["المعلم"]).toBe("");
   });
 });
+
+import { buildDailyRows, buildGuardianSummary } from "./nazem-export";
+describe("nazem daily & guardian sheets", () => {
+  const sm = new Map([["s1", { id: "s1", full_name: "أحمد", guardian_name: "خالد", guardian_work: "معلم" }]]);
+  const att = [{ student_id: "s1", attendance_date: "2026-10-04", status: "present" }, { student_id: "s1", attendance_date: "2026-10-05", status: "absent" }];
+  const rec = [{ student_id: "s1", record_date: "2026-10-04", memorized_from: "البقرة 1", memorized_to: "البقرة 5", total_score: 90 }];
+  it("daily rows merge attendance and recitation", () => {
+    const rows = buildDailyRows(rec as any, att, sm as any, new Map());
+    expect(rows).toHaveLength(2);
+    expect(rows[0]["الحضور"]).toBe("حاضر");
+    expect(rows[0]["الحفظ الجديد"]).toBe("البقرة 1 - البقرة 5");
+    expect(rows[0]["عمل ولي الأمر"]).toBe("معلم");
+  });
+  it("guardian summary", () => {
+    const [r] = buildGuardianSummary(rec as any, att, sm as any);
+    expect(r["نسبة الحضور"]).toBe("50%");
+    expect(r["متوسط الدرجات"]).toBe(90);
+  });
+});

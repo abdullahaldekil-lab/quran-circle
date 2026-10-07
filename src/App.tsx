@@ -113,6 +113,8 @@ import TarbawiCalendar from "./pages/TarbawiCalendar";
 import TarbawiStudentHistory from "./pages/TarbawiStudentHistory";
 import TarbawiPracticeQuiz from "./pages/TarbawiPracticeQuiz";
 import NazemExport from "./pages/NazemExport";
+import StudentTrack from "./pages/StudentTrack";
+import AttendanceOverview from "./pages/AttendanceOverview";
 import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient({
@@ -217,6 +219,8 @@ const AppRoutes = () => {
       <Route path="/program-quiz" element={<ProtectedRoute path="/program-quiz"><ProgramQuiz /></ProtectedRoute>} />
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />
+      <Route path="/students/:id/track" element={<ProtectedRoute path="/students"><StudentTrack /></ProtectedRoute>} />
+      <Route path="/attendance-overview" element={<ProtectedRoute path="/attendance-overview"><AttendanceOverview /></ProtectedRoute>} />
       <Route path="/students/:id/narration-progress" element={<ProtectedRoute path="/students"><StudentNarrationProgress /></ProtectedRoute>} />
       <Route path="/narration-test" element={<ProtectedRoute path="/quran-narration"><NarrationTest /></ProtectedRoute>} />
       <Route path="/review-test" element={<ProtectedRoute path="/quran-narration"><ReviewTest /></ProtectedRoute>} />

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import GuardianLayout from "@/components/GuardianLayout";
+import StudentTrackView from "@/components/student/StudentTrackView";
+import GuardianStudentEditForm from "@/components/guardian/GuardianStudentEditForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -287,8 +289,10 @@ const GuardianChildProfile = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="recitations" className="w-full">
+        <Tabs defaultValue="track" className="w-full">
           <TabsList className="w-full flex flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="track" className="text-xs flex-1 min-w-[60px]">متابعة المسار</TabsTrigger>
+            <TabsTrigger value="info" className="text-xs flex-1 min-w-[60px]">بيانات الطالب</TabsTrigger>
             <TabsTrigger value="recitations" className="text-xs flex-1 min-w-[60px]">التسميع</TabsTrigger>
             <TabsTrigger value="attendance" className="text-xs flex-1 min-w-[60px]">الحضور</TabsTrigger>
             <TabsTrigger value="month-report" className="text-xs flex-1 min-w-[60px]">تقرير الشهر</TabsTrigger>
@@ -299,6 +303,13 @@ const GuardianChildProfile = () => {
             <TabsTrigger value="tests" className="text-xs flex-1 min-w-[60px]">الاختبارات</TabsTrigger>
             <TabsTrigger value="annual-plan" className="text-xs flex-1 min-w-[60px]">الخطة السنوية</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="track">
+            {id && <StudentTrackView studentId={id} />}
+          </TabsContent>
+          <TabsContent value="info">
+            {student && <GuardianStudentEditForm student={student} onSaved={(u) => setStudent((p: any) => ({ ...p, ...u }))} />}
+          </TabsContent>
 
           {/* Recitations Tab */}
           <TabsContent value="recitations">

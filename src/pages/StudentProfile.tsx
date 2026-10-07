@@ -235,6 +235,10 @@ const StudentProfile = () => {
           <Printer className="w-4 h-4 ml-1" />
           طباعة البيانات
         </Button>
+        <Button size="sm" onClick={() => navigate(`/students/${id}/track`)}>
+          <TrendingUp className="w-4 h-4 ml-1" />
+          متابعة المسار
+        </Button>
       </div>
 
       {/* Halaqa Student Navigation */}

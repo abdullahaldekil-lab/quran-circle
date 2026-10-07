@@ -102,6 +102,7 @@ const navGroups: NavGroup[] = [
       { to: "/attendance", icon: CheckSquare, label: "الحضور" },
       { to: "/attendance-audit", icon: ClipboardList, label: "سجل التدقيق" },
       { to: "/student-attendance-report", icon: BarChart3, label: "تقرير حضور الطلاب" },
+      { to: "/attendance-overview", icon: Users, label: "حضور الحلقات حسب الموظف" },
       { to: "/staff-attendance", icon: CheckSquare, label: "حضور العاملين" },
       { to: "/staff-attendance-log", icon: ClipboardList, label: "سجل حضور العاملين" },
       { to: "/student-portal", icon: QrCode, label: "بوابة الطالب" },
