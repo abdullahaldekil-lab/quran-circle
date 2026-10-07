@@ -67,7 +67,7 @@ const StudentProfile = () => {
   const [levels, setLevels] = useState<any[]>([]);
   const [editForm, setEditForm] = useState({
     full_name: "", halaqa_id: "", guardian_name: "", guardian_phone: "",
-    current_level: "", birth_date_gregorian: "", birth_date_hijri: "", notes: "",
+    current_level: "", birth_date_gregorian: "", birth_date_hijri: "", notes: "", guardian_work: "",
   });
 
   useEffect(() => {
@@ -126,6 +126,7 @@ const StudentProfile = () => {
       birth_date_gregorian: student.birth_date_gregorian || "",
       birth_date_hijri: student.birth_date_hijri || "",
       notes: student.notes || "",
+      guardian_work: student.guardian_work || "",
     });
     setEditOpen(true);
   };
@@ -141,6 +142,7 @@ const StudentProfile = () => {
       birth_date_gregorian: editForm.birth_date_gregorian || null,
       birth_date_hijri: editForm.birth_date_hijri || null,
       notes: editForm.notes || null,
+      guardian_work: editForm.guardian_work || null,
     }).eq("id", id!);
     if (error) { toast.error("حدث خطأ أثناء التعديل"); return; }
     toast.success("تم تعديل بيانات الطالب");
@@ -228,6 +230,10 @@ const StudentProfile = () => {
           <Printer className="w-4 h-4 ml-1" />
           طباعة استمارة التسجيل
         </Button>
+        <Button variant="outline" size="sm" onClick={() => printStudentData(student)}>
+          <Printer className="w-4 h-4 ml-1" />
+          طباعة البيانات
+        </Button>
       </div>
 
       {/* Halaqa Student Navigation */}
@@ -262,6 +268,7 @@ const StudentProfile = () => {
                   <span className="text-xs text-muted-foreground">
                     ولي الأمر: {student.guardian_name || "غير مسجّل"}
                     {student.guardian_phone && <span dir="ltr"> ({student.guardian_phone})</span>}
+                    {student.guardian_work && <> — العمل: {student.guardian_work}</>}
                   </span>
                   <WhatsappButton
                     phone={student.guardian_phone}
@@ -628,6 +635,10 @@ const StudentProfile = () => {
             <div className="space-y-2">
               <Label>اسم ولي الأمر</Label>
               <Input value={editForm.guardian_name} onChange={(e) => setEditForm({ ...editForm, guardian_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>عمل ولي الأمر</Label>
+              <Input value={editForm.guardian_work} onChange={(e) => setEditForm({ ...editForm, guardian_work: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>هاتف ولي الأمر</Label>
