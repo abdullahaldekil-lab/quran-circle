@@ -93,7 +93,7 @@ const NazemExport = () => {
         buildNazemRow(r, studentMap as any, halaqaMap as any, teacherMap as any),
       );
 
-      const ws = XLSX.utils.json_to_sheet(rows);
+      const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "ملاحظة": "لا يوجد حفظ جديد في الفترة" }]);
       ws["!cols"] = [
         { wch: 12 }, { wch: 22 }, { wch: 14 }, { wch: 12 }, { wch: 18 },
         { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 8 }, { wch: 8 },
