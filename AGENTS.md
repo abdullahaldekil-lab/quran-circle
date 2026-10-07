@@ -1,0 +1,1 @@
+- Student track follow-up UI lives in one shared component (StudentTrackView) used by staff and guardian pages; guardians edit student data only via the guardian_update_student RPC (allow-listed fields, logged). Why: one source of truth and no direct guardian writes to students.
