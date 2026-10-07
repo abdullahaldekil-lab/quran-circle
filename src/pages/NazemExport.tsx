@@ -10,7 +10,7 @@ import { Download, FileSpreadsheet, CalendarCheck, History } from "lucide-react"
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
-import { buildNazemRow } from "@/lib/nazem-export";
+import { buildNazemRow, buildDailyRows, buildGuardianSummary } from "@/lib/nazem-export";
 import { formatDateTimeSmart } from "@/lib/hijri";
 
 const NazemExport = () => {
@@ -20,6 +20,8 @@ const NazemExport = () => {
 
   const [halaqat, setHalaqat] = useState<any[]>([]);
   const [halaqaId, setHalaqaId] = useState<string>("all");
+  const [studentId, setStudentId] = useState<string>("all");
+  const [studentsList, setStudentsList] = useState<any[]>([]);
   const [from, setFrom] = useState(monthAgo);
   const [to, setTo] = useState(today);
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,12 @@ const NazemExport = () => {
       setHalaqat(filterTahfeezOnly((data as any[]) || []));
     });
   }, []);
+
+  useEffect(() => {
+    setStudentId("all");
+    if (halaqaId === "all") { setStudentsList([]); return; }
+    supabase.from("students").select("id, full_name").eq("halaqa_id", halaqaId).eq("status", "active").order("full_name").then(({ data }) => setStudentsList(data || []));
+  }, [halaqaId]);
 
   const loadLog = useCallback(async () => {
     const { data } = await (supabase as any)
@@ -47,26 +55,30 @@ const NazemExport = () => {
     try {
       let query = supabase
         .from("recitation_records")
-        .select("record_date, memorized_from, memorized_to, total_score, mistakes_breakdown, notes, student_id, halaqa_id")
+        .select("record_date, memorized_from, memorized_to, review_from, review_to, linking_from, linking_to, total_score, mistakes_breakdown, notes, student_id, halaqa_id")
         .gte("record_date", rangeFrom)
         .lte("record_date", rangeTo)
-        .not("memorized_to", "is", null)
         .order("record_date", { ascending: true });
+      let attQuery = supabase.from("attendance").select("student_id, attendance_date, status, halaqa_id")
+        .gte("attendance_date", rangeFrom).lte("attendance_date", rangeTo).limit(10000);
 
-      if (halaqaId !== "all") query = query.eq("halaqa_id", halaqaId);
+      if (halaqaId !== "all") { query = query.eq("halaqa_id", halaqaId); attQuery = attQuery.eq("halaqa_id", halaqaId); }
+      if (studentId !== "all") { query = query.eq("student_id", studentId); attQuery = attQuery.eq("student_id", studentId); }
 
-      const { data: records, error } = await query;
+      const [{ data: allRecords, error }, { data: attRows }] = await Promise.all([query, attQuery]);
       if (error) throw error;
-      if (!records || records.length === 0) {
+      const records = (allRecords || []).filter((r: any) => r.memorized_to);
+      const attendance = (attRows || []) as any[];
+      if ((allRecords || []).length === 0 && attendance.length === 0) {
         toast.error("لا توجد سجلات في الفترة المحددة");
         return;
       }
 
-      const studentIds = [...new Set(records.map((r: any) => r.student_id))];
-      const halaqaIds = [...new Set(records.map((r: any) => r.halaqa_id).filter(Boolean))];
+      const studentIds = [...new Set([...(allRecords || []).map((r: any) => r.student_id), ...attendance.map((a) => a.student_id)])];
+      const halaqaIds = [...new Set([...(allRecords || []).map((r: any) => r.halaqa_id), ...attendance.map((a) => a.halaqa_id)].filter(Boolean))];
 
       const [studentsRes, halaqatRes] = await Promise.all([
-        supabase.from("students").select("id, full_name, national_id, student_code, guardian_work").in("id", studentIds),
+        supabase.from("students").select("id, full_name, national_id, student_code, guardian_work, guardian_name, guardian_phone").in("id", studentIds),
         supabase.from("halaqat").select("id, name, teacher_id").in("id", halaqaIds),
       ]);
 
@@ -104,6 +116,22 @@ const NazemExport = () => {
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "تسميع - ناظم");
+      const styleSheet = (sheet: any) => {
+        sheet["!views"] = [{ RTL: true }];
+        if (!sheet["!ref"]) return;
+        const rg = XLSX.utils.decode_range(sheet["!ref"]);
+        sheet["!cols"] = Array.from({ length: rg.e.c + 1 }, () => ({ wch: 16 }));
+        for (let c = rg.s.c; c <= rg.e.c; c++) {
+          const a = XLSX.utils.encode_cell({ r: 0, c });
+          if (sheet[a]) sheet[a].s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "1F5D3A" } }, alignment: { horizontal: "center" } };
+        }
+      };
+      const dailyWs = XLSX.utils.json_to_sheet(buildDailyRows((allRecords || []) as any, attendance, studentMap as any, halaqaMap as any));
+      styleSheet(dailyWs);
+      XLSX.utils.book_append_sheet(wb, dailyWs, "التحصيل اليومي");
+      const sumWs = XLSX.utils.json_to_sheet(buildGuardianSummary((allRecords || []) as any, attendance, studentMap as any));
+      styleSheet(sumWs);
+      XLSX.utils.book_append_sheet(wb, sumWs, "ملخص ولي الأمر");
       const filename = `nazem-export-${rangeFrom}_to_${rangeTo}.xlsx`;
       XLSX.writeFile(wb, filename);
 
@@ -140,7 +168,7 @@ const NazemExport = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            يتم تصدير سجلات الحفظ الجديد في الفترة المحددة كملف Excel جاهز للرفع على منصة ناظم.
+            يتم تصدير ملف Excel يضم: سجلات الحفظ الجديد لناظم، والتحصيل اليومي لكل طالب (حضور، حفظ، مراجعة، ربط، درجات)، وملخص ولي الأمر.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -163,6 +191,18 @@ const NazemExport = () => {
                 </SelectContent>
               </Select>
             </div>
+            {halaqaId !== "all" && (
+              <div className="space-y-2 md:col-span-2">
+                <Label>الطالب</Label>
+                <Select value={studentId} onValueChange={setStudentId}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع طلاب الحلقة</SelectItem>
+                    {studentsList.map((st) => <SelectItem key={st.id} value={st.id}>{st.full_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Button onClick={() => runExport(from, to)} disabled={loading} className="w-full">
