@@ -1,3 +1,4 @@
+import { TalqeenHalaqaResults } from "@/components/talqeen/TalqeenHalaqaResults";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StudentNameLink from "@/components/StudentNameLink";
@@ -67,8 +68,9 @@ interface Teacher {
 }
 
 const TalqeenHalaqat = () => {
-  const { isManager, isSupervisor, isTalqeenSupervisor } = useRole();
+  const { isManager, isSupervisor, isTalqeenSupervisor, role } = useRole();
   const { user } = useAuth();
+  const [resultsHalaqa, setResultsHalaqa] = useState<any>(null);
   const canChangeCurriculum = isManager || isTalqeenSupervisor;
   // مشرف التلقين يدير حلقات التلقين (إضافة/تعديل/حذف) كالمدير.
   const canManageHalaqat = isManager || isTalqeenSupervisor;
@@ -374,7 +376,12 @@ const TalqeenHalaqat = () => {
       supabase.from("talqeen_curricula").select("*").eq("active", true).order("code"),
     ]);
     const allHalaqat = halaqatRes.data || [];
-    setHalaqat(allHalaqat.filter((h: any) => h.name.includes("تلقين")));
+    const talqeenOnly = allHalaqat.filter((h: any) => h.name.includes("تلقين") || h.talqeen_curriculum_id);
+    // معلم/مساعد التلقين يرى حلقته فقط ويُدخل بياناتها دون غيرها
+    const isStaffTeacher = role === "teacher" || role === "assistant_teacher";
+    setHalaqat(isStaffTeacher
+      ? talqeenOnly.filter((h: any) => h.teacher_id === user?.id || h.assistant_teacher_id === user?.id)
+      : talqeenOnly);
     setTeachers((teachersRes.data as Teacher[]) || []);
     setLevelTracks(tracksRes.data || []);
     setCurricula(curriculaRes.data || []);
@@ -437,7 +444,7 @@ const TalqeenHalaqat = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [user?.id, role]);
 
   // تحديث فوري لعدد الطلاب وسجل التغييرات عبر Realtime
   useEffect(() => {
@@ -893,6 +900,10 @@ const TalqeenHalaqat = () => {
                   <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => openPlan(h.id)}>
                     <ClipboardList className="w-3 h-3 ml-1" />
                     جلسات الخطة
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => setResultsHalaqa(h)}>
+                    <ListChecks className="w-3 h-3 ml-1" />
+                    النتائج والمراكز
                   </Button>
                   {canChangeCurriculum && (
                     <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => openChangeLog(h.id)}>
@@ -1486,6 +1497,12 @@ const TalqeenHalaqat = () => {
       </Dialog>
 
       <ContentViewer lesson={hpViewerLesson} open={!!hpViewerLesson} onOpenChange={(o) => { if (!o) setHpViewerLesson(null); }} />
+      <TalqeenHalaqaResults
+        halaqa={resultsHalaqa}
+        students={resultsHalaqa ? (studentsByHalaqa[resultsHalaqa.id] || []) : []}
+        open={!!resultsHalaqa}
+        onOpenChange={(o) => { if (!o) setResultsHalaqa(null); }}
+      />
     </div>
   );
 };
