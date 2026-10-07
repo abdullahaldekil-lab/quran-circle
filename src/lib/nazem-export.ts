@@ -20,6 +20,7 @@ export interface NazemStudent {
   id: string;
   full_name?: string | null;
   national_id?: string | null;
+  guardian_work?: string | null;
   student_code?: string | null;
 }
 export interface NazemHalaqa {
@@ -46,6 +47,7 @@ export const buildNazemRow = (
     "التاريخ": r.record_date,
     "اسم الطالب": s.full_name || "",
     "رقم الهوية": s.national_id || "",
+    "عمل ولي الأمر": s.guardian_work || "",
     "كود الطالب": s.student_code || "",
     "الحلقة": h.name || "",
     "المعلم": t.full_name || "",

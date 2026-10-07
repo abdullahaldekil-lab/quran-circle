@@ -66,7 +66,7 @@ const NazemExport = () => {
       const halaqaIds = [...new Set(records.map((r: any) => r.halaqa_id).filter(Boolean))];
 
       const [studentsRes, halaqatRes] = await Promise.all([
-        supabase.from("students").select("id, full_name, national_id, student_code").in("id", studentIds),
+        supabase.from("students").select("id, full_name, national_id, student_code, guardian_work").in("id", studentIds),
         supabase.from("halaqat").select("id, name, teacher_id").in("id", halaqaIds),
       ]);
 
