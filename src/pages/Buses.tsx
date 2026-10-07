@@ -59,8 +59,8 @@ const Buses = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
-        .select("id, full_name, guardian_name, guardian_phone")
-        .eq("status", "active")
+        .select("id, full_name, guardian_name, guardian_phone, status")
+        .in("status", ["active", "inactive"])
         .order("full_name");
       if (error) throw error;
       return data;
@@ -69,7 +69,9 @@ const Buses = () => {
   });
 
   const assignedStudentIds = new Set(assignments.map((a: any) => a.student_id));
-  const unassignedStudents = allStudents.filter((s: any) => !assignedStudentIds.has(s.id));
+  const [studentSearch, setStudentSearch] = useState("");
+  const normAr = (t: string) => (t || "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/\s+/g, " ").trim();
+  const unassignedStudents = allStudents.filter((s: any) => !assignedStudentIds.has(s.id) && (!studentSearch.trim() || normAr(s.full_name).includes(normAr(studentSearch)) || (s.guardian_phone || "").includes(studentSearch.trim())));
 
   // Auto-fill guardian info when student is selected
   useEffect(() => {
@@ -164,13 +166,15 @@ const Buses = () => {
 
   const unassignMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("student_bus_assignments").update({ active: false }).eq("id", id);
+      const { data, error } = await supabase.from("student_bus_assignments").update({ active: false }).eq("id", id).select("id");
       if (error) throw error;
+      if (!data?.length) throw new Error("لا تملك صلاحية إزالة هذا الطالب من الباص");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bus_assignments"] });
       toast({ title: "تم إلغاء التعيين" });
     },
+    onError: (e: any) => toast({ title: "تعذرت الإزالة", description: e.message, variant: "destructive" }),
   });
 
   // Dashboard stats
@@ -180,6 +184,7 @@ const Buses = () => {
 
   const resetAssignDialog = () => {
     setSelectedStudentId("");
+    setStudentSearch("");
     setGuardianName("");
     setGuardianPhone("");
     setPhoneError("");
@@ -323,9 +328,10 @@ const Buses = () => {
             </div>
             <div>
               <Label>الطالب</Label>
+              <Input value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} placeholder="ابحث باسم الطالب أو جوال ولي الأمر" className="mb-2" />
               <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-                <SelectTrigger><SelectValue placeholder="اختر الطالب" /></SelectTrigger>
-                <SelectContent>{unassignedStudents.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent>
+                <SelectTrigger><SelectValue placeholder={`اختر الطالب (${unassignedStudents.length})`} /></SelectTrigger>
+                <SelectContent>{unassignedStudents.length === 0 ? <div className="p-2 text-sm text-muted-foreground">لا توجد نتائج</div> : unassignedStudents.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.full_name}{s.status === "inactive" ? " (غير نشط)" : ""}</SelectItem>)}</SelectContent>
               </Select>
             </div>
 
