@@ -1,3 +1,4 @@
+import { TalqeenHalaqaResults } from "@/components/talqeen/TalqeenHalaqaResults";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StudentNameLink from "@/components/StudentNameLink";
@@ -1496,6 +1497,12 @@ const TalqeenHalaqat = () => {
       </Dialog>
 
       <ContentViewer lesson={hpViewerLesson} open={!!hpViewerLesson} onOpenChange={(o) => { if (!o) setHpViewerLesson(null); }} />
+      <TalqeenHalaqaResults
+        halaqa={resultsHalaqa}
+        students={resultsHalaqa ? (studentsByHalaqa[resultsHalaqa.id] || []) : []}
+        open={!!resultsHalaqa}
+        onOpenChange={(o) => { if (!o) setResultsHalaqa(null); }}
+      />
     </div>
   );
 };
