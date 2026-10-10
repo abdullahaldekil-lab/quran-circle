@@ -12,6 +12,7 @@ import * as XLSX from "xlsx-js-style";
 import { filterTahfeezOnly } from "@/lib/halaqaType";
 import { buildNazemRow, buildDailyRows, buildGuardianSummary } from "@/lib/nazem-export";
 import { formatDateTimeSmart } from "@/lib/hijri";
+import MissingGuardianData from "@/components/nazem/MissingGuardianData";
 
 const NazemExport = () => {
   const { user } = useAuth();
@@ -221,6 +222,8 @@ const NazemExport = () => {
           </div>
         </CardContent>
       </Card>
+
+      <MissingGuardianData halaqaId={halaqaId} />
 
       <Card>
         <CardHeader className="pb-2">
