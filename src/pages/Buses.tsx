@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,6 +30,7 @@ const Buses = () => {
   const [guardianPhone, setGuardianPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [busForm, setBusForm] = useState({ bus_name: "", driver_name: "", driver_phone: "", capacity: 30 });
+  const [removeTarget, setRemoveTarget] = useState<any | null>(null);
 
   // Fetch buses
   const { data: buses = [] } = useQuery({
@@ -172,7 +174,7 @@ const Buses = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bus_assignments"] });
-      toast({ title: "تم إلغاء التعيين" });
+      toast({ title: "تم حذف الطالب من الباص" });
     },
     onError: (e: any) => toast({ title: "تعذرت الإزالة", description: e.message, variant: "destructive" }),
   });
@@ -298,7 +300,7 @@ const Buses = () => {
                           </TableCell>
                           {canManage && (
                             <TableCell>
-                              <Button aria-label="إزالة" variant="ghost" size="icon" onClick={() => unassignMutation.mutate(a.id)}>
+                              <Button aria-label="حذف من الباص" title="حذف من الباص" variant="ghost" size="icon" onClick={() => setRemoveTarget(a)}>
                                 <UserMinus className="w-4 h-4 text-destructive" />
                               </Button>
                             </TableCell>
@@ -372,6 +374,27 @@ const Buses = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirm remove student from bus */}
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => { if (!open) setRemoveTarget(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الطالب من الباص</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف «{removeTarget?.students?.full_name || "الطالب"}» من هذا الباص. يمكنك إعادة تعيينه لاحقًا.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (removeTarget) unassignMutation.mutate(removeTarget.id); setRemoveTarget(null); }}
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
