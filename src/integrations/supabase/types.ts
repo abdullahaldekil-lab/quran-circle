@@ -7597,6 +7597,7 @@ export type Database = {
       get_student_portal_data: { Args: { _code: string }; Returns: Json }
       get_student_practice_quizzes: { Args: { _code: string }; Returns: Json }
       get_tarbawi_survey_by_token: { Args: { _token: string }; Returns: Json }
+      guardian_trip_ids: { Args: { _uid: string }; Returns: string[] }
       guardian_update_student: {
         Args: { _fields: Json; _student_id: string }
         Returns: boolean
