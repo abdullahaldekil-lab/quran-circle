@@ -374,6 +374,27 @@ const Buses = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirm remove student from bus */}
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => { if (!open) setRemoveTarget(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الطالب من الباص</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف «{removeTarget?.students?.full_name || "الطالب"}» من هذا الباص. يمكنك إعادة تعيينه لاحقًا.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (removeTarget) unassignMutation.mutate(removeTarget.id); setRemoveTarget(null); }}
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
