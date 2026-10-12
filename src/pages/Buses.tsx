@@ -174,7 +174,7 @@ const Buses = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bus_assignments"] });
-      toast({ title: "تم إلغاء التعيين" });
+      toast({ title: "تم حذف الطالب من الباص" });
     },
     onError: (e: any) => toast({ title: "تعذرت الإزالة", description: e.message, variant: "destructive" }),
   });
