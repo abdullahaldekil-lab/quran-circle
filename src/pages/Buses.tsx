@@ -300,7 +300,7 @@ const Buses = () => {
                           </TableCell>
                           {canManage && (
                             <TableCell>
-                              <Button aria-label="إزالة" variant="ghost" size="icon" onClick={() => unassignMutation.mutate(a.id)}>
+                              <Button aria-label="حذف من الباص" title="حذف من الباص" variant="ghost" size="icon" onClick={() => setRemoveTarget(a)}>
                                 <UserMinus className="w-4 h-4 text-destructive" />
                               </Button>
                             </TableCell>
