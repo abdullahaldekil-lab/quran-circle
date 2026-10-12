@@ -30,6 +30,7 @@ const Buses = () => {
   const [guardianPhone, setGuardianPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [busForm, setBusForm] = useState({ bus_name: "", driver_name: "", driver_phone: "", capacity: 30 });
+  const [removeTarget, setRemoveTarget] = useState<any | null>(null);
 
   // Fetch buses
   const { data: buses = [] } = useQuery({
