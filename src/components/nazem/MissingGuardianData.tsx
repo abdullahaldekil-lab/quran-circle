@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserX, Save } from "lucide-react";
 import { toast } from "sonner";
+import GuardianExcelImport from "./GuardianExcelImport";
 
 const FIELDS = [
   { key: "guardian_name", label: "اسم ولي الأمر" },
@@ -57,6 +58,7 @@ const MissingGuardianData = ({ halaqaId }: { halaqaId: string }) => {
           <Badge variant="secondary">{rows.length}</Badge>
         </CardTitle>
         <p className="text-xs text-muted-foreground">املأ الخانات الفارغة ثم احفظ، وتظهر البيانات مباشرة في ملف ناظم.</p>
+        <GuardianExcelImport halaqaId={halaqaId} onDone={load} />
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
