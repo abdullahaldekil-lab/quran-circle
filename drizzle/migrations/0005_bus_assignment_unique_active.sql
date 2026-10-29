@@ -1,0 +1,3 @@
+ALTER TABLE public.student_bus_assignments DROP CONSTRAINT IF EXISTS student_bus_assignments_student_id_active_key;
+DROP INDEX IF EXISTS public.student_bus_assignments_student_id_active_key;
+CREATE UNIQUE INDEX IF NOT EXISTS student_bus_assignments_one_active_per_student ON public.student_bus_assignments (student_id) WHERE active;
