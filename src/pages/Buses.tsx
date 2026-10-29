@@ -31,6 +31,7 @@ const Buses = () => {
   const [phoneError, setPhoneError] = useState("");
   const [busForm, setBusForm] = useState({ bus_name: "", driver_name: "", driver_phone: "", capacity: 30 });
   const [removeTarget, setRemoveTarget] = useState<any | null>(null);
+  const [editBus, setEditBus] = useState<{ id: string; bus_name: string; driver_name: string; driver_phone: string; capacity: number } | null>(null);
 
   // Fetch buses
   const { data: buses = [] } = useQuery({
@@ -118,6 +119,26 @@ const Buses = () => {
     onError: (e: any) => toast({ title: "خطأ", description: e.message, variant: "destructive" }),
   });
 
+  const editBusMutation = useMutation({
+    mutationFn: async () => {
+      if (!editBus) return;
+      const count = getAssignmentsForBus(editBus.id).length;
+      if (editBus.capacity < count) throw new Error(`السعة لا يمكن أن تقل عن عدد الطلاب الحاليين (${count})`);
+      const { data, error } = await supabase.from("buses").update({
+        bus_name: editBus.bus_name.trim(), driver_name: editBus.driver_name || null,
+        driver_phone: editBus.driver_phone || null, capacity: editBus.capacity,
+      }).eq("id", editBus.id).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("لا تملك صلاحية تعديل الباص");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["buses"] });
+      toast({ title: "تم تعديل بيانات الباص" });
+      setEditBus(null);
+    },
+    onError: (e: any) => toast({ title: "خطأ", description: e.message, variant: "destructive" }),
+  });
+
   const deleteBusMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("buses").update({ active: false }).eq("id", id);
@@ -140,6 +161,12 @@ const Buses = () => {
       if (bus && currentCount >= bus.capacity) {
         throw new Error("السعة ممتلئة، لا يمكن إضافة طالب");
       }
+      const { data: existing } = await supabase.from("student_bus_assignments")
+        .select("bus_id").eq("student_id", selectedStudentId).eq("active", true).limit(1);
+      if (existing?.length) {
+        const other = buses.find((b: any) => b.id === existing[0].bus_id);
+        throw new Error(`الطالب مسجل مسبقاً في ${other?.bus_name || "باص آخر"}، لا يمكن تسجيله مرتين`);
+      }
       const student = allStudents.find((s: any) => s.id === selectedStudentId);
       const needsOverride = guardianPhone.trim() !== (student?.guardian_phone || "").trim();
       const { error } = await supabase.from("student_bus_assignments").insert({
@@ -147,7 +174,10 @@ const Buses = () => {
         bus_id: selectedBusId,
         ...(needsOverride ? { guardian_phone_override: guardianPhone.trim() } : {}),
       } as any);
-      if (error) throw error;
+      if (error) {
+        if ((error as any).code === "23505") throw new Error("الطالب مسجل مسبقاً في باص، لا يمكن تسجيله مرتين");
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bus_assignments"] });
