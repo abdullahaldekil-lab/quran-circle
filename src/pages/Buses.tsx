@@ -276,6 +276,9 @@ const Buses = () => {
                       <Button aria-label="إضافة" variant="ghost" size="icon" onClick={() => { setSelectedBusId(bus.id); resetAssignDialog(); setAssignDialogOpen(true); }}>
                         <UserPlus className="w-4 h-4" />
                       </Button>
+                      <Button aria-label="تعديل" title="تعديل بيانات الباص" variant="ghost" size="icon" onClick={() => setEditBus({ id: bus.id, bus_name: bus.bus_name || "", driver_name: bus.driver_name || "", driver_phone: bus.driver_phone || "", capacity: bus.capacity || 30 })}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
                       <Button aria-label="حذف" variant="ghost" size="icon" onClick={() => deleteBusMutation.mutate(bus.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
@@ -345,6 +348,24 @@ const Buses = () => {
           );
         })}
       </div>
+
+      <Dialog open={!!editBus} onOpenChange={(o) => { if (!o) setEditBus(null); }}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>تعديل بيانات الباص</DialogTitle></DialogHeader>
+          {editBus && (
+            <div className="space-y-4">
+              <div><Label>اسم الباص</Label><Input value={editBus.bus_name} onChange={e => setEditBus({ ...editBus, bus_name: e.target.value })} /></div>
+              <div><Label>اسم السائق</Label><Input value={editBus.driver_name} onChange={e => setEditBus({ ...editBus, driver_name: e.target.value })} /></div>
+              <div><Label>هاتف السائق</Label><Input value={editBus.driver_phone} onChange={e => setEditBus({ ...editBus, driver_phone: e.target.value })} /></div>
+              <div><Label>السعة (عدد المقاعد)</Label><Input type="number" min={1} value={editBus.capacity} onChange={e => setEditBus({ ...editBus, capacity: parseInt(e.target.value) || 0 })} />
+                <p className="text-xs text-muted-foreground mt-1">المسجلون حالياً: {getAssignmentsForBus(editBus.id).length}</p></div>
+              <Button className="w-full" onClick={() => editBusMutation.mutate()} disabled={!editBus.bus_name.trim() || editBus.capacity < 1 || editBusMutation.isPending}>
+                {editBusMutation.isPending ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Assign Student Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={(open) => { setAssignDialogOpen(open); if (!open) resetAssignDialog(); }}>
