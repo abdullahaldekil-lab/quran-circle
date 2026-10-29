@@ -43,6 +43,13 @@
       "when": 1793274738004,
       "tag": "0005_bus_assignment_unique_active",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793274946135,
+      "tag": "0006_bus_daily_log",
+      "breakpoints": true
     }
   ]
 }
