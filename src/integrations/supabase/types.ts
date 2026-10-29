@@ -242,6 +242,60 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_daily_log: {
+        Row: {
+          absent: boolean
+          alighted_at: string | null
+          boarded_at: string | null
+          bus_id: string
+          created_at: string
+          id: string
+          log_date: string
+          recorded_by: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          absent?: boolean
+          alighted_at?: string | null
+          boarded_at?: string | null
+          bus_id: string
+          created_at?: string
+          id?: string
+          log_date?: string
+          recorded_by?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          absent?: boolean
+          alighted_at?: string | null
+          boarded_at?: string | null
+          bus_id?: string
+          created_at?: string
+          id?: string
+          log_date?: string
+          recorded_by?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_daily_log_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bus_daily_log_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buses: {
         Row: {
           active: boolean
