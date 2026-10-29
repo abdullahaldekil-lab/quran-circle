@@ -95,6 +95,9 @@ import GuardianSettings from "./pages/guardian/GuardianSettings";
 import GuardianEvaluation from "./pages/guardian/GuardianEvaluation";
 import GuardianMessagesAdmin from "./pages/admin/GuardianMessagesAdmin";
 import GuardianWhatsapp from "./pages/admin/GuardianWhatsapp";
+import GuardianWeeklyReport from "./pages/GuardianWeeklyReport";
+import HalaqaAttendanceRanking from "./pages/HalaqaAttendanceRanking";
+import BusDailyLog from "./pages/BusDailyLog";
 import GuardianExcusesAdmin from "./pages/admin/GuardianExcusesAdmin";
 import TeacherEvaluationsReport from "./pages/admin/TeacherEvaluationsReport";
 import GuardianApprovals from "./pages/admin/GuardianApprovals";
@@ -192,6 +195,9 @@ const AppRoutes = () => {
       <Route path="/rankings" element={<ProtectedRoute path="/rankings"><Rankings /></ProtectedRoute>} />
       <Route path="/rewards" element={<ProtectedRoute path="/rewards"><Rewards /></ProtectedRoute>} />
       <Route path="/trips" element={<ProtectedRoute path="/trips"><Trips /></ProtectedRoute>} />
+      <Route path="/bus-daily-log" element={<ProtectedRoute path="/bus-daily-log"><BusDailyLog /></ProtectedRoute>} />
+      <Route path="/guardian-weekly-report" element={<ProtectedRoute path="/guardian-weekly-report"><GuardianWeeklyReport /></ProtectedRoute>} />
+      <Route path="/halaqa-attendance-ranking" element={<ProtectedRoute path="/halaqa-attendance-ranking"><HalaqaAttendanceRanking /></ProtectedRoute>} />
       <Route path="/finance" element={<ProtectedRoute path="/finance"><Finance /></ProtectedRoute>} />
       <Route path="/strategic-plan" element={<ProtectedRoute path="/strategic-plan"><StrategicPlan /></ProtectedRoute>} />
       <Route path="/strategy" element={<ProtectedRoute path="/strategic-plan"><StrategicPlan /></ProtectedRoute>} />

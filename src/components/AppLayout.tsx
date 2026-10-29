@@ -103,6 +103,8 @@ const navGroups: NavGroup[] = [
       { to: "/attendance-audit", icon: ClipboardList, label: "سجل التدقيق" },
       { to: "/student-attendance-report", icon: BarChart3, label: "تقرير حضور الطلاب" },
       { to: "/attendance-overview", icon: Users, label: "حضور الحلقات حسب الموظف" },
+      { to: "/halaqa-attendance-ranking", icon: BarChart3, label: "حضور الحلقة والترتيب" },
+      { to: "/guardian-weekly-report", icon: Users, label: "الإشعارات الأسبوعية لأولياء الأمور" },
       { to: "/staff-attendance", icon: CheckSquare, label: "حضور العاملين" },
       { to: "/staff-attendance-log", icon: ClipboardList, label: "سجل حضور العاملين" },
       { to: "/student-portal", icon: QrCode, label: "بوابة الطالب" },
@@ -253,6 +255,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/trips", icon: BusIcon, label: "الرحلات" },
       { to: "/buses", icon: BusIcon, label: "الباصات" },
+      { to: "/bus-daily-log", icon: BusIcon, label: "صعود ونزول الباصات" },
       { to: "/documents", icon: FolderOpen, label: "المستندات" },
     ],
   },
