@@ -12,7 +12,7 @@ import { useRole } from "@/hooks/useRole";
 import { fetchMyHalaqat, currentSchoolWeek } from "@/lib/myHalaqat";
 import { openWhatsapp, normalizeWhatsappNumber } from "@/lib/whatsapp";
 
-type Row = { id: string; full_name: string; guardian_name: string | null; guardian_phone: string | null; absent: number; late: number; present: number; recCount: number; recAvg: number | null };
+type Row = { id: string; full_name: string; guardian_name: string | null; guardian_phone: string | null; absent: number; late: number; present: number; recCount: number; recAvg: number | null; behavior: number };
 
 const GuardianWeeklyReport = () => {
   const { isTeacher } = useRole();
@@ -23,8 +23,12 @@ const GuardianWeeklyReport = () => {
   const [to, setTo] = useState(week.to);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
+  const sentKey = `weekly-wa-sent:${halaqaId}:${from}:${to}`;
   const [sent, setSent] = useState<Record<string, boolean>>({});
   const [onlyAbsent, setOnlyAbsent] = useState(false);
+
+  useEffect(() => { try { setSent(JSON.parse(localStorage.getItem(sentKey) || "{}")); } catch { setSent({}); } }, [sentKey]);
+  const markSent = (id: string) => setSent((s) => { const n = { ...s, [id]: true }; localStorage.setItem(sentKey, JSON.stringify(n)); return n; });
 
   useEffect(() => { fetchMyHalaqat(isTeacher).then((l) => { setHalaqat(l); if (l[0]) setHalaqaId((p) => p || l[0].id); }); }, [isTeacher]);
 
@@ -34,9 +38,10 @@ const GuardianWeeklyReport = () => {
     (async () => {
       const { data: sts } = await supabase.from("students").select("id, full_name, guardian_name, guardian_phone").eq("halaqa_id", halaqaId).eq("status", "active").order("full_name");
       const ids = (sts || []).map((s) => s.id);
-      const [{ data: att }, { data: rec }] = await Promise.all([
+      const [{ data: att }, { data: rec }, { data: beh }] = await Promise.all([
         ids.length ? supabase.from("attendance").select("student_id, status").in("student_id", ids).gte("attendance_date", from).lte("attendance_date", to) : Promise.resolve({ data: [] as any[] }),
         ids.length ? supabase.from("recitation_records").select("student_id, total_score").in("student_id", ids).gte("record_date", from).lte("record_date", to) : Promise.resolve({ data: [] as any[] }),
+        ids.length ? supabase.from("student_behavior").select("student_id, points").in("student_id", ids).gte("eval_date", from).lte("eval_date", to) : Promise.resolve({ data: [] as any[] }),
       ]);
       setRows((sts || []).map((s) => {
         const a = (att || []).filter((x: any) => x.student_id === s.id);
@@ -48,6 +53,7 @@ const GuardianWeeklyReport = () => {
           present: a.filter((x: any) => x.status === "present").length,
           recCount: r.length,
           recAvg: r.length ? Math.round(r.reduce((t: number, x: any) => t + Number(x.total_score), 0) / r.length) : null,
+          behavior: (beh || []).filter((x: any) => x.student_id === s.id).reduce((t: number, x: any) => t + x.points, 0),
         };
       }));
       setLoading(false);
@@ -58,10 +64,19 @@ const GuardianWeeklyReport = () => {
   const buildMsg = (r: Row) =>
     `السلام عليكم ${r.guardian_name || "ولي الأمر"}\nالتقرير الأسبوعي للطالب: ${r.full_name} — ${halaqaName}\nالفترة: ${from} إلى ${to}\n\n` +
     `الحضور: ${r.present} يوم\nالغياب: ${r.absent} يوم\nالتأخر: ${r.late} مرة\n` +
-    `التسميع: ${r.recCount} مرة${r.recAvg != null ? ` — متوسط الدرجة ${r.recAvg}` : ""}\n\n` +
+    `التسميع: ${r.recCount} مرة${r.recAvg != null ? ` — متوسط الدرجة ${r.recAvg}` : ""}\n` +
+    `نقاط السلوك: ${r.behavior > 0 ? "+" : ""}${r.behavior}\n\n` +
     (r.absent > 0 ? "نأمل متابعة انتظام الطالب في الحضور.\n" : "شكرًا لمتابعتكم، نسأل الله له التوفيق.\n");
 
   const shown = useMemo(() => rows.filter((r) => !onlyAbsent || r.absent > 0), [rows, onlyAbsent]);
+  const absentQueue = useMemo(() => rows.filter((r) => r.absent > 0 && !sent[r.id] && normalizeWhatsappNumber(r.guardian_phone)), [rows, sent]);
+  const sendOne = (r: Row) => { if (openWhatsapp(r.guardian_phone, buildMsg(r))) markSent(r.id); else toast.error("رقم ولي الأمر غير صالح"); };
+  const sendNextAbsent = () => {
+    const next = absentQueue[0];
+    if (!next) return toast.info("تم الإرسال لجميع الغائبين");
+    sendOne(next);
+    toast.success(`فُتحت رسالة ${next.full_name} — متبقٍ ${absentQueue.length - 1}`);
+  };
 
   return (
     <div className="space-y-6" dir="rtl">
