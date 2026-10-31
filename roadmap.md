@@ -7,3 +7,7 @@
 - [x] Weekly notifications: one-tap sequential WhatsApp for absentees + behavior points in message
 - [x] Behavior evaluation with cumulative points
 - [x] Weekly halaqa attendance PDF report
+- [ ] Registered guardians: child counts and account details
+- [ ] Daily guardian absence/results messages
+- [ ] Teacher behavior: student points and entry dialog
+- [ ] WhatsApp Business automatic sending — blocked: workspace role cannot create connections
