@@ -9,7 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Link2, Unlink, UserPlus, Save, Pencil } from "lucide-react";
+import { Link2, Unlink, UserPlus, Save, Pencil, UserRound } from "lucide-react";
+import { Link as RouterLink } from "react-router-dom";
+import { guardianChildCount } from "@/lib/guardianReports";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { normalizeWhatsappNumber } from "@/lib/whatsapp";
@@ -52,6 +54,8 @@ const GuardiansManagement = () => {
   const [linkStudent, setLinkStudent] = useState("");
   const [linkRel, setLinkRel] = useState("أب");
   const [editG, setEditG] = useState<Guardian | null>(null);
+  const [account, setAccount] = useState<Guardian | null>(null);
+  const [page, setPage] = useState(1);
 
   const load = async () => {
     const [{ data: g }, { data: l }, { data: s }] = await Promise.all([
@@ -164,10 +168,10 @@ const GuardiansManagement = () => {
         <TabsList><TabsTrigger value="accounts">حسابات أولياء الأمور ({guardians.length})</TabsTrigger><TabsTrigger value="contacts">بيانات التواصل في ملفات الطلاب</TabsTrigger></TabsList>
 
         <TabsContent value="accounts" className="space-y-4">
-          <Input placeholder="بحث بالاسم أو الجوال" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+          <Input placeholder="بحث بالاسم أو الجوال" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="max-w-sm" />
           {shownGuardians.length === 0 ? <p className="text-muted-foreground">لا يوجد أولياء أمور.</p> : (
             <div className="grid gap-4 md:grid-cols-2">
-              {shownGuardians.map((g) => {
+              {shownGuardians.slice((page - 1) * 20, page * 20).map((g) => {
                 const kids = links.filter((l) => l.guardian_id === g.id);
                 return (
                   <Card key={g.id}>
@@ -176,6 +180,7 @@ const GuardiansManagement = () => {
                       <Badge variant={g.approval_status === "approved" ? "secondary" : "outline"}>{STATUS[g.approval_status] || g.approval_status}</Badge>
                     </CardHeader>
                     <CardContent className="space-y-3">
+                      <p className="font-semibold">عدد الأبناء: {guardianChildCount(links, g.id)}</p>
                       {kids.length === 0 ? <p className="text-sm text-muted-foreground">غير مرتبط بأي طالب</p> : (
                         <ul className="space-y-1">{kids.map((l) => (
                           <li key={l.id} className="flex items-center justify-between text-sm bg-muted rounded px-2 py-1">
@@ -183,6 +188,7 @@ const GuardiansManagement = () => {
                             <Button size="sm" variant="ghost" onClick={() => unlink(l)}><Unlink className="w-3 h-3 ml-1" />فك</Button>
                           </li>))}</ul>)}
                       <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setAccount(g)}><UserRound className="w-4 h-4 ml-1" />فتح الحساب</Button>
                         <Button size="sm" variant="outline" onClick={() => { setLinkFor(g); setLinkStudent(""); }}><Link2 className="w-4 h-4 ml-1" />ربط بطالب</Button>
                         <Button size="sm" variant="outline" onClick={() => setEditG({ ...g })}><Pencil className="w-4 h-4 ml-1" />تعديل التواصل</Button>
                         {isManager && g.approval_status !== "approved" && <Button size="sm" onClick={() => approve(g)}>اعتماد</Button>}
@@ -192,6 +198,7 @@ const GuardiansManagement = () => {
                 );
               })}
             </div>)}
+          {shownGuardians.length > 20 && <div className="flex items-center gap-3"><Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>السابق</Button><span>{page} / {Math.ceil(shownGuardians.length / 20)}</span><Button variant="outline" disabled={page * 20 >= shownGuardians.length} onClick={() => setPage(p => p + 1)}>التالي</Button></div>}
         </TabsContent>
 
         <TabsContent value="contacts" className="space-y-4">
@@ -212,6 +219,20 @@ const GuardiansManagement = () => {
           </CardContent></Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!account} onOpenChange={(open) => !open && setAccount(null)}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>حساب ولي الأمر: {account?.full_name}</DialogTitle></DialogHeader>
+          {account && <div className="space-y-4">
+            <p dir="ltr" className="text-right">{account.phone || "بدون جوال"}</p>
+            <Badge variant="secondary">{STATUS[account.approval_status] || account.approval_status}</Badge>
+            <h3 className="font-semibold">الأبناء المرتبطون ({guardianChildCount(links, account.id)})</h3>
+            {links.filter(l => l.guardian_id === account.id).map(l => <div key={l.id} className="flex justify-between items-center gap-2 border-b py-2"><span>{studentName(l.student_id)} ({l.relationship || "—"})</span><Button asChild size="sm" variant="outline"><RouterLink to={`/students/${l.student_id}/track`}>متابعة الطالب</RouterLink></Button></div>)}
+            {!guardianChildCount(links, account.id) && <p className="text-muted-foreground">غير مرتبط بأي طالب</p>}
+            <DialogFooter><Button variant="outline" onClick={() => { setEditG({ ...account }); setAccount(null); }}>تعديل التواصل</Button><Button onClick={() => { setLinkFor(account); setLinkStudent(""); setAccount(null); }}>ربط بطالب</Button></DialogFooter>
+          </div>}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent dir="rtl">
