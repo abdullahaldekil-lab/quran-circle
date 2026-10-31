@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageCircle, CheckCircle2 } from "lucide-react";
+import { MessageCircle, CheckCircle2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { fetchMyHalaqat, currentSchoolWeek } from "@/lib/myHalaqat";
@@ -93,6 +93,19 @@ const GuardianWeeklyReport = () => {
         <div className="flex items-end"><Button variant={onlyAbsent ? "default" : "outline"} className="w-full" onClick={() => setOnlyAbsent((v) => !v)}>{onlyAbsent ? "عرض الجميع" : "الغائبون فقط"}</Button></div>
       </CardContent></Card>
 
+      {rows.some((r) => r.absent > 0) && (
+        <Card><CardContent className="pt-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold">إرسال رسائل الغائبين</p>
+            <p className="text-sm text-muted-foreground">كل ضغطة تفتح رسالة الغائب التالي جاهزة في واتساب — المتبقي: {absentQueue.length}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={sendNextAbsent} disabled={!absentQueue.length}><Send className="w-4 h-4 ml-2" />{absentQueue.length ? "إرسال للغائب التالي" : "تم الإرسال للجميع"}</Button>
+            <Button variant="outline" onClick={() => { localStorage.removeItem(sentKey); setSent({}); }}>إعادة التعيين</Button>
+          </div>
+        </CardContent></Card>
+      )}
+
       {loading ? <p className="text-muted-foreground">جارٍ التحميل...</p> : shown.length === 0 ? <p className="text-muted-foreground">لا يوجد طلاب.</p> : (
         <div className="grid gap-4 md:grid-cols-2">
           {shown.map((r) => {
@@ -103,12 +116,12 @@ const GuardianWeeklyReport = () => {
                   <CardTitle className="text-base">{r.full_name}</CardTitle>
                   <div className="flex gap-1">
                     {r.absent > 0 && <Badge variant="destructive">غياب {r.absent}</Badge>}
-                    {sent[r.id] && <Badge variant="secondary"><CheckCircle2 className="w-3 h-3 ml-1" />فُتحت</Badge>}
+                    {sent[r.id] && <Badge variant="secondary"><CheckCircle2 className="w-3 h-3 ml-1" />أُرسلت</Badge>}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <pre className="whitespace-pre-wrap text-sm bg-muted rounded-md p-3 font-sans">{buildMsg(r)}</pre>
-                  <Button className="w-full" disabled={!valid} onClick={() => { if (openWhatsapp(r.guardian_phone, buildMsg(r))) setSent((s) => ({ ...s, [r.id]: true })); else toast.error("رقم ولي الأمر غير صالح"); }}>
+                  <Button className="w-full" disabled={!valid} onClick={() => sendOne(r)}>
                     <MessageCircle className="w-4 h-4 ml-2" />{valid ? "فتح واتساب" : "لا يوجد رقم صالح لولي الأمر"}
                   </Button>
                 </CardContent>
