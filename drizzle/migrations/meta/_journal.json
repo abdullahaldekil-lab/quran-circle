@@ -50,6 +50,13 @@
       "when": 1793274946135,
       "tag": "0006_bus_daily_log",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793431929482,
+      "tag": "0007_student_behavior",
+      "breakpoints": true
     }
   ]
 }
