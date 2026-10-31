@@ -32,7 +32,7 @@ const WeeklyAttendancePdf = () => {
   const [from, setFrom] = useState(week.from);
   const [to, setTo] = useState(week.to);
   const [students, setStudents] = useState<{ id: string; full_name: string }[]>([]);
-  const [att, setAtt] = useState<{ student_id: string; attendance_date: string; status: string; notes: string | null }[]>([]);
+  const [att, setAtt] = useState<{ student_id: string; attendance_date: string; status: string; note: string | null }[]>([]);
   const [teacher, setTeacher] = useState("");
   const [busy, setBusy] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -53,7 +53,7 @@ const WeeklyAttendancePdf = () => {
       } else setTeacher("");
       const ids = (sts || []).map((s) => s.id);
       if (!ids.length) return setAtt([]);
-      const { data } = await supabase.from("attendance").select("student_id, attendance_date, status, notes").in("student_id", ids).gte("attendance_date", from).lte("attendance_date", to).is("archived_at", null);
+      const { data } = await supabase.from("attendance").select("student_id, attendance_date, status, note").in("student_id", ids).gte("attendance_date", from).lte("attendance_date", to).is("archived_at", null);
       setAtt((data as any) || []);
     })();
   }, [halaqaId, from, to]);
@@ -154,7 +154,7 @@ const WeeklyAttendancePdf = () => {
                 <thead><tr className="bg-muted"><th className={cell}>التاريخ</th><th className={cell}>اليوم</th><th className={cell}>الطالب</th><th className={cell}>الحالة</th><th className={cell}>ملاحظات</th></tr></thead>
                 <tbody>{details.map((x, i) => <tr key={i}>
                   <td className={cell}>{x.attendance_date}</td><td className={cell}>{DAY_NAMES[new Date(x.attendance_date + "T00:00:00").getDay()]}</td>
-                  <td className={`${cell} text-right`}>{x.name}</td><td className={cell}>{MARK[x.status]}</td><td className={`${cell} text-right`}>{x.notes || "—"}</td>
+                  <td className={`${cell} text-right`}>{x.name}</td><td className={cell}>{MARK[x.status]}</td><td className={`${cell} text-right`}>{x.note || "—"}</td>
                 </tr>)}</tbody>
               </table>)}
           </div>
