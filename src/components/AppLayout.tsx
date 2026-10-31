@@ -104,7 +104,7 @@ const navGroups: NavGroup[] = [
       { to: "/student-attendance-report", icon: BarChart3, label: "تقرير حضور الطلاب" },
       { to: "/attendance-overview", icon: Users, label: "حضور الحلقات حسب الموظف" },
       { to: "/halaqa-attendance-ranking", icon: BarChart3, label: "حضور الحلقة والترتيب" },
-      { to: "/guardian-weekly-report", icon: Users, label: "الإشعارات الأسبوعية لأولياء الأمور" },
+      { to: "/guardian-weekly-report", icon: Users, label: "إشعارات أولياء الأمور اليومية والأسبوعية" },
       { to: "/behavior-evaluation", icon: Award, label: "تقييم السلوك" },
       { to: "/weekly-attendance-pdf", icon: FileText, label: "تقرير الحضور الأسبوعي PDF" },
       { to: "/guardians-management", icon: UserCog, label: "إدارة أولياء الأمور" },
