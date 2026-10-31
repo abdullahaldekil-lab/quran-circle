@@ -25,7 +25,7 @@ const BehaviorEvaluation = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [studentId, setStudentId] = useState("");
-  const [category, setCategory] = useState(BEHAVIOR_CATEGORIES[0].key);
+  const [category, setCategory] = useState<string>(BEHAVIOR_CATEGORIES[0].key);
   const [date, setDate] = useState(today());
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
