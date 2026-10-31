@@ -4459,6 +4459,71 @@ export type Database = {
           },
         ]
       }
+      student_behavior: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          eval_date: string
+          halaqa_id: string | null
+          id: string
+          note: string | null
+          points: number
+          student_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          eval_date?: string
+          halaqa_id?: string | null
+          id?: string
+          note?: string | null
+          points?: number
+          student_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          eval_date?: string
+          halaqa_id?: string | null
+          id?: string
+          note?: string | null
+          points?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_behavior_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_behavior_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_behavior_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_behavior_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_bus_assignments: {
         Row: {
           active: boolean
