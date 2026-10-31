@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Test recent updates and deliver an Arabic report without changing student data (310 tests passed; 10 pages checked; account/behavior dialogs and PDF/Excel downloads verified)
 - [x] Weekly guardian notifications page (absence + recitation, WhatsApp per message)
 - [x] Halaqa attendance + cumulative ranking with recitation excellence points
 - [x] Bus daily boarding/alighting log (trip creation & student distribution already in /trips)
@@ -7,7 +8,7 @@
 - [x] Weekly notifications: one-tap sequential WhatsApp for absentees + behavior points in message
 - [x] Behavior evaluation with cumulative points
 - [x] Weekly halaqa attendance PDF report
-- [x] Registered guardians: child counts and account details (no registered accounts returned in the test session; opening a real account remains unverified)
+- [x] Registered guardians: child counts and account details (opened a registered guardian's details; one pending account with zero linked children; guardian sign-in and linked-child editing remain unverified)
 - [x] Daily guardian absence/results messages (daily/weekly switch checked with a signed-in account)
 - [x] Teacher behavior: student points and entry dialog (saved +7, read back, removed temporary evaluation; teacher-specific session not available)
 - [ ] WhatsApp Business automatic sending — blocked: workspace role cannot create connections
