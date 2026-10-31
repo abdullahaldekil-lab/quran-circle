@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2 } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { riyadhToday, validBehaviorPoints } from "@/lib/guardianReports";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/useRole";
 import { fetchMyHalaqat } from "@/lib/myHalaqat";
@@ -16,7 +18,7 @@ import { BEHAVIOR_CATEGORIES } from "@/lib/behavior";
 type Student = { id: string; full_name: string };
 type Entry = { id: string; student_id: string; eval_date: string; category: string; points: number; note: string | null };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = riyadhToday;
 
 const BehaviorEvaluation = () => {
   const { isTeacher } = useRole();
@@ -29,6 +31,8 @@ const BehaviorEvaluation = () => {
   const [date, setDate] = useState(today());
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [entryOpen, setEntryOpen] = useState(false);
+  const [points, setPoints] = useState(String(BEHAVIOR_CATEGORIES[0].points));
 
   useEffect(() => { fetchMyHalaqat(isTeacher).then((l) => { setHalaqat(l); if (l[0]) setHalaqaId((p) => p || l[0].id); }); }, [isTeacher]);
 
@@ -38,8 +42,14 @@ const BehaviorEvaluation = () => {
     setStudents(sts || []);
     const ids = (sts || []).map((s) => s.id);
     if (!ids.length) { setEntries([]); return; }
-    const { data } = await supabase.from("student_behavior").select("id, student_id, eval_date, category, points, note").in("student_id", ids).order("eval_date", { ascending: false }).limit(1000);
-    setEntries(data || []);
+    const all: Entry[] = [];
+    for (let start = 0; ; start += 1000) {
+      const { data, error } = await supabase.from("student_behavior").select("id, student_id, eval_date, category, points, note").in("student_id", ids).order("eval_date", { ascending: false }).order("id").range(start, start + 999);
+      if (error) { toast.error("تعذر تحميل نقاط السلوك"); return; }
+      all.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    setEntries(all);
   };
   useEffect(() => { load(); setStudentId(""); }, [halaqaId]);
 
@@ -54,14 +64,16 @@ const BehaviorEvaluation = () => {
 
   const add = async () => {
     if (!studentId) return toast.error("اختر الطالب");
-    const cat = BEHAVIOR_CATEGORIES.find((c) => c.key === category)!;
+    const cat = BEHAVIOR_CATEGORIES.find((c) => c.key === category);
+    if (!cat || !validBehaviorPoints(points) || !students.some(s => s.id === studentId)) return toast.error("أدخل نقاطًا صحيحة لطالب في حلقتك");
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("student_behavior").insert({ student_id: studentId, halaqa_id: halaqaId, eval_date: date, category: cat.label, points: cat.points, note: note || null, created_by: u.user?.id });
+    const { error } = await supabase.from("student_behavior").insert({ student_id: studentId, halaqa_id: halaqaId, eval_date: date, category: cat.label, points: Number(points), note: note || null, created_by: u.user?.id });
     setSaving(false);
     if (error) return toast.error("تعذر الحفظ: " + error.message);
-    toast.success(`تم تسجيل «${cat.label}» (${cat.points > 0 ? "+" : ""}${cat.points})`);
+    toast.success(`تم تسجيل «${cat.label}» (${Number(points) > 0 ? "+" : ""}${points})`);
     setNote("");
+    setEntryOpen(false);
     load();
   };
 
@@ -76,24 +88,24 @@ const BehaviorEvaluation = () => {
   return (
     <div className="space-y-6" dir="rtl">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">تقييم السلوك</h1>
-        <p className="text-muted-foreground">سجّل سلوك الطلاب الإيجابي والسلبي، وتابع النقاط التراكمية والترتيب</p>
+        <h1 className="text-2xl font-bold text-foreground">{isTeacher ? "سلوك طلاب حلقتي" : "تقييم السلوك"}</h1>
       </div>
 
-      <Card><CardContent className="pt-6 grid gap-4 md:grid-cols-6">
-        <div className="md:col-span-1"><Label>الحلقة</Label>
-          <Select value={halaqaId} onValueChange={setHalaqaId}><SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
-            <SelectContent>{halaqat.map((h) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}</SelectContent></Select></div>
-        <div className="md:col-span-1"><Label>الطالب</Label>
+      <div className="max-w-sm"><Label>الحلقة</Label>
+          {isTeacher ? <p className="py-2 font-semibold">{halaqat.find(h => h.id === halaqaId)?.name || "لا توجد حلقة مسندة"}</p> : <Select value={halaqaId} onValueChange={setHalaqaId}><SelectTrigger><SelectValue placeholder="اختر الحلقة" /></SelectTrigger>
+            <SelectContent>{halaqat.map((h) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}</SelectContent></Select>}</div>
+      <Dialog open={entryOpen} onOpenChange={setEntryOpen}><DialogContent dir="rtl"><DialogHeader><DialogTitle>تسجيل نقاط: {name(studentId)}</DialogTitle></DialogHeader>
+        <div><Label>الطالب</Label>
           <Select value={studentId} onValueChange={setStudentId}><SelectTrigger><SelectValue placeholder="اختر الطالب" /></SelectTrigger>
             <SelectContent>{students.map((s) => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent></Select></div>
         <div className="md:col-span-1"><Label>السلوك</Label>
-          <Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue /></SelectTrigger>
+          <Select value={category} onValueChange={v => { setCategory(v); const c = BEHAVIOR_CATEGORIES.find(c => c.key === v); if (c) setPoints(String(c.points)); }}><SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{BEHAVIOR_CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label} ({c.points > 0 ? "+" : ""}{c.points})</SelectItem>)}</SelectContent></Select></div>
         <div><Label>التاريخ</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+        <div><Label htmlFor="behavior-points">النقاط</Label><Input id="behavior-points" type="number" step="1" value={points} onChange={e => setPoints(e.target.value)} /></div>
         <div><Label>ملاحظة</Label><Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="اختياري" /></div>
-        <div className="flex items-end"><Button className="w-full" onClick={add} disabled={saving}>تسجيل</Button></div>
-      </CardContent></Card>
+        <DialogFooter><Button onClick={add} disabled={saving}>{saving ? "جارٍ الحفظ..." : "تسجيل"}</Button></DialogFooter>
+      </DialogContent></Dialog>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card><CardHeader><CardTitle className="text-base">الترتيب التراكمي لنقاط السلوك</CardTitle></CardHeader>
@@ -102,8 +114,8 @@ const BehaviorEvaluation = () => {
             <TableHead className="text-right">إيجابي</TableHead><TableHead className="text-right">سلبي</TableHead><TableHead className="text-right">النقاط</TableHead>
           </TableRow></TableHeader><TableBody>
             {ranking.map((r) => <TableRow key={r.id}>
-              <TableCell>{r.rank}</TableCell><TableCell>{r.full_name}</TableCell><TableCell>{r.pos}</TableCell><TableCell>{r.neg}</TableCell>
-              <TableCell><Badge variant={r.total < 0 ? "destructive" : "secondary"}>{r.total}</Badge></TableCell>
+              <TableCell>{r.rank}</TableCell><TableCell><Button variant="link" className="px-0" onClick={() => { setStudentId(r.id); setNote(""); setDate(today()); setEntryOpen(true); }}>{r.full_name}<Plus className="w-4 h-4 mr-2" /></Button></TableCell><TableCell>{r.pos}</TableCell><TableCell>{r.neg}</TableCell>
+              <TableCell><Button variant="ghost" aria-label={`نقاط ${r.full_name}`} onClick={() => { setStudentId(r.id); setNote(""); setDate(today()); setEntryOpen(true); }}><Badge variant={r.total < 0 ? "destructive" : "secondary"}>{r.total}</Badge></Button></TableCell>
             </TableRow>)}
           </TableBody></Table></CardContent></Card>
 
