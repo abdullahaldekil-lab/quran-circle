@@ -143,9 +143,12 @@ const Buses = () => {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("buses").update({ active: false }).eq("id", id);
       if (error) throw error;
+      const { error: e2 } = await supabase.from("student_bus_assignments").update({ active: false }).eq("bus_id", id).eq("active", true);
+      if (e2) throw e2;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["buses"] });
+      queryClient.invalidateQueries({ queryKey: ["bus_assignments"] });
       toast({ title: "تم حذف الباص" });
     },
   });
@@ -210,7 +213,8 @@ const Buses = () => {
   });
 
   // Dashboard stats
-  const totalAssigned = assignments.length;
+  const activeBusIds = new Set(buses.map((b: any) => b.id));
+  const totalAssigned = assignments.filter((a: any) => activeBusIds.has(a.bus_id)).length;
   const totalStudents = allStudents.length;
   const unassignedCount = totalStudents - totalAssigned;
 
