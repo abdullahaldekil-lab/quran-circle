@@ -1,3 +1,4 @@
 - Student track follow-up UI lives in one shared component (StudentTrackView) used by staff and guardian pages; guardians edit student data only via the guardian_update_student RPC (allow-listed fields, logged). Why: one source of truth and no direct guardian writes to students.
 - Daily and weekly guardian reports share one page and date-range helper; WhatsApp deep links track conversation opening, never delivery, because only provider evidence can confirm sending.
 - Teacher behavior uses the existing evaluation page with student-specific entry dialogs and paged history reads, so cumulative points include all records without duplicating the workflow.
+- Himmah day data extends narration sessions through separate tables and guarded RPCs; approved per-hizb attempts are immutable, and day totals use the latest approved attempt so legacy scoring stays unchanged.

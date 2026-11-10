@@ -355,6 +355,7 @@ export default function QuranNarration() {
   return (
     <div className="space-y-6" dir="rtl">
       {/* Header */}
+      <Button variant="outline" onClick={() => navigate('/quran-narration/himmah')}>يوم السرد – يوم الهمة</Button>
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">

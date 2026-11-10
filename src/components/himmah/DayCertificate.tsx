@@ -1,0 +1,10 @@
+import logo from '@/assets/huwaylan-logo.jpeg';
+import { formatDateSmart } from '@/lib/hijri';
+import { appreciation, type HimmahDay, type summarize } from '@/lib/himmah';
+export default function DayCertificate({ day, row }: { day: HimmahDay; row: ReturnType<typeof summarize>[number] }) {
+  return <article className="himmah-certificate bg-card text-card-foreground border-4 border-primary p-8 mx-auto font-cairo" dir="rtl">
+    <header className="flex justify-between items-center gap-4"><img src={day.logo_url || logo} alt="شعار المجمع" className="w-20 h-20 object-contain" /><div className="text-center"><h2 className="text-2xl font-bold text-primary">مجمع حلق جامع حويلان</h2><h3 className="text-3xl font-bold mt-3">شهادة {day.title}</h3><p className="mt-2">{formatDateSmart(day.day_date)}</p></div>{day.association_logo_url ? <img src={day.association_logo_url} alt="شعار الجمعية" className="w-20 h-20 object-contain" /> : <span className="w-20 text-sm text-muted-foreground">شعار الجمعية غير مضاف</span>}</header>
+    <div className="text-center space-y-4 py-8"><p>يشهد المجمع بأن الطالب</p><h1 className="text-4xl font-bold text-primary">{row.student_name}</h1><p>من حلقة <strong>{row.halaqa_name}</strong></p><p className="text-xl">حقق نسبة إنجاز <strong>{row.completion.toFixed(1)}%</strong> بتقدير <strong>{appreciation(row.completion)}</strong></p><p>الأحزاب المجتازة: {row.passed.map(a => a.hizb).sort((a, b) => a - b).join('، ') || '—'}</p><p>{row.passed.length} حزب مجتاز من إجمالي {row.hizbs.length} حزب مقرر</p></div>
+    <footer className="flex justify-between items-end gap-5"><div><p>معلم الحلقة</p><strong>{row.teacher_name || 'الاسم غير مضاف'}</strong></div>{day.stamp_url ? <img src={day.stamp_url} alt="ختم المجمع" className="w-24 h-24 object-contain" /> : <p className="text-muted-foreground text-sm">الختم غير مضاف</p>}<div><p>مدير المجمع</p><strong>{day.manager_name || 'الاسم غير مضاف'}</strong></div></footer>
+  </article>;
+}

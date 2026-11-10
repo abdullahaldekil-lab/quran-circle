@@ -56,6 +56,7 @@
     --warning-foreground: 0 0% 100%;
     --info: 198 85% 44%;
     --info-foreground: 0 0% 100%;
+    --himmah: 194 67% 27%;
 
     /* Sacred Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(158, 64%, 24%), hsl(162, 70%, 16%));
@@ -86,6 +87,7 @@
     --border: 160 20% 18%;
     --input: 160 20% 18%;
     --ring: 155 60% 38%;
+    --himmah: 194 63% 68%;
     --sidebar-background: 162 45% 7%;
     --sidebar-foreground: 45 35% 95%;
     --sidebar-primary: 41 75% 52%;
@@ -117,6 +119,15 @@
   body {
     @apply bg-background text-foreground font-arabic antialiased;
   }
+}
+
+.himmah-workspace:fullscreen { overflow: auto; background: hsl(var(--background)); padding: 24px; }
+.himmah-certificate { width: 960px; min-height: 620px; max-width: none; }
+@media print {
+  body:has(.himmah-print) * { visibility: hidden; }
+  body:has(.himmah-print) .himmah-print, body:has(.himmah-print) .himmah-print * { visibility: visible; }
+  .himmah-print { position: absolute; inset: 0; overflow: visible; }
+  .himmah-certificate { break-after: page; width: 100%; min-height: 0; }
 }
 
 @layer utilities {

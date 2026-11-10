@@ -21,6 +21,7 @@ export default {
         quran: ['"Amiri Quran"', '"Amiri"', 'serif'],
       },
       colors: {
+        himmah: "hsl(var(--himmah))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

@@ -1441,6 +1441,304 @@ export type Database = {
           },
         ]
       }
+      himmah_attempts: {
+        Row: {
+          approved_at: string | null
+          attempt_no: number
+          duration_seconds: number | null
+          ended_at: string | null
+          equivalent_errors: number | null
+          error_weight: number | null
+          fail_threshold: number | null
+          hizb: number
+          id: string
+          mistakes: number
+          participant_id: string
+          request_id: string
+          reviewer_id: string
+          started_at: string
+          status: string
+          warnings: number
+        }
+        Insert: {
+          approved_at?: string | null
+          attempt_no: number
+          duration_seconds?: number | null
+          ended_at?: string | null
+          equivalent_errors?: number | null
+          error_weight?: number | null
+          fail_threshold?: number | null
+          hizb: number
+          id?: string
+          mistakes?: number
+          participant_id: string
+          request_id: string
+          reviewer_id: string
+          started_at?: string
+          status?: string
+          warnings?: number
+        }
+        Update: {
+          approved_at?: string | null
+          attempt_no?: number
+          duration_seconds?: number | null
+          ended_at?: string | null
+          equivalent_errors?: number | null
+          error_weight?: number | null
+          fail_threshold?: number | null
+          hizb?: number
+          id?: string
+          mistakes?: number
+          participant_id?: string
+          request_id?: string
+          reviewer_id?: string
+          started_at?: string
+          status?: string
+          warnings?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "himmah_attempts_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_attempts_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_reviewers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      himmah_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          attempt_id: string | null
+          created_at: string
+          day_id: string
+          id: string
+          new_value: Json | null
+          previous_value: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          attempt_id?: string | null
+          created_at?: string
+          day_id: string
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          attempt_id?: string | null
+          created_at?: string
+          day_id?: string
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "himmah_audit_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_audit_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      himmah_days: {
+        Row: {
+          association_logo_url: string
+          created_at: string
+          created_by: string
+          day_date: string
+          error_weight: number
+          expires_at: string
+          fail_threshold: number
+          id: string
+          invite_key: string
+          logo_url: string
+          manager_name: string
+          ranking_mode: string
+          registration_open: boolean
+          session_id: string
+          stamp_url: string
+          title: string
+        }
+        Insert: {
+          association_logo_url?: string
+          created_at?: string
+          created_by: string
+          day_date: string
+          error_weight?: number
+          expires_at?: string
+          fail_threshold?: number
+          id?: string
+          invite_key?: string
+          logo_url?: string
+          manager_name?: string
+          ranking_mode?: string
+          registration_open?: boolean
+          session_id: string
+          stamp_url?: string
+          title: string
+        }
+        Update: {
+          association_logo_url?: string
+          created_at?: string
+          created_by?: string
+          day_date?: string
+          error_weight?: number
+          expires_at?: string
+          fail_threshold?: number
+          id?: string
+          invite_key?: string
+          logo_url?: string
+          manager_name?: string
+          ranking_mode?: string
+          registration_open?: boolean
+          session_id?: string
+          stamp_url?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "himmah_days_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "narration_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      himmah_participants: {
+        Row: {
+          day_id: string
+          halaqa_id: string
+          halaqa_name: string
+          hizbs: number[]
+          id: string
+          present: boolean
+          student_id: string
+          student_name: string
+          teacher_name: string
+        }
+        Insert: {
+          day_id: string
+          halaqa_id: string
+          halaqa_name: string
+          hizbs: number[]
+          id?: string
+          present?: boolean
+          student_id: string
+          student_name: string
+          teacher_name?: string
+        }
+        Update: {
+          day_id?: string
+          halaqa_id?: string
+          halaqa_name?: string
+          hizbs?: number[]
+          id?: string
+          present?: boolean
+          student_id?: string
+          student_name?: string
+          teacher_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "himmah_participants_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_participants_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_participants_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_tahfeez"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_participants_halaqa_id_fkey"
+            columns: ["halaqa_id"]
+            isOneToOne: false
+            referencedRelation: "halaqat_talqeen_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_participants_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      himmah_reviewers: {
+        Row: {
+          active: boolean
+          created_at: string
+          day_id: string
+          full_name: string
+          id: string
+          phone: string
+          token_hash: string | null
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          day_id: string
+          full_name: string
+          id?: string
+          phone?: string
+          token_hash?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          day_id?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          token_hash?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "himmah_reviewers_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holidays: {
         Row: {
           created_at: string
@@ -7725,6 +8023,44 @@ export type Database = {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
       }
+      himmah_admin: { Args: never; Returns: boolean }
+      himmah_attempt: {
+        Args: {
+          _action: string
+          _attempt?: string
+          _day: string
+          _hizb?: number
+          _mistakes?: number
+          _participant?: string
+          _request?: string
+          _token?: string
+          _warnings?: number
+        }
+        Returns: Json
+      }
+      himmah_correct: {
+        Args: {
+          _attempt: string
+          _mistakes: number
+          _reason: string
+          _warnings: number
+        }
+        Returns: Json
+      }
+      himmah_dashboard: {
+        Args: { _day: string; _token?: string }
+        Returns: Json
+      }
+      himmah_day_list: { Args: never; Returns: Json }
+      himmah_manage: {
+        Args: { _action: string; _data?: Json; _day?: string }
+        Returns: string
+      }
+      himmah_register: {
+        Args: { _invite: string; _name: string; _phone: string; _token: string }
+        Returns: Json
+      }
+      himmah_view_halaqa: { Args: { _halaqa: string }; Returns: boolean }
       is_app_member: { Args: { _uid: string }; Returns: boolean }
       is_guardian_of: { Args: { _student_id: string }; Returns: boolean }
       is_halaqa_teacher: { Args: { _halaqa_id: string }; Returns: boolean }

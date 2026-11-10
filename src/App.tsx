@@ -122,6 +122,8 @@ import NazemExport from "./pages/NazemExport";
 import StudentTrack from "./pages/StudentTrack";
 import AttendanceOverview from "./pages/AttendanceOverview";
 import AdminDashboard from "./pages/AdminDashboard";
+import HimmahDayPage from "./pages/HimmahDay";
+import HimmahRegister from "./pages/HimmahRegister";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -179,6 +181,7 @@ const AppRoutes = () => {
       <Route path="/verify-certificate" element={<VerifyCertificate />} />
       <Route path="/verify-certificate/:number" element={<VerifyCertificate />} />
       <Route path="/external-reviewer/:token" element={<ExternalReviewer />} />
+      <Route path="/himmah-register/:dayId/:invite" element={<HimmahRegister />} />
       <Route path="/student-portal" element={<StudentPortal />} />
       <Route path="/student-portal/:code" element={<StudentPortal />} />
 
@@ -228,6 +231,7 @@ const AppRoutes = () => {
       <Route path="/talqeen-programs" element={<ProtectedRoute path="/talqeen-programs"><TalqeenPrograms /></ProtectedRoute>} />
       <Route path="/talqeen-supervisor" element={<ProtectedRoute path="/talqeen-supervisor"><TalqeenSupervisor /></ProtectedRoute>} />
       <Route path="/quran-narration" element={<ProtectedRoute path="/quran-narration"><QuranNarration /></ProtectedRoute>} />
+      <Route path="/quran-narration/himmah" element={<ProtectedRoute path="/quran-narration"><HimmahDayPage /></ProtectedRoute>} />
       <Route path="/program-quiz" element={<ProtectedRoute path="/program-quiz"><ProgramQuiz /></ProtectedRoute>} />
       <Route path="/quran-narration/:sessionId" element={<ProtectedRoute path="/quran-narration"><NarrationSession /></ProtectedRoute>} />
       <Route path="/quran-narration/reports" element={<ProtectedRoute path="/quran-narration"><NarrationReports /></ProtectedRoute>} />

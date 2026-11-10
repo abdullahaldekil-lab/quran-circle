@@ -148,6 +148,7 @@ const navGroups: NavGroup[] = [
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
       { to: "/quran-narration", icon: ScrollText, label: "يوم السرد" },
+      { to: "/quran-narration/himmah", icon: ScrollText, label: "يوم السرد – يوم الهمة" },
       { to: "/narration-test", icon: ScrollText, label: "اختبار السرد" },
       { to: "/review-test", icon: ClipboardList, label: "اختبار المراجعة" },
       { to: "/narration-stats", icon: CalendarDays, label: "إحصائيات السرد" },
