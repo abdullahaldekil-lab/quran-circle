@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Copy, Send, Users, KeyRound, MessageCircle } from 'lucide-react';
-import { manage, reviewerStatusLabel, codeMessage, type Dashboard, type Reviewer } from '@/lib/himmah';
+import { manage, savePlan, reviewerStatusLabel, codeMessage, type Dashboard, type Reviewer } from '@/lib/himmah';
 
 /** Memorization circles only: talqeen circles are excluded. */
 const isMemorization = (h: { name: string; talqeen_curriculum_id: string | null }) => !h.talqeen_curriculum_id && !h.name.includes('تلقين');
@@ -29,19 +29,20 @@ export function DaySetup({ data, refresh }: { data: Dashboard; refresh: () => vo
   }, [students.data, enrolled]);
   const valid = (r: { from: number; to: number }) => Number.isInteger(r.from) && Number.isInteger(r.to) && r.from >= 1 && r.to <= 60 && r.from <= r.to;
   async function save() {
+    const shown = students.data || [];
+    const list = shown.filter(s => plan[s.id]?.on);
+    // Validate everything before any change, then save circles and participants in one atomic call.
+    const bad = list.find(s => !valid(plan[s.id]));
+    if (bad) { toast({ title: `نطاق أحزاب غير صحيح: ${bad.full_name}`, variant: 'destructive' }); return; }
+    const unchecked = shown.filter(s => !plan[s.id]?.on && enrolled.has(s.id));
+    const leaving = data.participants.filter(p => !picked.includes(p.halaqa_id) || unchecked.some(s => s.id === p.student_id));
+    if (leaving.length && !window.confirm(`سيُحذف ${leaving.length} مشارك من اليوم:\n${leaving.slice(0, 15).map(p => `${p.student_name} (${p.halaqa_name})`).join('، ')}${leaving.length > 15 ? ' …' : ''}\nهل تريد المتابعة؟`)) return;
     setBusy(true);
     try {
-      try { await manage('halaqat', data.day.id, { halaqa_ids: picked }); }
-      catch (e) { setPicked(data.day.halaqa_ids || []); throw new Error(`تعذّرت إزالة الحلقة: ${(e as { message?: string })?.message || 'خطأ غير معروف'}`); }
-      const list = (students.data || []).filter(s => plan[s.id]?.on);
-      for (const s of list) { const r = plan[s.id]; if (!valid(r)) throw new Error(`نطاق أحزاب غير صحيح: ${s.full_name}`); await manage('participant', data.day.id, { student_id: s.id, hizbs: Array.from({ length: r.to - r.from + 1 }, (_, i) => r.from + i) }); }
-      const unchecked = (students.data || []).filter(s => !plan[s.id]?.on && enrolled.has(s.id));
-      const failed: string[] = [];
-      for (const s of unchecked) await manage('remove_participant', data.day.id, { participant_id: enrolled.get(s.id)!.id }).catch(() => { failed.push(s.full_name); });
+      const result = await savePlan(data.day.id, picked, list.map(s => { const r = plan[s.id]; return { student_id: s.id, hizbs: Array.from({ length: r.to - r.from + 1 }, (_, i) => r.from + i) }; }), unchecked.map(s => s.id));
       refresh();
-      if (failed.length) toast({ title: `تعذّرت إزالة ${failed.length} طالب لوجود محاولات محفوظة: ${failed.join('، ')}`, variant: 'destructive' });
-      else toast({ title: `تم حفظ ${list.length} مشارك` });
-    } catch (e) { toast({ title: e instanceof Error ? e.message : 'تعذّر الحفظ', variant: 'destructive' }); } finally { setBusy(false); }
+      toast({ title: `تم حفظ ${result.saved} مشارك${result.removed ? ` وحذف ${result.removed}` : ''}` });
+    } catch (e) { toast({ title: (e as { message?: string })?.message || 'تعذّر الحفظ؛ لم يُغيَّر شيء', variant: 'destructive' }); } finally { setBusy(false); }
   }
   return <section className="border border-border rounded-lg p-4 space-y-4 bg-card" aria-label="إعداد اليوم">
     <h3 className="font-bold">١. حلقات اليوم والطلاب المشاركون</h3>
@@ -75,6 +76,12 @@ export function ReviewerManager({ data, refresh }: { data: Dashboard; refresh: (
     try { const { data: code, error } = await supabase.rpc('himmah_issue_code', { _reviewer: r.id }); if (error) throw error; setIssued({ reviewer: r, code: String(code) }); refresh(); }
     catch (e) { toast({ title: e instanceof Error ? e.message : 'تعذّر إصدار الكود', variant: 'destructive' }); } finally { setBusy(false); }
   }
+  async function revoke(r: Reviewer) {
+    if (!window.confirm(`إيقاف المسمّع «${r.full_name}» نهائيًا؟ يُلغى كوده ولا يمكن التراجع. محاولاته غير المعتمدة يمكن إلغاؤها من سجل المحاولات في التقارير.`)) return;
+    setBusy(true);
+    try { await manage('revoke', data.day.id, { reviewer_id: r.id }); toast({ title: 'أُوقف المسمّع' }); refresh(); }
+    catch (e) { toast({ title: (e as { message?: string })?.message || 'تعذّر الإيقاف', variant: 'destructive' }); } finally { setBusy(false); }
+  }
   const link = `${window.location.origin}/himmah-register/${data.day.id}/${data.day.invite_key}`;
   const message = issued ? codeMessage(issued.reviewer.full_name, data.day.title, issued.code, link, scopeText(issued.reviewer.id)) : '';
   async function send() {
@@ -90,7 +97,7 @@ export function ReviewerManager({ data, refresh }: { data: Dashboard; refresh: (
   const pending = external.filter(r => r.status === 'pending').length;
   return <section className="space-y-4" aria-label="إدارة المسمّعين الخارجيين">
     <div className="flex flex-wrap gap-2 items-center"><Button variant="outline" disabled={!data.day.registration_open} onClick={() => navigator.clipboard.writeText(link).then(() => toast({ title: 'تم نسخ رابط التسجيل' })).catch(() => toast({ title: 'تعذّر النسخ', variant: 'destructive' }))}><Copy className="w-4 h-4 me-2" />نسخ رابط تسجيل المسمّعين</Button>{!data.day.registration_open && <span className="text-sm text-muted-foreground">التسجيل مغلق — افتحه من الإعدادات</span>}{pending > 0 && <Badge variant="secondary">{pending} بانتظار التوزيع</Badge>}</div>
-    <Table><TableHeader><TableRow><TableHead>المسمّع</TableHead><TableHead>الجوال</TableHead><TableHead>الحالة</TableHead><TableHead>التكليف</TableHead><TableHead>الإجراءات</TableHead></TableRow></TableHeader><TableBody>{external.map(r => <TableRow key={r.id}><TableCell>{r.full_name}</TableCell><TableCell dir="ltr">{r.phone || '—'}</TableCell><TableCell><Badge variant={r.status === 'assigned' ? 'default' : r.status === 'revoked' ? 'destructive' : 'secondary'}>{reviewerStatusLabel(r)}</Badge></TableCell><TableCell>{scopeText(r.id)}</TableCell><TableCell className="flex flex-wrap gap-2">{r.status !== 'revoked' && <><Button size="sm" variant="outline" disabled={busy} onClick={() => openAssign(r)}><Users className="w-4 h-4 me-1" />توزيع</Button><Button size="sm" disabled={busy || !scopeOf(r.id).length} onClick={() => issue(r)}><KeyRound className="w-4 h-4 me-1" />{r.code_issued_at ? 'إعادة إصدار الكود' : 'إصدار الكود'}</Button><Button size="sm" variant="ghost" disabled={busy} onClick={() => manage('revoke', data.day.id, { reviewer_id: r.id }).then(refresh)}>إيقاف</Button></>}</TableCell></TableRow>)}</TableBody></Table>
+    <Table><TableHeader><TableRow><TableHead>المسمّع</TableHead><TableHead>الجوال</TableHead><TableHead>الحالة</TableHead><TableHead>التكليف</TableHead><TableHead>الإجراءات</TableHead></TableRow></TableHeader><TableBody>{external.map(r => <TableRow key={r.id}><TableCell>{r.full_name}</TableCell><TableCell dir="ltr">{r.phone || '—'}</TableCell><TableCell><Badge variant={r.status === 'assigned' ? 'default' : r.status === 'revoked' ? 'destructive' : 'secondary'}>{reviewerStatusLabel(r)}</Badge></TableCell><TableCell>{scopeText(r.id)}</TableCell><TableCell className="flex flex-wrap gap-2">{r.status !== 'revoked' && <><Button size="sm" variant="outline" disabled={busy} onClick={() => openAssign(r)}><Users className="w-4 h-4 me-1" />توزيع</Button><Button size="sm" disabled={busy || !scopeOf(r.id).length} onClick={() => issue(r)}><KeyRound className="w-4 h-4 me-1" />{r.code_issued_at ? 'إعادة إصدار الكود' : 'إصدار الكود'}</Button><Button size="sm" variant="ghost" disabled={busy} onClick={() => revoke(r)}>إيقاف</Button></>}</TableCell></TableRow>)}</TableBody></Table>
     {external.length === 0 && <p className="text-sm text-muted-foreground">لا يوجد مسمّعون مسجلون بعد</p>}
     <Dialog open={!!assignFor} onOpenChange={v => !v && setAssignFor(null)}><DialogContent dir="rtl" className="max-w-2xl max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>توزيع على {assignFor?.full_name}</DialogTitle></DialogHeader>
       <p className="font-medium">حلقات كاملة</p><div className="flex flex-wrap gap-2">{circles.map(([id, name]) => <label key={id} className="flex items-center gap-2 border border-border rounded-md px-3 py-2"><Checkbox aria-label={`تكليف حلقة ${name}`} checked={halaqat.includes(id)} onCheckedChange={v => setHalaqat(h => v === true ? [...h, id] : h.filter(x => x !== id))} />{name}</label>)}</div>

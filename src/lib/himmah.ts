@@ -5,7 +5,7 @@ export interface HimmahDay { id: string; title: string; day_date: string; error_
 export interface Participant { id: string; student_id: string; student_name: string; halaqa_id: string; halaqa_name: string; teacher_name: string; hizbs: number[]; present: boolean }
 export interface Reviewer { id: string; full_name: string; phone: string; active: boolean; status?: 'pending' | 'assigned' | 'revoked'; staff?: boolean; code_issued_at?: string | null }
 export interface Assignment { reviewer_id: string; halaqa_id: string | null; participant_id: string | null }
-export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail'; approved_at: string | null; paused_at?: string | null; paused_seconds?: number; score?: number | null; scoring?: ScoringConfig & { reviewer_name?: string } | null }
+export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail' | 'cancelled'; approved_at: string | null; paused_at?: string | null; paused_seconds?: number; score?: number | null; scoring?: ScoringConfig & { reviewer_name?: string } | null }
 export interface Dashboard { day: HimmahDay; can_manage: boolean; reviewer_id: string | null; participants: Participant[]; reviewers: Reviewer[]; assignments: Assignment[]; attempts: Attempt[]; audit: { id: string; action: string; created_at: string }[] }
 export interface ScoringConfig { total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds?: number }
 /** Final score = total − mistakes×mistake deduction − warnings×warning deduction, clamped to [0, total]. No automatic fail by count or time. */
@@ -52,11 +52,48 @@ export function summarize(participants: Participant[], attempts: Attempt[], mode
   });
   return rows;
 }
+/** Difference between the server clock and this device, so the recitation timer never depends on the device time. */
+let clockOffset = 0;
+export const serverNow = () => Date.now() + clockOffset;
+export function syncClock(serverIso: string | undefined, sentAt: number, receivedAt: number) {
+  const server = Date.parse(serverIso || '');
+  // A slow round trip is too imprecise to trust; keep the previous offset.
+  if (Number.isFinite(server) && receivedAt - sentAt < 5000) clockOffset = server - (sentAt + receivedAt) / 2;
+  return clockOffset;
+}
 export async function dashboard(day: string, token?: string) {
+  const sentAt = Date.now();
   const { data, error } = await supabase.rpc('himmah_dashboard', { _day: day, _token: token || undefined });
   if (error) throw error;
-  return data as unknown as Dashboard;
+  const { server_now, ...rest } = data as unknown as Dashboard & { server_now?: string };
+  syncClock(server_now, sentAt, Date.now());
+  return rest as Dashboard;
 }
+export type Branding = Pick<HimmahDay, 'logo_url' | 'association_logo_url' | 'stamp_url'>;
+/** Certificate images are fetched once, outside the polled dashboard. */
+export async function branding(day: string) {
+  const { data, error } = await supabase.rpc('himmah_branding', { _day: day });
+  if (error) throw error;
+  return (data || { logo_url: '', association_logo_url: '', stamp_url: '' }) as unknown as Branding;
+}
+/** Only an explicit server refusal (bad or revoked code, expired day) ends a reviewer session; network failures do not. */
+export const isAccessDenied = (error: unknown) => (error as { code?: string } | null)?.code === 'P0001';
+export async function cancelAttempt(day: string, attempt: string, token?: string, reason?: string) {
+  const { data, error } = await supabase.rpc('himmah_cancel_attempt', { _day: day, _attempt: attempt, _token: token, _reason: reason });
+  if (error) throw error;
+  return data as unknown as Attempt;
+}
+export async function savePlan(day: string, halaqaIds: string[], plan: { student_id: string; hizbs: number[] }[], remove: string[]) {
+  const { data, error } = await supabase.rpc('himmah_save_plan', { _day: day, _halaqa_ids: halaqaIds, _plan: plan, _remove: remove });
+  if (error) throw error;
+  return data as unknown as { saved: number; removed: number };
+}
+/** Delay before retrying the automatic stop at the time limit: 2s, 4s, 8s … capped at 30s. */
+export const retryDelay = (failures: number) => Math.min(30000, 2000 * 2 ** Math.max(0, failures - 1));
+/** `datetime-local` works in device time; these keep the stored instant unchanged in both directions. */
+export function toLocalInput(iso: string) { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
+export function fromLocalInput(value: string) { const d = new Date(value); return Number.isNaN(d.getTime()) ? null : d.toISOString(); }
+export const attemptStatusLabel = (s: Attempt['status']) => ({ pass: 'مجتاز', fail: 'راسب', cancelled: 'ملغاة', ended: 'بانتظار الاعتماد', running: 'قيد التسميع' })[s];
 export async function manage(action: string, day: string | undefined, payload: Record<string, Json | undefined>) {
   const { data, error } = await supabase.rpc('himmah_manage', { _action: action, _day: day, _data: payload });
   if (error) throw error;

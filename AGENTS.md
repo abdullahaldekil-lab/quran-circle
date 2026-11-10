@@ -2,3 +2,4 @@
 - Daily and weekly guardian reports share one page and date-range helper; WhatsApp deep links track conversation opening, never delivery, because only provider evidence can confirm sending.
 - Teacher behavior uses the existing evaluation page with student-specific entry dialogs and paged history reads, so cumulative points include all records without duplicating the workflow.
 - Himmah day data extends narration sessions through separate tables and guarded RPCs; approved per-hizb attempts are immutable, and day totals use the latest approved attempt so legacy scoring stays unchanged.
+- Himmah day circles and participants save through one atomic RPC (himmah_save_plan); unapproved attempts are cancelled, never deleted; certificate images load via himmah_branding outside the polled dashboard. Why: partial saves and silent removals lost data, and inline images made every 8-second sync heavy.
