@@ -1441,6 +1441,55 @@ export type Database = {
           },
         ]
       }
+      himmah_assignments: {
+        Row: {
+          created_at: string
+          day_id: string
+          halaqa_id: string | null
+          id: string
+          participant_id: string | null
+          reviewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_id: string
+          halaqa_id?: string | null
+          id?: string
+          participant_id?: string | null
+          reviewer_id: string
+        }
+        Update: {
+          created_at?: string
+          day_id?: string
+          halaqa_id?: string | null
+          id?: string
+          participant_id?: string | null
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "himmah_assignments_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_assignments_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_assignments_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_reviewers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       himmah_attempts: {
         Row: {
           approved_at: string | null
@@ -1454,6 +1503,8 @@ export type Database = {
           id: string
           mistakes: number
           participant_id: string
+          paused_at: string | null
+          paused_seconds: number
           request_id: string
           reviewer_id: string
           score: number | null
@@ -1474,6 +1525,8 @@ export type Database = {
           id?: string
           mistakes?: number
           participant_id: string
+          paused_at?: string | null
+          paused_seconds?: number
           request_id: string
           reviewer_id: string
           score?: number | null
@@ -1494,6 +1547,8 @@ export type Database = {
           id?: string
           mistakes?: number
           participant_id?: string
+          paused_at?: string | null
+          paused_seconds?: number
           request_id?: string
           reviewer_id?: string
           score?: number | null
@@ -1577,6 +1632,7 @@ export type Database = {
           expires_at: string
           fail_threshold: number
           grade_bounds: Json
+          halaqa_ids: string[]
           id: string
           invite_key: string
           logo_url: string
@@ -1601,6 +1657,7 @@ export type Database = {
           expires_at?: string
           fail_threshold?: number
           grade_bounds?: Json
+          halaqa_ids?: string[]
           id?: string
           invite_key?: string
           logo_url?: string
@@ -1625,6 +1682,7 @@ export type Database = {
           expires_at?: string
           fail_threshold?: number
           grade_bounds?: Json
+          halaqa_ids?: string[]
           id?: string
           invite_key?: string
           logo_url?: string
@@ -1725,31 +1783,40 @@ export type Database = {
       himmah_reviewers: {
         Row: {
           active: boolean
+          code_hash: string | null
+          code_issued_at: string | null
           created_at: string
           day_id: string
           full_name: string
           id: string
           phone: string
+          status: string
           token_hash: string | null
           user_id: string | null
         }
         Insert: {
           active?: boolean
+          code_hash?: string | null
+          code_issued_at?: string | null
           created_at?: string
           day_id: string
           full_name: string
           id?: string
           phone?: string
+          status?: string
           token_hash?: string | null
           user_id?: string | null
         }
         Update: {
           active?: boolean
+          code_hash?: string | null
+          code_issued_at?: string | null
           created_at?: string
           day_id?: string
           full_name?: string
           id?: string
           phone?: string
+          status?: string
           token_hash?: string | null
           user_id?: string | null
         }
@@ -8048,6 +8115,10 @@ export type Database = {
         Returns: boolean
       }
       himmah_admin: { Args: never; Returns: boolean }
+      himmah_assign: {
+        Args: { _halaqat: string[]; _participants: string[]; _reviewer: string }
+        Returns: number
+      }
       himmah_attempt: {
         Args: {
           _action: string
@@ -8061,6 +8132,10 @@ export type Database = {
           _warnings?: number
         }
         Returns: Json
+      }
+      himmah_code_reviewer: {
+        Args: { _code: string; _day: string }
+        Returns: string
       }
       himmah_correct: {
         Args: {
@@ -8080,12 +8155,29 @@ export type Database = {
         Returns: Json
       }
       himmah_day_list: { Args: never; Returns: Json }
+      himmah_elapsed: {
+        Args: {
+          _a: Database["public"]["Tables"]["himmah_attempts"]["Row"]
+          _limit: number
+        }
+        Returns: number
+      }
+      himmah_in_scope: {
+        Args: { _participant: string; _reviewer: string }
+        Returns: boolean
+      }
+      himmah_issue_code: { Args: { _reviewer: string }; Returns: string }
       himmah_manage: {
         Args: { _action: string; _data?: Json; _day?: string }
         Returns: string
       }
       himmah_register: {
-        Args: { _invite: string; _name: string; _phone: string; _token: string }
+        Args: {
+          _invite: string
+          _name: string
+          _phone: string
+          _token?: string
+        }
         Returns: Json
       }
       himmah_score: {

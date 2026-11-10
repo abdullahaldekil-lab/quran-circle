@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { certificateIndex, stats, appreciation, duration, latestApproved, outcome, score, summarize, type Attempt, type Participant } from './himmah';
+import { certificateIndex, stats, appreciation, duration, latestApproved, outcome, score, summarize, elapsedSeconds, type Attempt, type Participant } from './himmah';
 describe('Himmah rules', () => {
   const cfg = { total_score: 100, mistake_deduction: 5, warning_deduction: 1, pass_score: 80 };
   it.each([[3, 0, 85, 'pass'], [0, 12, 88, 'pass'], [4, 0, 80, 'pass'], [4, 1, 79, 'fail']])('%i errors and %i warnings => %i %s', (e, w, s, result) => { expect(score(Number(e), Number(w), cfg)).toBe(s); expect(outcome(Number(e), Number(w), cfg)).toBe(result); });
@@ -15,4 +15,6 @@ describe('Himmah rules', () => {
   it('custom grade bounds change the grade', () => { expect(appreciation(85, { excellent: 85, very_good: 75, good: 65, acceptable: 50 })).toBe('ممتاز'); expect(appreciation(85)).toBe('جيد جدًا'); });
   it('stats follow the filtered scope only', () => { const rows = summarize([p, { ...p, id: 'p2', halaqa_id: 'h2', present: false }], [a('a', '2026-11-10T01:00:00Z', 'pass')]); const one = stats(rows.filter(r => r.halaqa_id === 'h')); expect(one.registered).toBe(1); expect(one.passed).toBe(1); expect(one.remaining).toBe(1); expect(stats(rows).total).toBe(4); });
   it('certificate stays visible after filtering to one student', () => { expect(certificateIndex(['x'], 'y')).toBe(0); expect(certificateIndex(['x', 'y'], 'y')).toBe(1); expect(certificateIndex([], 'y')).toBe(-1); });
+  it('pause time is excluded and timer resumes without reset', () => { const start = '2026-11-10T10:00:00Z'; expect(elapsedSeconds({ started_at: start, paused_at: '2026-11-10T10:01:00Z', paused_seconds: 0, duration_seconds: null }, Date.parse('2026-11-10T10:05:00Z'), 540)).toBe(60); expect(elapsedSeconds({ started_at: start, paused_at: null, paused_seconds: 240, duration_seconds: null }, Date.parse('2026-11-10T10:05:30Z'), 540)).toBe(90); });
+  it('timer never exceeds 540 seconds', () => expect(elapsedSeconds({ started_at: '2026-11-10T10:00:00Z', paused_at: null, paused_seconds: 0, duration_seconds: null }, Date.parse('2026-11-10T10:20:00Z'), 540)).toBe(540));
 });

@@ -33,3 +33,6 @@ verify_jwt = false
 # staff-qr-checkin authenticates the staff member themselves — keep the JWT check.
 [functions.staff-qr-checkin]
 verify_jwt = true
+
+[functions.himmah-send-code]
+verify_jwt = false

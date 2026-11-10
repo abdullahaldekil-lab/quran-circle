@@ -1,11 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 
-export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds: number }
+export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds: number; halaqa_ids?: string[] }
 export interface Participant { id: string; student_id: string; student_name: string; halaqa_id: string; halaqa_name: string; teacher_name: string; hizbs: number[]; present: boolean }
-export interface Reviewer { id: string; full_name: string; phone: string; active: boolean }
-export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail'; approved_at: string | null; score?: number | null; scoring?: ScoringConfig & { reviewer_name?: string } | null }
-export interface Dashboard { day: HimmahDay; can_manage: boolean; reviewer_id: string | null; participants: Participant[]; reviewers: Reviewer[]; attempts: Attempt[]; audit: { id: string; action: string; created_at: string }[] }
+export interface Reviewer { id: string; full_name: string; phone: string; active: boolean; status?: 'pending' | 'assigned' | 'revoked'; staff?: boolean; code_issued_at?: string | null }
+export interface Assignment { reviewer_id: string; halaqa_id: string | null; participant_id: string | null }
+export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail'; approved_at: string | null; paused_at?: string | null; paused_seconds?: number; score?: number | null; scoring?: ScoringConfig & { reviewer_name?: string } | null }
+export interface Dashboard { day: HimmahDay; can_manage: boolean; reviewer_id: string | null; participants: Participant[]; reviewers: Reviewer[]; assignments: Assignment[]; attempts: Attempt[]; audit: { id: string; action: string; created_at: string }[] }
 export interface ScoringConfig { total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds?: number }
 /** Final score = total − mistakes×mistake deduction − warnings×warning deduction, clamped to [0, total]. No automatic fail by count or time. */
 export const score = (mistakes: number, warnings: number, c: ScoringConfig) => {
@@ -67,3 +68,11 @@ export async function attemptAction(action: string, day: string, options: { part
   return data as unknown as Attempt;
 }
 export function randomToken() { return [...crypto.getRandomValues(new Uint8Array(32))].map(v => v.toString(16).padStart(2, '0')).join(''); }
+export const reviewerStatusLabel = (r: Reviewer) => !r.active || r.status === 'revoked' ? 'موقوف' : r.status === 'assigned' ? (r.code_issued_at ? 'مكلّف · صدر الكود' : 'مكلّف') : 'بانتظار التوزيع';
+export const codeMessage = (name: string, day: string, code: string, link: string, scope: string) => `السلام عليكم ${name}\nتم تكليفكم بالتسميع في «${day}».\nالتكليف: ${scope}\nكود الدخول: ${code}\nرابط الدخول: ${link}\nالكود خاص بكم ولا يُشارك.`;
+/** Elapsed recitation seconds excluding paused time, capped at the limit. */
+export function elapsedSeconds(a: Pick<Attempt, 'started_at' | 'paused_at' | 'paused_seconds' | 'duration_seconds'>, now: number, limit: number) {
+  if (a.duration_seconds != null) return Math.min(limit, a.duration_seconds);
+  const end = a.paused_at ? Date.parse(a.paused_at) : now;
+  return Math.min(limit, Math.max(0, Math.floor((end - Date.parse(a.started_at)) / 1000) - (a.paused_seconds || 0)));
+}
