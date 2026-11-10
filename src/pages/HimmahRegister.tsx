@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { dashboard } from '@/lib/himmah';
+import { dashboard, isAccessDenied } from '@/lib/himmah';
 import { HimmahWorkspace } from './HimmahDay';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,19 +20,22 @@ export default function HimmahRegister() {
   const logout = () => { sessionStorage.removeItem(`himmah-code:${dayId}`); setCode(''); };
   const [ended, setEnded] = useState('');
   useEffect(() => {
-    if (!code || !view.isError) return;
+    // A dropped connection keeps the session and the next sync retries; only a server refusal ends it.
+    if (!code || !view.isError || !isAccessDenied(view.error)) return;
     const hadSession = !!queryClient.getQueryData(['himmah-external', dayId, code]);
     queryClient.removeQueries({ queryKey: ['himmah-external', dayId] });
     sessionStorage.removeItem(`himmah-code:${dayId}`); setCode(''); setCodeInput('');
     setEnded(hadSession ? 'انتهت جلستك: أُلغي الكود أو انتهت صلاحية اليوم. أدخل كودًا جديدًا من الإدارة.' : 'الكود غير صحيح أو أوقفته الإدارة أو انتهت صلاحية اليوم');
-  }, [view.isError, code, dayId, queryClient]);
-  if (view.data && !view.isError) return <main className="min-h-screen bg-background p-4 md:p-8 max-w-6xl mx-auto font-cairo" dir="rtl"><div className="flex justify-end mb-3"><Button variant="outline" size="sm" onClick={logout}>خروج</Button></div><HimmahWorkspace data={view.data} token={code} refresh={() => view.refetch()} /></main>;
+  }, [view.isError, view.error, code, dayId, queryClient]);
+  const offline = view.isError && !isAccessDenied(view.error);
+  if (view.data && code) return <main className="min-h-screen bg-background p-4 md:p-8 max-w-6xl mx-auto font-cairo" dir="rtl">{offline && <p className="text-destructive text-sm mb-3" role="status">تعذّر الاتصال بالخادم؛ جلستك محفوظة وتُعاد المزامنة تلقائيًا.</p>}<div className="flex justify-end mb-3"><Button variant="outline" size="sm" onClick={logout}>خروج</Button></div><HimmahWorkspace data={view.data} token={code} refresh={() => view.refetch()} /></main>;
   return <main className="min-h-screen bg-background p-4 md:p-8 font-cairo" dir="rtl"><div className="max-w-md mx-auto py-8 space-y-8">
     <img src={logo} className="w-24 h-24 mx-auto object-contain" alt="شعار مجمع حويلان" />
     <h1 className="text-2xl font-bold text-himmah text-center">المسمّعون · يوم الهمة</h1>
     <section className="space-y-3 border border-border rounded-lg p-4 bg-card" aria-label="الدخول بالكود">
       <h2 className="font-bold">لديّ كود دخول</h2>
       {ended && <p className="text-destructive" role="alert">{ended}</p>}
+      {offline && <p className="text-destructive" role="alert">تعذّر الاتصال بالخادم؛ تحقق من الشبكة وستُعاد المحاولة تلقائيًا.</p>}
       <form className="flex gap-2" onSubmit={e => { e.preventDefault(); const c = codeInput.trim().toUpperCase(); if (!c) return; setEnded(''); sessionStorage.setItem(`himmah-code:${dayId}`, c); setCode(c); }}>
         <Input aria-label="كود الدخول" dir="ltr" className="font-mono tracking-widest uppercase" maxLength={12} value={codeInput} onChange={e => setCodeInput(e.target.value)} placeholder="XXXXXXXX" />
         <Button type="submit" disabled={view.isFetching}>{view.isFetching ? 'جارٍ التحقق...' : 'دخول'}</Button>

@@ -8133,6 +8133,16 @@ export type Database = {
         }
         Returns: Json
       }
+      himmah_branding: { Args: { _day: string }; Returns: Json }
+      himmah_cancel_attempt: {
+        Args: {
+          _attempt: string
+          _day: string
+          _reason?: string
+          _token?: string
+        }
+        Returns: Json
+      }
       himmah_code_reviewer: {
         Args: { _code: string; _day: string }
         Returns: string
@@ -8177,6 +8187,15 @@ export type Database = {
           _name: string
           _phone: string
           _token?: string
+        }
+        Returns: Json
+      }
+      himmah_save_plan: {
+        Args: {
+          _day: string
+          _halaqa_ids: string[]
+          _plan: Json
+          _remove?: string[]
         }
         Returns: Json
       }
