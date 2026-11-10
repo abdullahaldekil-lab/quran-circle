@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 
-export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds: number; halaqa_ids?: string[] }
+export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds: number; pause_limit_seconds?: number; halaqa_ids?: string[] }
 export interface Participant { id: string; student_id: string; student_name: string; halaqa_id: string; halaqa_name: string; teacher_name: string; hizbs: number[]; present: boolean }
 export interface Reviewer { id: string; full_name: string; phone: string; active: boolean; status?: 'pending' | 'assigned' | 'revoked'; staff?: boolean; code_issued_at?: string | null }
 export interface Assignment { reviewer_id: string; halaqa_id: string | null; participant_id: string | null }
@@ -107,9 +107,53 @@ export async function attemptAction(action: string, day: string, options: { part
 export function randomToken() { return [...crypto.getRandomValues(new Uint8Array(32))].map(v => v.toString(16).padStart(2, '0')).join(''); }
 export const reviewerStatusLabel = (r: Reviewer) => !r.active || r.status === 'revoked' ? 'موقوف' : r.status === 'assigned' ? (r.code_issued_at ? 'مكلّف · صدر الكود' : 'مكلّف') : 'بانتظار التوزيع';
 export const codeMessage = (name: string, day: string, code: string, link: string, scope: string) => `السلام عليكم ${name}\nتم تكليفكم بالتسميع في «${day}».\nالتكليف: ${scope}\nكود الدخول: ${code}\nرابط الدخول: ${link}\nالكود خاص بكم ولا يُشارك.`;
-/** Elapsed recitation seconds excluding paused time, capped at the limit. */
-export function elapsedSeconds(a: Pick<Attempt, 'started_at' | 'paused_at' | 'paused_seconds' | 'duration_seconds'>, now: number, limit: number) {
+/** Seconds of the current pause excluded from the clock; with a pause cap, time beyond it counts as recitation again. */
+function pauseCredit(a: Pick<Attempt, 'paused_at' | 'paused_seconds'>, now: number, pauseLimit: number) {
+  if (!a.paused_at) return 0;
+  const current = Math.max(0, Math.floor((now - Date.parse(a.paused_at)) / 1000));
+  return pauseLimit > 0 ? Math.min(current, Math.max(0, pauseLimit - (a.paused_seconds || 0))) : current;
+}
+/** Elapsed recitation seconds excluding allowed paused time, capped at the limit. `pauseLimit` 0 means unlimited pause. */
+export function elapsedSeconds(a: Pick<Attempt, 'started_at' | 'paused_at' | 'paused_seconds' | 'duration_seconds'>, now: number, limit: number, pauseLimit = 0) {
   if (a.duration_seconds != null) return Math.min(limit, a.duration_seconds);
-  const end = a.paused_at ? Date.parse(a.paused_at) : now;
-  return Math.min(limit, Math.max(0, Math.floor((end - Date.parse(a.started_at)) / 1000) - (a.paused_seconds || 0)));
+  return Math.min(limit, Math.max(0, Math.floor((now - Date.parse(a.started_at)) / 1000) - (a.paused_seconds || 0) - pauseCredit(a, now, pauseLimit)));
+}
+/** Pause seconds still available for an attempt, or null when pausing is unlimited. */
+export function pauseRemaining(a: Pick<Attempt, 'paused_at' | 'paused_seconds'>, now: number, pauseLimit: number) {
+  return pauseLimit > 0 ? Math.max(0, pauseLimit - (a.paused_seconds || 0) - pauseCredit(a, now, pauseLimit)) : null;
+}
+const arabicDigits = (s: string) => s.replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+/** Parses a hizb list such as "1-5، 8، 10-12" (Arabic or Latin digits) into sorted unique numbers; null when invalid or empty. */
+export function parseHizbs(text: string) {
+  const parts = arabicDigits(text).split(/[,،;\s]+/).filter(Boolean);
+  const set = new Set<number>();
+  for (const part of parts) {
+    const m = /^(\d{1,2})(?:[-–](\d{1,2}))?$/.exec(part);
+    if (!m) return null;
+    const from = Number(m[1]), to = Number(m[2] ?? m[1]);
+    if (from < 1 || to > 60 || from > to) return null;
+    for (let h = from; h <= to; h++) set.add(h);
+  }
+  return set.size ? [...set].sort((a, b) => a - b) : null;
+}
+/** Compact text for a hizb list: [1,2,3,7] => "1-3، 7". */
+export function formatHizbs(hizbs: number[]) {
+  const sorted = [...new Set(hizbs)].sort((a, b) => a - b); const out: string[] = [];
+  for (let i = 0; i < sorted.length; i++) { let j = i; while (j + 1 < sorted.length && sorted[j + 1] === sorted[j] + 1) j++; out.push(j > i ? `${sorted[i]}-${sorted[j]}` : String(sorted[i])); i = j; }
+  return out.join('، ');
+}
+/** Search key that ignores diacritics and common Arabic letter variants. */
+export const normalizeArabic = (s: string) => s.replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim().toLowerCase();
+/** Today's date in the device time zone as YYYY-MM-DD (not the UTC date). */
+export function localDate(d = new Date()) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+/** Places report blocks down the pages: a block that does not fit moves to the next page, and only a block taller than a page is split. */
+export function createFlow(pageHeight: number) {
+  let page = 0, y = 0;
+  return { place(height: number) {
+    const pieces: { page: number; y: number; offset: number; height: number }[] = [];
+    if (height <= pageHeight) { if (y > 0 && y + height > pageHeight) { page++; y = 0; } pieces.push({ page, y, offset: 0, height }); y += height; return pieces; }
+    if (y > 0) { page++; y = 0; }
+    for (let offset = 0; offset < height; offset += pageHeight) { const h = Math.min(pageHeight, height - offset); pieces.push({ page, y: 0, offset, height: h }); if (offset + h < height) page++; else y = h; }
+    return pieces;
+  }, get pages() { return page + 1; } };
 }

@@ -1,8 +1,13 @@
 // Sends a Himmah reviewer access code through the project's configured WhatsApp channel.
 // When the channel is not configured it reports configured:false so the admin copies the message manually.
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { z } from 'npm:zod@3';
+
+// Same headers as the project's other functions, so the browser preflight behaves identically.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
 
 const Body = z.object({ day_id: z.string().uuid(), reviewer_id: z.string().uuid(), message: z.string().min(10).max(1000) });
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
