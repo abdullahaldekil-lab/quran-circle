@@ -14,7 +14,8 @@ export default function TimedRecitation({ data, participant, token, refresh }: {
   useEffect(() => {
     const stored = localStorage.getItem(`himmah-attempt:${data.day.id}:${participant.id}`);
     const found = data.attempts.find(a => a.id === stored && ['running', 'ended'].includes(a.status));
-    setActive(found || null);
+    // Sync must not reset the timer or overwrite newer local counters for the same attempt.
+    setActive(current => current && found && current.id === found.id ? current : current && !found && current.id === stored ? current : found || null);
   }, [data.day.id, participant.id, data.attempts]);
   async function run(action: string, hizb?: number, counts?: { mistakes: number; warnings: number }) {
     if (busy) return;

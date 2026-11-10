@@ -159,9 +159,9 @@ const navGroups: NavGroup[] = [
         label: "السرد القرآني",
         icon: ScrollText,
         items: [
-          { to: "/quran-narration", icon: ScrollText, label: "يوم السرد" },
+          { to: "/quran-narration/himmah", icon: Sparkles, label: "يوم السرد – يوم الهمة" },
           { to: "/narration-test", icon: ClipboardList, label: "اختبار السرد" },
-          { to: "/quran-narration/himmah", icon: Sparkles, label: "يوم الهمة" },
+          { to: "/quran-narration", icon: ScrollText, label: "سجلات السرد السابقة" },
           { to: "/narration-stats", icon: BarChart3, label: "إحصائيات السرد" },
         ],
       },

@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 
-export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string }
+export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; grade_bounds?: GradeBounds }
 export interface Participant { id: string; student_id: string; student_name: string; halaqa_id: string; halaqa_name: string; teacher_name: string; hizbs: number[]; present: boolean }
 export interface Reviewer { id: string; full_name: string; phone: string; active: boolean }
 export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail'; approved_at: string | null }
@@ -20,7 +20,17 @@ export function latestApproved(attempts: Attempt[]) {
   }
   return [...map.values()];
 }
-export const appreciation = (percent: number) => percent >= 90 ? 'ممتاز' : percent >= 80 ? 'جيد جدًا' : percent >= 70 ? 'جيد' : percent >= 60 ? 'مقبول' : 'يحتاج تحسينًا';
+export interface GradeBounds { excellent: number; very_good: number; good: number; acceptable: number }
+export const DEFAULT_GRADE_BOUNDS: GradeBounds = { excellent: 90, very_good: 80, good: 70, acceptable: 60 };
+export const validBounds = (b: GradeBounds) => [b.excellent, b.very_good, b.good, b.acceptable].every(Number.isFinite) && b.excellent <= 100 && b.excellent > b.very_good && b.very_good > b.good && b.good > b.acceptable && b.acceptable >= 0;
+export const appreciation = (percent: number, b: GradeBounds = DEFAULT_GRADE_BOUNDS) => { const g = validBounds(b) ? b : DEFAULT_GRADE_BOUNDS; return percent >= g.excellent ? 'ممتاز' : percent >= g.very_good ? 'جيد جدًا' : percent >= g.good ? 'جيد' : percent >= g.acceptable ? 'مقبول' : 'يحتاج تحسينًا'; };
+/** Aggregate indicators for an already-filtered set of summarized rows (unique hizbs via latest approved attempt). */
+export function stats(rows: ReturnType<typeof summarize>) {
+  const total = rows.reduce((s, p) => s + p.hizbs.length, 0); const passed = rows.reduce((s, p) => s + p.passed.length, 0); const presented = rows.reduce((s, p) => s + p.results.length, 0); const present = rows.filter(p => p.present).length;
+  return { registered: rows.length, present, attendance: rows.length ? present / rows.length * 100 : 0, total, presented, passed, failed: presented - passed, notPresented: total - presented, remaining: total - passed, completion: total ? passed / total * 100 : 0 };
+}
+/** Keep the selected certificate bound to a student id; fall back to the first match when it leaves the list. */
+export function certificateIndex(ids: string[], selected: string | null) { if (!ids.length) return -1; const i = selected ? ids.indexOf(selected) : -1; return i >= 0 ? i : 0; }
 export const duration = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
 export function summarize(participants: Participant[], attempts: Attempt[], mode: HimmahDay['ranking_mode'] = 'passed') {
   const latest = latestApproved(attempts);

@@ -1570,6 +1570,7 @@ export type Database = {
           error_weight: number
           expires_at: string
           fail_threshold: number
+          grade_bounds: Json
           id: string
           invite_key: string
           logo_url: string
@@ -1588,6 +1589,7 @@ export type Database = {
           error_weight?: number
           expires_at?: string
           fail_threshold?: number
+          grade_bounds?: Json
           id?: string
           invite_key?: string
           logo_url?: string
@@ -1606,6 +1608,7 @@ export type Database = {
           error_weight?: number
           expires_at?: string
           fail_threshold?: number
+          grade_bounds?: Json
           id?: string
           invite_key?: string
           logo_url?: string
