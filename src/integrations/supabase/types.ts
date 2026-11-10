@@ -1639,6 +1639,7 @@ export type Database = {
           manager_name: string
           mistake_deduction: number
           pass_score: number
+          pause_limit_seconds: number
           ranking_mode: string
           registration_open: boolean
           session_id: string
@@ -1664,6 +1665,7 @@ export type Database = {
           manager_name?: string
           mistake_deduction?: number
           pass_score?: number
+          pause_limit_seconds?: number
           ranking_mode?: string
           registration_open?: boolean
           session_id: string
@@ -1689,6 +1691,7 @@ export type Database = {
           manager_name?: string
           mistake_deduction?: number
           pass_score?: number
+          pause_limit_seconds?: number
           ranking_mode?: string
           registration_open?: boolean
           session_id?: string
@@ -8169,6 +8172,7 @@ export type Database = {
         Args: {
           _a: Database["public"]["Tables"]["himmah_attempts"]["Row"]
           _limit: number
+          _pause_limit: number
         }
         Returns: number
       }
@@ -8180,6 +8184,13 @@ export type Database = {
       himmah_manage: {
         Args: { _action: string; _data?: Json; _day?: string }
         Returns: string
+      }
+      himmah_pause_credit: {
+        Args: {
+          _a: Database["public"]["Tables"]["himmah_attempts"]["Row"]
+          _pause_limit: number
+        }
+        Returns: number
       }
       himmah_register: {
         Args: {
