@@ -147,17 +147,24 @@ const navGroups: NavGroup[] = [
       { to: "/teacher-management", icon: UserCog, label: "إدارة المعلمين" },
       { to: "/recitation", icon: ClipboardList, label: "التسميع" },
       { to: "/levels", icon: GraduationCap, label: "المستويات" },
-      { to: "/quran-narration", icon: ScrollText, label: "يوم السرد" },
-      { to: "/quran-narration/himmah", icon: ScrollText, label: "يوم السرد – يوم الهمة" },
-      { to: "/narration-test", icon: ScrollText, label: "اختبار السرد" },
       { to: "/review-test", icon: ClipboardList, label: "اختبار المراجعة" },
-      { to: "/narration-stats", icon: CalendarDays, label: "إحصائيات السرد" },
       { to: "/nazem-export", icon: FileSpreadsheet, label: "تصدير لناظم" },
       { to: "/instructions", icon: MessageSquare, label: "التعليمات" },
       { to: "/summer-programs", icon: Sun, label: "البرامج الصيفية" },
       { to: "/narration-test-settings", icon: Settings, label: "إعدادات اختبار السرد" },
     ],
     subGroups: [
+      {
+        id: "narration-sub",
+        label: "السرد القرآني",
+        icon: ScrollText,
+        items: [
+          { to: "/quran-narration", icon: ScrollText, label: "يوم السرد" },
+          { to: "/narration-test", icon: ClipboardList, label: "اختبار السرد" },
+          { to: "/quran-narration/himmah", icon: Sparkles, label: "يوم الهمة" },
+          { to: "/narration-stats", icon: BarChart3, label: "إحصائيات السرد" },
+        ],
+      },
       {
         id: "madarij-sub",
         label: "برنامج مدارج",
@@ -564,6 +571,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                                 <NavLink
                                   key={item.to}
                                   to={item.to}
+                                  end={item.to === "/quran-narration"}
                                   onClick={() => setSidebarOpen(false)}
                                   className={({ isActive }) =>
                                     `flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors ${
