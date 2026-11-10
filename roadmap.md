@@ -1,5 +1,6 @@
 # Roadmap
-- [ ] Develop «يوم السرد – يوم الهمة» from the uploaded brief: unified day workspace, participants and hizb plans, external reviewer registration, durable timed attempts, server-side scoring and permissions, day reports, certificates, and acceptance testing.
+- [x] Develop «يوم السرد – يوم الهمة»: unified workspace, participants/hizb plans, limited external registration, restored timer, immutable approved attempts and audited corrections, day reports, Arabic PDF/Excel, certificates, and display mode. 326 tests passed; staff and external mobile flows verified; temporary records removed. Teacher-specific session, real branding uploads, and multi-student bulk PDF remain unverified.
+- [ ] Official Himmah certificate assets — waiting for approved manager name, association logo, and stamp; management can upload them in day settings.
 - [x] Test recent updates and deliver an Arabic report without changing student data (310 tests passed; 10 pages checked; account/behavior dialogs and PDF/Excel downloads verified)
 - [x] Weekly guardian notifications page (absence + recitation, WhatsApp per message)
 - [x] Halaqa attendance + cumulative ranking with recitation excellence points

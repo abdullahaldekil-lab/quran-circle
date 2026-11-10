@@ -1,0 +1,4 @@
+ALTER FUNCTION public.himmah_dashboard(uuid,text) RENAME TO himmah_dashboard_internal;
+REVOKE ALL ON FUNCTION public.himmah_dashboard_internal(uuid,text) FROM PUBLIC,anon,authenticated;
+CREATE FUNCTION public.himmah_dashboard(_day uuid,_token text DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE result jsonb; BEGIN IF _token IS NULL AND NOT (public.himmah_admin() OR EXISTS(SELECT 1 FROM public.himmah_participants WHERE day_id=_day AND public.himmah_view_halaqa(halaqa_id))) THEN RAISE EXCEPTION 'هذا اليوم خارج نطاقك'; END IF; result:=public.himmah_dashboard_internal(_day,_token); IF _token IS NOT NULL THEN result:=jsonb_set(result,'{day}',(result->'day')-'manager_name'-'stamp_url'-'association_logo_url'-'logo_url'); END IF; RETURN result; END $$;
+REVOKE ALL ON FUNCTION public.himmah_dashboard(uuid,text) FROM PUBLIC; GRANT EXECUTE ON FUNCTION public.himmah_dashboard(uuid,text) TO anon,authenticated;

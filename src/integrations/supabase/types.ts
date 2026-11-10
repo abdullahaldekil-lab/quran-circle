@@ -8051,6 +8051,10 @@ export type Database = {
         Args: { _day: string; _token?: string }
         Returns: Json
       }
+      himmah_dashboard_internal: {
+        Args: { _day: string; _token?: string }
+        Returns: Json
+      }
       himmah_day_list: { Args: never; Returns: Json }
       himmah_manage: {
         Args: { _action: string; _data?: Json; _day?: string }

@@ -71,6 +71,13 @@
       "when": 1794303058307,
       "tag": "0009_himmah_security_and_branding",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794303320073,
+      "tag": "0010_himmah_dashboard_scope_guard",
+      "breakpoints": true
     }
   ]
 }
