@@ -31,12 +31,16 @@ export function DaySetup({ data, refresh }: { data: Dashboard; refresh: () => vo
   async function save() {
     setBusy(true);
     try {
-      await manage('halaqat', data.day.id, { halaqa_ids: picked });
+      try { await manage('halaqat', data.day.id, { halaqa_ids: picked }); }
+      catch (e) { setPicked(data.day.halaqa_ids || []); throw new Error(`تعذّرت إزالة الحلقة: ${(e as { message?: string })?.message || 'خطأ غير معروف'}`); }
       const list = (students.data || []).filter(s => plan[s.id]?.on);
       for (const s of list) { const r = plan[s.id]; if (!valid(r)) throw new Error(`نطاق أحزاب غير صحيح: ${s.full_name}`); await manage('participant', data.day.id, { student_id: s.id, hizbs: Array.from({ length: r.to - r.from + 1 }, (_, i) => r.from + i) }); }
       const unchecked = (students.data || []).filter(s => !plan[s.id]?.on && enrolled.has(s.id));
-      for (const s of unchecked) await manage('remove_participant', data.day.id, { participant_id: enrolled.get(s.id)!.id }).catch(() => undefined);
-      toast({ title: `تم حفظ ${list.length} مشارك` }); refresh();
+      const failed: string[] = [];
+      for (const s of unchecked) await manage('remove_participant', data.day.id, { participant_id: enrolled.get(s.id)!.id }).catch(() => { failed.push(s.full_name); });
+      refresh();
+      if (failed.length) toast({ title: `تعذّرت إزالة ${failed.length} طالب لوجود محاولات محفوظة: ${failed.join('، ')}`, variant: 'destructive' });
+      else toast({ title: `تم حفظ ${list.length} مشارك` });
     } catch (e) { toast({ title: e instanceof Error ? e.message : 'تعذّر الحفظ', variant: 'destructive' }); } finally { setBusy(false); }
   }
   return <section className="border border-border rounded-lg p-4 space-y-4 bg-card" aria-label="إعداد اليوم">
