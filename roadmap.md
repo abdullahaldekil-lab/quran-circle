@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Develop «يوم السرد – يوم الهمة» from the uploaded brief: unified day workspace, participants and hizb plans, external reviewer registration, durable timed attempts, server-side scoring and permissions, day reports, certificates, and acceptance testing.
 - [x] Test recent updates and deliver an Arabic report without changing student data (310 tests passed; 10 pages checked; account/behavior dialogs and PDF/Excel downloads verified)
 - [x] Weekly guardian notifications page (absence + recitation, WhatsApp per message)
 - [x] Halaqa attendance + cumulative ranking with recitation excellence points
