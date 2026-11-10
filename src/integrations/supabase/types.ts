@@ -1456,6 +1456,8 @@ export type Database = {
           participant_id: string
           request_id: string
           reviewer_id: string
+          score: number | null
+          scoring: Json | null
           started_at: string
           status: string
           warnings: number
@@ -1474,6 +1476,8 @@ export type Database = {
           participant_id: string
           request_id: string
           reviewer_id: string
+          score?: number | null
+          scoring?: Json | null
           started_at?: string
           status?: string
           warnings?: number
@@ -1492,6 +1496,8 @@ export type Database = {
           participant_id?: string
           request_id?: string
           reviewer_id?: string
+          score?: number | null
+          scoring?: Json | null
           started_at?: string
           status?: string
           warnings?: number
@@ -1575,11 +1581,16 @@ export type Database = {
           invite_key: string
           logo_url: string
           manager_name: string
+          mistake_deduction: number
+          pass_score: number
           ranking_mode: string
           registration_open: boolean
           session_id: string
           stamp_url: string
+          time_limit_seconds: number
           title: string
+          total_score: number
+          warning_deduction: number
         }
         Insert: {
           association_logo_url?: string
@@ -1594,11 +1605,16 @@ export type Database = {
           invite_key?: string
           logo_url?: string
           manager_name?: string
+          mistake_deduction?: number
+          pass_score?: number
           ranking_mode?: string
           registration_open?: boolean
           session_id: string
           stamp_url?: string
+          time_limit_seconds?: number
           title: string
+          total_score?: number
+          warning_deduction?: number
         }
         Update: {
           association_logo_url?: string
@@ -1613,11 +1629,16 @@ export type Database = {
           invite_key?: string
           logo_url?: string
           manager_name?: string
+          mistake_deduction?: number
+          pass_score?: number
           ranking_mode?: string
           registration_open?: boolean
           session_id?: string
           stamp_url?: string
+          time_limit_seconds?: number
           title?: string
+          total_score?: number
+          warning_deduction?: number
         }
         Relationships: [
           {
@@ -8066,6 +8087,10 @@ export type Database = {
       himmah_register: {
         Args: { _invite: string; _name: string; _phone: string; _token: string }
         Returns: Json
+      }
+      himmah_score: {
+        Args: { _cfg: Json; _m: number; _w: number }
+        Returns: number
       }
       himmah_view_halaqa: { Args: { _halaqa: string }; Returns: boolean }
       is_app_member: { Args: { _uid: string }; Returns: boolean }

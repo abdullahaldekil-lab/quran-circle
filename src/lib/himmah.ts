@@ -1,15 +1,20 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 
-export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; grade_bounds?: GradeBounds }
+export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds: number }
 export interface Participant { id: string; student_id: string; student_name: string; halaqa_id: string; halaqa_name: string; teacher_name: string; hizbs: number[]; present: boolean }
 export interface Reviewer { id: string; full_name: string; phone: string; active: boolean }
-export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail'; approved_at: string | null }
+export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail'; approved_at: string | null; score?: number | null; scoring?: ScoringConfig & { reviewer_name?: string } | null }
 export interface Dashboard { day: HimmahDay; can_manage: boolean; reviewer_id: string | null; participants: Participant[]; reviewers: Reviewer[]; attempts: Attempt[]; audit: { id: string; action: string; created_at: string }[] }
-export const outcome = (mistakes: number, warnings: number, weight = 4, threshold = 12) => {
-  if (![mistakes, warnings, weight, threshold].every(Number.isSafeInteger) || mistakes < 0 || warnings < 0 || weight < 1 || threshold < 1) throw new Error('أعداد غير صحيحة');
-  return mistakes * weight + warnings >= threshold ? 'fail' : 'pass';
+export interface ScoringConfig { total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds?: number }
+/** Final score = total − mistakes×mistake deduction − warnings×warning deduction, clamped to [0, total]. No automatic fail by count or time. */
+export const score = (mistakes: number, warnings: number, c: ScoringConfig) => {
+  if (![mistakes, warnings].every(Number.isSafeInteger) || mistakes < 0 || warnings < 0 || ![c.total_score, c.mistake_deduction, c.warning_deduction, c.pass_score].every(Number.isFinite) || c.total_score <= 0) throw new Error('أعداد غير صحيحة');
+  return Math.max(0, Math.min(c.total_score, c.total_score - mistakes * c.mistake_deduction - warnings * c.warning_deduction));
 };
+export const outcome = (mistakes: number, warnings: number, c: ScoringConfig) => score(mistakes, warnings, c) >= c.pass_score ? 'pass' : 'fail';
+/** Score of an approved attempt from its saved snapshot (legacy attempts have none). */
+export const attemptScore = (a: Attempt) => a.score ?? null;
 export function latestApproved(attempts: Attempt[]) {
   const map = new Map<string, Attempt>();
   for (const a of attempts) {
@@ -38,7 +43,7 @@ export function summarize(participants: Participant[], attempts: Attempt[], mode
     const results = latest.filter(a => a.participant_id === p.id && p.hizbs.includes(a.hizb));
     const passed = results.filter(a => a.status === 'pass');
     const completion = p.hizbs.length ? passed.length / p.hizbs.length * 100 : 0;
-    return { ...p, results, passed, completion, average: results.length ? results.reduce((s, a) => s + (a.equivalent_errors || 0), 0) / results.length : Infinity, rank: 0 };
+    return { ...p, results, passed, completion, average: results.length ? -results.reduce((s, a) => s + (a.score ?? 0), 0) / results.length : Infinity, avgScore: results.length ? results.reduce((s, a) => s + (a.score ?? 0), 0) / results.length : 0, rank: 0 };
   }).sort((a, b) => (mode === 'completion' ? b.completion - a.completion : b.passed.length - a.passed.length) || a.average - b.average);
   rows.forEach((r, i) => {
     const previous = rows[i - 1];
