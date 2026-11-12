@@ -1,4 +1,11 @@
 # Roadmap
+- [ ] يوم السرد: إصلاح حفظ الحلقات والأحزاب، إضافة اللحن والتحضير، وإظهار المتبقي وإخفاء الأحزاب المسمّاة.
+- [ ] إلغاء تكليف المسمّع؛ يختار الحلقة ثم الطالب ضمن صلاحيات اليوم.
+- [ ] شهادة أفقية وعبارات وشعار محدّث، وأعداد مختصرة في نطاق العرض.
+- [ ] شاشة عرض مستقلة متجددة بشعار المجمع وأفضل حلقة وطالب وبيانات عامة.
+- [ ] تقارير الحلقات والمجمع وعدد الأحزاب المسمّاة لكل مسمّع، مع اختبار المسار الأساسي.
+- [ ] استكمال المرفق: تحضير جماعي موثق، إعادة تسميع موثقة، منع تزامن الحزب، فلاتر النتائج، اتصال شاشة العرض، ونص الشهادة المحدد.
+- [ ] تسليم تقرير قبول مصوّر وحذف بيانات الاختبار المؤقتة.
 - [x] Develop «يوم السرد – يوم الهمة»: unified workspace, participants/hizb plans, limited external registration, restored timer, immutable approved attempts and audited corrections, day reports, Arabic PDF/Excel, certificates, and display mode. 326 tests passed; staff and external mobile flows verified; temporary records removed. Teacher-specific session, real branding uploads, and multi-student bulk PDF remain unverified.
 - [ ] Official Himmah certificate assets — waiting for approved manager name, association logo, and stamp; management can upload them in day settings.
 - [x] Test recent updates and deliver an Arabic report without changing student data (310 tests passed; 10 pages checked; account/behavior dialogs and PDF/Excel downloads verified)

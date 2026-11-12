@@ -9,8 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Copy, Send, Users, KeyRound, MessageCircle } from 'lucide-react';
-import { manage, savePlan, parseHizbs, formatHizbs, reviewerStatusLabel, codeMessage, type Dashboard, type Reviewer } from '@/lib/himmah';
+import { Copy, Send, KeyRound, MessageCircle } from 'lucide-react';
+import { manage, savePlan, parseHizbs, formatHizbs, reviewerStatusLabel, codeMessage, reviewerStats, type Dashboard, type Reviewer } from '@/lib/himmah';
 
 /** Memorization circles only: talqeen circles are excluded. */
 const isMemorization = (h: { name: string; talqeen_curriculum_id: string | null }) => !h.talqeen_curriculum_id && !h.name.includes('تلقين');
@@ -60,34 +60,21 @@ export function DaySetup({ data, refresh }: { data: Dashboard; refresh: () => vo
 
 export function ReviewerManager({ data, refresh }: { data: Dashboard; refresh: () => void }) {
   const { toast } = useToast();
-  const [assignFor, setAssignFor] = useState<Reviewer | null>(null);
-  const [halaqat, setHalaqat] = useState<string[]>([]); const [students, setStudents] = useState<string[]>([]);
   const [issued, setIssued] = useState<{ reviewer: Reviewer; code: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const circles = [...new Map(data.participants.map(p => [p.halaqa_id, p.halaqa_name])).entries()];
-  const scopeOf = (id: string) => data.assignments.filter(a => a.reviewer_id === id);
-  const scopeText = (id: string) => { const s = scopeOf(id); if (!s.length) return '—'; return [...s.filter(a => a.halaqa_id).map(a => circles.find(c => c[0] === a.halaqa_id)?.[1] || 'حلقة'), ...(s.some(a => a.participant_id) ? [`${s.filter(a => a.participant_id).length} طالب`] : [])].join('، '); };
-  function openAssign(r: Reviewer) { const s = scopeOf(r.id); setHalaqat(s.flatMap(a => a.halaqa_id ? [a.halaqa_id] : [])); setStudents(s.flatMap(a => a.participant_id ? [a.participant_id] : [])); setAssignFor(r); }
-  async function saveAssign() {
-    if (!assignFor) return;
-    if (!halaqat.length && !students.length && !window.confirm(`سحب كل تكليف «${assignFor.full_name}»؟ يُلغى كوده ويعود إلى «بانتظار التوزيع».`)) return;
-    setBusy(true);
-    try { const { error } = await supabase.rpc('himmah_assign', { _reviewer: assignFor.id, _halaqat: halaqat, _participants: students }); if (error) throw error; toast({ title: 'تم حفظ التكليف' }); setAssignFor(null); refresh(); }
-    catch (e) { toast({ title: e instanceof Error ? e.message : 'تعذّر الحفظ', variant: 'destructive' }); } finally { setBusy(false); }
-  }
   async function issue(r: Reviewer) {
     setBusy(true);
     try { const { data: code, error } = await supabase.rpc('himmah_issue_code', { _reviewer: r.id }); if (error) throw error; setIssued({ reviewer: r, code: String(code) }); refresh(); }
     catch (e) { toast({ title: e instanceof Error ? e.message : 'تعذّر إصدار الكود', variant: 'destructive' }); } finally { setBusy(false); }
   }
   async function revoke(r: Reviewer) {
-    if (!window.confirm(`إيقاف المسمّع «${r.full_name}» نهائيًا؟ يُلغى كوده ولا يمكن التراجع. محاولاته غير المعتمدة يمكن إلغاؤها من سجل المحاولات في التقارير.`)) return;
+    if (!window.confirm(`إيقاف المسمّع «${r.full_name}» نهائيًا؟ يُلغى كوده ولا يمكن التراجع.`)) return;
     setBusy(true);
     try { await manage('revoke', data.day.id, { reviewer_id: r.id }); toast({ title: 'أُوقف المسمّع' }); refresh(); }
     catch (e) { toast({ title: (e as { message?: string })?.message || 'تعذّر الإيقاف', variant: 'destructive' }); } finally { setBusy(false); }
   }
   const link = `${window.location.origin}/himmah-register/${data.day.id}/${data.day.invite_key}`;
-  const message = issued ? codeMessage(issued.reviewer.full_name, data.day.title, issued.code, link, scopeText(issued.reviewer.id)) : '';
+  const message = issued ? codeMessage(issued.reviewer.full_name, data.day.title, issued.code, link) : '';
   async function send() {
     if (!issued) return; setBusy(true);
     try {
@@ -100,13 +87,10 @@ export function ReviewerManager({ data, refresh }: { data: Dashboard; refresh: (
   const external = data.reviewers.filter(r => !r.staff);
   const pending = external.filter(r => r.status === 'pending').length;
   return <section className="space-y-4" aria-label="إدارة المسمّعين الخارجيين">
-    <div className="flex flex-wrap gap-2 items-center"><Button variant="outline" disabled={!data.day.registration_open} onClick={() => navigator.clipboard.writeText(link).then(() => toast({ title: 'تم نسخ رابط التسجيل' })).catch(() => toast({ title: 'تعذّر النسخ', variant: 'destructive' }))}><Copy className="w-4 h-4 me-2" />نسخ رابط تسجيل المسمّعين</Button>{!data.day.registration_open && <span className="text-sm text-muted-foreground">التسجيل مغلق — افتحه من الإعدادات</span>}{pending > 0 && <Badge variant="secondary">{pending} بانتظار التوزيع</Badge>}</div>
-    <Table><TableHeader><TableRow><TableHead>المسمّع</TableHead><TableHead>الجوال</TableHead><TableHead>الحالة</TableHead><TableHead>التكليف</TableHead><TableHead>الإجراءات</TableHead></TableRow></TableHeader><TableBody>{external.map(r => <TableRow key={r.id}><TableCell>{r.full_name}</TableCell><TableCell dir="ltr">{r.phone || '—'}</TableCell><TableCell><Badge variant={r.status === 'assigned' ? 'default' : r.status === 'revoked' ? 'destructive' : 'secondary'}>{reviewerStatusLabel(r)}</Badge></TableCell><TableCell>{scopeText(r.id)}</TableCell><TableCell className="flex flex-wrap gap-2">{r.status !== 'revoked' && <><Button size="sm" variant="outline" disabled={busy} onClick={() => openAssign(r)}><Users className="w-4 h-4 me-1" />توزيع</Button><Button size="sm" disabled={busy || !scopeOf(r.id).length} onClick={() => issue(r)}><KeyRound className="w-4 h-4 me-1" />{r.code_issued_at ? 'إعادة إصدار الكود' : 'إصدار الكود'}</Button><Button size="sm" variant="ghost" disabled={busy} onClick={() => revoke(r)}>إيقاف</Button></>}</TableCell></TableRow>)}</TableBody></Table>
+    <p className="text-sm text-muted-foreground">لا يحتاج المسمّع إلى توزيع مسبق؛ بعد إصدار الكود يختار الحلقة ثم اسم الطالب، ولا يظهر له الحزب المعتمد مرة أخرى.</p>
+    <div className="flex flex-wrap gap-2 items-center"><Button variant="outline" disabled={!data.day.registration_open} onClick={() => navigator.clipboard.writeText(link).then(() => toast({ title: 'تم نسخ رابط التسجيل' })).catch(() => toast({ title: 'تعذّر النسخ', variant: 'destructive' }))}><Copy className="w-4 h-4 me-2" />نسخ رابط تسجيل المسمّعين</Button>{!data.day.registration_open && <span className="text-sm text-muted-foreground">التسجيل مغلق — افتحه من الإعدادات</span>}{pending > 0 && <Badge variant="secondary">{pending} بانتظار إصدار الكود</Badge>}</div>
+    <Table><TableHeader><TableRow><TableHead>المسمّع</TableHead><TableHead>الجوال</TableHead><TableHead>الحالة</TableHead><TableHead>المسمّاة</TableHead><TableHead>المجتازة</TableHead><TableHead>الراسبة</TableHead><TableHead>المحاولات</TableHead><TableHead>الإجراءات</TableHead></TableRow></TableHeader><TableBody>{external.map(r => <TableRow key={r.id}><TableCell>{r.full_name}</TableCell><TableCell dir="ltr">{r.phone || '—'}</TableCell><TableCell><Badge variant={r.status === 'assigned' ? 'default' : r.status === 'revoked' ? 'destructive' : 'secondary'}>{r.status === 'pending' ? 'بانتظار إصدار الكود' : reviewerStatusLabel(r)}</Badge></TableCell><TableCell>{reviewerStats(data.attempts, r.id).presented}</TableCell><TableCell>{reviewerStats(data.attempts, r.id).passed}</TableCell><TableCell>{reviewerStats(data.attempts, r.id).failed}</TableCell><TableCell>{reviewerStats(data.attempts, r.id).attempts}</TableCell><TableCell className="flex flex-wrap gap-2">{r.status !== 'revoked' && <><Button size="sm" disabled={busy} onClick={() => issue(r)}><KeyRound className="w-4 h-4 me-1" />{r.code_issued_at ? 'إعادة إصدار الكود' : 'إصدار الكود'}</Button><Button size="sm" variant="ghost" disabled={busy} onClick={() => revoke(r)}>إيقاف</Button></>}</TableCell></TableRow>)}</TableBody></Table>
     {external.length === 0 && <p className="text-sm text-muted-foreground">لا يوجد مسمّعون مسجلون بعد</p>}
-    <Dialog open={!!assignFor} onOpenChange={v => !v && setAssignFor(null)}><DialogContent dir="rtl" className="max-w-2xl max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>توزيع على {assignFor?.full_name}</DialogTitle></DialogHeader>
-      <p className="font-medium">حلقات كاملة</p><div className="flex flex-wrap gap-2">{circles.map(([id, name]) => <label key={id} className="flex items-center gap-2 border border-border rounded-md px-3 py-2"><Checkbox aria-label={`تكليف حلقة ${name}`} checked={halaqat.includes(id)} onCheckedChange={v => setHalaqat(h => v === true ? [...h, id] : h.filter(x => x !== id))} />{name}</label>)}</div>
-      <p className="font-medium mt-3">أو طلاب محددون</p><div className="grid sm:grid-cols-2 gap-2">{data.participants.filter(p => !halaqat.includes(p.halaqa_id)).map(p => <label key={p.id} className="flex items-center gap-2 text-sm"><Checkbox aria-label={`تكليف الطالب ${p.student_name}`} checked={students.includes(p.id)} onCheckedChange={v => setStudents(s => v === true ? [...s, p.id] : s.filter(x => x !== p.id))} />{p.student_name} · {p.halaqa_name}</label>)}</div>
-      <Button disabled={busy || (!halaqat.length && !students.length && !(assignFor && scopeOf(assignFor.id).length))} onClick={saveAssign}>{!halaqat.length && !students.length ? 'سحب التكليف' : 'حفظ التكليف'}</Button></DialogContent></Dialog>
     <Dialog open={!!issued} onOpenChange={v => !v && setIssued(null)}><DialogContent dir="rtl"><DialogHeader><DialogTitle>كود دخول {issued?.reviewer.full_name}</DialogTitle></DialogHeader>
       <p className="text-center font-mono text-3xl tracking-widest" dir="ltr" data-testid="issued-code">{issued?.code}</p>
       <p className="text-sm text-muted-foreground">يظهر الكود مرة واحدة فقط. إعادة الإصدار تُلغي الكود السابق.</p>

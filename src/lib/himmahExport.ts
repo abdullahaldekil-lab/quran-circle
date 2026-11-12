@@ -43,9 +43,15 @@ export async function himmahPdf(elements: HTMLElement[], name: string, onProgres
   pdf.save(`${name}.pdf`);
   return flow.pages;
 }
-export function himmahExcel(rows: Record<string, string | number>[], name: string) {
-  const book = XLSX.utils.book_new(); const sheet = XLSX.utils.json_to_sheet(rows);
-  sheet['!cols'] = Object.keys(rows[0] || {}).map(() => ({ wch: 24 }));
+export function himmahExcel(rows: Record<string, string | number>[], name: string, sheets: Record<string, Record<string, string | number>[]> = {}) {
+  const book = XLSX.utils.book_new();
   book.Workbook = { Views: [{ RTL: true }] };
-  XLSX.utils.book_append_sheet(book, sheet, 'يوم الهمة'); XLSX.writeFile(book, `${name}.xlsx`);
+  const append = (items: Record<string, string | number>[], title: string) => {
+    const sheet = XLSX.utils.json_to_sheet(items.length ? items : [{ 'لا توجد بيانات': '' }]);
+    sheet['!cols'] = Object.keys(items[0] || { 'لا توجد بيانات': '' }).map(() => ({ wch: 24 }));
+    XLSX.utils.book_append_sheet(book, sheet, title.slice(0, 31));
+  };
+  append(rows, 'تفاصيل الطلاب');
+  Object.entries(sheets).forEach(([title, items]) => append(items, title));
+  XLSX.writeFile(book, `${name}.xlsx`);
 }

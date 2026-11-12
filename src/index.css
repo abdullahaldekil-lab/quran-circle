@@ -122,12 +122,13 @@
 }
 
 .himmah-workspace:fullscreen { overflow: auto; background: hsl(var(--background)); padding: 24px; }
-.himmah-certificate { width: 960px; min-height: 620px; max-width: none; }
+.himmah-certificate { width: 1120px; min-height: 720px; max-width: none; aspect-ratio: 297 / 210; }
+@page himmah-landscape { size: A4 landscape; margin: 8mm; }
 @media print {
   body:has(.himmah-print) * { visibility: hidden; }
   body:has(.himmah-print) .himmah-print, body:has(.himmah-print) .himmah-print * { visibility: visible; }
-  .himmah-print { position: absolute; inset: 0; overflow: visible; }
-  .himmah-certificate { break-after: page; width: 100%; min-height: 0; }
+  .himmah-print { position: absolute; inset: 0; overflow: visible; page: himmah-landscape; }
+  .himmah-certificate { break-after: page; width: 100%; min-height: 185mm; }
 }
 
 @layer utilities {

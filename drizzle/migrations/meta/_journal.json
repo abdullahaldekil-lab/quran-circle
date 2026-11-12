@@ -120,6 +120,27 @@
       "when": 1794314956962,
       "tag": "0016_himmah_pause_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794466293831,
+      "tag": "0017_himmah_melody_open_reviewer_display",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794466513097,
+      "tag": "0018_himmah_open_reviewer_plan_save_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794466706382,
+      "tag": "0019_himmah_attendance_reopen_concurrency",
+      "breakpoints": true
     }
   ]
 }

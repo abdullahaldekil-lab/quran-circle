@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import logo from '@/assets/huwaylan-logo.jpeg';
 
-/** Registration records name + phone only (pending). Student data opens only after an admin-issued access code. */
+/** Registration records name + phone only. Student data opens after an admin-issued code; no prior circle assignment is needed. */
 export default function HimmahRegister() {
   const { dayId, invite } = useParams();
   const queryClient = useQueryClient();
@@ -43,7 +43,7 @@ export default function HimmahRegister() {
     </section>
     <section className="space-y-3 border border-border rounded-lg p-4 bg-card" aria-label="تسجيل مسمّع جديد">
       <h2 className="font-bold">تسجيل مسمّع جديد</h2>
-      {registered ? <p className="text-success font-medium" role="status">تم تسجيلك بحالة «بانتظار التوزيع». ستصلك رسالة بكود الدخول بعد أن تكلّفك الإدارة.</p> :
+      {registered ? <p className="text-success font-medium" role="status">تم تسجيلك بحالة «بانتظار إصدار الكود». ستصلك رسالة بكود الدخول من الإدارة، وبعد الدخول تختار الحلقة ثم الطالب.</p> :
       <form className="space-y-3" onSubmit={async e => { e.preventDefault(); if (!invite) return; setBusy(true); setError(''); try { const { error: failure } = await supabase.rpc('himmah_register', { _invite: invite, _name: name, _phone: phone }); if (failure) throw failure; setRegistered(true); } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر التسجيل'); } finally { setBusy(false); } }}>
         <Label htmlFor="reviewer-name">الاسم الكامل</Label><Input id="reviewer-name" required minLength={3} maxLength={120} value={name} onChange={e => setName(e.target.value)} />
         <Label htmlFor="reviewer-phone">رقم الجوال</Label><Input id="reviewer-phone" required type="tel" pattern="(05[0-9]{8}|9665[0-9]{8})" placeholder="05xxxxxxxx" value={phone} onChange={e => setPhone(e.target.value)} />

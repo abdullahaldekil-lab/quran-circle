@@ -1501,6 +1501,7 @@ export type Database = {
           fail_threshold: number | null
           hizb: number
           id: string
+          melodies: number
           mistakes: number
           participant_id: string
           paused_at: string | null
@@ -1523,6 +1524,7 @@ export type Database = {
           fail_threshold?: number | null
           hizb: number
           id?: string
+          melodies?: number
           mistakes?: number
           participant_id: string
           paused_at?: string | null
@@ -1545,6 +1547,7 @@ export type Database = {
           fail_threshold?: number | null
           hizb?: number
           id?: string
+          melodies?: number
           mistakes?: number
           participant_id?: string
           paused_at?: string | null
@@ -1625,9 +1628,12 @@ export type Database = {
       himmah_days: {
         Row: {
           association_logo_url: string
+          certificate_note: string
+          certificate_title: string
           created_at: string
           created_by: string
           day_date: string
+          display_key: string
           error_weight: number
           expires_at: string
           fail_threshold: number
@@ -1637,8 +1643,10 @@ export type Database = {
           invite_key: string
           logo_url: string
           manager_name: string
+          melody_deduction: number
           mistake_deduction: number
           pass_score: number
+          pause_limit_seconds: number
           ranking_mode: string
           registration_open: boolean
           session_id: string
@@ -1650,9 +1658,12 @@ export type Database = {
         }
         Insert: {
           association_logo_url?: string
+          certificate_note?: string
+          certificate_title?: string
           created_at?: string
           created_by: string
           day_date: string
+          display_key?: string
           error_weight?: number
           expires_at?: string
           fail_threshold?: number
@@ -1662,8 +1673,10 @@ export type Database = {
           invite_key?: string
           logo_url?: string
           manager_name?: string
+          melody_deduction?: number
           mistake_deduction?: number
           pass_score?: number
+          pause_limit_seconds?: number
           ranking_mode?: string
           registration_open?: boolean
           session_id: string
@@ -1675,9 +1688,12 @@ export type Database = {
         }
         Update: {
           association_logo_url?: string
+          certificate_note?: string
+          certificate_title?: string
           created_at?: string
           created_by?: string
           day_date?: string
+          display_key?: string
           error_weight?: number
           expires_at?: string
           fail_threshold?: number
@@ -1687,8 +1703,10 @@ export type Database = {
           invite_key?: string
           logo_url?: string
           manager_name?: string
+          melody_deduction?: number
           mistake_deduction?: number
           pass_score?: number
+          pause_limit_seconds?: number
           ranking_mode?: string
           registration_open?: boolean
           session_id?: string
@@ -1710,6 +1728,8 @@ export type Database = {
       }
       himmah_participants: {
         Row: {
+          attended_at: string | null
+          attended_by_name: string | null
           day_id: string
           halaqa_id: string
           halaqa_name: string
@@ -1721,6 +1741,8 @@ export type Database = {
           teacher_name: string
         }
         Insert: {
+          attended_at?: string | null
+          attended_by_name?: string | null
           day_id: string
           halaqa_id: string
           halaqa_name: string
@@ -1732,6 +1754,8 @@ export type Database = {
           teacher_name?: string
         }
         Update: {
+          attended_at?: string | null
+          attended_by_name?: string | null
           day_id?: string
           halaqa_id?: string
           halaqa_name?: string
@@ -1776,6 +1800,48 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      himmah_reopenings: {
+        Row: {
+          day_id: string
+          hizb: number
+          id: string
+          participant_id: string
+          reopened_at: string
+          reopened_by: string | null
+        }
+        Insert: {
+          day_id: string
+          hizb: number
+          id?: string
+          participant_id: string
+          reopened_at?: string
+          reopened_by?: string | null
+        }
+        Update: {
+          day_id?: string
+          hizb?: number
+          id?: string
+          participant_id?: string
+          reopened_at?: string
+          reopened_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "himmah_reopenings_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "himmah_reopenings_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "himmah_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -8133,6 +8199,49 @@ export type Database = {
         }
         Returns: Json
       }
+      himmah_attempt_v2: {
+        Args: {
+          _action: string
+          _attempt?: string
+          _day: string
+          _hizb?: number
+          _melodies?: number
+          _mistakes?: number
+          _participant?: string
+          _request?: string
+          _token?: string
+          _warnings?: number
+        }
+        Returns: Json
+      }
+      himmah_attendance: {
+        Args: {
+          _day: string
+          _participant: string
+          _present: boolean
+          _token?: string
+        }
+        Returns: Json
+      }
+      himmah_attendance_bulk: {
+        Args: {
+          _day: string
+          _participant_ids: string[]
+          _present: boolean
+          _token?: string
+        }
+        Returns: Json
+      }
+      himmah_branding: { Args: { _day: string }; Returns: Json }
+      himmah_cancel_attempt: {
+        Args: {
+          _attempt: string
+          _day: string
+          _reason?: string
+          _token?: string
+        }
+        Returns: Json
+      }
       himmah_code_reviewer: {
         Args: { _code: string; _day: string }
         Returns: string
@@ -8140,6 +8249,16 @@ export type Database = {
       himmah_correct: {
         Args: {
           _attempt: string
+          _mistakes: number
+          _reason: string
+          _warnings: number
+        }
+        Returns: Json
+      }
+      himmah_correct_v2: {
+        Args: {
+          _attempt: string
+          _melodies: number
           _mistakes: number
           _reason: string
           _warnings: number
@@ -8159,6 +8278,7 @@ export type Database = {
         Args: {
           _a: Database["public"]["Tables"]["himmah_attempts"]["Row"]
           _limit: number
+          _pause_limit: number
         }
         Returns: number
       }
@@ -8171,6 +8291,17 @@ export type Database = {
         Args: { _action: string; _data?: Json; _day?: string }
         Returns: string
       }
+      himmah_pause_credit: {
+        Args: {
+          _a: Database["public"]["Tables"]["himmah_attempts"]["Row"]
+          _pause_limit: number
+        }
+        Returns: number
+      }
+      himmah_public_display: {
+        Args: { _day: string; _key: string }
+        Returns: Json
+      }
       himmah_register: {
         Args: {
           _invite: string
@@ -8180,8 +8311,25 @@ export type Database = {
         }
         Returns: Json
       }
+      himmah_reopen_hizb: {
+        Args: { _day: string; _hizb: number; _participant: string }
+        Returns: Json
+      }
+      himmah_save_plan: {
+        Args: {
+          _day: string
+          _halaqa_ids: string[]
+          _plan: Json
+          _remove?: string[]
+        }
+        Returns: Json
+      }
       himmah_score: {
         Args: { _cfg: Json; _m: number; _w: number }
+        Returns: number
+      }
+      himmah_score_v2: {
+        Args: { _cfg: Json; _l: number; _m: number; _w: number }
         Returns: number
       }
       himmah_view_halaqa: { Args: { _halaqa: string }; Returns: boolean }

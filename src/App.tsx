@@ -124,6 +124,7 @@ import AttendanceOverview from "./pages/AttendanceOverview";
 import AdminDashboard from "./pages/AdminDashboard";
 import HimmahDayPage from "./pages/HimmahDay";
 import HimmahRegister from "./pages/HimmahRegister";
+import HimmahDisplay from "./pages/HimmahDisplay";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -182,6 +183,7 @@ const AppRoutes = () => {
       <Route path="/verify-certificate/:number" element={<VerifyCertificate />} />
       <Route path="/external-reviewer/:token" element={<ExternalReviewer />} />
       <Route path="/himmah-register/:dayId/:invite" element={<HimmahRegister />} />
+      <Route path="/himmah-display/:dayId/:displayKey" element={<HimmahDisplay />} />
       <Route path="/student-portal" element={<StudentPortal />} />
       <Route path="/student-portal/:code" element={<StudentPortal />} />
 

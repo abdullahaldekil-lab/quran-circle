@@ -1,19 +1,20 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 
-export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds: number; pause_limit_seconds?: number; halaqa_ids?: string[] }
-export interface Participant { id: string; student_id: string; student_name: string; halaqa_id: string; halaqa_name: string; teacher_name: string; hizbs: number[]; present: boolean }
+export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; display_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; certificate_title: string; certificate_note: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; melody_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds: number; pause_limit_seconds?: number; halaqa_ids?: string[] }
+export interface Participant { id: string; student_id: string; student_name: string; halaqa_id: string; halaqa_name: string; teacher_name: string; hizbs: number[]; present: boolean; attended_at?: string | null; attended_by_name?: string | null }
+export interface Reopening { participant_id: string; hizb: number; reopened_at: string }
 export interface Reviewer { id: string; full_name: string; phone: string; active: boolean; status?: 'pending' | 'assigned' | 'revoked'; staff?: boolean; code_issued_at?: string | null }
 export interface Assignment { reviewer_id: string; halaqa_id: string | null; participant_id: string | null }
-export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail' | 'cancelled'; approved_at: string | null; paused_at?: string | null; paused_seconds?: number; score?: number | null; scoring?: ScoringConfig & { reviewer_name?: string } | null }
-export interface Dashboard { day: HimmahDay; can_manage: boolean; reviewer_id: string | null; participants: Participant[]; reviewers: Reviewer[]; assignments: Assignment[]; attempts: Attempt[]; audit: { id: string; action: string; created_at: string }[] }
-export interface ScoringConfig { total_score: number; mistake_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds?: number }
-/** Final score = total − mistakes×mistake deduction − warnings×warning deduction, clamped to [0, total]. No automatic fail by count or time. */
-export const score = (mistakes: number, warnings: number, c: ScoringConfig) => {
-  if (![mistakes, warnings].every(Number.isSafeInteger) || mistakes < 0 || warnings < 0 || ![c.total_score, c.mistake_deduction, c.warning_deduction, c.pass_score].every(Number.isFinite) || c.total_score <= 0) throw new Error('أعداد غير صحيحة');
-  return Math.max(0, Math.min(c.total_score, c.total_score - mistakes * c.mistake_deduction - warnings * c.warning_deduction));
+export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; melodies: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail' | 'cancelled'; approved_at: string | null; paused_at?: string | null; paused_seconds?: number; score?: number | null; scoring?: ScoringConfig & { reviewer_name?: string } | null }
+export interface Dashboard { day: HimmahDay; can_manage: boolean; reviewer_id: string | null; participants: Participant[]; reviewers: Reviewer[]; assignments: Assignment[]; reopenings: Reopening[]; attempts: Attempt[]; audit: { id: string; action: string; created_at: string }[] }
+export interface ScoringConfig { total_score: number; mistake_deduction: number; melody_deduction?: number; warning_deduction: number; pass_score: number; time_limit_seconds?: number }
+/** Final score = total − mistakes×mistake deduction − melodies×melody deduction − warnings×warning deduction. */
+export const score = (mistakes: number, warnings: number, c: ScoringConfig, melodies = 0) => {
+  if (![mistakes, melodies, warnings].every(Number.isSafeInteger) || mistakes < 0 || melodies < 0 || warnings < 0 || ![c.total_score, c.mistake_deduction, c.melody_deduction ?? 0, c.warning_deduction, c.pass_score].every(Number.isFinite) || c.total_score <= 0) throw new Error('أعداد غير صحيحة');
+  return Math.max(0, Math.min(c.total_score, c.total_score - mistakes * c.mistake_deduction - melodies * (c.melody_deduction ?? 0) - warnings * c.warning_deduction));
 };
-export const outcome = (mistakes: number, warnings: number, c: ScoringConfig) => score(mistakes, warnings, c) >= c.pass_score ? 'pass' : 'fail';
+export const outcome = (mistakes: number, warnings: number, c: ScoringConfig, melodies = 0) => score(mistakes, warnings, c, melodies) >= c.pass_score ? 'pass' : 'fail';
 /** Score of an approved attempt from its saved snapshot (legacy attempts have none). */
 export const attemptScore = (a: Attempt) => a.score ?? null;
 export function latestApproved(attempts: Attempt[]) {
@@ -26,6 +27,26 @@ export function latestApproved(attempts: Attempt[]) {
   }
   return [...map.values()];
 }
+/** Approved hizbs disappear from the recitation choices; this count is what the student has not recited yet. */
+export function remainingHizbs(participant: Participant, attempts: Attempt[], reopened: Reopening[] = []) {
+  const reopenedSet = new Set(reopened.filter(r => r.participant_id === participant.id).map(r => r.hizb));
+  const done = new Set(latestApproved(attempts).filter(a => a.participant_id === participant.id && !reopenedSet.has(a.hizb)).map(a => a.hizb));
+  return participant.hizbs.filter(h => !done.has(h));
+}
+/** Per-reviewer latest result for each student/hizb, plus the separate approved-attempt count. */
+export function reviewerStats(attempts: Attempt[], reviewerId: string) {
+  const own = attempts.filter(a => a.reviewer_id === reviewerId && a.approved_at);
+  const latest = new Map<string, Attempt>();
+  for (const a of own) {
+    const key = `${a.participant_id}:${a.hizb}`;
+    const previous = latest.get(key);
+    if (!previous || Date.parse(a.approved_at || '') > Date.parse(previous.approved_at || '')) latest.set(key, a);
+  }
+  const results = [...latest.values()];
+  const passed = results.filter(a => a.status === 'pass').length;
+  return { presented: results.length, passed, failed: results.length - passed, attempts: own.length };
+}
+export function countReviewerHizbs(attempts: Attempt[], reviewerId: string) { return reviewerStats(attempts, reviewerId).presented; }
 export interface GradeBounds { excellent: number; very_good: number; good: number; acceptable: number }
 export const DEFAULT_GRADE_BOUNDS: GradeBounds = { excellent: 90, very_good: 80, good: 70, acceptable: 60 };
 export const validBounds = (b: GradeBounds) => [b.excellent, b.very_good, b.good, b.acceptable].every(Number.isFinite) && b.excellent <= 100 && b.excellent > b.very_good && b.very_good > b.good && b.good > b.acceptable && b.acceptable >= 0;
@@ -51,6 +72,17 @@ export function summarize(participants: Participant[], attempts: Attempt[], mode
     r.rank = previous && (mode === 'completion' ? previous.completion === r.completion : previous.passed.length === r.passed.length) && previous.average === r.average ? previous.rank : i + 1;
   });
   return rows;
+}
+/** Apply reviewer/status filters to the hizbs themselves before computing any card, table or export total. */
+export function scopeRows(rows: ReturnType<typeof summarize>, reviewer = '', status = '') {
+  return rows.map(p => {
+    let allowed = p.hizbs;
+    if (reviewer) allowed = allowed.filter(h => p.results.some(a => a.hizb === h && a.reviewer_id === reviewer));
+    if (status === 'pending') allowed = allowed.filter(h => !p.results.some(a => a.hizb === h));
+    else if (status) allowed = allowed.filter(h => p.results.some(a => a.hizb === h && a.status === status));
+    const results = p.results.filter(a => allowed.includes(a.hizb)); const passed = results.filter(a => a.status === 'pass');
+    return { ...p, hizbs: allowed, results, passed, completion: allowed.length ? passed.length / allowed.length * 100 : 0 };
+  }).filter(p => p.hizbs.length > 0);
 }
 /** Difference between the server clock and this device, so the recitation timer never depends on the device time. */
 let clockOffset = 0;
@@ -99,14 +131,14 @@ export async function manage(action: string, day: string | undefined, payload: R
   if (error) throw error;
   return data;
 }
-export async function attemptAction(action: string, day: string, options: { participant?: string; hizb?: number; attempt?: string; request?: string; mistakes?: number; warnings?: number; token?: string }) {
-  const { data, error } = await supabase.rpc('himmah_attempt', { _action: action, _day: day, _participant: options.participant, _hizb: options.hizb, _attempt: options.attempt, _request: options.request, _mistakes: options.mistakes ?? 0, _warnings: options.warnings ?? 0, _token: options.token });
+export async function attemptAction(action: string, day: string, options: { participant?: string; hizb?: number; attempt?: string; request?: string; mistakes?: number; melodies?: number; warnings?: number; token?: string }) {
+  const { data, error } = await supabase.rpc('himmah_attempt_v2', { _action: action, _day: day, _participant: options.participant, _hizb: options.hizb, _attempt: options.attempt, _request: options.request, _mistakes: options.mistakes ?? 0, _melodies: options.melodies ?? 0, _warnings: options.warnings ?? 0, _token: options.token });
   if (error) throw error;
   return data as unknown as Attempt;
 }
 export function randomToken() { return [...crypto.getRandomValues(new Uint8Array(32))].map(v => v.toString(16).padStart(2, '0')).join(''); }
-export const reviewerStatusLabel = (r: Reviewer) => !r.active || r.status === 'revoked' ? 'موقوف' : r.status === 'assigned' ? (r.code_issued_at ? 'مكلّف · صدر الكود' : 'مكلّف') : 'بانتظار التوزيع';
-export const codeMessage = (name: string, day: string, code: string, link: string, scope: string) => `السلام عليكم ${name}\nتم تكليفكم بالتسميع في «${day}».\nالتكليف: ${scope}\nكود الدخول: ${code}\nرابط الدخول: ${link}\nالكود خاص بكم ولا يُشارك.`;
+export const reviewerStatusLabel = (r: Reviewer) => !r.active || r.status === 'revoked' ? 'موقوف' : r.code_issued_at ? 'صدر الكود' : 'بانتظار إصدار الكود';
+export const codeMessage = (name: string, day: string, code: string, link: string) => `السلام عليكم ${name}\nتم اعتمادكم للتسميع في «${day}».\nكود الدخول: ${code}\nرابط الدخول: ${link}\nبعد الدخول اختر الحلقة ثم اسم الطالب. الكود خاص بكم ولا يُشارك.`;
 /** Seconds of the current pause excluded from the clock; with a pause cap, time beyond it counts as recitation again. */
 function pauseCredit(a: Pick<Attempt, 'paused_at' | 'paused_seconds'>, now: number, pauseLimit: number) {
   if (!a.paused_at) return 0;
