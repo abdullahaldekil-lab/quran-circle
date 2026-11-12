@@ -141,6 +141,13 @@
       "when": 1794466706382,
       "tag": "0019_himmah_attendance_reopen_concurrency",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794466990726,
+      "tag": "0020_himmah_attendance_bulk_ambiguity_fix",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,9 @@
+CREATE OR REPLACE FUNCTION public.himmah_attendance_bulk(_day uuid,_participant_ids uuid[],_present boolean,_token text DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE rid uuid; actor_name text; changed integer:=0; BEGIN
+  IF _token IS NOT NULL THEN rid:=public.himmah_code_reviewer(_day,_token); IF rid IS NULL THEN RAISE EXCEPTION 'الكود غير صحيح أو انتهت صلاحيته'; END IF; SELECT full_name INTO actor_name FROM public.himmah_reviewers WHERE id=rid;
+  ELSIF NOT public.is_staff(auth.uid()) OR public.get_staff_role(auth.uid()) NOT IN ('manager','teacher','assistant_teacher') THEN RAISE EXCEPTION 'غير مصرح بالتحضير'; END IF;
+  IF EXISTS(SELECT 1 FROM unnest(coalesce(_participant_ids,'{}')) AS ids(participant_id) LEFT JOIN public.himmah_participants p ON p.id=ids.participant_id AND p.day_id=_day WHERE p.id IS NULL OR (_token IS NULL AND NOT public.himmah_view_halaqa(p.halaqa_id))) THEN RAISE EXCEPTION 'أحد الطلاب خارج نطاقك'; END IF;
+  UPDATE public.himmah_participants SET present=_present,attended_at=CASE WHEN _present THEN clock_timestamp() ELSE NULL END,attended_by_name=CASE WHEN _present THEN actor_name ELSE NULL END WHERE day_id=_day AND id=ANY(coalesce(_participant_ids,'{}'));
+  GET DIAGNOSTICS changed=ROW_COUNT;
+  INSERT INTO public.himmah_audit(day_id,actor_id,action,new_value) VALUES(_day,coalesce(auth.uid(),rid),'attendance_bulk',jsonb_build_object('participant_ids',to_jsonb(_participant_ids),'present',_present,'attended_by_name',actor_name,'changed',changed));
+  RETURN jsonb_build_object('changed',changed,'present',_present,'attended_at',clock_timestamp(),'attended_by_name',actor_name); END $$;
