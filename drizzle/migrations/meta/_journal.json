@@ -190,6 +190,27 @@
       "when": 1794472163198,
       "tag": "0026_memorization_arabic_normalization_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1794473073667,
+      "tag": "0027_unify_himmah_eligibility_and_complete_page_boundaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794473291789,
+      "tag": "0028_fix_madarij_combined_range_parsing",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794473515984,
+      "tag": "0029_restrict_participant_eligibility_trigger",
+      "breakpoints": true
     }
   ]
 }

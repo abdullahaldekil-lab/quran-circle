@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.himmah_participant_eligibility_guard() FROM PUBLIC,anon,authenticated;

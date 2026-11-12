@@ -8387,6 +8387,10 @@ export type Database = {
         Args: { _cfg: Json; _l: number; _m: number; _w: number }
         Returns: number
       }
+      himmah_validated_hizbs: {
+        Args: { _hizbs: Json; _student: string }
+        Returns: number[]
+      }
       himmah_view_halaqa: { Args: { _halaqa: string }; Returns: boolean }
       is_app_member: { Args: { _uid: string }; Returns: boolean }
       is_guardian_of: { Args: { _student_id: string }; Returns: boolean }

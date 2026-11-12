@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { MUSHAF_TOTAL_PAGES } from "./mushaf";
 import {
+  absoluteAyah,
   ayahToHizb,
   ayahToPage,
   findSurah,
@@ -61,6 +62,28 @@ describe("ayah ⇄ page", () => {
     for (let p = 1; p <= MUSHAF_TOTAL_PAGES; p++) {
       expect(ayahToPage(pageStartRef(p))).toBe(p);
     }
+  });
+
+  it("has contiguous, non-null bounds for all 604 pages", () => {
+    for (let p = 1; p <= MUSHAF_TOTAL_PAGES; p++) {
+      const start = pageStartRef(p);
+      const end = pageEndRef(p);
+      expect(start, `page ${p} start`).not.toBeNull();
+      expect(end, `page ${p} end`).not.toBeNull();
+      expect(ayahToPage(end), `page ${p} end mapping`).toBe(p);
+      if (p < MUSHAF_TOTAL_PAGES) {
+        expect(absoluteAyah(pageStartRef(p + 1)!) - absoluteAyah(end!), `page ${p} continuity`).toBe(1);
+      }
+    }
+  });
+
+  it("matches the corrected 323, 582 and 604 landmarks", () => {
+    expect(pageStartRef(323)).toEqual({ surah: 21, ayah: 11 });
+    expect(pageEndRef(323)).toEqual({ surah: 21, ayah: 24 });
+    expect(pageStartRef(582)).toEqual({ surah: 78, ayah: 1 });
+    expect(pageEndRef(582)).toEqual({ surah: 78, ayah: 30 });
+    expect(pageStartRef(604)).toEqual({ surah: 112, ayah: 1 });
+    expect(pageEndRef(604)).toEqual({ surah: 114, ayah: 6 });
   });
 });
 
