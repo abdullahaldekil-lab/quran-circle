@@ -155,6 +155,13 @@
       "when": 1794467508767,
       "tag": "0021_himmah_display_live_rankings_branding",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1794469825137,
+      "tag": "0022_fix_himmah_display_participant_aggregation",
+      "breakpoints": true
     }
   ]
 }
