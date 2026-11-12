@@ -65,14 +65,14 @@
     --gradient-gold-soft: linear-gradient(135deg, hsl(44, 75%, 94%), hsl(40, 65%, 88%));
     --gradient-sidebar: linear-gradient(180deg, hsl(160, 55%, 14%) 0%, hsl(162, 60%, 9%) 100%);
     --gradient-card-header: linear-gradient(135deg, hsl(158, 45%, 96%), hsl(44, 40%, 96%));
-    --display-background: 222 72% 11%;
-    --display-card: 217 58% 19%;
-    --display-foreground: 210 40% 98%;
-    --display-muted: 213 28% 76%;
-    --display-border: 211 48% 42%;
-    --display-glow: 199 89% 55%;
-    --display-gold: 43 93% 60%;
-    --display-track: 216 45% 29%;
+    --display-background: 218 88% 24%;
+    --display-card: 209 82% 34%;
+    --display-foreground: 0 0% 100%;
+    --display-muted: 207 85% 88%;
+    --display-border: 195 90% 65%;
+    --display-glow: 188 95% 62%;
+    --display-gold: 46 96% 55%;
+    --display-track: 213 72% 24%;
   }
 
   .dark {
@@ -131,8 +131,8 @@
 
 .himmah-display {
   background:
-    radial-gradient(circle at 15% 15%, hsl(var(--display-glow) / 0.18), transparent 35%),
-    radial-gradient(circle at 85% 85%, hsl(var(--display-border) / 0.2), transparent 40%),
+    radial-gradient(circle at 15% 15%, hsl(var(--display-glow) / 0.24), transparent 38%),
+    radial-gradient(circle at 85% 85%, hsl(var(--display-gold) / 0.12), transparent 42%),
     linear-gradient(145deg, hsl(var(--display-background)), hsl(var(--display-card)));
 }
 .himmah-display:fullscreen { overflow: auto; }
