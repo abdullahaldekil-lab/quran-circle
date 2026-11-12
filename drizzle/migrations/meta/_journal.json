@@ -162,6 +162,27 @@
       "when": 1794469825137,
       "tag": "0022_fix_himmah_display_participant_aggregation",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794471488402,
+      "tag": "0023_unified_student_memorization_himmah",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794471516679,
+      "tag": "0024_himmah_verified_memorization_eligibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794471701483,
+      "tag": "0025_memorization_current_schema_compatibility",
+      "breakpoints": true
     }
   ]
 }

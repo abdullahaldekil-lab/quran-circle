@@ -18,7 +18,8 @@ import { dashboard, branding, manage, cancelAttempt, summarize, latestApproved, 
 import { himmahExcel, himmahPdf } from '@/lib/himmahExport';
 import TimedRecitation from '@/components/himmah/TimedRecitation';
 import DayCertificate from '@/components/himmah/DayCertificate';
-import { DaySetup, ReviewerManager } from '@/components/himmah/HimmahSetup';
+import { ReviewerManager } from '@/components/himmah/HimmahSetup';
+import DaySetup from '@/components/himmah/HimmahEligibilitySetup';
 import { formatDateSmart } from '@/lib/hijri';
 import logo from '@/assets/huwaylan-logo.jpeg';
 

@@ -37,6 +37,7 @@ import { juzEquivalent, memorizedPercent } from "@/lib/memorization";
 import { MUSHAF_TOTAL_PAGES } from "@/lib/mushaf";
 import NoPlanNotice from "@/components/recitation/NoPlanNotice";
 import { useStudentPlan } from "@/hooks/useStudentPlan";
+import StudentMemorizationHimmah from "@/components/student/StudentMemorizationHimmah";
 
 /** Shows the "no memorization plan" prompt when the student has none. */
 const StudentPlanGate = ({ studentId, studentName }: { studentId: string; studentName?: string }) => {
@@ -427,6 +428,11 @@ const StudentProfile = () => {
                 </div>
               </CardContent>
             </Card>
+
+            <StudentMemorizationHimmah
+              studentId={id!}
+              canEdit={isManager || isSupervisor || role === "teacher" || role === "assistant_teacher"}
+            />
           </>
         );
       })()}

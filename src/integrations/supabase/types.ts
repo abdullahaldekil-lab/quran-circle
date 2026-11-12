@@ -5170,6 +5170,53 @@ export type Database = {
           },
         ]
       }
+      student_memorization_ranges: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          end_ayah: number
+          from_label: string
+          id: string
+          start_ayah: number
+          student_id: string
+          superseded_at: string | null
+          to_label: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          end_ayah: number
+          from_label: string
+          id?: string
+          start_ayah: number
+          student_id: string
+          superseded_at?: string | null
+          to_label: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          end_ayah?: number
+          from_label?: string
+          id?: string
+          start_ayah?: number
+          student_id?: string
+          superseded_at?: string | null
+          to_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_memorization_ranges_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_plan_change_log: {
         Row: {
           action: string
@@ -8282,6 +8329,10 @@ export type Database = {
         }
         Returns: number
       }
+      himmah_eligible_students: {
+        Args: { _day: string; _halaqa_ids: string[] }
+        Returns: Json
+      }
       himmah_in_scope: {
         Args: { _participant: string; _reviewer: string }
         Returns: boolean
@@ -8353,6 +8404,27 @@ export type Database = {
         Returns: boolean
       }
       mark_overdue_staff_tasks: { Args: never; Returns: number }
+      mem_ayah: { Args: { _raw: string }; Returns: number }
+      mem_completed: { Args: { _student: string }; Returns: number[] }
+      mem_hizb_starts: { Args: never; Returns: number[] }
+      mem_norm: { Args: { _raw: string }; Returns: string }
+      mem_page: { Args: { _raw: string }; Returns: number }
+      mem_page_starts: { Args: never; Returns: number[] }
+      mem_segment: {
+        Args: { _from: string; _to: string }
+        Returns: Record<string, unknown>
+      }
+      mem_segments: {
+        Args: { _student: string }
+        Returns: {
+          end_ayah: number
+          recorded_at: string
+          source: string
+          source_label: string
+          start_ayah: number
+        }[]
+      }
+      mem_surah_starts: { Args: never; Returns: number[] }
       plan_range_name: { Args: { _raw: string }; Returns: string }
       plan_range_norm: { Args: { _raw: string }; Returns: string }
       plan_range_num: { Args: { _raw: string }; Returns: number }
@@ -8372,6 +8444,11 @@ export type Database = {
         }
         Returns: Json
       }
+      student_himmah_history: { Args: { _student: string }; Returns: Json }
+      student_memorization_data: {
+        Args: { _student_ids: string[] }
+        Returns: Json
+      }
       student_purge_targets: {
         Args: never
         Returns: {
@@ -8379,6 +8456,10 @@ export type Database = {
           label_ar: string
           tbl: string
         }[]
+      }
+      student_save_memorization_ranges: {
+        Args: { _ranges: Json; _student: string }
+        Returns: Json
       }
       submit_external_narration_review: {
         Args: {
