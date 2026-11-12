@@ -148,6 +148,13 @@
       "when": 1794466990726,
       "tag": "0020_himmah_attendance_bulk_ambiguity_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794467508767,
+      "tag": "0021_himmah_display_live_rankings_branding",
+      "breakpoints": true
     }
   ]
 }

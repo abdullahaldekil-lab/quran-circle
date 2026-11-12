@@ -8298,6 +8298,10 @@ export type Database = {
         }
         Returns: number
       }
+      himmah_public_branding: {
+        Args: { _day: string; _key: string }
+        Returns: Json
+      }
       himmah_public_display: {
         Args: { _day: string; _key: string }
         Returns: Json

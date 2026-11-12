@@ -22,6 +22,16 @@ export default {
       },
       colors: {
         himmah: "hsl(var(--himmah))",
+        display: {
+          background: "hsl(var(--display-background))",
+          card: "hsl(var(--display-card))",
+          foreground: "hsl(var(--display-foreground))",
+          muted: "hsl(var(--display-muted))",
+          border: "hsl(var(--display-border))",
+          glow: "hsl(var(--display-glow))",
+          gold: "hsl(var(--display-gold))",
+          track: "hsl(var(--display-track))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
