@@ -1639,7 +1639,6 @@ export type Database = {
           manager_name: string
           mistake_deduction: number
           pass_score: number
-          pause_limit_seconds: number
           ranking_mode: string
           registration_open: boolean
           session_id: string
@@ -1665,7 +1664,6 @@ export type Database = {
           manager_name?: string
           mistake_deduction?: number
           pass_score?: number
-          pause_limit_seconds?: number
           ranking_mode?: string
           registration_open?: boolean
           session_id: string
@@ -1691,7 +1689,6 @@ export type Database = {
           manager_name?: string
           mistake_deduction?: number
           pass_score?: number
-          pause_limit_seconds?: number
           ranking_mode?: string
           registration_open?: boolean
           session_id?: string
@@ -8136,16 +8133,6 @@ export type Database = {
         }
         Returns: Json
       }
-      himmah_branding: { Args: { _day: string }; Returns: Json }
-      himmah_cancel_attempt: {
-        Args: {
-          _attempt: string
-          _day: string
-          _reason?: string
-          _token?: string
-        }
-        Returns: Json
-      }
       himmah_code_reviewer: {
         Args: { _code: string; _day: string }
         Returns: string
@@ -8172,7 +8159,6 @@ export type Database = {
         Args: {
           _a: Database["public"]["Tables"]["himmah_attempts"]["Row"]
           _limit: number
-          _pause_limit: number
         }
         Returns: number
       }
@@ -8185,28 +8171,12 @@ export type Database = {
         Args: { _action: string; _data?: Json; _day?: string }
         Returns: string
       }
-      himmah_pause_credit: {
-        Args: {
-          _a: Database["public"]["Tables"]["himmah_attempts"]["Row"]
-          _pause_limit: number
-        }
-        Returns: number
-      }
       himmah_register: {
         Args: {
           _invite: string
           _name: string
           _phone: string
           _token?: string
-        }
-        Returns: Json
-      }
-      himmah_save_plan: {
-        Args: {
-          _day: string
-          _halaqa_ids: string[]
-          _plan: Json
-          _remove?: string[]
         }
         Returns: Json
       }
