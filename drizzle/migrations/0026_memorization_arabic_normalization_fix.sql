@@ -1,0 +1,1 @@
+CREATE OR REPLACE FUNCTION public.mem_norm(_raw text) RETURNS text LANGUAGE sql IMMUTABLE SET search_path=public AS $$ SELECT trim(regexp_replace(translate(lower(coalesce(_raw,'')),'٠١٢٣٤٥٦٧٨٩أإآٱىؤئـ','0123456789اااايوي '),'[\x064B-\x065F\x0670]','','g')) $$;
