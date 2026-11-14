@@ -8208,6 +8208,10 @@ export type Database = {
           student_full_name: string
         }[]
       }
+      delete_narration_session: {
+        Args: { _session_id: string }
+        Returns: string
+      }
       delete_student_permanently: {
         Args: { _student_id: string }
         Returns: Json

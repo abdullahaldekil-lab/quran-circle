@@ -65,6 +65,7 @@ export default function QuranNarration() {
 
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [editSession, setEditSession] = useState<NarrationSession | null>(null);
+  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [quickEditSessionId, setQuickEditSessionId] = useState<string | null>(null);
   const [quickEditDate, setQuickEditDate] = useState("");
   const [form, setForm] = useState({
@@ -282,18 +283,18 @@ export default function QuranNarration() {
   // حذف جلسة
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("narration_sessions" as any)
-        .delete()
-        .eq("id", id);
+      const { data, error } = await supabase.rpc("delete_narration_session", { _session_id: id });
       if (error) throw error;
+      if (data !== id) throw new Error("تعذّر تأكيد حذف الجلسة");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["narration-sessions"] });
-      queryClient.invalidateQueries({ queryKey: ["narration-results-all"] });
+      setDeleteSessionId(null);
+      ["narration-sessions", "narration-attempts-all", "narration-results-all", "narration-sessions-reports", "narration-results-report", "narration-attempts-all-reports", "narration_sessions_today", "narration_attempts_today", "himmah-days", "himmah-dashboard"].forEach(key => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
       toast({ title: "تم حذف الجلسة" });
     },
-    onError: () => toast({ title: "حدث خطأ في الحذف", variant: "destructive" }),
+    onError: (error) => toast({ title: "تعذّر حذف الجلسة", description: error.message, variant: "destructive" }),
   });
 
   // تحديث الإعدادات
@@ -627,20 +628,20 @@ export default function QuranNarration() {
                                 </Button>
                               )}
                               {isManager && (
-                                <AlertDialog>
+                                <AlertDialog open={deleteSessionId === session.id} onOpenChange={(open) => { if (!deleteMutation.isPending) setDeleteSessionId(open ? session.id : null); }}>
                                   <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="حذف">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="حذف الجلسة" aria-label="حذف الجلسة" disabled={deleteMutation.isPending}>
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent dir="rtl">
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                                      <AlertDialogDescription>سيتم حذف الجلسة وجميع نتائج الطلاب المرتبطة بها.</AlertDialogDescription>
+                                      <AlertDialogDescription>سيتم حذف «{session.title || formatDateHijriOnly(session.session_date)}» نهائيًا وجميع نتائج الطلاب المرتبطة بها. إذا كانت مرتبطة بيوم الهمة، فسيُحذف اليوم وحضوره وأحزابه ومسمّعوه وأكواد الوصول أيضًا. لا يمكن التراجع عن الحذف.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(session.id)}>حذف</AlertDialogAction>
+                                      <AlertDialogCancel disabled={deleteMutation.isPending}>إلغاء</AlertDialogCancel>
+                                      <AlertDialogAction disabled={deleteMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={(event) => { event.preventDefault(); deleteMutation.mutate(session.id); }}>{deleteMutation.isPending ? "جارٍ الحذف…" : "حذف نهائي"}</AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>

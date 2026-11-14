@@ -218,6 +218,13 @@
       "when": 1794636604563,
       "tag": "0030_materialize_memorization_evidence_once",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794636901741,
+      "tag": "0031_delete_narration_session_atomically",
+      "breakpoints": true
     }
   ]
 }
