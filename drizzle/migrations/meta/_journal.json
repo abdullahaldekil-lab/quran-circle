@@ -211,6 +211,13 @@
       "when": 1794473515984,
       "tag": "0029_restrict_participant_eligibility_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794636604563,
+      "tag": "0030_materialize_memorization_evidence_once",
+      "breakpoints": true
     }
   ]
 }
