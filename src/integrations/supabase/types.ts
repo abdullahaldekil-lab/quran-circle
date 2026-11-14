@@ -1644,6 +1644,7 @@ export type Database = {
           logo_url: string
           manager_name: string
           melody_deduction: number
+          minimum_duration_seconds: number
           mistake_deduction: number
           pass_score: number
           pause_limit_seconds: number
@@ -1674,6 +1675,7 @@ export type Database = {
           logo_url?: string
           manager_name?: string
           melody_deduction?: number
+          minimum_duration_seconds?: number
           mistake_deduction?: number
           pass_score?: number
           pause_limit_seconds?: number
@@ -1704,6 +1706,7 @@ export type Database = {
           logo_url?: string
           manager_name?: string
           melody_deduction?: number
+          minimum_duration_seconds?: number
           mistake_deduction?: number
           pass_score?: number
           pause_limit_seconds?: number

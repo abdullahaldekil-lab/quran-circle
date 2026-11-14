@@ -1,14 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 
-export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; display_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; certificate_title: string; certificate_note: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; melody_deduction: number; warning_deduction: number; pass_score: number; time_limit_seconds: number; pause_limit_seconds?: number; halaqa_ids?: string[] }
+export interface HimmahDay { id: string; title: string; day_date: string; error_weight: number; fail_threshold: number; ranking_mode: 'passed' | 'completion'; registration_open: boolean; expires_at: string; invite_key?: string; display_key?: string; manager_name: string; logo_url: string; association_logo_url: string; stamp_url: string; certificate_title: string; certificate_note: string; grade_bounds?: GradeBounds; total_score: number; mistake_deduction: number; melody_deduction: number; warning_deduction: number; pass_score: number; minimum_duration_seconds: number; time_limit_seconds?: number; pause_limit_seconds?: number; halaqa_ids?: string[] }
 export interface Participant { id: string; student_id: string; student_name: string; halaqa_id: string; halaqa_name: string; teacher_name: string; hizbs: number[]; present: boolean; attended_at?: string | null; attended_by_name?: string | null }
 export interface Reopening { participant_id: string; hizb: number; reopened_at: string }
 export interface Reviewer { id: string; full_name: string; phone: string; active: boolean; status?: 'pending' | 'assigned' | 'revoked'; staff?: boolean; code_issued_at?: string | null }
 export interface Assignment { reviewer_id: string; halaqa_id: string | null; participant_id: string | null }
 export interface Attempt { id: string; participant_id: string; reviewer_id: string; hizb: number; attempt_no: number; started_at: string; ended_at: string | null; duration_seconds: number | null; mistakes: number; melodies: number; warnings: number; equivalent_errors: number | null; error_weight: number | null; fail_threshold: number | null; status: 'running' | 'ended' | 'pass' | 'fail' | 'cancelled'; approved_at: string | null; paused_at?: string | null; paused_seconds?: number; score?: number | null; scoring?: ScoringConfig & { reviewer_name?: string } | null }
 export interface Dashboard { day: HimmahDay; can_manage: boolean; reviewer_id: string | null; participants: Participant[]; reviewers: Reviewer[]; assignments: Assignment[]; reopenings: Reopening[]; attempts: Attempt[]; audit: { id: string; action: string; created_at: string }[] }
-export interface ScoringConfig { total_score: number; mistake_deduction: number; melody_deduction?: number; warning_deduction: number; pass_score: number; time_limit_seconds?: number }
+export interface ScoringConfig { total_score: number; mistake_deduction: number; melody_deduction?: number; warning_deduction: number; pass_score: number; time_limit_seconds?: number; minimum_duration_seconds?: number; timing_rule?: string }
 /** Final score = total − mistakes×mistake deduction − melodies×melody deduction − warnings×warning deduction. */
 export const score = (mistakes: number, warnings: number, c: ScoringConfig, melodies = 0) => {
   if (![mistakes, melodies, warnings].every(Number.isSafeInteger) || mistakes < 0 || melodies < 0 || warnings < 0 || ![c.total_score, c.mistake_deduction, c.melody_deduction ?? 0, c.warning_deduction, c.pass_score].every(Number.isFinite) || c.total_score <= 0) throw new Error('أعداد غير صحيحة');
@@ -145,10 +145,10 @@ function pauseCredit(a: Pick<Attempt, 'paused_at' | 'paused_seconds'>, now: numb
   const current = Math.max(0, Math.floor((now - Date.parse(a.paused_at)) / 1000));
   return pauseLimit > 0 ? Math.min(current, Math.max(0, pauseLimit - (a.paused_seconds || 0))) : current;
 }
-/** Elapsed recitation seconds excluding allowed paused time, capped at the limit. `pauseLimit` 0 means unlimited pause. */
-export function elapsedSeconds(a: Pick<Attempt, 'started_at' | 'paused_at' | 'paused_seconds' | 'duration_seconds'>, now: number, limit: number, pauseLimit = 0) {
-  if (a.duration_seconds != null) return Math.min(limit, a.duration_seconds);
-  return Math.min(limit, Math.max(0, Math.floor((now - Date.parse(a.started_at)) / 1000) - (a.paused_seconds || 0) - pauseCredit(a, now, pauseLimit)));
+/** Actual recitation seconds excluding allowed pauses; the minimum never caps elapsed time. */
+export function elapsedSeconds(a: Pick<Attempt, 'started_at' | 'paused_at' | 'paused_seconds' | 'duration_seconds'>, now: number, _minimum: number, pauseLimit = 0) {
+  if (a.duration_seconds != null) return a.duration_seconds;
+  return Math.max(0, Math.floor((now - Date.parse(a.started_at)) / 1000) - (a.paused_seconds || 0) - pauseCredit(a, now, pauseLimit));
 }
 /** Pause seconds still available for an attempt, or null when pausing is unlimited. */
 export function pauseRemaining(a: Pick<Attempt, 'paused_at' | 'paused_seconds'>, now: number, pauseLimit: number) {
@@ -189,3 +189,6 @@ export function createFlow(pageHeight: number) {
     return pieces;
   }, get pages() { return page + 1; } };
 }
+
+/** Minimum active recitation time; pauses do not satisfy the minimum. */
+export const canFinishHizb = (seconds: number, minimum = 540) => Number.isFinite(seconds) && seconds >= Math.max(540, minimum);

@@ -225,6 +225,13 @@
       "when": 1794636901741,
       "tag": "0031_delete_narration_session_atomically",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794657151855,
+      "tag": "0032_himmah_minimum_duration_uncapped_timer",
+      "breakpoints": true
     }
   ]
 }

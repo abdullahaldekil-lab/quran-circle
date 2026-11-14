@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { certificateIndex, stats, appreciation, duration, latestApproved, outcome, score, summarize, elapsedSeconds, isAccessDenied, retryDelay, syncClock, serverNow, toLocalInput, fromLocalInput, pauseRemaining, parseHizbs, formatHizbs, normalizeArabic, localDate, createFlow, remainingHizbs, countReviewerHizbs, reviewerStats, scopeRows, type Attempt, type Participant } from './himmah';
+import { certificateIndex, stats, appreciation, duration, latestApproved, outcome, score, summarize, elapsedSeconds, canFinishHizb, isAccessDenied, retryDelay, syncClock, serverNow, toLocalInput, fromLocalInput, pauseRemaining, parseHizbs, formatHizbs, normalizeArabic, localDate, createFlow, remainingHizbs, countReviewerHizbs, reviewerStats, scopeRows, type Attempt, type Participant } from './himmah';
 describe('Himmah rules', () => {
   const cfg = { total_score: 100, mistake_deduction: 5, melody_deduction: 2, warning_deduction: 1, pass_score: 80 };
   it.each([[3, 0, 85, 'pass'], [0, 12, 88, 'pass'], [4, 0, 80, 'pass'], [4, 1, 79, 'fail']])('%i errors and %i warnings => %i %s', (e, w, s, result) => { expect(score(Number(e), Number(w), cfg)).toBe(s); expect(outcome(Number(e), Number(w), cfg)).toBe(result); });
@@ -32,5 +32,8 @@ describe('Himmah rules', () => {
   it('student search ignores diacritics and letter variants', () => { expect(normalizeArabic('أَحْمَد  إبراهيمُ')).toBe('احمد ابراهيم'); expect(normalizeArabic('فاطمة يحيى')).toBe(normalizeArabic('فاطمه يحيي')); });
   it('new day defaults to the local date', () => expect(localDate(new Date(2026, 10, 9, 1, 30))).toBe('2026-11-09'));
   it('report blocks are not split unless taller than a page', () => { const flow = createFlow(190); expect(flow.place(100)).toEqual([{ page: 0, y: 0, offset: 0, height: 100 }]); expect(flow.place(100)).toEqual([{ page: 1, y: 0, offset: 0, height: 100 }]); expect(flow.place(400).map(p => [p.page, p.offset, p.height])).toEqual([[2, 0, 190], [3, 190, 190], [4, 380, 20]]); expect(flow.place(50)).toEqual([{ page: 4, y: 20, offset: 0, height: 50 }]); expect(flow.pages).toBe(5); });
-  it('timer never exceeds 540 seconds', () => expect(elapsedSeconds({ started_at: '2026-11-10T10:00:00Z', paused_at: null, paused_seconds: 0, duration_seconds: null }, Date.parse('2026-11-10T10:20:00Z'), 540)).toBe(540));
+  it('timer continues beyond the nine-minute minimum', () => expect(elapsedSeconds({ started_at: '2026-11-10T10:00:00Z', paused_at: null, paused_seconds: 0, duration_seconds: null }, Date.parse('2026-11-10T10:20:00Z'), 540)).toBe(1200));
+  it('cannot finish before 540 active seconds', () => { expect(canFinishHizb(539)).toBe(false); expect(canFinishHizb(540)).toBe(true); expect(canFinishHizb(541)).toBe(true); });
+  it('saved duration is not truncated at nine minutes', () => expect(elapsedSeconds({ started_at: '2026-11-10T10:00:00Z', duration_seconds: 725 }, Date.now(), 540)).toBe(725));
+  it('pauses remain excluded after nine minutes', () => expect(elapsedSeconds({ started_at: '2026-11-10T10:00:00Z', paused_at: null, paused_seconds: 120, duration_seconds: null }, Date.parse('2026-11-10T10:14:00Z'), 540)).toBe(720));
 });

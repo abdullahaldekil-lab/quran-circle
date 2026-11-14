@@ -34,3 +34,8 @@
 - [x] Daily guardian absence/results messages (daily/weekly switch checked with a signed-in account)
 - [x] Teacher behavior: student points and entry dialog (saved +7, read back, removed temporary evaluation; teacher-specific session not available)
 - [ ] WhatsApp Business automatic sending — blocked: workspace role cannot create connections
+
+## Minimum hizb duration
+- [x] Correct server timer and enforce a 540-second minimum without changing scores or historical results.
+- [x] Update timer controls and settings to show minimum and actual finish time.
+- [x] Run rule tests and authenticated browser verification; remove test data.
