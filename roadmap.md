@@ -3,7 +3,7 @@
 - [x] Verify cron authentication, mushaf conversion, plan endpoints, Madarij CRUD reporting, dependencies, and CI checks.
 - [x] Run typecheck, lint, all 376 tests, production build, and Deno checks for the five changed Edge Functions.
 - [x] Complete backend preflight without deploying or invoking jobs: Edge CRON_SECRET absent; Vault equality unavailable; schedules unchanged; frontend unpublished.
-- [ ] Commit the reviewed changes and report exact diff, verification evidence, deployment blockers, and sync status.
+- [x] Commit the reviewed changes and report exact diff, verification evidence, deployment blockers, and sync status.
 - [x] إصلاح حفظ تغييرات مقررات يوم السرد فقط مع أخطاء لكل طالب وحفظ ذري وحماية المسودة من التحديث.
 - [x] تحديث الأهلية وإظهار المكتمل والمقرر المحفوظ والإضافات والاستبعادات بوضوح.
 - [x] توضيح النتيجة المبدئية وحد النجاح واستخدام نسخة التقييم المحفوظة في ملف الطالب والتقارير.
