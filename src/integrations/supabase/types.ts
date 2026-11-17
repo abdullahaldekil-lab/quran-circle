@@ -3410,6 +3410,42 @@ export type Database = {
         }
         Relationships: []
       }
+      prayer_times_cache: {
+        Row: {
+          asr: string | null
+          date: string | null
+          dhuhr: string | null
+          fajr: string | null
+          fetched_at: string
+          hijri_date: string | null
+          isha: string | null
+          maghrib: string | null
+          prayer_date: string
+        }
+        Insert: {
+          asr?: string | null
+          date?: string | null
+          dhuhr?: string | null
+          fajr?: string | null
+          fetched_at?: string
+          hijri_date?: string | null
+          isha?: string | null
+          maghrib?: string | null
+          prayer_date: string
+        }
+        Update: {
+          asr?: string | null
+          date?: string | null
+          dhuhr?: string | null
+          fajr?: string | null
+          fetched_at?: string
+          hijri_date?: string | null
+          isha?: string | null
+          maghrib?: string | null
+          prayer_date?: string
+        }
+        Relationships: []
+      }
       pre_registrations: {
         Row: {
           converted_student_id: string | null
