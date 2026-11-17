@@ -1,0 +1,1 @@
+DO $$ DECLARE def text; BEGIN def:=pg_get_functiondef('public.himmah_save_plan(uuid,uuid[],jsonb,uuid[])'::regprocedure); def:=replace(def,'FROM jsonb_array_elements(_plan)e GROUP BY e->>''student_id''','FROM jsonb_array_elements(_plan) AS item(value) GROUP BY item.value->>''student_id'''); EXECUTE def; END $$;

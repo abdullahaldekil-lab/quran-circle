@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { savePlan, formatHizbs, type Dashboard } from '@/lib/himmah';
 import { planChanges, type PlanRow, type PlanIssue } from '@/lib/himmahPlan';
 
@@ -29,7 +28,7 @@ export default function HimmahEligibilitySetup({ data, refresh }: { data: Dashbo
   // Drafts contain only user edits. Polling and eligibility refresh never replace them.
   const rowFor = (s: EligibleStudent): PlanRow => plan[s.student_id] || { on: enrolled.has(s.student_id), hizbs: enrolled.get(s.student_id)?.hizbs || s.completed };
   useEffect(() => setStudentPage(0), [picked.join(',')]);
-  const toggleStudent = (s: EligibleStudent, on: boolean) => setPlan(p => ({ ...p, [s.student_id]: { on, hizbs: p[s.student_id]?.hizbs?.length ? p[s.student_id].hizbs : s.completed } }));
+  const toggleStudent = (s: EligibleStudent, on: boolean) => setPlan(p => ({ ...p, [s.student_id]: { on, hizbs: p[s.student_id]?.hizbs ?? enrolled.get(s.student_id)?.hizbs ?? s.completed } }));
   const addQualified = () => setPlan(p => ({ ...p, ...Object.fromEntries((students.data || []).filter(s => s.eligible && !p[s.student_id]).map(s => [s.student_id, { on: true, hizbs: enrolled.get(s.student_id)?.hizbs || s.completed }])) }));
   async function save() {
     const changes = planChanges(plan, data.participants, picked);

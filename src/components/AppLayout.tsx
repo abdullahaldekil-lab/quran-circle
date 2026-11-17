@@ -625,7 +625,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-h-dvh flex flex-col bg-islamic-pattern">
+      <main className="flex-1 min-w-0 min-h-dvh flex flex-col bg-islamic-pattern">
         {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/70 px-4 py-2.5 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2.5">
