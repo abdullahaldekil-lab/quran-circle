@@ -21,9 +21,15 @@ The system-audit patch changes the shared authorization helper and these five Ed
 
 Deploy each function with the updated `_shared/notify.ts` and `_shared/cron-auth.ts` using the existing backend's authorized deployment mechanism. Frontend publishing alone does not deploy this fix. No database migration is introduced by this patch.
 
-Before deploying, verify in the backend control plane that the Edge secret `CRON_SECRET` is configured and matches the database Vault secret named `cron_secret`. Check equality without printing either value. The existing cron schedule reads the Vault secret when creating its request headers; if the secret changes, recreate the affected schedules through the existing scheduling function. Also verify `SUPABASE_URL` and `SUPABASE_ANON_KEY` are available for manual manager authorization.
+Choose the scheduling path supported by the actual backend before deploying. Also verify `SUPABASE_URL` and `SUPABASE_ANON_KEY` are available for manual manager authorization.
 
-With the patch, a missing or mismatched cron secret denies scheduled calls. Manual runs require a valid user session and a current, active `manager` profile. Anonymous users, fabricated bearer strings, inactive profiles and other roles must be refused before service-role work begins.
+**Lovable managed schedules:** the platform sends a private managed bearer credential. The shared gate accepts it only when it exactly matches the configured `LOVABLE_CRON_SECRET`. Provision the binding through the platform's supported cron-auth repair and create schedules through its managed HTTP scheduling tools. This path does not require copying a hidden credential into Vault. Missing or incorrect credentials fail closed. The repair does not convert a legacy unmanaged job into a managed job.
+
+When migrating the existing staff job, record its current frequency and active state, pause it, deploy the reviewed secured functions, create one managed schedule for the same target and frequency, verify the managed metadata, then remove the old paused job. Preserve exactly one active schedule. If a step fails, remove any incomplete managed schedule and restore the recorded legacy job state as appropriate; never roll back to insecure authentication. Current frequency is `*/5 * * * *`. Managed schedule creation is active immediately, so do not create it while the legacy job remains active. Do not invoke the business job manually as an authentication test.
+
+**Legacy secret-header schedules:** Edge `CRON_SECRET` must match Vault `cron_secret`, with the expected backend URL configured for the scheduler. Check equality without printing values, and refresh affected job headers after a credential change. Do not assume `public.schedule_edge_function` exists just because an old migration contains it; it is absent from the current managed database. Inspect the actual scheduling tools and functions before changing jobs.
+
+Manual runs require a valid user session and a current, active `manager` profile. Anonymous users, fabricated bearer strings, inactive profiles and other roles must be refused before service-role work begins. A publishable API key is not a managed cron credential.
 
 Test those cases in staging with a no-side-effect delivery configuration. Do not invoke production absence, badge or reminder jobs just to test authentication: successful calls can update records and send real notifications. Confirm scheduled jobs and a manager's manual run in the intended environment before considering this backend release complete.
 

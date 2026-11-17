@@ -1,6 +1,5 @@
 export interface CronAuthorization {
   expectedSecret?: string;
-  /** Platform-managed schedule credential, sent as the full bearer token. */
   managedSecret?: string;
   isActiveManager: (token: string) => Promise<boolean>;
 }
@@ -16,6 +15,9 @@ export async function authorizeCronCall(
 
   const token = /^Bearer\s+(\S+)$/i.exec(request.headers.get("Authorization") || "")?.[1];
   if (!token) return false;
+
+  // Lovable's managed scheduler sends its private credential as a bearer token.
+  // Its prefix alone never authorizes a call, and an unset secret fails closed.
   if (managedSecret && token === managedSecret) return true;
 
   try {

@@ -59,7 +59,7 @@ describe("scheduled job authorization", () => {
     expect(verify).not.toHaveBeenCalled();
   });
 
-  it("accepts the exact managed schedule credential as bearer", async () => {
+  it("accepts an exact managed bearer credential without a manager lookup", async () => {
     const verify = vi.fn();
     expect(await authorizeCronCall(request({ Authorization: "Bearer managed-secret" }), {
       managedSecret: "managed-secret", isActiveManager: verify,
@@ -67,15 +67,55 @@ describe("scheduled job authorization", () => {
     expect(verify).not.toHaveBeenCalled();
   });
 
-  it("rejects a wrong bearer when a managed credential is configured", async () => {
-    expect(await authorizeCronCall(request({ Authorization: "Bearer managed-secretX" }), {
+  it("does not accept a different bearer credential just because managed cron is configured", async () => {
+    const verify = vi.fn().mockResolvedValue(false);
+    expect(await authorizeCronCall(request({ Authorization: "Bearer wrong-secret" }), {
+      managedSecret: "managed-secret", isActiveManager: verify,
+    })).toBe(false);
+    expect(verify).toHaveBeenCalledWith("wrong-secret");
+  });
+
+  it("fails closed when the managed secret is missing or empty", async () => {
+    for (const managedSecret of [undefined, ""]) {
+      expect(await authorizeCronCall(request({ Authorization: "Bearer arbitrary-token" }), {
+        managedSecret, isActiveManager: vi.fn().mockResolvedValue(false),
+      })).toBe(false);
+    }
+  });
+
+  it("rejects anonymous requests even when managed cron is configured", async () => {
+    const verify = vi.fn();
+    expect(await authorizeCronCall(request(), {
+      managedSecret: "managed-secret", isActiveManager: verify,
+    })).toBe(false);
+    expect(verify).not.toHaveBeenCalled();
+  });
+
+  it("does not treat a publishable API key as the managed credential", async () => {
+    expect(await authorizeCronCall(request({
+      Authorization: "Bearer sb_publishable_example", apikey: "sb_publishable_example",
+    }), {
       managedSecret: "managed-secret", isActiveManager: vi.fn().mockResolvedValue(false),
     })).toBe(false);
   });
 
-  it("does not treat an empty managed credential as configured", async () => {
-    expect(await authorizeCronCall(request({ Authorization: "Bearer x" }), {
-      managedSecret: "", isActiveManager: vi.fn().mockResolvedValue(false),
+  it("retains the legacy secret-header path when a managed secret is also configured", async () => {
+    expect(await authorizeCronCall(request({ "x-cron-secret": "legacy-secret" }), {
+      expectedSecret: "legacy-secret", managedSecret: "managed-secret", isActiveManager: vi.fn(),
+    })).toBe(true);
+  });
+
+  it("rejects a malformed managed bearer token", async () => {
+    const verify = vi.fn();
+    expect(await authorizeCronCall(request({ Authorization: "Bearer managed-secret extra" }), {
+      managedSecret: "managed-secret", isActiveManager: verify,
+    })).toBe(false);
+    expect(verify).not.toHaveBeenCalled();
+  });
+
+  it("does not accept the managed secret through an unconfigured legacy header", async () => {
+    expect(await authorizeCronCall(request({ "x-cron-secret": "managed-secret" }), {
+      managedSecret: "managed-secret", isActiveManager: vi.fn(),
     })).toBe(false);
   });
 });
