@@ -8356,6 +8356,10 @@ export type Database = {
         }
         Returns: number
       }
+      himmah_plan_hizbs: {
+        Args: { _hizbs: Json; _previous?: number[]; _student: string }
+        Returns: number[]
+      }
       himmah_public_branding: {
         Args: { _day: string; _key: string }
         Returns: Json

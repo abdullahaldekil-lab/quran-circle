@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import StudentNameLink from "@/components/StudentNameLink";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ import MadarijPrintTemplate from "@/components/MadarijPrintTemplate";
 import FollowUpFormTab from "@/components/madarij/FollowUpFormTab";
 
 const MadarijEnrollment = () => {
+  const queryClient = useQueryClient();
   const { enrollmentId } = useParams<{ enrollmentId: string }>();
   const navigate = useNavigate();
   const { isManager, isTeacher } = useRole();
@@ -117,6 +119,7 @@ const MadarijEnrollment = () => {
       toast.success("تمت الإضافة");
     }
     setDpDialogOpen(false);
+    void queryClient.invalidateQueries({ queryKey: ['himmah-eligible-students'] });
     fetchAll();
   };
 
@@ -125,6 +128,7 @@ const MadarijEnrollment = () => {
     await supabase.from("madarij_daily_progress").delete().eq("id", deleteDpId);
     toast.success("تم الحذف");
     setDeleteDpId(null);
+    void queryClient.invalidateQueries({ queryKey: ['himmah-eligible-students'] });
     fetchAll();
   };
 

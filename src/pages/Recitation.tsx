@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ import { useStudentPlan } from "@/hooks/useStudentPlan";
 import NoPlanNotice from "@/components/recitation/NoPlanNotice";
 
 const Recitation = () => {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const { filterHalaqat, loading: accessLoading } = useTeacherHalaqat();
@@ -159,6 +161,7 @@ const Recitation = () => {
 
     setSaving(false);
     toast.success(`تم حفظ تسميع ${currentStudent.full_name} - الدرجة: ${totalScore}`);
+    void queryClient.invalidateQueries({ queryKey: ['himmah-eligible-students'] });
     if (currentIndex < students.length - 1) {
       setCurrentIndex(currentIndex + 1);
       resetForm();

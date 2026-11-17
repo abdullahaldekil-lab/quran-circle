@@ -17,6 +17,14 @@ export const score = (mistakes: number, warnings: number, c: ScoringConfig, melo
 export const outcome = (mistakes: number, warnings: number, c: ScoringConfig, melodies = 0) => score(mistakes, warnings, c, melodies) >= c.pass_score ? 'pass' : 'fail';
 /** Score of an approved attempt from its saved snapshot (legacy attempts have none). */
 export const attemptScore = (a: Attempt) => a.score ?? null;
+/** Explain the saved score without recalculating historical results from today's settings. */
+export function resultExplanation(value: number, config: Pick<ScoringConfig, 'total_score' | 'pass_score'>) {
+  const passed = value >= config.pass_score;
+  return `${value} من ${config.total_score} — حد النجاح ${config.pass_score} — ${passed ? 'مجتاز' : `أقل من المطلوب بـ${Number((config.pass_score - value).toFixed(2))} درجات`}`;
+}
+export function approvedExplanation(a: Pick<Attempt, 'score' | 'scoring'>) {
+  return a.score != null && a.scoring ? resultExplanation(a.score, a.scoring) : 'نتيجة سابقة؛ نسخة إعدادات التقييم غير متاحة';
+}
 export function latestApproved(attempts: Attempt[]) {
   const map = new Map<string, Attempt>();
   for (const a of attempts) {
