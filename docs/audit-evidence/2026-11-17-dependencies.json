@@ -1,0 +1,284 @@
+{
+  "date": "2026-11-17",
+  "vulnerabilities": {
+    "info": 0,
+    "low": 1,
+    "moderate": 15,
+    "high": 15,
+    "critical": 2,
+    "total": 33
+  },
+  "remaining_packages": [
+    {
+      "package": "@esbuild-kit/core-utils",
+      "severity": "moderate",
+      "direct": false,
+      "range": "*",
+      "fix": true
+    },
+    {
+      "package": "@esbuild-kit/esm-loader",
+      "severity": "moderate",
+      "direct": false,
+      "range": "*",
+      "fix": true
+    },
+    {
+      "package": "@humanfs/node",
+      "severity": "moderate",
+      "direct": false,
+      "range": "<0.16.8",
+      "fix": true
+    },
+    {
+      "package": "@tailwindcss/typography",
+      "severity": "moderate",
+      "direct": true,
+      "range": "<=0.0.0-insiders.fda8ce5 || >=0.5.5",
+      "fix": {
+        "name": "@tailwindcss/typography",
+        "version": "0.5.4",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "@tootallnate/once",
+      "severity": "low",
+      "direct": false,
+      "range": "<2.0.1",
+      "fix": true
+    },
+    {
+      "package": "@vitest/mocker",
+      "severity": "moderate",
+      "direct": false,
+      "range": "<=4.1.11",
+      "fix": {
+        "name": "vitest",
+        "version": "5.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "@xmldom/xmldom",
+      "severity": "high",
+      "direct": false,
+      "range": "<=0.8.14",
+      "fix": true
+    },
+    {
+      "package": "ajv",
+      "severity": "moderate",
+      "direct": false,
+      "range": "<6.14.0",
+      "fix": true
+    },
+    {
+      "package": "brace-expansion",
+      "severity": "high",
+      "direct": false,
+      "range": "<=1.1.20 || 2.0.0 - 2.1.6 || 3.0.0 - 5.0.11",
+      "fix": true
+    },
+    {
+      "package": "browserslist",
+      "severity": "high",
+      "direct": false,
+      "range": "<=4.28.6",
+      "fix": true
+    },
+    {
+      "package": "dompurify",
+      "severity": "high",
+      "direct": false,
+      "range": "<=3.4.16",
+      "fix": true
+    },
+    {
+      "package": "drizzle-kit",
+      "severity": "moderate",
+      "direct": true,
+      "range": "0.19.0 - 1.0.0-beta.1-fd8bfcc",
+      "fix": true
+    },
+    {
+      "package": "esbuild",
+      "severity": "moderate",
+      "direct": false,
+      "range": "<=0.24.2",
+      "fix": {
+        "name": "vite",
+        "version": "8.3.8",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "fflate",
+      "severity": "moderate",
+      "direct": false,
+      "range": "0.8.0 - 0.8.2",
+      "fix": true
+    },
+    {
+      "package": "flatted",
+      "severity": "high",
+      "direct": false,
+      "range": "<=3.4.1",
+      "fix": true
+    },
+    {
+      "package": "form-data",
+      "severity": "high",
+      "direct": false,
+      "range": "4.0.0 - 4.0.5",
+      "fix": true
+    },
+    {
+      "package": "glob",
+      "severity": "high",
+      "direct": false,
+      "range": "9.0.0 - 14.0.1",
+      "fix": true
+    },
+    {
+      "package": "js-yaml",
+      "severity": "high",
+      "direct": false,
+      "range": "4.0.0 - 4.3.1",
+      "fix": true
+    },
+    {
+      "package": "lodash",
+      "severity": "high",
+      "direct": false,
+      "range": "4.0.0 - 4.17.23",
+      "fix": true
+    },
+    {
+      "package": "minimatch",
+      "severity": "high",
+      "direct": false,
+      "range": "<=3.1.3 || 7.0.0 - 11.0.0",
+      "fix": true
+    },
+    {
+      "package": "moment",
+      "severity": "moderate",
+      "direct": false,
+      "range": "2.29.2 - 2.30.1",
+      "fix": true
+    },
+    {
+      "package": "picomatch",
+      "severity": "high",
+      "direct": false,
+      "range": "<=2.3.1 || 4.0.0 - 4.0.3",
+      "fix": true
+    },
+    {
+      "package": "postcss-selector-parser",
+      "severity": "moderate",
+      "direct": false,
+      "range": "<=6.1.4",
+      "fix": {
+        "name": "@tailwindcss/typography",
+        "version": "0.5.4",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "react-router",
+      "severity": "moderate",
+      "direct": false,
+      "range": "6.0.0 - 7.17.0",
+      "fix": {
+        "name": "react-router-dom",
+        "version": "7.18.5",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "react-router-dom",
+      "severity": "moderate",
+      "direct": true,
+      "range": "6.0.0-alpha.0 - 7.17.0",
+      "fix": {
+        "name": "react-router-dom",
+        "version": "7.18.5",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "rimraf",
+      "severity": "moderate",
+      "direct": false,
+      "range": "4.2.0 - 6.1.3",
+      "fix": true
+    },
+    {
+      "package": "rollup",
+      "severity": "high",
+      "direct": false,
+      "range": "4.0.0 - 4.58.0",
+      "fix": true
+    },
+    {
+      "package": "tinypool",
+      "severity": "critical",
+      "direct": false,
+      "range": "<=2.1.1",
+      "fix": {
+        "name": "vitest",
+        "version": "5.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "vite",
+      "severity": "high",
+      "direct": true,
+      "range": "<=6.4.3",
+      "fix": {
+        "name": "vite",
+        "version": "8.3.8",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "vitest",
+      "severity": "critical",
+      "direct": true,
+      "range": "0.0.95 - 4.1.10",
+      "fix": {
+        "name": "vitest",
+        "version": "5.1.0",
+        "isSemVerMajor": true
+      }
+    },
+    {
+      "package": "ws",
+      "severity": "high",
+      "direct": false,
+      "range": "8.0.0 - 8.20.1",
+      "fix": true
+    },
+    {
+      "package": "yaml",
+      "severity": "moderate",
+      "direct": false,
+      "range": "2.0.0 - 2.8.2",
+      "fix": true
+    },
+    {
+      "package": "zod",
+      "severity": "high",
+      "direct": true,
+      "range": "<4.6.6",
+      "fix": {
+        "name": "zod",
+        "version": "4.6.7",
+        "isSemVerMajor": true
+      }
+    }
+  ]
+}

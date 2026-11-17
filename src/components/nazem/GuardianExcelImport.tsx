@@ -98,7 +98,8 @@ const GuardianExcelImport = ({ halaqaId, onDone }: { halaqaId: string; onDone: (
     let ok = 0, fail = 0;
     for (const p of valid) {
       const { error } = await supabase.from("students").update(p.patch).eq("id", p.student!.id);
-      error ? fail++ : ok++;
+      if (error) fail++;
+      else ok++;
     }
     setBusy(false); setPlans(null);
     toast.success(`تم تحديث ${ok} طالب${fail ? ` — فشل ${fail}` : ""}`);

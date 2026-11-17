@@ -3,6 +3,9 @@
 
 export const MUSHAF_TOTAL_PAGES = 604;
 
+/** اصطلاح المجمع: الوجه صفحة واحدة من مصحف المدينة. */
+export const AWJUH_PER_PAGE = 1;
+
 /** First page of each juz (1-based) in the standard Madinah mushaf. */
 export const JUZ_START_PAGE: number[] = [
   1, 22, 42, 62, 82, 102, 121, 142, 162, 182,
@@ -65,7 +68,7 @@ export interface DailyMushafRange {
 
 /**
  * Next daily range in mushaf order, derived from the student's last memorized
- * page. `dailyPages` is in "أوجه" (half pages): 2 أوجه = صفحة كاملة.
+ * page. A face (وجه) is one mushaf page, matching annual plans and Madarij.
  */
 export const nextDailyMushafRange = (
   lastMemorizedTo: string | null | undefined,
@@ -89,9 +92,13 @@ export const nextDailyMushafRange = (
   };
 };
 
-/** أوجه → صفحات (2 أوجه = صفحة). Always at least one page. */
-export const pagesStep = (dailyPages: number): number =>
-  Math.max(1, Math.ceil((Number(dailyPages) || 1) / 2));
+/** Pages to show in the mushaf; fractional targets need precise ayah endpoints before saving. */
+export const pagesStep = (dailyPages: number): number => {
+  const amount = Number(dailyPages);
+  return Number.isFinite(amount) && amount > 0
+    ? Math.max(1, Math.ceil(amount / AWJUH_PER_PAGE))
+    : 1;
+};
 
 const buildRange = (from: number, to: number, completed = false): DailyMushafRange => ({
   from,

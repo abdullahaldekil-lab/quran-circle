@@ -110,11 +110,11 @@ const MadarijEnrollment = () => {
     e.preventDefault();
     const payload = { ...dpForm, enrollment_id: enrollmentId, student_id: enrollment.student_id };
     if (editingDp) {
-      const { error } = await supabase.from("madarij_daily_progress").update(dpForm).eq("id", editingDp.id);
+      const { error } = await supabase.from("madarij_daily_progress").update(dpForm).eq("id", editingDp.id).select("id").single();
       if (error) { toast.error("خطأ"); return; }
       toast.success("تم التعديل");
     } else {
-      const { error } = await supabase.from("madarij_daily_progress").insert(payload);
+      const { error } = await supabase.from("madarij_daily_progress").insert(payload).select("id").single();
       if (error) { toast.error("خطأ"); return; }
       toast.success("تمت الإضافة");
     }
@@ -125,7 +125,8 @@ const MadarijEnrollment = () => {
 
   const handleDeleteDp = async () => {
     if (!deleteDpId) return;
-    await supabase.from("madarij_daily_progress").delete().eq("id", deleteDpId);
+    const { error } = await supabase.from("madarij_daily_progress").delete().eq("id", deleteDpId).select("id").single();
+    if (error) { toast.error("تعذّر حذف المتابعة اليومية؛ لم تُحذف البيانات"); return; }
     toast.success("تم الحذف");
     setDeleteDpId(null);
     void queryClient.invalidateQueries({ queryKey: ['himmah-eligible-students'] });
@@ -148,10 +149,12 @@ const MadarijEnrollment = () => {
   const handleSaveMistake = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingMistake) {
-      await supabase.from("madarij_mistakes").update(mistakeForm).eq("id", editingMistake.id);
+      const { error } = await supabase.from("madarij_mistakes").update(mistakeForm).eq("id", editingMistake.id).select("id").single();
+      if (error) { toast.error("تعذّر تعديل الخطأ؛ لم تُحفظ التغييرات"); return; }
       toast.success("تم التعديل");
     } else {
-      await supabase.from("madarij_mistakes").insert({ ...mistakeForm, enrollment_id: enrollmentId, student_id: enrollment.student_id });
+      const { error } = await supabase.from("madarij_mistakes").insert({ ...mistakeForm, enrollment_id: enrollmentId, student_id: enrollment.student_id }).select("id").single();
+      if (error) { toast.error("تعذّر إضافة الخطأ؛ لم تُحفظ البيانات"); return; }
       toast.success("تمت الإضافة");
     }
     setMistakeDialogOpen(false);
@@ -160,7 +163,8 @@ const MadarijEnrollment = () => {
 
   const handleDeleteMistake = async () => {
     if (!deleteMistakeId) return;
-    await supabase.from("madarij_mistakes").delete().eq("id", deleteMistakeId);
+    const { error } = await supabase.from("madarij_mistakes").delete().eq("id", deleteMistakeId).select("id").single();
+    if (error) { toast.error("تعذّر حذف الخطأ؛ لم تُحذف البيانات"); return; }
     toast.success("تم الحذف");
     setDeleteMistakeId(null);
     fetchAll();

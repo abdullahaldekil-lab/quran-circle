@@ -10,3 +10,5 @@
 - Delete narration sessions through the manager-only delete_narration_session RPC, locking the session and linked days and deleting dependent data atomically with an admin audit entry; direct session deletion fails for Himmah-linked sessions.
 
 - Himmah timers are uncapped and use minimum_duration_seconds; enforce completion in guarded RPCs, preserve actual duration through corrections, and never auto-end from the browser. Why: the configured duration is a minimum, not a timeout.
+- Scheduled endpoints must await isAuthorizedCronCall before service-role work. A configured cron secret or a verified active manager is required; missing secrets and bearer prefixes alone never authorize a request.
+- A memorization face is one mushaf page; share AWJUH_PER_PAGE between locator and range helpers. Fractional annual-plan targets require explicit ayah endpoints instead of automatically saving a rounded full page.

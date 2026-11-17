@@ -1,7 +1,7 @@
 // Bidirectional Quran locator: surah/ayah ⇄ page ⇄ juz/hizb, plus أوجه counting.
 // Used by the annual plan form so entering any one input fills in the rest.
 
-import { MUSHAF_TOTAL_PAGES, pageToJuz } from "./mushaf";
+import { AWJUH_PER_PAGE, MUSHAF_TOTAL_PAGES, pageToJuz } from "./mushaf";
 import { HIZB_QUARTER_STARTS, PAGE_STARTS, SURAH_AYAHS, SURAH_NAMES } from "./quran-index";
 import { normalizeDigits } from "./planRanges";
 
@@ -10,8 +10,7 @@ export interface AyahRef {
   ayah: number;
 }
 
-/** اصطلاح البرنامج: الوجه = صفحة مصحف واحدة (مطابق لـ madarij-pace: الحزب 10 أوجه، الجزء 20). */
-export const AWJUH_PER_PAGE = 1;
+export { AWJUH_PER_PAGE };
 
 const stripDiacritics = (s: string) => s.replace(/[\u064B-\u0652\u0670\u06D6-\u06ED\u0640]/g, "");
 

@@ -57,17 +57,18 @@ describe("pageToJuz", () => {
 });
 
 describe("pagesStep", () => {
-  it("converts أوجه to whole pages, rounding up", () => {
+  it("uses one mushaf page for each complete face", () => {
     expect(pagesStep(1)).toBe(1);
-    expect(pagesStep(2)).toBe(1);
-    expect(pagesStep(3)).toBe(2);
-    expect(pagesStep(4)).toBe(2);
+    expect(pagesStep(2)).toBe(2);
+    expect(pagesStep(3)).toBe(3);
+    expect(pagesStep(4)).toBe(4);
   });
 
   it("never returns less than one page", () => {
     expect(pagesStep(0)).toBe(1);
     expect(pagesStep(-5)).toBe(1);
     expect(pagesStep(NaN)).toBe(1);
+    expect(pagesStep(Infinity)).toBe(1);
   });
 });
 
@@ -75,12 +76,12 @@ describe("nextDailyMushafRange", () => {
   it("starts at the beginning when there is no previous record", () => {
     const r = nextDailyMushafRange(null, 2);
     expect(r.from).toBe(1);
-    expect(r.to).toBe(1);
+    expect(r.to).toBe(2);
     expect(r.completed).toBe(false);
   });
 
   it("continues from the page after the last memorized one", () => {
-    const r = nextDailyMushafRange("صفحة 42 (الجزء 3)", 4);
+    const r = nextDailyMushafRange("صفحة 42 (الجزء 3)", 2);
     expect(r.from).toBe(43);
     expect(r.to).toBe(44);
   });
@@ -110,14 +111,14 @@ describe("nextReviewMushafRange", () => {
   });
 
   it("starts at the beginning of the memorized portion", () => {
-    const r = nextReviewMushafRange(null, 4, memorized)!;
+    const r = nextReviewMushafRange(null, 2, memorized)!;
     expect(r.from).toBe(1);
     expect(r.to).toBe(2);
     expect(r.wrapped).toBe(false);
   });
 
   it("continues after the last reviewed page", () => {
-    const r = nextReviewMushafRange("صفحة 10 (الجزء 1)", 4, memorized)!;
+    const r = nextReviewMushafRange("صفحة 10 (الجزء 1)", 2, memorized)!;
     expect(r.from).toBe(11);
     expect(r.to).toBe(12);
   });
@@ -141,7 +142,7 @@ describe("nextReviewMushafRange", () => {
 
 describe("nextLinkingMushafRange", () => {
   it("returns the pages immediately before today's new portion", () => {
-    const r = nextLinkingMushafRange(43, 4)!;
+    const r = nextLinkingMushafRange(43, 2)!;
     expect(r.to).toBe(42);
     expect(r.from).toBe(41);
   });

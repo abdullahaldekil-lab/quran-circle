@@ -11,6 +11,9 @@
 
 // deno-lint-ignore-file no-explicit-any
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizeCronCall } from "./cron-auth.ts";
+
 export interface DispatchParams {
   templateCode: string;
   recipientIds: string[];
@@ -181,14 +184,29 @@ export async function dispatchNotification(
  * Shared gate for cron-triggered functions.
  *
  * These run with `verify_jwt = false` so pg_cron can reach them without a user token;
- * the shared secret is what keeps them from being public. When CRON_SECRET is unset
- * (local development) the gate is open.
+ * a missing secret never makes a scheduled endpoint public. Manual runs use a
+ * verified user token and the manager's current active profile.
  */
-export const isAuthorizedCronCall = (req: Request): boolean => {
-  const expected = Deno.env.get("CRON_SECRET");
-  if (!expected) return true;
-  const provided = req.headers.get("x-cron-secret");
-  if (provided === expected) return true;
-  // A logged-in staff member triggering a run manually from the app is also fine.
-  return (req.headers.get("Authorization") || "").startsWith("Bearer ");
-};
+export const isAuthorizedCronCall = (req: Request): Promise<boolean> =>
+  authorizeCronCall(req, {
+    expectedSecret: Deno.env.get("CRON_SECRET"),
+    isActiveManager: async (token) => {
+      const url = Deno.env.get("SUPABASE_URL");
+      const key = Deno.env.get("SUPABASE_ANON_KEY");
+      if (!url || !key) return false;
+
+      const client = createClient(url, key, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: identity, error: authError } = await client.auth.getUser(token);
+      if (authError || !identity.user) return false;
+
+      const { data: profile, error: profileError } = await client
+        .from("profiles")
+        .select("role, active")
+        .eq("id", identity.user.id)
+        .maybeSingle();
+      return !profileError && profile?.active === true && profile.role === "manager";
+    },
+  });

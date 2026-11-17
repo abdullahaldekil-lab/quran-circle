@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-17",
+  "site": "https://quran-circle.enter.com.sa",
+  "scope": "Read-only navigation with existing manager account; no student or recitation writes",
+  "pages": [
+    {
+      "path": "/students",
+      "http": 200,
+      "final_path": "/students",
+      "runtime_errors": [],
+      "api_errors": []
+    },
+    {
+      "path": "/halaqat",
+      "http": 200,
+      "final_path": "/halaqat",
+      "runtime_errors": [],
+      "api_errors": []
+    },
+    {
+      "path": "/attendance",
+      "http": 200,
+      "final_path": "/attendance",
+      "runtime_errors": [],
+      "api_errors": []
+    },
+    {
+      "path": "/recitation",
+      "http": 200,
+      "final_path": "/recitation",
+      "runtime_errors": [],
+      "api_errors": []
+    },
+    {
+      "path": "/madarij",
+      "http": 200,
+      "final_path": "/madarij",
+      "runtime_errors": [],
+      "api_errors": []
+    },
+    {
+      "path": "/quran-narration/himmah",
+      "http": 200,
+      "final_path": "/quran-narration/himmah",
+      "runtime_errors": [],
+      "api_errors": []
+    },
+    {
+      "path": "/finance",
+      "http": 200,
+      "final_path": "/finance",
+      "runtime_errors": [],
+      "api_errors": []
+    },
+    {
+      "path": "/guardian-weekly-report",
+      "http": 200,
+      "final_path": "/guardian-weekly-report",
+      "runtime_errors": [],
+      "api_errors": []
+    }
+  ],
+  "anonymous_read_probes": [
+    {
+      "table": "students",
+      "http": 200,
+      "rows_visible": 0
+    },
+    {
+      "table": "guardian_profiles",
+      "http": 200,
+      "rows_visible": 0
+    },
+    {
+      "table": "recitation_records",
+      "http": 200,
+      "rows_visible": 0
+    }
+  ],
+  "runtime_errors": [],
+  "blocked_write_count": 12,
+  "session_closed": true
+}

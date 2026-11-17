@@ -1,73 +1,39 @@
-# Welcome to your Lovable project
+# Quran Circle — مجمع حلق جامع حويلان
 
-## Project info
+Arabic RTL application for circle and student administration, attendance, daily recitation, Madarij, guardian follow-up, and Quran narration days.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+- Live application: https://quran-circle.enter.com.sa
+- Repository: https://github.com/abdullahaldekil-lab/quran-circle
+- Stack: React 18, TypeScript, Vite, Tailwind/shadcn, Supabase Auth/Postgres/Edge Functions.
 
-## How can I edit this code?
+## Local development
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Use Node.js 22 and npm. `package-lock.json` is the lockfile used by CI.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm ci
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The browser uses the public `VITE_SUPABASE_*` configuration. Never add service-role keys, database passwords, cron secrets, or user credentials to browser configuration or version control.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Verification
 
-**Use GitHub Codespaces**
+```sh
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+SQL regression scenarios are under `supabase/tests`; run them against an isolated, migrated database with suitable test fixtures. Frontend tests do not replace database permission checks or browser tests with each role.
 
-## What technologies are used for this project?
+## Deployment
 
-This project is built with:
+The checked-in GitHub workflow verifies code; it does not deploy the live application. The existing project is published through Lovable. Edge Functions and database migrations have separate release requirements. See [deployment instructions](docs/deployment.md) before publishing.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The current Himmah duration is a **minimum** active recitation time: the timer continues after it and preserves the actual duration. Approved scores use the attempt's saved grading settings. See [AGENTS.md](AGENTS.md) for additional project invariants.
 
-## How can I deploy this project?
+## Review status
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+See [the system audit dated 17 November 2026](docs/system-audit-2026-11-17.md) for verified fixes, remaining risks, and the limits of the review.

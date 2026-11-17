@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   // Same gate as the other scheduled jobs: shared cron secret, or a signed-in caller.
-  if (!isAuthorizedCronCall(req)) {
+  if (!(await isAuthorizedCronCall(req))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

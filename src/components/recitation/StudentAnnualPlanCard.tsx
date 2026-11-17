@@ -77,6 +77,8 @@ const StudentAnnualPlanCard = ({ studentId, onApply, autoApply = true }: Props) 
   const dailyTarget = Number(plan?.daily_memorization_pages ?? plan?.daily_target_pages) || 1;
   const dailyReview = Number(plan?.daily_review_pages) || 0;
   const dailyLinking = Number(plan?.daily_linking_pages) || 0;
+  const needsExactEndpoints = [dailyTarget, dailyReview, dailyLinking]
+    .some(amount => amount > 0 && !Number.isInteger(amount));
 
   /** آخر موضع للطالب: آخر تسميع، وإلا نهاية المحفوظ السابق في الخطة */
   const lastRef: string | null =
@@ -88,7 +90,7 @@ const StudentAnnualPlanCard = ({ studentId, onApply, autoApply = true }: Props) 
 
     // Review sweeps what the student has already memorized, up to the page before
     // today's new portion.
-    const memorizedEnd = (parsePageRef(lastRef) ?? memorization.from) - 1;
+    const memorizedEnd = parsePageRef(lastRef) ?? memorization.from - 1;
     const review =
       dailyReview > 0
         ? nextReviewMushafRange(lastRecord?.review_to, dailyReview, {
@@ -118,13 +120,13 @@ const StudentAnnualPlanCard = ({ studentId, onApply, autoApply = true }: Props) 
 
   // تحديد بداية ونهاية الجزء تلقائياً في الخطة اليومية
   useEffect(() => {
-    if (!autoApply || !ranges || applied) return;
+    if (!autoApply || !ranges || applied || needsExactEndpoints) return;
     const key = `${studentId}:${Object.values(ranges).join("|")}`;
     if (autoAppliedFor.current === key) return;
     autoAppliedFor.current = key;
     onApply(ranges);
     setApplied(true);
-  }, [autoApply, ranges, applied, studentId, onApply]);
+  }, [autoApply, ranges, applied, studentId, onApply, needsExactEndpoints]);
 
   if (loading || !plan || !suggestion || !ranges) return null;
 
@@ -132,6 +134,7 @@ const StudentAnnualPlanCard = ({ studentId, onApply, autoApply = true }: Props) 
   const currentPage = parsePageRef(lastRef) ?? memorization.from;
 
   const handleApply = () => {
+    if (needsExactEndpoints) return;
     onApply(ranges);
     setApplied(true);
   };
@@ -157,7 +160,7 @@ const StudentAnnualPlanCard = ({ studentId, onApply, autoApply = true }: Props) 
             </div>
 
             <p className="text-xs text-green-700 dark:text-green-400 truncate">
-              الحفظ: {memorization.fromLabel}
+              {needsExactEndpoints ? "صفحات مرجعية للحفظ: " : "الحفظ: "}{memorization.fromLabel}
               <ArrowLeft className="w-3 h-3 inline mx-1" />
               {memorization.toLabel}
             </p>
@@ -182,7 +185,9 @@ const StudentAnnualPlanCard = ({ studentId, onApply, autoApply = true }: Props) 
             )}
 
             <p className="text-[11px] text-green-600 dark:text-green-500">
-              {memorization.completed
+              {needsExactEndpoints
+                ? "المقدار يتضمن جزءًا من وجه؛ حدّد بداية ونهاية التسميع بالسورة والآية في النموذج حتى لا يُسجّل وجه كامل بالخطأ."
+                : memorization.completed
                 ? "أتم الطالب نطاق الخطة"
                 : `تم التحديد تلقائياً بناءً على آخر تسميع (${
                     lastRef ? `الجزء ${pageToJuz(currentPage)}` : "بداية المقرر"
@@ -199,7 +204,8 @@ const StudentAnnualPlanCard = ({ studentId, onApply, autoApply = true }: Props) 
               variant={applied ? "secondary" : "default"}
               className="text-xs h-7"
               onClick={handleApply}
-              disabled={applied}
+              disabled={applied || needsExactEndpoints}
+              title={needsExactEndpoints ? "حدّد مواضع المقدار الجزئي في نموذج التسميع" : undefined}
             >
               {applied ? <><Check className="w-3 h-3 ml-1" />تم</> : "تطبيق"}
             </Button>
