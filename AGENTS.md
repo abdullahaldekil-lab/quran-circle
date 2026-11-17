@@ -12,3 +12,4 @@
 - Himmah timers are uncapped and use minimum_duration_seconds; enforce completion in guarded RPCs, preserve actual duration through corrections, and never auto-end from the browser. Why: the configured duration is a minimum, not a timeout.
 - Scheduled endpoints must await isAuthorizedCronCall before service-role work. A configured cron secret or a verified active manager is required; missing secrets and bearer prefixes alone never authorize a request.
 - A memorization face is one mushaf page; share AWJUH_PER_PAGE between locator and range helpers. Fractional annual-plan targets require explicit ayah endpoints instead of automatically saving a rounded full page.
+- Scheduled Edge jobs run via platform-managed HTTP schedules; isAuthorizedCronCall also accepts the exact LOVABLE_CRON_SECRET bearer. Why: Vault secrets are not agent-writable, and managed schedules carry that bearer.

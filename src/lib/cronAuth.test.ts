@@ -58,4 +58,24 @@ describe("scheduled job authorization", () => {
     })).toBe(false);
     expect(verify).not.toHaveBeenCalled();
   });
+
+  it("accepts the exact managed schedule credential as bearer", async () => {
+    const verify = vi.fn();
+    expect(await authorizeCronCall(request({ Authorization: "Bearer managed-secret" }), {
+      managedSecret: "managed-secret", isActiveManager: verify,
+    })).toBe(true);
+    expect(verify).not.toHaveBeenCalled();
+  });
+
+  it("rejects a wrong bearer when a managed credential is configured", async () => {
+    expect(await authorizeCronCall(request({ Authorization: "Bearer managed-secretX" }), {
+      managedSecret: "managed-secret", isActiveManager: vi.fn().mockResolvedValue(false),
+    })).toBe(false);
+  });
+
+  it("does not treat an empty managed credential as configured", async () => {
+    expect(await authorizeCronCall(request({ Authorization: "Bearer x" }), {
+      managedSecret: "", isActiveManager: vi.fn().mockResolvedValue(false),
+    })).toBe(false);
+  });
 });

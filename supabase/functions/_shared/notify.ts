@@ -190,6 +190,7 @@ export async function dispatchNotification(
 export const isAuthorizedCronCall = (req: Request): Promise<boolean> =>
   authorizeCronCall(req, {
     expectedSecret: Deno.env.get("CRON_SECRET"),
+    managedSecret: Deno.env.get("LOVABLE_CRON_SECRET"),
     isActiveManager: async (token) => {
       const url = Deno.env.get("SUPABASE_URL");
       const key = Deno.env.get("SUPABASE_ANON_KEY");
